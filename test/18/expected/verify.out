@@ -295,16 +295,16 @@ drop cascades to table myschema1.mytbl2b
 drop cascades to function myschema1.mytbl2trgfct1()
 drop cascades to function myschema1.mytbl2trgfct2()
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                   msg                                                    
-----------------------------------------------------------------------------------------------------------
- Error: The application schema "myschema1" does not exist any more.
- Error: In tables group "myGroup1", the table "myschema1"."myTbl3" does not exist any more.
- Error: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" does not exist any more.
- Error: In tables group "myGroup1", the table "myschema1"."mytbl1" does not exist any more.
- Error: In tables group "myGroup1", the table "myschema1"."mytbl2" does not exist any more.
- Error: In tables group "myGroup1", the table "myschema1"."mytbl2b" does not exist any more.
- Error: In tables group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" does not exist any more.
- Error: In tables group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+                                                   msg                                                   
+---------------------------------------------------------------------------------------------------------
+ Error: The application schema "myschema1" does not exist anymore.
+ Error: In tables group "myGroup1", the table "myschema1"."myTbl3" does not exist anymore.
+ Error: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" does not exist anymore.
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl1" does not exist anymore.
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl2" does not exist anymore.
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl2b" does not exist anymore.
+ Error: In tables group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" does not exist anymore.
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl4" does not exist anymore.
 (8 rows)
 
 rollback;
@@ -312,9 +312,9 @@ rollback;
 begin;
   drop table myschema1.mytbl4;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                            msg                                             
---------------------------------------------------------------------------------------------
- Error: In tables group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+                                            msg                                            
+-------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl4" does not exist anymore.
 (1 row)
 
 rollback;
@@ -322,9 +322,9 @@ rollback;
 begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                              msg                                              
------------------------------------------------------------------------------------------------
- Error: In tables group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more.
+                                             msg                                              
+----------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the sequence "myschema1"."mytbl1" does not exist anymore.
 (1 row)
 
 rollback;
@@ -355,7 +355,7 @@ drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                                       msg                                                       
 ----------------------------------------------------------------------------------------------------------------
- Error: The E-Maj schema "emaj_myschema1" does not exist any more.
+ Error: The E-Maj schema "emaj_myschema1" does not exist anymore.
  Error: In tables group "myGroup1", the log table "emaj_myschema1"."myTbl3_log" is not found.
  Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
  Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl2_log" is not found.
@@ -461,9 +461,9 @@ begin;
   alter table "phil's schema""3"."my""tbl4" drop constraint "my""tbl4_pkey" cascade;    -- table from an audit_only group
 NOTICE:  drop cascades to constraint mytbl2_col21_fkey on table "phil's schema""3"."myTbl2\"
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                   msg                                                    
-----------------------------------------------------------------------------------------------------------
- Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
+                                                   msg                                                   
+---------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key anymore.
 (1 row)
 
 rollback;
@@ -538,11 +538,11 @@ begin;
  Error: In schema "emaj", the table "emaj"."dummy_log" is not linked to any created tables group.
  Error: In schema "emaj", the function "emaj"."dummy_log_fnct" is not linked to any created tables group.
  Error: In schema "emaj", the function "emaj"."dummy_rlbk_fnct" is not linked to any created tables group.
- Error: In tables group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
+ Error: In tables group "myGroup2", the sequence "myschema2"."mytbl1" does not exist anymore.
  Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
  Error: In tables group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
  Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
- Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
+ Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key anymore.
 (8 rows)
 
 rollback;
@@ -644,7 +644,7 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
+ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist anymore.
 CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 99 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
@@ -671,7 +671,7 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
+ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist anymore.
 CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 113 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
@@ -726,7 +726,7 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist any more.
+ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist anymore.
 CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 126 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
@@ -869,21 +869,21 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The schema "myschema2" does not exist any more.
+ERROR:  _stop_groups: The schema "myschema2" does not exist anymore.
 CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 76 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop and drop the group
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The schema "myschema2" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.mytbl1" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.mytbl2" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.mytbl5" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.mytbl6" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.mytbl7" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.mytbl8" does not exist any more.
+WARNING:  _stop_groups: The schema "myschema2" does not exist anymore.
+WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist anymore.
+WARNING:  _stop_groups: The table "myschema2.mytbl1" does not exist anymore.
+WARNING:  _stop_groups: The table "myschema2.mytbl2" does not exist anymore.
+WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist anymore.
+WARNING:  _stop_groups: The table "myschema2.mytbl5" does not exist anymore.
+WARNING:  _stop_groups: The table "myschema2.mytbl6" does not exist anymore.
+WARNING:  _stop_groups: The table "myschema2.mytbl7" does not exist anymore.
+WARNING:  _stop_groups: The table "myschema2.mytbl8" does not exist anymore.
  emaj_force_stop_group 
 -----------------------
                     10

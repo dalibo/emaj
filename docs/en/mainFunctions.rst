@@ -28,7 +28,7 @@ If specified, the initial mark name may contain a generic '%' character. Then th
 
 If the parameter representing the mark is not specified, or is empty or NULL, a name is automatically generated: "*START_%*", where the '%' character represents the current time with a *hh.mn.ss.mmmm* pattern.
 
-The *<are.old.logs.to.be.deleted?>* parameter is an optional boolean. By default, its value is true, meaning that all log tables of the tables group are purged before the trigger activation. If the value is explicitly set to false, all rows from log tables are kept as is. The old marks are also preserved, even-though they are not usable for a rollback any more, (unlogged updates may have occurred while the tables group was stopped).
+The *<are.old.logs.to.be.deleted?>* parameter is an optional boolean. By default, its value is true, meaning that all log tables of the tables group are purged before the trigger activation. If the value is explicitly set to false, all rows from log tables are kept as is. The old marks are also preserved, even-though they are not usable for a rollback anymore, (unlogged updates may have occurred while the tables group was stopped).
 
 The function returns the number of tables and sequences contained by the group.
 

@@ -681,7 +681,7 @@ set role emaj_regression_tests_adm_user2;
 -- try to set a mark
 begin;
   select emaj_set_mark_group('phil''s group#3",','should fails');
-ERROR:  _verify_groups (1): In group "phil's group#3",", the table "phil's schema"3"."my"tbl4" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In group "phil's group#3",", the table "phil's schema"3"."my"tbl4" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
       FROM emaj._verify_groups(array[p_groupName], TRUE)"

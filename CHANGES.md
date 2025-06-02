@@ -740,7 +740,7 @@ E-Maj - Change log
     functions are replaced by a more efficient generic table rollback 
     processing.
   * For security reason, emaj_viewer roles cannot directly read the 
-    emaj_param table's content any more. Instead, this role may access a new 
+    emaj_param table's content anymore. Instead, this role may access a new 
     emaj_visible_param view that provides the same visibility, except for the 
     value of the new 'dblink_user_password' parameter that is masked.
   * The emaj_estimate_rollback_duration() function is replaced by two new 
@@ -870,7 +870,7 @@ E-Maj - Change log
     lock can be set on a sequence, this decreases the risk of another 
     concurrently running transaction modifying one of these sequences.
   * Process more safely the EMAJ_LAST_MARK keyword when system time changes, 
-    the mark search not being based on timestamp any more.
+    the mark search not being based on timestamp anymore.
   * Minor improvements in the code and in comments.
 
 ### Bug fixes: ###
@@ -931,7 +931,7 @@ E-Maj - Change log
     set to true, old log records of a group are deleted (i.e. the group is 
     reset) at start group time. If the group is not reset at start time, all 
     old related marks and log tables rows cannot be used for any rollback 
-    operation any more. Nevertheless, log rows remain visible, old marks can 
+    operation anymore. Nevertheless, log rows remain visible, old marks can 
     be deleted, renamed or commented, and log statistics can be requested.
   * Now that logs may survive to a group start, a mark is automatically set 
     at group stop time so that this operation is clearly visible in the marks 
@@ -1020,7 +1020,7 @@ E-Maj - Change log
   * Fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
     operations. When a mark set for several groups by an 
     emaj_set_mark_groups() function, is deleted for a single group, it was 
-    not usable any more (in particular for rollback) for the other groups 
+    not usable anymore (in particular for rollback) for the other groups 
     for which the mark remained active.
   * Fix errors when using schema, column, sequence or mark names including 
     unusual characters like apostrophs or commas.
@@ -1124,7 +1124,7 @@ E-Maj - Change log
   * Change the primary key columns identification. Starting from pg 9.0, 
     column names must be read from pg_attribute with the table's definition, 
     using pg_index.indkey, as the column names with the index definition is 
-    not safe any more in case of column renaming.
+    not safe anymore in case of column renaming.
 
 0.9.1 (2011-Jul-24)
 -----
@@ -1209,7 +1209,7 @@ E-Maj - Change log
   * 2 error messages in emaj_start_group() didn't include the right function 
     name.
   * during rollback operations, do not rollback the sequences associated to 
-    the log tables any more. Before, if a problem occurred during a rollback 
+    the log tables anymore. Before, if a problem occurred during a rollback 
     operation, the sequences of already rollbacked tables were left in an 
     inconsistent state.
   * fix grant issues for emaj_adm role.
@@ -1315,7 +1315,7 @@ E-Maj - Change log
   * add a feature to perform parallel rollbacks, in order to speed up the 
     rollback operations on multi-processor servers. A PHP command is created
     for this purpose: emajParallelRollback.php.
-  * the emaj_reset_group function is not necessary any more before starting 
+  * the emaj_reset_group function is not necessary anymore before starting 
     a group; the log purge is automatically done at emaj_start_group function.
     But the emaj_reset_function remains so user can purge log tables sooner.
   * issue a warning at emaj_create_group, emaj_start_group and 

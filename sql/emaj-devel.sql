@@ -5073,7 +5073,7 @@ $_verify_groups$
       SELECT t.rel_schema, t.rel_tblseq, r.rel_group,
              'In group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
-               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist any more.' AS msg
+               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
         FROM
           (  SELECT rel_schema, rel_tblseq, rel_kind
                FROM emaj.emaj_relation
@@ -5239,7 +5239,7 @@ $_verify_groups$
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
              'In rollbackable group "' || rel_group || '", the table "' ||
-             rel_schema || '"."' || rel_tblseq || '" has no primary key any more.' AS msg
+             rel_schema || '"."' || rel_tblseq || '" has no primary key anymore.' AS msg
         FROM emaj.emaj_relation
              JOIN emaj.emaj_group ON (group_name = rel_group)
         WHERE rel_group = ANY (p_groups)
@@ -5688,7 +5688,7 @@ CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN
 RETURNS INT LANGUAGE plpgsql AS
 $_drop_group$
 -- This function effectively deletes the emaj objects for all tables of a group.
--- It also drops log schemas that are not useful any more.
+-- It also drops log schemas that are not useful anymore.
 -- Input: group name, and a boolean indicating whether the group's state has to be checked
 -- Output: number of processed tables and sequences
   DECLARE
@@ -6997,9 +6997,9 @@ $_stop_groups$
           ORDER BY rel_schema
       LOOP
         IF p_isForced THEN
-          RAISE WARNING '_stop_groups: The schema "%" does not exist any more.', r_schema.rel_schema;
+          RAISE WARNING '_stop_groups: The schema "%" does not exist anymore.', r_schema.rel_schema;
         ELSE
-          RAISE EXCEPTION '_stop_groups: The schema "%" does not exist any more.', r_schema.rel_schema;
+          RAISE EXCEPTION '_stop_groups: The schema "%" does not exist anymore.', r_schema.rel_schema;
         END IF;
       END LOOP;
 -- For each relation currently belonging to the groups to process...
@@ -7020,9 +7020,9 @@ $_stop_groups$
                     AND relname = r_tblsq.rel_tblseq
                ) THEN
             IF p_isForced THEN
-              RAISE WARNING '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+              RAISE WARNING '_stop_groups: The table "%.%" does not exist anymore.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
             ELSE
-              RAISE EXCEPTION '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+              RAISE EXCEPTION '_stop_groups: The table "%.%" does not exist anymore.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
             END IF;
           ELSE
 -- ... and disable the emaj log and truncate triggers.
@@ -7033,10 +7033,10 @@ $_stop_groups$
             EXCEPTION
               WHEN undefined_object THEN
                 IF p_isForced THEN
-                  RAISE WARNING '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.',
+                  RAISE WARNING '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist anymore.',
                     r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                 ELSE
-                  RAISE EXCEPTION '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.',
+                  RAISE EXCEPTION '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist anymore.',
                     r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                 END IF;
             END;
@@ -7046,10 +7046,10 @@ $_stop_groups$
             EXCEPTION
               WHEN undefined_object THEN
                 IF p_isForced THEN
-                  RAISE WARNING '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.',
+                  RAISE WARNING '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist anymore.',
                     r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                 ELSE
-                  RAISE EXCEPTION '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.',
+                  RAISE EXCEPTION '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist anymore.',
                     r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                 END IF;
             END;
@@ -12582,7 +12582,7 @@ $_verify_all_groups$
 --
 -- Check that all application schemas referenced in the emaj_relation table still exist.
     RETURN QUERY
-      SELECT 'Error: The application schema "' || rel_schema || '" does not exist any more.' AS msg
+      SELECT 'Error: The application schema "' || rel_schema || '" does not exist anymore.' AS msg
         FROM
           (  SELECT DISTINCT rel_schema
                FROM emaj.emaj_relation
@@ -12596,7 +12596,7 @@ $_verify_all_groups$
     RETURN QUERY
       SELECT 'Error: In tables group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
-               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist any more.' AS msg
+               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
         FROM                                          -- all expected application relations
           (  SELECT rel_schema, rel_tblseq, rel_kind
                FROM emaj.emaj_relation
@@ -12770,7 +12770,7 @@ $_verify_all_groups$
 -- Check that all tables of rollbackable groups have their primary key.
     RETURN QUERY
       SELECT 'Error: In the rollbackable group "' || rel_group || '", the table "' ||
-             rel_schema || '"."' || rel_tblseq || '" has no primary key any more.' AS msg
+             rel_schema || '"."' || rel_tblseq || '" has no primary key anymore.' AS msg
         FROM emaj.emaj_relation
              JOIN emaj.emaj_group ON (group_name = rel_group)
         WHERE upper_inf(rel_time_range)
@@ -13048,7 +13048,7 @@ $_verify_all_schemas$
   BEGIN
 -- Verify that the expected E-Maj schemas still exist.
     RETURN QUERY
-      SELECT DISTINCT 'Error: The E-Maj schema "' || sch_name || '" does not exist any more.' AS msg
+      SELECT DISTINCT 'Error: The E-Maj schema "' || sch_name || '" does not exist anymore.' AS msg
         FROM emaj.emaj_schema
         WHERE NOT EXISTS
                (SELECT NULL
@@ -13675,7 +13675,7 @@ $emaj_drop_extension$
     v_nbObject = 0;
     FOR r_object IN
       SELECT msg FROM emaj._verify_all_schemas() msg
-        WHERE msg NOT LIKE 'Error: The E-Maj schema % does not exist any more.'
+        WHERE msg NOT LIKE 'Error: The E-Maj schema % does not exist anymore.'
       LOOP
 -- An E-Maj schema contains objects that do not belong to the extension.
       RAISE WARNING 'emaj_drop_extension - schema consistency checks: %',r_object.msg;

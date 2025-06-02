@@ -170,7 +170,7 @@ When the consolidation is complete, only the rollback target mark and the end ro
 
 The disk space of deleted rows will become reusable as soon as these log tables will be “vacuumed”.
 
-Of course, once consolidated, a “*logged rollback*” cannot be cancelled (or rolled back) any more, the start rollback mark and the logs covering this rollback being deleted.
+Of course, once consolidated, a “*logged rollback*” cannot be cancelled (or rolled back) anymore, the start rollback mark and the logs covering this rollback being deleted.
 
 The consolidation operation is not sensitive to the protections set on groups or marks, if any.
 

@@ -651,7 +651,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select * from emaj.emaj_rollback_group('myGroup2','Mark21');
-ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
@@ -665,7 +665,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select * from emaj.emaj_logged_rollback_group('myGroup2','Mark21');
-ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
@@ -772,7 +772,7 @@ select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B
 begin;
   drop table mySchema2."myTbl3" cascade;
   select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
-ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
@@ -786,7 +786,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
-ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
@@ -2963,8 +2963,8 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
          4019 | SET_FK_IMM         | myschema4   | mypartp1b  | mytblp_col1_fkey         |                     |                 3 |            1 |                 |                   |                           |                       3 |                    3 |              
          4019 | SET_FK_IMM         | myschema4   | mypartp2   | mytblp_col1_fkey         |                     |                 2 |            1 |                 |                   |                           |                       8 |                    3 |              
          4019 | SET_FK_IMM         | myschema4   | mytblr2    | mytblr2_col2_col3_fkey_2 |                     |                 7 |            1 |                 |                   |                           |                       3 |                    3 |              
-         4019 | SET_FK_IMM         | myschema4   | mytblr2    | mytblr2_col2_col3_fkey_3 |                     |                 3 |            1 |                 |                   |                           |                       5 |                    2 |              
-         4019 | SET_FK_IMM         | myschema4   | mytblr2    | mytblr2_col2_col3_fkey_4 |                     |                 2 |            1 |                 |                   |                           |                      10 |                    2 |              
+         4019 | SET_FK_IMM         | myschema4   | mytblr2    | mytblr2_col2_col3_fkey_3 |                     |                 3 |            1 |                 |                   |                           |                       5 |                    3 |              
+         4019 | SET_FK_IMM         | myschema4   | mytblr2    | mytblr2_col2_col3_fkey_4 |                     |                 2 |            1 |                 |                   |                           |                      10 |                    3 |              
          4019 | ENA_APP_TRG        | myschema4   | mypartp1a  | z_min_update             |                     |                 7 |            1 |                 |                   |                           |                         |                    2 |              
          4019 | ENA_APP_TRG        | myschema4   | mypartp1b  | z_min_update             |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
          4019 | ENA_APP_TRG        | myschema4   | mypartp2   | z_min_update             |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              

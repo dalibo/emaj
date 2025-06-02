@@ -1291,7 +1291,7 @@ $_verify_groups$
       SELECT t.rel_schema, t.rel_tblseq, r.rel_group,
              'In group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
-               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist any more.' AS msg
+               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
         FROM
           (  SELECT rel_schema, rel_tblseq, rel_kind
                FROM emaj.emaj_relation
@@ -1457,7 +1457,7 @@ $_verify_groups$
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
              'In rollbackable group "' || rel_group || '", the table "' ||
-             rel_schema || '"."' || rel_tblseq || '" has no primary key any more.' AS msg
+             rel_schema || '"."' || rel_tblseq || '" has no primary key anymore.' AS msg
         FROM emaj.emaj_relation
              JOIN emaj.emaj_group ON (group_name = rel_group)
         WHERE rel_group = ANY (p_groups)
@@ -1715,6 +1715,71 @@ $_check_fk_groups$
   END;
 $_check_fk_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_drop_group$
+-- This function effectively deletes the emaj objects for all tables of a group.
+-- It also drops log schemas that are not useful anymore.
+-- Input: group name, and a boolean indicating whether the group's state has to be checked
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_function               TEXT;
+    v_eventTriggers          TEXT[];
+    v_timeId                 BIGINT;
+    v_nbRel                  INT;
+    r_rel                    emaj.emaj_relation%ROWTYPE;
+  BEGIN
+    v_function = CASE WHEN p_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END;
+-- Get the time stamp of the operation.
+    SELECT emaj._set_time_stamp(v_function, 'D') INTO v_timeId;
+-- Register into emaj_relation_change the tables and sequences removal from their group, for completeness.
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      SELECT v_timeId, rel_schema, rel_tblseq,
+             CASE WHEN rel_kind = 'r' THEN 'REMOVE_TABLE'::emaj._relation_change_kind_enum
+                                      ELSE 'REMOVE_SEQUENCE'::emaj._relation_change_kind_enum END,
+             p_groupName
+        FROM emaj.emaj_relation
+        WHERE rel_group = p_groupName
+          AND upper_inf(rel_time_range)
+        ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range;
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Delete the emaj objects and references for each table and sequences of the group.
+    FOR r_rel IN
+      SELECT *
+        FROM emaj.emaj_relation
+        WHERE rel_group = p_groupName
+        ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range
+    LOOP
+      PERFORM CASE r_rel.rel_kind
+                WHEN 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
+                WHEN 'S' THEN emaj._drop_seq(r_rel, v_timeId)
+              END;
+    END LOOP;
+-- Drop the E-Maj log schemas that are now useless (i.e. not used by any other created group).
+    PERFORM emaj._drop_log_schemas(v_function, p_isForced);
+-- Delete group row from the emaj_group table.
+-- By cascade, it also deletes rows from emaj_mark.
+    DELETE FROM emaj.emaj_group
+      WHERE group_name = p_groupName
+      RETURNING group_nb_table + group_nb_sequence INTO v_nbRel;
+-- Update the last log session for the group to set the time range upper bound
+    UPDATE emaj.emaj_log_session
+      SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[]')
+      WHERE lses_group = p_groupName
+        AND upper_inf(lses_time_range);
+-- Update the last group history row to set the time range upper bound
+    UPDATE emaj.emaj_group_hist
+      SET grph_time_range = int8range(lower(grph_time_range), v_timeId, '[]')
+      WHERE grph_group = p_groupName
+        AND upper_inf(grph_time_range);
+-- Enable previously disabled event triggers.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+--
+    RETURN v_nbRel;
+  END;
+$_drop_group$;
+
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(p_groupNames TEXT[])
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_check$
@@ -1890,6 +1955,185 @@ $_import_groups_conf_check$
     RETURN;
   END;
 $_import_groups_conf_check$;
+
+CREATE OR REPLACE FUNCTION emaj._stop_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_isForced BOOLEAN)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_stop_groups$
+-- This function effectively de-activates the log triggers of all the tables for a group.
+-- Input: array of group names, a mark name to set, and a boolean indicating if the function is called by a multi group function
+-- Output: number of processed tables and sequences
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
+  DECLARE
+    v_function               TEXT;
+    v_groupList              TEXT;
+    v_count                  INT;
+    v_timeId                 BIGINT;
+    v_nbTblSeq               INT = 0;
+    v_markName               TEXT;
+    v_group                  TEXT;
+    v_lsesTimeRange          INT8RANGE;
+    r_schema                 RECORD;
+    r_tblsq                  RECORD;
+  BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
+                   WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
+                   ELSE 'FORCE_STOP_GROUP' END;
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES (v_function, 'BEGIN', array_to_string(p_groupNames,','));
+-- Check the group names.
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)
+      INTO p_groupNames;
+-- For all already IDLE groups, generate a warning message and remove them from the list of the groups to process.
+    SELECT string_agg(group_name,', ' ORDER BY group_name), count(*)
+      INTO v_groupList, v_count
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(p_groupNames)
+       AND NOT group_is_logging;
+    IF v_count = 1 THEN
+      RAISE WARNING '_stop_groups: The group "%" is already in IDLE state.', v_groupList;
+    END IF;
+    IF v_count > 1 THEN
+      RAISE WARNING '_stop_groups: The groups "%" are already in IDLE state.', v_groupList;
+    END IF;
+-- Process the LOGGING groups.
+    SELECT array_agg(DISTINCT group_name)
+      INTO p_groupNames
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(p_groupNames)
+        AND group_is_logging;
+    IF p_groupNames IS NOT NULL THEN
+-- Check and process the supplied mark name (except if the function is called by emaj_force_stop_group()).
+      IF NOT p_isForced THEN
+        IF p_mark IS NULL OR p_mark = '' THEN
+          p_mark = 'STOP_%';
+        END IF;
+        SELECT emaj._check_new_mark(p_groupNames, p_mark) INTO v_markName;
+      END IF;
+-- OK (no error detected and at least one group in logging state)
+-- Get a time stamp id of type 'X' for the operation.
+      SELECT emaj._set_time_stamp(v_function, 'X') INTO v_timeId;
+-- Lock all tables to get a stable point.
+-- One sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
+-- risk of deadlock.
+      PERFORM emaj._lock_groups(p_groupNames,'SHARE ROW EXCLUSIVE',p_multiGroup);
+-- Verify that all application schemas for the groups still exists.
+      FOR r_schema IN
+        SELECT DISTINCT rel_schema
+          FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range)
+            AND rel_group = ANY (p_groupNames)
+            AND NOT EXISTS
+                 (SELECT nspname
+                    FROM pg_catalog.pg_namespace
+                    WHERE nspname = rel_schema
+                 )
+          ORDER BY rel_schema
+      LOOP
+        IF p_isForced THEN
+          RAISE WARNING '_stop_groups: The schema "%" does not exist anymore.', r_schema.rel_schema;
+        ELSE
+          RAISE EXCEPTION '_stop_groups: The schema "%" does not exist anymore.', r_schema.rel_schema;
+        END IF;
+      END LOOP;
+-- For each relation currently belonging to the groups to process...
+      FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind
+          FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range)
+            AND rel_group = ANY (p_groupNames)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+        IF r_tblsq.rel_kind = 'r' THEN
+-- If it is a table, check the table still exists,
+          IF NOT EXISTS
+               (SELECT 0
+                  FROM pg_catalog.pg_class
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                  WHERE nspname = r_tblsq.rel_schema
+                    AND relname = r_tblsq.rel_tblseq
+               ) THEN
+            IF p_isForced THEN
+              RAISE WARNING '_stop_groups: The table "%.%" does not exist anymore.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+            ELSE
+              RAISE EXCEPTION '_stop_groups: The table "%.%" does not exist anymore.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+            END IF;
+          ELSE
+-- ... and disable the emaj log and truncate triggers.
+-- Errors are captured so that emaj_force_stop_group() can be silently executed.
+            BEGIN
+              EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_log_trg',
+                             r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+            EXCEPTION
+              WHEN undefined_object THEN
+                IF p_isForced THEN
+                  RAISE WARNING '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist anymore.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                ELSE
+                  RAISE EXCEPTION '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist anymore.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                END IF;
+            END;
+            BEGIN
+              EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_trunc_trg',
+                             r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+            EXCEPTION
+              WHEN undefined_object THEN
+                IF p_isForced THEN
+                  RAISE WARNING '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist anymore.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                ELSE
+                  RAISE EXCEPTION '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist anymore.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                END IF;
+            END;
+          END IF;
+        END IF;
+        v_nbTblSeq = v_nbTblSeq + 1;
+      END LOOP;
+      IF NOT p_isForced THEN
+-- If the function is not called by emaj_force_stop_group(), set the stop mark for each group,
+        PERFORM emaj._set_mark_groups(p_groupNames, v_markName, NULL, p_multiGroup, TRUE, NULL, v_timeId);
+-- and set the number of log rows to 0 for these marks.
+        UPDATE emaj.emaj_mark m
+          SET mark_log_rows_before_next = 0
+          WHERE mark_group = ANY (p_groupNames)
+            AND mark_time_id = v_timeId;
+      END IF;
+-- Process each tables group separately to ...
+      FOREACH v_group IN ARRAY p_groupNames
+      LOOP
+-- Get the latest log session of the tables group.
+        SELECT lses_time_range
+          INTO v_lsesTimeRange
+          FROM emaj.emaj_log_session
+          WHERE lses_group = v_group
+          ORDER BY lses_time_range DESC
+          LIMIT 1;
+-- Set all marks as 'DELETED' to avoid any further rollback and remove marks protection against rollback, if any.
+        UPDATE emaj.emaj_mark
+          SET mark_is_rlbk_protected = FALSE
+          WHERE mark_group = v_group
+            AND mark_time_id >= lower(v_lsesTimeRange);
+-- Update the log session to set the time range upper bound
+        UPDATE emaj.emaj_log_session
+          SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[]')
+          WHERE lses_group = v_group
+            AND lses_time_range = v_lsesTimeRange;
+      END LOOP;
+-- Update the emaj_group table to set the groups state and the rollback protections.
+      UPDATE emaj.emaj_group
+        SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
+        WHERE group_name = ANY (p_groupNames);
+    END IF;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'END', array_to_string(p_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
+--
+    RETURN v_nbTblSeq;
+  END;
+$_stop_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(p_groupName TEXT, p_markName TEXT, p_markTimeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -2267,7 +2511,7 @@ $_verify_all_groups$
 --
 -- Check that all application schemas referenced in the emaj_relation table still exist.
     RETURN QUERY
-      SELECT 'Error: The application schema "' || rel_schema || '" does not exist any more.' AS msg
+      SELECT 'Error: The application schema "' || rel_schema || '" does not exist anymore.' AS msg
         FROM
           (  SELECT DISTINCT rel_schema
                FROM emaj.emaj_relation
@@ -2281,7 +2525,7 @@ $_verify_all_groups$
     RETURN QUERY
       SELECT 'Error: In tables group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
-               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist any more.' AS msg
+               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
         FROM                                          -- all expected application relations
           (  SELECT rel_schema, rel_tblseq, rel_kind
                FROM emaj.emaj_relation
@@ -2455,7 +2699,7 @@ $_verify_all_groups$
 -- Check that all tables of rollbackable groups have their primary key.
     RETURN QUERY
       SELECT 'Error: In the rollbackable group "' || rel_group || '", the table "' ||
-             rel_schema || '"."' || rel_tblseq || '" has no primary key any more.' AS msg
+             rel_schema || '"."' || rel_tblseq || '" has no primary key anymore.' AS msg
         FROM emaj.emaj_relation
              JOIN emaj.emaj_group ON (group_name = rel_group)
         WHERE upper_inf(rel_time_range)
@@ -2725,6 +2969,134 @@ $_verify_all_groups$
   END;
 $_verify_all_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._verify_all_schemas()
+RETURNS SETOF TEXT LANGUAGE plpgsql AS
+$_verify_all_schemas$
+-- The function verifies that all E-Maj schemas only contains E-Maj objects.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
+  BEGIN
+-- Verify that the expected E-Maj schemas still exist.
+    RETURN QUERY
+      SELECT DISTINCT 'Error: The E-Maj schema "' || sch_name || '" does not exist anymore.' AS msg
+        FROM emaj.emaj_schema
+        WHERE NOT EXISTS
+               (SELECT NULL
+                  FROM pg_catalog.pg_namespace
+                  WHERE nspname = sch_name
+               )
+        ORDER BY msg;
+-- Detect all objects that are not directly linked to a known table groups in all E-Maj schemas, by scanning the catalog
+-- (pg_class, pg_proc, pg_type, pg_conversion, pg_operator, pg_opclass).
+    RETURN QUERY
+      SELECT msg FROM
+-- Look for unexpected tables.
+        (  SELECT nspname, 1, 'Error: In schema "' || nspname ||
+                 '", the table "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'r'
+                AND (nspname <> 'emaj' OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal tables
+                AND NOT EXISTS                                                   -- exclude emaj log tables
+                     (SELECT 0
+                        FROM emaj.emaj_relation
+                        WHERE rel_log_schema = nspname
+                          AND rel_log_table = relname
+                     )
+         UNION ALL
+-- Look for unexpected sequences.
+           SELECT nspname, 2, 'Error: In schema "' || nspname ||
+                  '", the sequence "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'S'
+                AND (nspname <> 'emaj' OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal sequences
+                AND NOT EXISTS                                                   -- exclude emaj log table sequences
+                     (SELECT 0
+                        FROM emaj.emaj_relation
+                        WHERE rel_log_schema = nspname
+                          AND rel_log_sequence = relname
+                     )
+         UNION ALL
+-- Look for unexpected functions.
+           SELECT nspname, 3, 'Error: In schema "' || nspname ||
+                  '", the function "' || nspname || '"."' || proname  || '" is not linked to any created tables group.' AS msg
+              FROM pg_catalog.pg_proc
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE (nspname <> 'emaj' OR (proname NOT LIKE E'emaj\\_%' AND proname NOT LIKE E'\\_%'))
+                                                                                 -- exclude emaj internal functions
+                AND NOT EXISTS                                                   -- exclude emaj log functions
+                     (SELECT 0
+                        FROM emaj.emaj_relation
+                        WHERE rel_log_schema = nspname
+                          AND rel_log_function = proname
+                     )
+         UNION ALL
+-- Look for unexpected composite types.
+           SELECT nspname, 4, 'Error: In schema "' || nspname ||
+                  '", the type "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'c'
+                AND (nspname <> 'emaj' OR (relname NOT LIKE E'emaj\\_%' AND relname NOT LIKE E'\\_%'))
+                                                                                 -- exclude emaj internal types
+         UNION ALL
+-- Look for unexpected views.
+           SELECT nspname, 5, 'Error: In schema "' || nspname ||
+                  '", the view "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'v'
+                AND (nspname <> 'emaj' OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal views
+         UNION ALL
+-- Look for unexpected foreign tables.
+           SELECT nspname, 6, 'Error: In schema "' || nspname ||
+                  '", the foreign table "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'f'
+         UNION ALL
+-- Look for unexpected domains.
+           SELECT nspname, 7, 'Error: In schema "' || nspname ||
+                  '", the domain "' || nspname || '"."' || typname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_type
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = typnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE typisdefined
+                AND typtype = 'd'
+         UNION ALL
+-- Look for unexpected conversions.
+         SELECT nspname, 8, 'Error: In schema "' || nspname ||
+                '", the conversion "' || nspname || '"."' || conname || '" is not an E-Maj component.' AS msg
+            FROM pg_catalog.pg_conversion
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = connamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+           UNION ALL
+-- Look for unexpected operators.
+           SELECT nspname, 9, 'Error: In schema "' || nspname ||
+                  '", the operator "' || nspname || '"."' || oprname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_operator
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = oprnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+         UNION ALL
+-- Look for unexpected operator classes.
+           SELECT nspname, 10, 'Error: In schema "' || nspname ||
+                  '", the operator class "' || nspname || '"."' || opcname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_opclass
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = opcnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+           ORDER BY 1, 2, 3
+        ) AS t;
+--
+    RETURN;
+  END;
+$_verify_all_schemas$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $emaj_verify_all$
@@ -2825,6 +3197,224 @@ $emaj_verify_all$
 $emaj_verify_all$;
 COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_drop_extension()
+RETURNS VOID LANGUAGE plpgsql AS
+$emaj_drop_extension$
+-- This function drops emaj from the current database, with both installation kinds,
+-- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
+-- - or with the alternate psql script.
+  DECLARE
+    v_nbObject              INTEGER;
+    v_roleToDrop            BOOLEAN;
+    v_dbList                TEXT;
+    v_granteeRoleList       TEXT;
+    v_granteeClassList      TEXT;
+    v_granteeFunctionList   TEXT;
+    v_tspList               TEXT;
+    r_object                RECORD;
+  BEGIN
+-- First perform some checks to verify that the conditions to execute the function are met.
+--
+-- Check emaj schema is present.
+    PERFORM 1 FROM pg_namespace WHERE nspname = 'emaj';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_drop_extension: The schema ''emaj'' doesn''t exist';
+    END IF;
+--
+-- For extensions, check the current role is superuser.
+    IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
+       PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+       IF NOT FOUND THEN
+         RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
+       END IF;
+    ELSE
+-- Otherwise, check the current role is the owner of the emaj schema, i.e. the role who installed emaj.
+      PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
+        WHERE nspowner = pg_roles.oid AND nspname = 'emaj' AND rolname = current_user;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be the owner of the emaj schema';
+      END IF;
+    END IF;
+--
+-- Check that no E-Maj schema contain any non E-Maj object.
+    v_nbObject = 0;
+    FOR r_object IN
+      SELECT msg FROM emaj._verify_all_schemas() msg
+        WHERE msg NOT LIKE 'Error: The E-Maj schema % does not exist anymore.'
+      LOOP
+-- An E-Maj schema contains objects that do not belong to the extension.
+      RAISE WARNING 'emaj_drop_extension - schema consistency checks: %',r_object.msg;
+      v_nbObject = v_nbObject + 1;
+    END LOOP;
+    IF v_nbObject > 0 THEN
+      RAISE EXCEPTION 'emaj_drop_extension: There are % unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall'
+                      ' function.', v_nbObject;
+    END IF;
+--
+-- OK, perform the removal actions.
+--
+-- Disable event triggers that would block the DROP EXTENSION command.
+    PERFORM emaj.emaj_disable_protection_by_event_triggers();
+--
+-- If the emaj_demo_cleanup function exists (created by the emaj_demo.sql script), execute it.
+    PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+      WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_demo_cleanup';
+    IF FOUND THEN
+      PERFORM emaj.emaj_demo_cleanup();
+    END IF;
+-- If the emaj_parallel_rollback_test_cleanup function exists (created by the emaj_prepare_parallel_rollback_test.sql script), execute it.
+    PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+      WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_parallel_rollback_test_cleanup';
+    IF FOUND THEN
+      PERFORM emaj.emaj_parallel_rollback_test_cleanup();
+    END IF;
+--
+-- Drop all created groups, bypassing potential errors, to remove all components not directly linked to the EXTENSION.
+    PERFORM emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
+--
+-- Drop the emaj extension, if it is an EXTENSION.
+    DROP EXTENSION IF EXISTS emaj CASCADE;
+--
+-- Drop the primary schema.
+    DROP SCHEMA IF EXISTS emaj CASCADE;
+--
+-- Drop the event trigger that protects the extension against unattempted drop and its function (they are external to the extension).
+    DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
+--
+-- Revoke also the grant given to emaj_adm on the dblink_connect_u function at install time.
+    FOR r_object IN
+      SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+        WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
+      LOOP
+        BEGIN
+          EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
+        EXCEPTION
+          WHEN insufficient_privilege THEN
+            RAISE WARNING 'emaj_drop_extension: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...';
+        END;
+    END LOOP;
+--
+-- Check if emaj roles can be dropped.
+    v_roleToDrop = true;
+--
+-- Are emaj_roles also used in other databases of the cluster ?
+    v_dbList = NULL;
+    SELECT string_agg(datname,', ') INTO v_dbList FROM (
+      SELECT DISTINCT datname FROM pg_catalog.pg_shdepend shd, pg_catalog.pg_database db, pg_catalog.pg_roles r
+        WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_viewer' AND datname <> current_database()
+      ) AS t;
+    IF v_dbList IS NOT NULL THEN
+      RAISE WARNING 'emaj_drop_extension: emaj_viewer role is also referenced in some other databases (%)',v_dbList;
+      v_roleToDrop = false;
+    END IF;
+--
+    v_dbList = NULL;
+    SELECT string_agg(datname,', ') INTO v_dbList FROM (
+      SELECT DISTINCT datname FROM pg_catalog.pg_shdepend shd, pg_catalog.pg_database db, pg_catalog.pg_roles r
+        WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_adm' AND datname <> current_database()
+      ) AS t;
+    IF v_dbList IS NOT NULL THEN
+      RAISE WARNING 'emaj_drop_extension: emaj_adm role is also referenced in some other databases (%)',v_dbList;
+      v_roleToDrop = false;
+    END IF;
+--
+-- Are emaj roles granted to other roles ?
+    v_granteeRoleList = NULL;
+    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList
+      FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
+      WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_viewer';
+    IF v_granteeRoleList IS NOT NULL THEN
+      RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_viewer role.',
+                    v_granteeRoleList;
+      v_roleToDrop = false;
+    END IF;
+--
+    v_granteeRoleList = NULL;
+    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList
+      FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
+      WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_adm';
+    IF v_granteeRoleList IS NOT NULL THEN
+      RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_adm role.',
+            v_granteeRoleList;
+      v_roleToDrop = false;
+    END IF;
+--
+-- Are emaj roles granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
+    v_granteeClassList = NULL;
+    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+      WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_viewer=%';
+    IF v_granteeClassList IS NOT NULL THEN
+      IF length(v_granteeClassList) > 200 THEN
+        v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_drop_extension: emaj_viewer role has some remaining grants on tables, views or sequences (%).',
+                    v_granteeClassList;
+      v_roleToDrop = false;
+    END IF;
+--
+    v_granteeClassList = NULL;
+    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+      WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_adm=%';
+    IF v_granteeClassList IS NOT NULL THEN
+      IF length(v_granteeClassList) > 200 THEN
+        v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_drop_extension: emaj_adm role has some remaining grants on tables, views or sequences (%).',
+                    v_granteeClassList;
+      v_roleToDrop = false;
+    END IF;
+--
+-- Are emaj roles granted to functions (other than just dropped emaj ones) ?
+    v_granteeFunctionList = NULL;
+    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
+      WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_viewer=%';
+    IF v_granteeFunctionList IS NOT NULL THEN
+      IF length(v_granteeFunctionList) > 200 THEN
+        v_granteeFunctionList = substr(v_granteeFunctionList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_drop_extension: emaj_viewer role has some remaining grants on functions (%).',
+                    v_granteeFunctionList;
+      v_roleToDrop = false;
+    END IF;
+--
+    v_granteeFunctionList = NULL;
+    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
+      WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_adm=%';
+    IF v_granteeFunctionList IS NOT NULL THEN
+      IF length(v_granteeFunctionList) > 200 THEN
+        v_granteeClassList = substr(v_granteeFunctionList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_drop_extension: emaj_adm role has some remaining grants on functions (%).',
+                    v_granteeFunctionList;
+      v_roleToDrop = false;
+    END IF;
+--
+-- If emaj roles can be dropped, drop them.
+    IF v_roleToDrop THEN
+-- Revoke the remaining grants set on tablespaces
+      SELECT string_agg(spcname, ', ') INTO v_tspList
+        FROM pg_catalog.pg_tablespace
+        WHERE array_to_string (spcacl,';') LIKE '%emaj_viewer=%' OR array_to_string (spcacl,';') LIKE '%emaj_adm=%';
+      IF v_tspList IS NOT NULL THEN
+        EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_viewer, emaj_adm';
+      END IF;
+-- ... and drop both emaj_viewer and emaj_adm roles.
+      DROP ROLE emaj_viewer, emaj_adm;
+      RAISE WARNING 'emaj_drop_extension: emaj_adm and emaj_viewer roles have been dropped.';
+    ELSE
+      RAISE WARNING 'emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.';
+    END IF;
+--
+    RETURN;
+  END;
+$emaj_drop_extension$;
+COMMENT ON FUNCTION emaj.emaj_drop_extension() IS
+$$Uninstalls the E-Maj components from the current database.$$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
