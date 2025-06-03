@@ -502,9 +502,9 @@ rollback;
 begin;
   alter table myschema1.mytbl2b drop column col24, add column col24 BOOLEAN GENERATED ALWAYS AS (col21 > 3) STORED;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                                            msg                                                                            
------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In group "myGroup1", the "GENERATED AS expression" columns list of the table "myschema1"."mytbl2b" has changed (col22,col23 => col22,col23,col24).
+                                                                               msg                                                                                
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the "GENERATED AS expression" columns list of the table "myschema1"."mytbl2b" has changed (col22,col23 => col22,col23,col24).
 (1 row)
 
 rollback;
@@ -555,10 +555,10 @@ begin;
     where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
 -- check
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                                                                                           msg                                                                                                                            
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In the rollbackable group "myGroup1", the trigger "dummy1" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- Error: In the rollbackable group "myGroup1", the trigger "dummy2" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+                                                                                                                      msg                                                                                                                       
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the trigger "dummy1" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ Error: In tables group "myGroup1", the trigger "dummy2" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
 (2 rows)
 
 -- and fix
@@ -584,14 +584,14 @@ begin;
   savepoint sp1;
 -- setting a mark or rollbacking fails
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
-ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (6): In tables group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
 SQL statement "SELECT 0
       FROM emaj._verify_groups(array[p_groupName], TRUE)"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text,text) line 18 at PERFORM
   rollback to savepoint sp1;
     select * from emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
-ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (6): In tables group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"

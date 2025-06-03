@@ -1289,7 +1289,7 @@ $_verify_groups$
 -- Check that all application relations referenced in the emaj_relation table still exist.
     FOR r_object IN
       SELECT t.rel_schema, t.rel_tblseq, r.rel_group,
-             'In group "' || r.rel_group || '", the ' ||
+             'In tables group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
                t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
         FROM
@@ -1308,13 +1308,13 @@ $_verify_groups$
           AND upper_inf(r.rel_time_range)
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (1): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (1): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- Check that the log table for all tables referenced in the emaj_relation table still exist.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In group "' || rel_group || '", the log table "' ||
+             'In tables group "' || rel_group || '", the log table "' ||
                rel_log_schema || '"."' || rel_log_table || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groups)
@@ -1328,15 +1328,15 @@ $_verify_groups$
                 )
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (2): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (2): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- Check that the log function for each table referenced in the emaj_relation table still exists.
     FOR r_object IN
                                                   -- the schema and table names are rebuilt from the returned function name
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function || '" is not found.'
-               AS msg
+             'In tables group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function ||
+             '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groups)
           AND rel_kind = 'r' AND upper_inf(rel_time_range)
@@ -1349,14 +1349,14 @@ $_verify_groups$
                 )
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (3): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (3): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- Check that log and truncate triggers for all tables referenced in the emaj_relation table still exist.
 --   Start with the log trigger
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+             'In tables group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groups)
@@ -1373,13 +1373,13 @@ $_verify_groups$
                 )
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (4): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (4): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 --   Then the truncate trigger.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+             'In tables group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
              rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groups)
@@ -1396,7 +1396,7 @@ $_verify_groups$
                 )
       ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (5): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (5): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- Check that all log tables have a structure consistent with the application tables they reference
@@ -1427,7 +1427,7 @@ $_verify_groups$
               AND rel_kind = 'r'
               AND upper_inf(rel_time_range))
       SELECT DISTINCT rel_schema, rel_tblseq, rel_group,
-             'In group "' || rel_group || '", the structure of the application table "' ||
+             'In tables group "' || rel_group || '", the structure of the application table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
              rel_log_schema || '"."' || rel_log_table || '").' AS msg
         FROM
@@ -1450,13 +1450,13 @@ $_verify_groups$
           ) AS t
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- Check that all tables have their primary key if they belong to a rollbackable group.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In rollbackable group "' || rel_group || '", the table "' ||
+             'In the rollbackable tables group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" has no primary key anymore.' AS msg
         FROM emaj.emaj_relation
              JOIN emaj.emaj_group ON (group_name = rel_group)
@@ -1475,14 +1475,14 @@ $_verify_groups$
                 )
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- For rollbackable groups, check that no table has been altered as UNLOGGED or dropped and recreated as TEMP table after the tables
 -- groups creation.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In rollbackable group "' || rel_group || '", the table "' ||
+             'In the rollbackable tables group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
         FROM emaj.emaj_relation
              JOIN emaj.emaj_group ON (group_name = rel_group)
@@ -1495,13 +1495,13 @@ $_verify_groups$
           AND relpersistence <> 'p'
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- Check that the primary key structure of all tables belonging to rollbackable groups is unchanged.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In rollbackable group "' || rel_group || '", the primary key of the table "' ||
+             'In the rollbackable tables group "' || rel_group || '", the primary key of the table "' ||
              rel_schema || '"."' || rel_tblseq || '" has changed (' ||
              registered_pk_columns || ' => ' || current_pk_columns || ').' AS msg
         FROM
@@ -1527,14 +1527,14 @@ $_verify_groups$
         WHERE registered_pk_columns <> current_pk_columns
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- Check that the "GENERATED AS expression" columns list of all tables have not changed.
 -- (The expression of virtual generated columns be changed, without generating any trouble)
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
+             'In tables group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
              rel_schema || '"."' || rel_tblseq || '" has changed (' ||
              registered_gen_columns || ' => ' || current_gen_columns || ').' AS msg
         FROM
@@ -1556,13 +1556,40 @@ $_verify_groups$
         WHERE registered_gen_columns <> current_gen_columns
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check the array of triggers to ignore at rollback time only contains existing triggers.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'Error: In group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
+          || rel_schema || '"."' || rel_tblseq || '" is missing. '
+          || 'Use the emaj_modify_table() function to adjust the list of application triggers that should not be'
+          || ' automatically disabled at rollback time.' AS msg
+        FROM
+          (SELECT rel_group, rel_schema, rel_tblseq, unnest(rel_ignored_triggers) AS trg_name
+             FROM emaj.emaj_relation
+             WHERE upper_inf(rel_time_range)
+               AND rel_ignored_triggers IS NOT NULL
+          ) AS t
+        WHERE NOT EXISTS
+                 (SELECT NULL
+                    FROM pg_catalog.pg_trigger
+                         JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                         JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                    WHERE nspname = rel_schema
+                      AND relname = rel_tblseq
+                      AND tgname = trg_name
+                 )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (11): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- Check that all log tables have the 6 required technical columns. It only returns one row per faulting table.
     FOR r_object IN
       SELECT DISTINCT rel_schema, rel_tblseq, rel_group,
-             'In group "' || rel_group || '", the log table "' ||
+             'In tables group "' || rel_group || '", the log table "' ||
              rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
              string_agg(attname,', ') || ').' AS msg
         FROM
@@ -1595,7 +1622,7 @@ $_verify_groups$
         GROUP BY rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table
         ORDER BY 1,2,3
     LOOP
-      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (11): % %',r_object.msg,v_hint; END IF;
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (12): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 --
@@ -2767,7 +2794,7 @@ $_verify_all_groups$
 -- Check that the "GENERATED AS expression" columns list of all tables have not changed.
 -- (The expression of virtual generated columns be changed, without generating any trouble)
     RETURN QUERY
-      SELECT 'Error: In group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
+      SELECT 'Error: In tables group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
              rel_schema || '"."' || rel_tblseq || '" has changed (' ||
              registered_gen_columns || ' => ' || current_gen_columns || ').' AS msg
         FROM
@@ -2789,7 +2816,7 @@ $_verify_all_groups$
         ORDER BY rel_schema, rel_tblseq, 1;
 -- Check the array of triggers to ignore at rollback time only contains existing triggers.
     RETURN QUERY
-      SELECT 'Error: In the rollbackable group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
+      SELECT 'Error: In tables group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
           || rel_schema || '"."' || rel_tblseq || '" is missing. '
           || 'Use the emaj_modify_table() function to adjust the list of application triggers that should not be'
           || ' automatically disabled at rollback time.'

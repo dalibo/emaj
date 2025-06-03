@@ -6,6 +6,8 @@ E-Maj - Change log
   * E-Maj is compatible with PostgreSQL V18.
   * Add checks on the stability of "GENERATED ALWAYS AS expression" columns
     in application tables.
+  * Add a check on the existence of application triggers registered as "to be
+    ignored at rollback time".
   * Minor code changes.
 
 ###Bug fixes:###

@@ -20,7 +20,7 @@ Ces **contrôles d'intégrité du groupe de tables** vérifient que :
 * pour les groupes de tables "rollbackables", aucune table n'a été transformée en table *UNLOGGED*,
 * pour les groupes de tables "rollbackables", les tables applicatives ont toujours leur clé primaire et que leur structure n’a pas changé.
 
-En utilisant la fonction :ref:`emaj_verify_all() <emaj_verify_all>`, l'administration peut effectuer à la demande ces mêmes contrôles sur l'ensemble des groupes de tables.
+En utilisant la fonction :ref:`emaj_verify_all() <emaj_verify_all>`, l'administrateur peut effectuer à la demande ces mêmes contrôles sur l'ensemble des groupes de tables.
 
 .. _event_triggers:
 

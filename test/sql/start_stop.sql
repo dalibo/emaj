@@ -107,6 +107,12 @@ begin;
   alter table myschema1.mytbl2b drop column col24, add column col24 BOOLEAN GENERATED ALWAYS AS (col21 > 3) STORED;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
+-- detection of a bad trigger in a "triggers to ignore at rollback time" array
+begin;
+  update emaj.emaj_relation set rel_ignored_triggers = '{"dummy1","dummy2"}'
+    where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
 -- detection of a log table missing a technical column
 begin;
   alter table emaj_myschema1.mytbl1_log drop column emaj_verb;
