@@ -57,6 +57,7 @@ Bienvenue dans la documentation E-Maj !
    parameters
    logTables
    reliability
+   generatedColumns
    traces
    rollbackDetails
    impactsAdmin
