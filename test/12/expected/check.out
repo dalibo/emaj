@@ -233,7 +233,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_current_log_table                |     4
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |    10
- emaj_get_version                          |    21
+ emaj_get_version                          |    20
  emaj_import_groups_configuration          |     4
  emaj_import_groups_configuration          |    16
  emaj_import_parameters_configuration      |     4
@@ -283,7 +283,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1092
+ 1091
 (1 row)
 
 -----------------------------

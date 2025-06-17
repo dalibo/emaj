@@ -69,6 +69,7 @@ If the file path is not supplied, the function directly returns the JSON structu
 
    {
      "_comment": "E-Maj parameters, generated from the database <db> with E-Maj version <version> at <date_heure>",
+     "_help": "Known parameter keys: <known keys list>",
      "parameters": [
        {
           "key": "...",

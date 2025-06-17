@@ -2894,7 +2894,7 @@ select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
 15 /tmp/emaj_18/misc/orig_param_config
 \! grep -v ', at ' $EMAJTESTTMPDIR/orig_param_config
 {
-  "_comment": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), fixed_table_rollback_duration (default = 00:00:00.001) and fixed_dblink_rollback_duration (default = 00:00:00.004).",
+  "_help": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), fixed_table_rollback_duration (default = 00:00:00.001) and fixed_dblink_rollback_duration (default = 00:00:00.004).",
   "parameters": [
     {
       "key": "dblink_user_password",

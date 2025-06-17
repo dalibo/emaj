@@ -68,6 +68,7 @@ Si le chemin du fichier n’est pas renseigné, la fonction retourne directement
 
    {
      "_comment": "E-Maj parameters, generated from the database <db> with E-Maj version <version> at <date_heure>",
+     "_help": "Known parameter keys: <liste des clés connues>",
      "parameters": [
        {
           "key": "...",
