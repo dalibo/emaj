@@ -306,6 +306,7 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to constraint emaj_relation_rel_log_schema_fkey on table emaj_relation
 NOTICE:  drop cascades to 9 other objects
 DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
 drop cascades to function _drop_seq(emaj_relation,bigint)

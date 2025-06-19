@@ -50,7 +50,7 @@ select emaj.emaj_drop_group('emptyGroup');
 
 -- emaj tables
 select * from emaj.emaj_group;
-select sch_name from emaj.emaj_schema;
+select * from emaj.emaj_schema;
 select * from emaj.emaj_relation;
 select * from emaj.emaj_mark;
 select * from emaj.emaj_sequence;

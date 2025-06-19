@@ -1390,8 +1390,8 @@ begin;
   create schema emaj_myschema1;
   select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop it manually.
-CONTEXT:  PL/pgSQL function emaj._create_log_schemas(text) line 25 at RAISE
-SQL statement "SELECT emaj._create_log_schemas('IMPORT_GROUPS')"
+CONTEXT:  PL/pgSQL function emaj._create_log_schemas(text,bigint) line 25 at RAISE
+SQL statement "SELECT emaj._create_log_schemas('IMPORT_GROUPS', p_timeId)"
 PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 14 at PERFORM
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 82 at PERFORM
@@ -1628,12 +1628,12 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  emaj_phil's schema"3
 (3 rows)
 
-select sch_name from emaj.emaj_schema order by 1;
-       sch_name       
-----------------------
- emaj
- emaj_myschema4
- emaj_phil's schema"3
+select * from emaj.emaj_schema order by 1;
+       sch_name       | sch_time_id 
+----------------------+-------------
+ emaj                 |            
+ emaj_myschema4       |        1023
+ emaj_phil's schema"3 |        1019
 (3 rows)
 
 select * from emaj.emaj_rel_hist order by 1,2,3;

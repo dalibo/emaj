@@ -63,6 +63,7 @@ select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
 -- emaj tables and sequences
 
 -- technical tables
+select * from emaj.emaj_schema order by sch_name;
 select rel_schema, rel_tblseq, rel_time_range, rel_gen_expr_cols from emaj.emaj_relation order by 1,2,3;
 
 -- check the environment integrity

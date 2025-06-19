@@ -88,6 +88,51 @@ SELECT emaj._disable_event_triggers();
 --
 
 -- create a temporary table with the old structure and copy the source content
+CREATE TEMP TABLE emaj_schema_old (LIKE emaj.emaj_schema);
+
+INSERT INTO emaj_schema_old SELECT * FROM emaj.emaj_schema;
+
+-- drop the old table
+DROP TABLE emaj.emaj_schema CASCADE;
+
+-- create the new table, with its comment and constraints (except foreign key)...
+CREATE TABLE emaj.emaj_schema (
+  sch_name                     TEXT        NOT NULL,       -- schema name
+  sch_time_id                  BIGINT,                     -- insertion time (NULL for emaj)
+  PRIMARY KEY (sch_name),
+  FOREIGN KEY (sch_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
+  );
+COMMENT ON TABLE emaj.emaj_schema IS
+$$Contains the E-Maj related schemas (emaj and all schemas hosting log tables, sequences and functions).$$;
+
+-- Populate the new table.
+-- The new rel_gen_expr_cols column content is built using the postgres catalog content.
+-- We assume that the "GENERATED ALWAYS AS expression" columns list was the same in the past that today.
+--   So populate the old emaj_relation rows (i.e. those for which upper_inf(rel_time_range) is FALSE) with the current
+--   table structure view.
+
+INSERT INTO emaj.emaj_schema (
+              sch_name, sch_time_id
+              )
+  SELECT      s.sch_name, time_id
+    FROM emaj_schema_old s
+         LEFT OUTER JOIN emaj.emaj_time_stamp ON (time_tx_timestamp = s.sch_datetime);
+
+-- Create indexes.
+--   there is no secondary indexes on this table
+
+-- recreate the foreign keys that point on this table
+ALTER TABLE emaj.emaj_relation ADD
+  FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema (sch_name);
+
+-- and finaly drop the temporary table
+DROP TABLE emaj_schema_old;
+
+--
+-- Process the emaj_relation table
+--
+
+-- create a temporary table with the old structure and copy the source content
 CREATE TEMP TABLE emaj_relation_old (LIKE emaj.emaj_relation);
 
 INSERT INTO emaj_relation_old SELECT * FROM emaj.emaj_relation;
@@ -186,6 +231,7 @@ DROP TABLE emaj_relation_old;
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
 SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_schema','');
 
 ------------------------------------
 --                                --
@@ -205,6 +251,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._create_log_schemas(P_FUNCTION TEXT);
 DROP FUNCTION IF EXISTS emaj._build_sql_tbl(P_FULLTABLENAME TEXT,OUT P_PKCOLS TEXT[],OUT P_RLBKCOLLIST TEXT,OUT P_GENCOLLIST TEXT,OUT P_GENVALLIST TEXT,OUT P_GENSETLIST TEXT,OUT P_GENPKCONDITIONS TEXT,OUT P_NBGENALWAYSIDENTCOL INT);
 
 ------------------------------------------------------------------
@@ -267,6 +314,341 @@ $_check_tables_for_rollbackable_group$
     RETURN p_tables;
   END;
 $_check_tables_for_rollbackable_group$;
+
+CREATE OR REPLACE FUNCTION emaj._create_log_schemas(p_function TEXT, p_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_create_log_schemas$
+-- The function creates all log schemas that will be needed to create new log tables.
+-- The function is called at tables groups configuration import.
+-- Input: calling function to record into the emaj_hist table and time_id
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
+--   the current database.
+  DECLARE
+    r_schema                 RECORD;
+  BEGIN
+    FOR r_schema IN
+        SELECT DISTINCT 'emaj_' || tmp_schema AS log_schema
+          FROM tmp_app_table
+          WHERE NOT EXISTS                                                                -- minus those already created
+                  (SELECT 0
+                     FROM emaj.emaj_schema
+                     WHERE sch_name = 'emaj_' || tmp_schema)
+          ORDER BY 1
+    LOOP
+-- Check that the schema doesn't already exist.
+      IF EXISTS
+           (SELECT 0
+              FROM pg_catalog.pg_namespace
+              WHERE nspname = r_schema.log_schema
+           ) THEN
+        RAISE EXCEPTION '_create_log_schemas: The schema "%" should not exist. Drop it manually.',r_schema.log_schema;
+      END IF;
+-- Create the schema and give the appropriate rights.
+      EXECUTE format('CREATE SCHEMA %I AUTHORIZATION emaj_adm',
+                     r_schema.log_schema);
+      EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                     r_schema.log_schema);
+-- And record the schema creation into the emaj_schema and the emaj_hist tables.
+      INSERT INTO emaj.emaj_schema (sch_name, sch_time_id)
+        VALUES (r_schema.log_schema, p_timeId);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES (p_function, 'LOG_SCHEMA CREATED', quote_ident(r_schema.log_schema));
+    END LOOP;
+--
+    RETURN;
+  END;
+$_create_log_schemas$;
+
+CREATE OR REPLACE FUNCTION emaj._assign_tables(p_schema TEXT, p_tables TEXT[], p_group TEXT, p_properties JSONB, p_mark TEXT,
+                                               p_multiTable BOOLEAN, p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_assign_tables$
+-- The function effectively assigns tables into a tables group.
+-- Inputs: schema, array of table names, group name, properties as JSON structure
+--         mark to set for lonnging groups, a boolean indicating whether several tables need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of tables effectively assigned to the tables group
+-- The JSONB p_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
+--   each properties being NULL by default
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
+--   the current database, needed to create log schemas.
+  DECLARE
+    v_function               TEXT;
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_priority               INT;
+    v_logDatTsp              TEXT;
+    v_logIdxTsp              TEXT;
+    v_ignoredTriggers        TEXT[];
+    v_ignoredTrgProfiles     TEXT[];
+    v_list                   TEXT;
+    v_array                  TEXT[];
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_logSchema              TEXT;
+    v_selectedIgnoredTrgs    TEXT[];
+    v_selectConditions       TEXT;
+    v_eventTriggers          TEXT[];
+    v_oneTable               TEXT;
+    v_nbAssignedTbl          INT = 0;
+  BEGIN
+    v_function = CASE WHEN p_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END;
+-- Insert the begin entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check supplied parameters.
+-- Check the group name and if ok, get some properties of the group.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE);
+    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+      FROM emaj.emaj_group
+      WHERE group_name = p_group;
+-- Check the supplied schema exists and is not an E-Maj schema.
+    IF NOT EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_namespace
+            WHERE nspname = p_schema
+         ) THEN
+      RAISE EXCEPTION '_assign_tables: The schema "%" does not exist.', p_schema;
+    END IF;
+    IF EXISTS
+         (SELECT 0
+            FROM emaj.emaj_schema
+            WHERE sch_name = p_schema
+         ) THEN
+      RAISE EXCEPTION '_assign_tables: The schema "%" is an E-Maj schema.', p_schema;
+    END IF;
+-- Check tables.
+    IF NOT p_arrayFromRegex THEN
+-- From the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array.
+      SELECT array_agg(DISTINCT table_name) INTO p_tables
+        FROM unnest(p_tables) AS table_name
+        WHERE table_name IS NOT NULL AND table_name <> '';
+-- Check that application tables exist.
+      WITH tables AS (
+        SELECT unnest(p_tables) AS table_name
+      )
+      SELECT string_agg(quote_ident(table_name), ', ') INTO v_list
+        FROM
+          (SELECT table_name
+             FROM tables
+             WHERE NOT EXISTS
+                     (SELECT 0
+                        FROM pg_catalog.pg_class
+                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        WHERE nspname = p_schema
+                          AND relname = table_name
+                          AND relkind IN ('r','p')
+                     )
+          ) AS t;
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) do not exist.', quote_ident(p_schema), v_list;
+      END IF;
+    END IF;
+-- Check or discard partitioned application tables (only elementary partitions can be managed by E-Maj).
+    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = ANY(p_tables)
+        AND relkind = 'p';
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) are partitionned tables (only elementary partitions are supported'
+                        ' by E-Maj).', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_tables: Some partitionned tables (%) are not selected.', v_list;
+        -- remove these tables from the tables to process
+        SELECT array_agg(remaining_table) INTO p_tables
+          FROM
+            (  SELECT unnest(p_tables)
+             EXCEPT
+               SELECT unnest(v_array)
+            ) AS t(remaining_table);
+      END IF;
+    END IF;
+-- Check or discard TEMP tables.
+    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = ANY(p_tables)
+        AND relkind = 'r'
+        AND relpersistence = 't';
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) are TEMP tables.', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_tables: Some TEMP tables (%) are not selected.', v_list;
+        -- remove these tables from the tables to process
+        SELECT array_agg(remaining_table) INTO p_tables
+          FROM
+           (  SELECT unnest(p_tables)
+            EXCEPT
+              SELECT unnest(v_array)
+           ) AS t(remaining_table);
+      END IF;
+    END IF;
+-- If the group is ROLLBACKABLE, perform additional checks or filters (a PK, not UNLOGGED).
+    IF v_groupIsRollbackable THEN
+      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex, '_assign_tables');
+    END IF;
+-- Check or discard tables already assigned to a group.
+    SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = ANY(p_tables)
+        AND upper_inf(rel_time_range);
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) already belong to a group.', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_tables: Some tables already belonging to a group (%) are not selected.', v_list;
+        -- remove these tables from the tables to process
+        SELECT array_agg(remaining_table) INTO p_tables
+          FROM
+            (  SELECT unnest(p_tables)
+             EXCEPT
+               SELECT unnest(v_array)
+            ) AS t(remaining_table);
+      END IF;
+    END IF;
+-- Check and extract the tables JSON properties.
+    IF p_properties IS NOT NULL THEN
+      SELECT * INTO v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
+        FROM emaj._check_json_table_properties(p_properties);
+    END IF;
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(array[p_group], p_mark) INTO v_markName;
+-- OK,
+    IF p_tables IS NULL OR p_tables = '{}' THEN
+-- When no tables are finaly selected, just warn.
+      RAISE WARNING '_assign_tables: No table to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_groupIsLogging THEN
+--   Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--   vacuum operation.
+        PERFORM emaj._lock_groups(ARRAY[p_group], 'ROW EXCLUSIVE', FALSE);
+--   And set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+      END IF;
+-- Create new log schemas if needed.
+      v_logSchema = 'emaj_' || p_schema;
+      IF NOT EXISTS
+           (SELECT 0
+              FROM emaj.emaj_schema
+              WHERE sch_name = v_logSchema
+           ) THEN
+-- Check that the schema doesn't already exist.
+        IF EXISTS
+             (SELECT 0
+                FROM pg_catalog.pg_namespace
+                WHERE nspname = v_logSchema
+             ) THEN
+          RAISE EXCEPTION '_assign_tables: The schema "%" should not exist. Drop it manually.',v_logSchema;
+        END IF;
+-- Create the schema and give the appropriate rights.
+        EXECUTE format('CREATE SCHEMA %I AUTHORIZATION emaj_adm',
+                       v_logSchema);
+        EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                       v_logSchema);
+-- And record the schema creation into the emaj_schema and the emaj_hist tables.
+        INSERT INTO emaj.emaj_schema (sch_name, sch_time_id)
+          VALUES (v_logSchema, v_timeId);
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES (CASE WHEN p_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'LOG_SCHEMA CREATED', quote_ident(v_logSchema));
+      END IF;
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+      SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Effectively create the log components for each table.
+--   Build the SQL conditions to use in order to build the array of "triggers to ignore at rollback time" for each table.
+      IF v_ignoredTriggers IS NOT NULL OR v_ignoredTrgProfiles IS NOT NULL THEN
+--   Build the condition on trigger names using the ignored_triggers parameters.
+        IF v_ignoredTriggers IS NOT NULL THEN
+          v_selectConditions = 'tgname = ANY (' || quote_literal(v_ignoredTriggers) || ') OR ';
+        ELSE
+          v_selectConditions = '';
+        END IF;
+--   Build the regexp conditions on trigger names using the ignored_triggers_profile parameters.
+        IF v_ignoredTrgProfiles IS NOT NULL THEN
+          SELECT v_selectConditions || string_agg('tgname ~ ' || quote_literal(profile), ' OR ')
+            INTO v_selectConditions
+            FROM unnest(v_ignoredTrgProfiles) AS profile;
+        ELSE
+          v_selectConditions = v_selectConditions || 'FALSE';
+        END IF;
+      END IF;
+-- Process each table.
+      FOREACH v_oneTable IN ARRAY p_tables
+      LOOP
+-- Check that the triggers listed in ignored_triggers property exists for the table.
+        SELECT string_agg(quote_ident(trigger_name), ', ') INTO v_list
+          FROM
+            (  SELECT trigger_name
+                 FROM unnest(v_ignoredTriggers) AS trigger_name
+             EXCEPT
+               SELECT tgname
+                 FROM pg_catalog.pg_trigger
+                      JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
+                      JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+                 WHERE nspname = p_schema
+                   AND relname = v_oneTable
+                   AND tgconstraint = 0
+                   AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
+            ) AS t;
+        IF v_list IS NOT NULL THEN
+          RAISE EXCEPTION '_assign_tables: some triggers (%) have not been found in the table %.%.',
+                          v_list, quote_ident(p_schema), quote_ident(v_oneTable);
+        END IF;
+-- Build the array of "triggers to ignore at rollback time".
+        IF v_selectConditions IS NOT NULL THEN
+          EXECUTE format(
+            $$SELECT array_agg(tgname ORDER BY tgname)
+                FROM pg_catalog.pg_trigger
+                     JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
+                     JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+                WHERE nspname = %L
+                  AND relname = %L
+                  AND tgconstraint = 0
+                  AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
+                  AND (%s)
+            $$, p_schema, v_oneTable, v_selectConditions)
+            INTO v_selectedIgnoredTrgs;
+        END IF;
+-- Create the table.
+        PERFORM emaj._add_tbl(p_schema, v_oneTable, p_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
+                              v_groupIsLogging, v_timeId, v_function);
+        v_nbAssignedTbl = v_nbAssignedTbl + 1;
+      END LOOP;
+-- Enable previously disabled event triggers
+      PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- Adjust the group characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_table = (
+              SELECT count(*)
+                FROM emaj.emaj_relation
+                WHERE rel_group = group_name
+                  AND upper_inf(rel_time_range)
+                  AND rel_kind = 'r'
+                             )
+        WHERE group_name = p_group;
+-- If the group is logging, check foreign keys with tables outside the groups (otherwise the check will be done at the group start time).
+      IF v_groupIsLogging THEN
+        PERFORM emaj._check_fk_groups(array[p_group]);
+      END IF;
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbAssignedTbl || ' tables assigned to the group ' || p_group);
+--
+    RETURN v_nbAssignedTbl;
+  END;
+$_assign_tables$;
 
 CREATE OR REPLACE FUNCTION emaj._create_tbl(p_schema TEXT, p_tbl TEXT, p_groupName TEXT, p_priority INT, p_logDatTsp TEXT,
                                             p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT, p_groupIsLogging BOOLEAN)
@@ -2100,6 +2482,229 @@ $_import_groups_conf_check$
     RETURN;
   END;
 $_import_groups_conf_check$;
+
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_alter(p_groupNames TEXT[], p_mark TEXT, p_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_import_groups_conf_alter$
+-- This function effectively alters the tables groups to import.
+-- It uses the content of tmp_app_table and tmp_app_sequence temporary tables and calls the appropriate elementary functions
+-- It is called by the _import_groups_conf_exec() function.
+-- Input: group names array,
+--        the mark name to set on groups in logging state
+--        the timestamp id
+  DECLARE
+    v_eventTriggers          TEXT[];
+  BEGIN
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Create the needed log schemas.
+    PERFORM emaj._create_log_schemas('IMPORT_GROUPS', p_timeId);
+-- Remove the tables that do not belong to the groups anymore.
+    PERFORM emaj._remove_tbl(rel_schema, rel_tblseq, rel_group, group_is_logging, p_timeId, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_group, group_is_logging
+          FROM emaj.emaj_relation
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE rel_group = ANY (p_groupNames)
+            AND upper_inf(rel_time_range)
+            AND rel_kind = 'r'
+            AND NOT EXISTS
+                  (SELECT NULL
+                     FROM tmp_app_table
+                     WHERE tmp_schema = rel_schema
+                     AND tmp_tbl_name = rel_tblseq
+                  )
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Remove the sequences that do not belong to the groups anymore.
+    PERFORM emaj._remove_seq(rel_schema, rel_tblseq, rel_group, group_is_logging, p_timeId, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_group, group_is_logging
+          FROM emaj.emaj_relation
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE rel_group = ANY (p_groupNames)
+            AND upper_inf(rel_time_range)
+            AND rel_kind = 'S'
+            AND NOT EXISTS
+                  (SELECT NULL
+                     FROM tmp_app_sequence
+                     WHERE tmp_schema = rel_schema
+                       AND tmp_seq_name = rel_tblseq
+                  )
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Repair the tables that are damaged or out of sync E-Maj components.
+    PERFORM emaj._repair_tbl(rel_schema, rel_tblseq, rel_group, group_is_logging, p_timeId, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_group, group_is_logging
+          FROM                                   -- all damaged or out of sync tables
+            (SELECT DISTINCT ver_schema, ver_tblseq
+               FROM emaj._verify_groups(p_groupNames, FALSE)
+            ) AS t
+            JOIN emaj.emaj_relation ON (rel_schema = ver_schema AND rel_tblseq = ver_tblseq AND upper_inf(rel_time_range))
+            JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+            JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE rel_group = ANY (p_groupNames)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Change the priority level when requested
+-- (the later operations will be executed with the new priorities).
+    PERFORM emaj._change_priority_tbl(rel_schema, rel_tblseq, rel_priority, tmp_priority, p_timeId, rel_group, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_priority, tmp_priority, rel_group
+          FROM emaj.emaj_relation
+               JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE upper_inf(rel_time_range)
+            AND rel_kind = 'r'
+            AND rel_group = ANY (p_groupNames)
+            AND ( (rel_priority IS NULL AND tmp_priority IS NOT NULL) OR
+                  (rel_priority IS NOT NULL AND tmp_priority IS NULL) OR
+                  (rel_priority <> tmp_priority) )
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Reset the concerned groups in IDLE state, before changing tablespaces.
+    PERFORM emaj._reset_groups(array_agg(group_name ORDER BY group_name))
+      FROM emaj.emaj_group
+      WHERE group_name = ANY (p_groupNames)
+        AND NOT group_is_logging;
+-- Change the log data tablespaces.
+    PERFORM emaj._change_log_data_tsp_tbl(rel_schema, rel_tblseq, rel_log_schema, rel_log_table, rel_log_dat_tsp, tmp_log_dat_tsp,
+                                          p_timeId, rel_group, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_log_schema, rel_log_table, rel_log_dat_tsp, tmp_log_dat_tsp, rel_group
+          FROM emaj.emaj_relation
+               JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE upper_inf(rel_time_range)
+            AND rel_group = ANY (p_groupNames)
+            AND rel_kind = 'r'
+            AND coalesce(rel_log_dat_tsp,'') <> coalesce(tmp_log_dat_tsp,'')
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Change the log index tablespaces.
+    PERFORM emaj._change_log_index_tsp_tbl(rel_schema, rel_tblseq, rel_log_schema, rel_log_index, rel_log_idx_tsp, tmp_log_idx_tsp,
+                                          p_timeId, rel_group, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_log_schema, rel_log_index, rel_log_idx_tsp, tmp_log_idx_tsp, rel_group
+          FROM emaj.emaj_relation
+               JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE upper_inf(rel_time_range)
+            AND rel_group = ANY (p_groupNames)
+            AND rel_kind = 'r'
+            AND coalesce(rel_log_idx_tsp,'') <> coalesce(tmp_log_idx_tsp,'')
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Change the arrays of triggers to ignore at rollback time for tables.
+    PERFORM emaj._change_ignored_triggers_tbl(rel_schema, rel_tblseq, rel_ignored_triggers, tmp_ignored_triggers,
+                                              p_timeId, rel_group, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_ignored_triggers, tmp_ignored_triggers, rel_group
+          FROM emaj.emaj_relation
+               JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+          WHERE upper_inf(rel_time_range)
+            AND rel_kind = 'r'
+            AND rel_group = ANY (p_groupNames)
+            AND ( (rel_ignored_triggers IS NULL AND tmp_ignored_triggers IS NOT NULL) OR
+                  (rel_ignored_triggers IS NOT NULL AND tmp_ignored_triggers IS NULL) OR
+                  (rel_ignored_triggers <> tmp_ignored_triggers) )
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Change the group ownership of tables.
+    PERFORM emaj._move_tbl(rel_schema, rel_tblseq, rel_group, old_group_is_logging, tmp_group, new_group_is_logging,
+                           p_timeId, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_group, old_group.group_is_logging AS old_group_is_logging,
+                                       tmp_group, new_group.group_is_logging AS new_group_is_logging
+          FROM emaj.emaj_relation
+              JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+              JOIN emaj.emaj_group old_group ON (old_group.group_name = rel_group)
+              JOIN emaj.emaj_group new_group ON (new_group.group_name = tmp_group)
+          WHERE upper_inf(rel_time_range)
+            AND rel_kind = 'r'
+            AND rel_group = ANY (p_groupNames)
+            AND rel_group <> tmp_group
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Change the group ownership of sequences.
+    PERFORM emaj._move_seq(rel_schema, rel_tblseq, rel_group, old_group_is_logging, tmp_group, new_group_is_logging,
+                           p_timeId, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_group, old_group.group_is_logging AS old_group_is_logging,
+                                       tmp_group, new_group.group_is_logging AS new_group_is_logging
+          FROM emaj.emaj_relation
+              JOIN tmp_app_sequence ON (tmp_schema = rel_schema AND tmp_seq_name = rel_tblseq)
+              JOIN emaj.emaj_group old_group ON (old_group.group_name = rel_group)
+              JOIN emaj.emaj_group new_group ON (new_group.group_name = tmp_group)
+          WHERE upper_inf(rel_time_range)
+            AND rel_kind = 'S'
+            AND rel_group = ANY (p_groupNames)
+            AND rel_group <> tmp_group
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t;
+-- Add tables to the groups.
+    PERFORM emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, p_timeId, 'IMPORT_GROUPS')
+      FROM (
+        SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
+               tmp_ignored_triggers, group_is_logging
+          FROM tmp_app_table
+               JOIN emaj.emaj_group ON (group_name = tmp_group)
+          WHERE NOT EXISTS
+                  (SELECT NULL
+                     FROM emaj.emaj_relation
+                     WHERE rel_schema = tmp_schema
+                       AND rel_tblseq = tmp_tbl_name
+                       AND upper_inf(rel_time_range)
+                       AND rel_kind = 'r'
+                       AND rel_group = ANY (p_groupNames)
+                  )
+          ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
+           ) AS t;
+-- Add sequences to the groups.
+    PERFORM emaj._add_seq(tmp_schema, tmp_seq_name, tmp_group, group_is_logging, p_timeId, 'IMPORT_GROUPS')
+      FROM (
+        SELECT tmp_schema, tmp_seq_name, tmp_group, group_is_logging
+          FROM tmp_app_sequence
+               JOIN emaj.emaj_group ON (group_name = tmp_group)
+          WHERE NOT EXISTS
+                  (SELECT NULL
+                     FROM emaj.emaj_relation
+                     WHERE rel_schema = tmp_schema
+                       AND rel_tblseq = tmp_seq_name
+                       AND upper_inf(rel_time_range)
+                       AND rel_kind = 'S'
+                       AND rel_group = ANY (p_groupNames)
+                  )
+          ORDER BY tmp_schema, tmp_seq_name
+           ) AS t;
+-- Drop the E-Maj log schemas that are now useless (i.e. not used by any created group).
+    PERFORM emaj._drop_log_schemas('IMPORT_GROUPS', FALSE);
+-- Re-enable previously disabled event triggers.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- Update some attributes in the emaj_group table.
+    UPDATE emaj.emaj_group
+      SET group_last_alter_time_id = p_timeId,
+          group_nb_table =
+            (SELECT count(*)
+               FROM emaj.emaj_relation
+               WHERE rel_group = group_name
+                 AND upper_inf(rel_time_range)
+                 AND rel_kind = 'r'
+             ),
+          group_nb_sequence =
+            (SELECT count(*)
+               FROM emaj.emaj_relation
+               WHERE rel_group = group_name
+                 AND upper_inf(rel_time_range)
+                 AND rel_kind = 'S'
+            )
+      WHERE group_name = ANY (p_groupNames);
+--
+    RETURN;
+  END;
+$_import_groups_conf_alter$;
 
 CREATE OR REPLACE FUNCTION emaj._stop_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql

@@ -818,7 +818,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 10000 order by hist_id;
 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
-select sch_name from emaj.emaj_schema order by 1;
+select * from emaj.emaj_schema order by 1;
 select * from emaj.emaj_rel_hist order by 1,2,3;
 
 select rlbk_id, rlbk_status, rlbk_comment from emaj.emaj_rlbk where rlbk_comment is not null order by 1;

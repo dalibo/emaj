@@ -183,10 +183,10 @@ select * from emaj.emaj_group;
 ------------+-----------------------+------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
 (0 rows)
 
-select sch_name from emaj.emaj_schema;
- sch_name 
-----------
- emaj
+select * from emaj.emaj_schema;
+ sch_name | sch_time_id 
+----------+-------------
+ emaj     |            
 (1 row)
 
 select * from emaj.emaj_relation;

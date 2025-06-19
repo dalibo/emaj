@@ -3746,10 +3746,10 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  emaj
 (1 row)
 
-select sch_name from emaj.emaj_schema order by 1;
- sch_name 
-----------
- emaj
+select * from emaj.emaj_schema order by 1;
+ sch_name | sch_time_id 
+----------+-------------
+ emaj     |            
 (1 row)
 
 select * from emaj.emaj_rel_hist order by 1,2,3;

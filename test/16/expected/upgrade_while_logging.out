@@ -57,6 +57,7 @@ select * from emaj.emaj_verify_all();
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to constraint emaj_relation_rel_log_schema_fkey on table emaj_relation
 NOTICE:  drop cascades to 9 other objects
 DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
 drop cascades to function _drop_seq(emaj_relation,bigint)
@@ -681,13 +682,15 @@ Tablespace: "tspemaj"
  rlbk_remaining              | interval                 |           |          | 
  rlbk_completion_pct         | smallint                 |           |          | 
 
-                                 Table "emaj.emaj_schema"
-    Column    |           Type           | Collation | Nullable |         Default         
---------------+--------------------------+-----------+----------+-------------------------
- sch_name     | text                     |           | not null | 
- sch_datetime | timestamp with time zone |           | not null | transaction_timestamp()
+               Table "emaj.emaj_schema"
+   Column    |  Type  | Collation | Nullable | Default 
+-------------+--------+-----------+----------+---------
+ sch_name    | text   |           | not null | 
+ sch_time_id | bigint |           |          | 
 Indexes:
     "emaj_schema_pkey" PRIMARY KEY, btree (sch_name), tablespace "tspemaj"
+Foreign-key constraints:
+    "emaj_schema_sch_time_id_fkey" FOREIGN KEY (sch_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Referenced by:
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
 Tablespace: "tspemaj"
@@ -807,6 +810,7 @@ Referenced by:
     TABLE "emaj.emaj_relation_change" CONSTRAINT "emaj_relation_change_rlchg_time_id_fkey" FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_rlbk" CONSTRAINT "emaj_rlbk_rlbk_mark_time_id_fkey" FOREIGN KEY (rlbk_mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_rlbk" CONSTRAINT "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_schema" CONSTRAINT "emaj_schema_sch_time_id_fkey" FOREIGN KEY (sch_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_begin_time_id_fkey" FOREIGN KEY (sqhl_begin_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_end_time_id_fkey" FOREIGN KEY (sqhl_end_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_sequence" CONSTRAINT "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
@@ -1346,6 +1350,16 @@ select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
 -----------------------------
 -- emaj tables and sequences
 -- technical tables
+select * from emaj.emaj_schema order by sch_name;
+       sch_name       | sch_time_id 
+----------------------+-------------
+ emaj                 |            
+ emaj_myschema1       |           5
+ emaj_myschema2       |          10
+ emaj_myschema6       |          14
+ emaj_phil's schema"3 |          12
+(5 rows)
+
 select rel_schema, rel_tblseq, rel_time_range, rel_gen_expr_cols from emaj.emaj_relation order by 1,2,3;
    rel_schema    |                       rel_tblseq                        | rel_time_range | rel_gen_expr_cols 
 -----------------+---------------------------------------------------------+----------------+-------------------

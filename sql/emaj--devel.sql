@@ -223,12 +223,12 @@ $$Contains E-Maj groups history.$$;
 -- Table containing the emaj and log schemas.
 CREATE TABLE emaj.emaj_schema (
   sch_name                     TEXT        NOT NULL,       -- schema name
-  sch_datetime                 TIMESTAMPTZ NOT NULL DEFAULT transaction_timestamp(),
-                                                           -- insertion time
-  PRIMARY KEY (sch_name)
+  sch_time_id                  BIGINT,                     -- insertion time (NULL for emaj)
+  PRIMARY KEY (sch_name),
+  FOREIGN KEY (sch_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
   );
 COMMENT ON TABLE emaj.emaj_schema IS
-$$Contains the schemas hosting log tables, sequences and functions.$$;
+$$Contains the E-Maj related schemas (emaj and all schemas hosting log tables, sequences and functions).$$;
 
 -- Table containing the relations (tables and sequences) of created tables groups.
 CREATE TABLE emaj.emaj_relation (
@@ -1990,13 +1990,13 @@ $_truncate_trigger_fnct$
   END;
 $_truncate_trigger_fnct$;
 
-CREATE OR REPLACE FUNCTION emaj._create_log_schemas(p_function TEXT)
+CREATE OR REPLACE FUNCTION emaj._create_log_schemas(p_function TEXT, p_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_create_log_schemas$
 -- The function creates all log schemas that will be needed to create new log tables.
 -- The function is called at tables groups configuration import.
--- Input: calling function to record into the emaj_hist table
+-- Input: calling function to record into the emaj_hist table and time_id
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
 --   the current database.
   DECLARE
@@ -2025,8 +2025,8 @@ $_create_log_schemas$
       EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
                      r_schema.log_schema);
 -- And record the schema creation into the emaj_schema and the emaj_hist tables.
-      INSERT INTO emaj.emaj_schema (sch_name)
-        VALUES (r_schema.log_schema);
+      INSERT INTO emaj.emaj_schema (sch_name, sch_time_id)
+        VALUES (r_schema.log_schema, p_timeId);
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
         VALUES (p_function, 'LOG_SCHEMA CREATED', quote_ident(r_schema.log_schema));
     END LOOP;
@@ -2363,8 +2363,8 @@ $_assign_tables$
         EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
                        v_logSchema);
 -- And record the schema creation into the emaj_schema and the emaj_hist tables.
-        INSERT INTO emaj.emaj_schema (sch_name)
-          VALUES (v_logSchema);
+        INSERT INTO emaj.emaj_schema (sch_name, sch_time_id)
+          VALUES (v_logSchema, v_timeId);
         INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
           VALUES (CASE WHEN p_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'LOG_SCHEMA CREATED', quote_ident(v_logSchema));
       END IF;
@@ -6552,7 +6552,7 @@ $_import_groups_conf_alter$
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- Create the needed log schemas.
-    PERFORM emaj._create_log_schemas('IMPORT_GROUPS');
+    PERFORM emaj._create_log_schemas('IMPORT_GROUPS', p_timeId);
 -- Remove the tables that do not belong to the groups anymore.
     PERFORM emaj._remove_tbl(rel_schema, rel_tblseq, rel_group, group_is_logging, p_timeId, 'IMPORT_GROUPS')
       FROM (
