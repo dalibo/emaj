@@ -213,7 +213,9 @@ Voici un exemple d’affichage du déroulement d’un test (ici le scénario ave
 	test start_stop               ... ok
 	test mark                     ... ok
 	test rollback                 ... ok
+	test stat                     ... ok
 	test misc                     ... ok
+	test verify                   ... ok
 	test alter                    ... ok
 	test alter_logging            ... ok
 	test viewer                   ... ok
@@ -225,12 +227,12 @@ Voici un exemple d’affichage du déroulement d’un test (ici le scénario ave
 	test cleanup                  ... ok
 	
 	=======================
-	1 of 15 tests failed.
+	1 of 18 tests failed.
 	=======================
 	
 	The differences that caused some tests to fail can be viewed in the
-	file "/home/postgres/proj/emaj/test/11/regression.diffs".  A copy of the test summary that you see
-	above is saved in the file "/home/postgres/proj/emaj/test/11/regression.out".
+	file "/home/postgres/proj/emaj/test/18/regression.diffs".  A copy of the test summary that you see
+	above is saved in the file "/home/postgres/proj/emaj/test/18/regression.out".
 
 Dans le cas où au moins un script ressort en différence, il convient d’analyser scrupuleusement le contenu du fichier *test/<version_postgres>/regression.diffs* pour vérifier si les écarts sont bien liés aux modifications apportées dans le code source de l’extension ou dans les scripts de test.
 

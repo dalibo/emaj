@@ -105,7 +105,7 @@ select funcname, calls from pg_stat_user_functions
  _change_log_data_tsp_tbl                  |    15
  _change_log_index_tsp_tbl                 |     9
  _change_priority_tbl                      |    16
- _check_fk_groups                          |    94
+ _check_fk_groups                          |    93
  _check_group_names                        |  1161
  _check_json_groups_conf                   |    43
  _check_json_param_conf                    |    15
@@ -128,13 +128,13 @@ select funcname, calls from pg_stat_user_functions
  _delete_intermediate_mark_group           |    23
  _delete_log_tbl                           |    67
  _detailed_log_stat_groups                 |    27
- _disable_event_triggers                   |   320
+ _disable_event_triggers                   |   318
  _drop_group                               |    34
- _drop_log_schemas                         |   132
+ _drop_log_schemas                         |   131
  _drop_seq                                 |    69
  _drop_tbl                                 |   222
  _emaj_param_change_fnct                   |    46
- _enable_event_triggers                    |   315
+ _enable_event_triggers                    |   313
  _estimate_rlbk_step_duration              |   791
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   207
@@ -166,13 +166,13 @@ select funcname, calls from pg_stat_user_functions
  _move_tables                              |    24
  _move_tbl                                 |    50
  _pg_version_num                           |    22
- _purge_histories                          |   101
+ _purge_histories                          |   100
  _remove_seq                               |    15
  _remove_sequences                         |    20
  _remove_tables                            |    35
  _remove_tbl                               |    40
  _repair_tbl                               |     2
- _reset_groups                             |    75
+ _reset_groups                             |    74
  _rlbk_async                               |     2
  _rlbk_check                               |   103
  _rlbk_end                                 |    79
@@ -191,7 +191,7 @@ select funcname, calls from pg_stat_user_functions
  _sequence_stat_seq                        |    36
  _set_mark_groups                          |   359
  _set_time_stamp                           |   593
- _start_groups                             |    55
+ _start_groups                             |    54
  _stop_groups                              |    66
  _truncate_trigger_fnct                    |    15
  _verify_all_groups                        |    56
@@ -233,7 +233,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_current_log_table                |     4
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |    10
- emaj_get_version                          |    20
+ emaj_get_version                          |    21
  emaj_import_groups_configuration          |     4
  emaj_import_groups_configuration          |    16
  emaj_import_parameters_configuration      |     4
@@ -267,10 +267,10 @@ select funcname, calls from pg_stat_user_functions
  emaj_rollback_groups                      |    11
  emaj_sequence_stat_group                  |    13
  emaj_sequence_stat_groups                 |     3
- emaj_set_mark_group                       |    77
+ emaj_set_mark_group                       |    78
  emaj_set_mark_groups                      |    25
  emaj_snap_group                           |    13
- emaj_start_group                          |    45
+ emaj_start_group                          |    44
  emaj_start_groups                         |    10
  emaj_stop_group                           |    44
  emaj_stop_groups                          |     9
@@ -283,7 +283,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1092
+ 1093
 (1 row)
 
 -----------------------------

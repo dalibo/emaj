@@ -210,7 +210,9 @@ Here is an example of the display issued by the test tool (in this case with the
 	test start_stop               ... ok
 	test mark                     ... ok
 	test rollback                 ... ok
+	test stat                     ... ok
 	test misc                     ... ok
+	test verify                   ... ok
 	test alter                    ... ok
 	test alter_logging            ... ok
 	test viewer                   ... ok
@@ -222,12 +224,12 @@ Here is an example of the display issued by the test tool (in this case with the
 	test cleanup                  ... ok
 	
 	=======================
-	1 of 15 tests failed.
+	1 of 18 tests failed.
 	=======================
 	
 	The differences that caused some tests to fail can be viewed in the
-	file "/home/postgres/proj/emaj/test/11/regression.diffs".  A copy of the test summary that you see
-	above is saved in the file "/home/postgres/proj/emaj/test/11/regression.out".
+	file "/home/postgres/proj/emaj/test/18/regression.diffs".  A copy of the test summary that you see
+	above is saved in the file "/home/postgres/proj/emaj/test/18/regression.out".
 
 When at least one script fails, it is important to closely analyze the differences, by reviewing the *test/<PostgreSQL_version>/regression.diffs* file content, and check that the differences are directly linked to changes applied in the extension source code or in the test scripts.
 
