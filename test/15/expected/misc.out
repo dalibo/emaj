@@ -375,15 +375,18 @@ alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.e
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
   from (select * from emaj.emaj_hist where hist_id >= 5200 order by hist_id) as t;
- hist_id | hist_function  |     hist_event     |         hist_object          |         regexp_replace         | hist_user 
----------+----------------+--------------------+------------------------------+--------------------------------+-----------
-    5221 | SET_MARK_GROUP | BEGIN              | myGroup1                     |                                | postgres
-    5222 | LOCK_GROUP     | BEGIN              | myGroup1                     |                                | postgres
-    5223 | LOCK_GROUP     | END                | myGroup1                     | 5 tables locked, 0 deadlock(s) | postgres
-    5224 | SET_MARK_GROUP | TIME STAMP SET     | 5202                         |                                | postgres
-    5225 | SET_MARK_GROUP | END                | myGroup1                     | Mark21                         | postgres
-    5233 |                | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                  | postgres
-(6 rows)
+ hist_id |   hist_function    |     hist_event     |         hist_object          |         regexp_replace         | hist_user 
+---------+--------------------+--------------------+------------------------------+--------------------------------+-----------
+    5227 | SET_MARK_GROUP     | BEGIN              | myGroup1                     |                                | postgres
+    5228 | LOCK_GROUP         | BEGIN              | myGroup1                     |                                | postgres
+    5229 | LOCK_GROUP         | END                | myGroup1                     | 5 tables locked, 0 deadlock(s) | postgres
+    5230 | SET_MARK_GROUP     | TIME STAMP SET     | 5202                         |                                | postgres
+    5231 | CLEANUP_RLBK_STATE |                    | Rollback id 5000             | set to COMMITTED               | postgres
+    5232 | CLEANUP_RLBK_STATE |                    | Rollback id 5001             | set to COMMITTED               | postgres
+    5233 | CLEANUP_RLBK_STATE |                    | Rollback id 5002             | set to COMMITTED               | postgres
+    5234 | SET_MARK_GROUP     | END                | myGroup1                     | Mark21                         | postgres
+    5242 |                    | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                  | postgres
+(9 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(5300);

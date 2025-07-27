@@ -1,20 +1,27 @@
 Compter les changements de contenu de données
 =============================================
 
-Six fonctions permettent d'obtenir des statistiques sur les changements enregistrés sur les tables et séquences :
+Les données contenues dans les tables techniques d’E-Maj et dans les tables de log permettent de construire des statistiques sur les mises à jour enregistrées.
 
-• :ref:`emaj_log_stat_group() <emaj_log_stat_group>` et :ref:`emaj_log_stat_groups() <emaj_log_stat_group>` offrent rapidement une vision du nombre de mises à jour enregistrées entre deux marques, ou depuis une marque, pour chaque table d'un ou plusieurs groupes de tables,
-• :ref:`emaj_detailed_log_stat_group()<emaj_detailed_log_stat_group>` et :ref:`emaj_detailed_log_stat_groups()<emaj_detailed_log_stat_group>` fournissent une vision plus détaillée du nombre de mises à jour enregistrées entre deux marques, ou depuis une marque, avec une répartition par table, type de verbe SQL et rôle de connexion,
-• :ref:`emaj_sequence_stat_group() <emaj_sequence_stat_group>` et :ref:`emaj_sequence_stat_groups() <emaj_sequence_stat_group>` restituent des statistiques sur l’évolution des séquences d’un ou plusieurs groupes de tables entre deux marques ou depuis une marque.
+A cette fin, l’utilisateur dispose de deux jeux de fonctions qui restituent des statistiques soit au niveau des groupes de tables, soit au niveau des tables ou séquences élémentaires.
 
-Toutes ces fonctions statistiques sont utilisables par tous les rôles E-Maj : *emaj_adm* et *emaj_viewer*.
+Toutes ces fonctions statistiques sont utilisables par tous les rôles E-Maj : emaj_adm et emaj_viewer.
+
+Statistiques de niveau groupe de tables
+=======================================
+
+Six fonctions permettent d'obtenir des statistiques sur les changements enregistrés sur les tables et séquences d'un ou pusieurs **groupes de tables**, sur un **intervalle de marques** donné ou depuis une marque donnée :
+
+• :ref:`emaj_log_stat_group() <emaj_log_stat_group>` et :ref:`emaj_log_stat_groups() <emaj_log_stat_group>` offrent rapidement une vision du nombre de mises à jour enregistrées pour chaque table d'un ou plusieurs groupes de tables,
+• :ref:`emaj_detailed_log_stat_group()<emaj_detailed_log_stat_group>` et :ref:`emaj_detailed_log_stat_groups()<emaj_detailed_log_stat_group>` fournissent une vision plus détaillée du nombre de mises à jour enregistrées, avec une répartition par table, type de verbe SQL et rôle de connexion,
+• :ref:`emaj_sequence_stat_group() <emaj_sequence_stat_group>` et :ref:`emaj_sequence_stat_groups() <emaj_sequence_stat_group>` restituent des statistiques sur l’évolution des séquences d’un ou plusieurs groupes de tables.
 
 .. _emaj_log_stat_group:
 
 Statistiques générales sur le contenu des tables de logs
---------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On peut obtenir les statistiques globales complètes à l'aide de la requête SQL ::
+On peut obtenir les statistiques globales complètes pour un groupe de tables à l'aide de la requête SQL ::
 
    SELECT * FROM emaj.emaj_log_stat_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>');
 
@@ -37,7 +44,7 @@ La fonction retourne un ensemble de lignes, de type *emaj.emaj_log_stat_type* et
 +--------------------------+-------------+-----------------------------------------------------------------------------------------+
 | stat_last_mark_datetime  | TIMESTAMPTZ | date et heure de la marque de fin de période                                            |
 +--------------------------+-------------+-----------------------------------------------------------------------------------------+
-| stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées dans la table de log associée à la table |
+| stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées                                          |
 +--------------------------+-------------+-----------------------------------------------------------------------------------------+
 
 Une valeur *NULL* fournie comme marque de fin représente la situation courante.
@@ -74,8 +81,8 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 
 .. _emaj_detailed_log_stat_group:
 
-Statistiques détaillées sur les logs
-------------------------------------
+Statistiques détaillées sur les logs d’un ou plusieurs groupes de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Le parcours des tables de log permet d'obtenir des informations plus détaillées, au prix d'un temps de réponse plus long. Ainsi, on peut obtenir les statistiques détaillées complètes à l'aide de la requête SQL ::
 
@@ -104,7 +111,7 @@ La fonction retourne un ensemble de lignes, de type *emaj.emaj_detailed_log_stat
 +--------------------------+-------------+------------------------------------------------------------------------------------------+
 | stat_verb                | TEXT        | verbe SQL à l'origine de la mise à jour (*INSERT* / *UPDATE* / *DELETE* / *TRUNCATE*)    |
 +--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées dans la table de log associée à la table  |
+| stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées                                           |
 +--------------------------+-------------+------------------------------------------------------------------------------------------+
 
 Une valeur *NULL* fournie comme marque de fin représente la situation courante.
@@ -125,10 +132,10 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 
 .. _emaj_sequence_stat_group:
 
-Statistiques sur l’évolution des séquences
-------------------------------------------
+Statistiques sur l’évolution des séquences d’un ou plusieurs groupes de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On peut obtenir les statistiques sur l’évolution des séquences à l'aide de la requête SQL ::
+On peut obtenir les statistiques sur l’évolution des séquences d'un groupe de tables à l'aide de la requête SQL ::
 
    SELECT * FROM emaj.emaj_sequence_stat_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>');
 
@@ -179,3 +186,111 @@ Des statistiques peuvent être obtenues sur plusieurs groupes de tables en même
    SELECT * FROM emaj.emaj_sequence_stat_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>');
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
+
+Statistiques de niveau table ou séquence
+========================================
+
+Deux autres fonctions permettent d’obtenir des statistiques sur les changements enregistrés pour **une seule table ou séquence**, sur **chaque intervalle** élémentaire de **marques** d’un intervalle d’observation donné :
+
+• :ref:`emaj_log_stat_table() <emaj_log_stat_table>` retourne rapidement des estimations du nombre de mises à jour enregistrées pour une table,
+• :ref:`emaj_log_stat_sequence() <emaj_log_stat_sequence>` retourne le nombre d’incréments pour une séquence.
+
+.. _emaj_log_stat_table:
+
+Statistiques sur l’évolution d’une table
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On peut obtenir les statistiques pour une seule table sur un intervalle de temps donné avec l’une des 2 requêtes SQL ::
+
+   SELECT * FROM emaj.emaj_log_stat_table('<nom.du.schéma>', '<nom.de.la.table>' [, '<date-heure.début>' [, '<date-heure.fin>']] );
+
+   ou
+
+   SELECT * FROM emaj.emaj_log_stat_table('<nom.du.schéma>', '<nom.de.la.table>', '<groupe.tables.début>', '<marque.début>' [, '<group.tables.fin>', '<marque.fin>'] );
+
+Les deux fonctions retournent un ensemble de lignes, de type *emaj.emaj_log_stat_table_type* et comportant les colonnes suivantes :
+
++----------------------------+-------------+-------------------------------------------------------+
+| Column                     | Type        | Description                                           |
++============================+=============+=======================================================+
+| stat_group                 | TEXT        | nom du groupe de tables                               |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_first_mark            | TEXT        | nom de la marque de début de période                  |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_first_mark_datetime   | TIMESTAMPTZ | date et heure de la marque de début de période        |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_is_log_start          | BOOLEAN     | indicateur de début de log pour la table              |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_last_mark             | TEXT        | nom de la marque de fin de période                    |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_last_mark_datetime    | TIMESTAMPTZ | date et heure de la marque de fin de période          |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_is_log_stop           | BOOLEAN     | indicateur de fin de log pour la table                |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_changes               | BIGINT      | nombre de modifications de lignes enregistrées        |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_rollbacks             | INT         | nombre de rollbacks E-Maj exécutés sur la période     |
++----------------------------+-------------+-------------------------------------------------------+
+
+Dans la première variante de la fonction, l’observation est bornée par deux paramètres date-heure début et date-heure de fin de type *TIMESTAMPTZ*. Le premier intervalle de marques retourné encadre la date-heure de début. Le dernier intervalle de marques retourné encadre la date-heure de fin.
+
+Dans la seconde variante de la fonction, l’observation est bornée par deux marques définies par leur groupe de tables et nom respectifs. Ces marques sont juste des points dans le temps : elles n’appartiennnent pas nécessairement au groupe de tables comprenant la table examinée. Si la borne inférieure ne correspond pas à un état connu pour la table (i.e. si le groupe de tables début indiqué n’était alors pas le groupe d’appartenance de la table), le premier intervalle de marques retourné encadre la marque début. De la même manière, si la borne supérieure ne correspond pas à un état connu pour la table (i.e. si le groupe de tables de fin indiqué n’était alors pas le groupe d’appartenance de la table), le dernier intervalle de marques retourné encadre la marque de fin.
+
+Si les paramètres qui définissent le début de l'observation ne sont pas valorisés ou ont la valeur *NULL*, l’observation démarre aux plus anciennes données connues pour la table.
+
+Si les paramètres qui définissent la fin de l'observation ne sont pas valorisés ou ont la valeur *NULL*, l’observation se termine à la situation courante.
+
+Les fonctions ne retournent aucune ligne pour les intervalles de marques durant lesquels les mises à jour sur la table n’étaient pas enregistrées. Les colonnes *stat_is_log_start* et *stat_is_log_stop* facilitent la détection des ruptures d’enregistrement des mises à jour.
+
+Ces statistiques sont restituées rapidement car elle ne nécessitent pas le parcours des tables de log.
+
+Mais, les valeurs retournées peuvent être approximatives (en fait surestimées). C'est en particulier le cas si, entre les deux marques citées, des transactions ont mis à jour des tables avant d'être annulées.
+
+.. _emaj_log_stat_sequence:
+
+Statistiques sur l’évolution d’une séquence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On peut obtenir les statistiques pour une seule table sur un intervalle de temps donné avec l’une des 2 requêtes SQL ::
+
+   SELECT * FROM emaj.emaj_log_stat_sequence('<nom.du.schéma>', '<nom.de.la.séquence>' [, '<date-heure.début>' [, '<date-heure.fin>']] );
+
+   ou
+
+   SELECT * FROM emaj.emaj_log_stat_sequence('<nom.du.schéma>', '<nom.de.la.séquence>', '<groupe.tables.début>', '<marque.début>' [, '<group.tables.fin>', '<marque.fin>'] );
+
+Les deux fonctions retournent un ensemble de lignes, de type *emaj.emaj_log_stat_sequence_type* et comportant les colonnes suivantes :
+
++----------------------------+-------------+------------------------------------------------------------------+
+| Column                     | Type        | Description                                                      |
++============================+=============+==================================================================+
+| stat_group                 | TEXT        | nom du groupe de tables                                          |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_first_mark            | TEXT        | nom de la marque de début de période                             |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_first_mark_datetime   | TIMESTAMPTZ | date et heure de la marque de début de période                   |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_is_log_start          | BOOLEAN     | indicateur de début de log pour la séquence                      |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_last_mark             | TEXT        | nom de la marque de fin de période                               |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_last_mark_datetime    | TIMESTAMPTZ | date et heure de la marque de fin de période                     |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_is_log_stop           | BOOLEAN     | indicateur de fin de log pour la séquence                        |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_increments            | BIGINT      | nombre d’incréments de la séquence                               |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_has_structure_changed | BIGINT      | indicateur d’un changement de propriété autre que last_value     |
++----------------------------+-------------+------------------------------------------------------------------+
+| stat_rollbacks             | INT         | nombre de rollbacks E-Maj exécutés sur la période                |
++----------------------------+-------------+------------------------------------------------------------------+
+
+Dans la première variante de la fonction, l’observation est bornée par deux paramètres date-heure début et date-heure de fin de type *TIMESTAMPTZ*. Le premier intervalle de marques retourné encadre la date-heure de début. Le dernier intervalle de marques retourné encadre la date-heure de fin.
+
+Dans la seconde variante de la fonction, l’observation est bornée par deux marques définies par leur groupe de tables et nom respectifs.  Ces marques sont juste des points dans le temps : elles n’appartiennnent pas nécessairement au groupe de tables comprenant la séquence examinée. Si la borne inférieure ne correspond pas à un état connu pour la séquence (i.e. si le groupe de tables début indiqué n’était alors pas le groupe d’appartenance de la séquence), le premier intervalle de marques retourné encadre la marque début. De la même manière, si la borne supérieure ne correspond pas à un état connu pour la séquence (i.e. si le groupe de tables de fin indiqué n’était alors pas le groupe d’appartenance de la séquence), le dernier intervalle de marques retourné encadre la marque de fin.
+
+Si les paramètres qui définissent le début de l'observation ne sont pas valorisés ou ont la valeur *NULL*, l’observation démarre aux plus anciennes données connues pour la séquence.
+
+Si les paramètres qui définissent la fin de l'observation ne sont pas valorisés ou ont la valeur *NULL*, l’observation se termine à la situation courante.
+
+Les fonctions ne retournent aucune ligne pour les intervalles de marques durant lesquels l’état de la séquence n’était pas enregistré. Les colonnes *stat_is_log_start* et *stat_is_log_stop* facilitent la détection des ruptures d’enregistrement.

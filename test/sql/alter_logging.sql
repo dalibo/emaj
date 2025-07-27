@@ -91,6 +91,8 @@ select nextval('myschema2.myseq2');
 select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  from emaj.emaj_log_stat_sequence('myschema2', 'myseq2', 'myGroup2', 'Mk1');
 
 --testing snap, dump changes and sql generation
 \! mkdir $EMAJTESTTMPDIR/snap
@@ -125,6 +127,8 @@ begin;
   select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
     from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
     order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    from emaj.emaj_log_stat_sequence('myschema2', 'myseq2', 'myGroup2', 'Mk1');
 rollback;
 
 -- test sequences at bounds following a rollback targeting a mark set before an ADD_SEQ
@@ -217,7 +221,8 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
 select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
-
+select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  from emaj.emaj_log_stat_sequence('myschema1', 'myTbl3_col31_seq', 'myGroup1', 'Mk2b');
 
 -- testing sql script generation
 select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3_col31_seq']);
@@ -230,6 +235,8 @@ begin;
   select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
     from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
     order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    from emaj.emaj_log_stat_sequence('myschema1', 'myTbl3_col31_seq', 'myGroup1', 'Mk2b');
   select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
     from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
   select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
@@ -324,6 +331,8 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test','After ADD_TBL');
+select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+  from emaj.emaj_log_stat_table('myschema2', 'mytbl7', 'myGroup2', 'Mk1');
 
 --testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
@@ -354,6 +363,8 @@ begin;
   select emaj.emaj_delete_mark_group('myGroup2','Add mytbl7');
   select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
     where tbl_name = 'mytbl7' order by tbl_time_id limit 1;
+  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+    from emaj.emaj_log_stat_table('myschema2', 'mytbl7', 'myGroup2', 'Mk1');
 rollback;
 
 -- test sequences and holes at bounds following a rollback targeting a mark set before an ADD_TBL
@@ -468,6 +479,8 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
   from emaj.emaj_log_stat_group('myGroup1','Mk1',NULL);
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
   from emaj.emaj_detailed_log_stat_group('myGroup1','Mk1',NULL);
+select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+  from emaj.emaj_log_stat_table('myschema1', 'myTbl3', 'myGroup1', 'Revert_sequences_removal');
 
 --testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
@@ -502,6 +515,8 @@ begin;
   select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
     where tbl_name in ('mytbl2b', 'myTbl3') order by tbl_time_id desc, tbl_name limit 2;
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = '2 tables removed from myGroup1';
+  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+    from emaj.emaj_log_stat_table('myschema1', 'myTbl3', 'myGroup1', 'Revert_sequences_removal');
 rollback;
 
 begin;
@@ -644,11 +659,30 @@ select * from emaj.emaj_relation where rel_schema = 'myschema2' and (rel_tblseq 
 -- perform various tasks on the groups
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','after move');
 update myschema2."myTbl3" set col33 = 12.0 where col31 >= 9;
+
+-- groups statistics
 select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL)
   where stat_schema = 'myschema2' and stat_table = 'myTbl3';
 select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_verb, stat_role, stat_rows
   from emaj.emaj_detailed_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL) where stat_schema = 'myschema2' and stat_table = 'myTbl3';
+
+-- table and sequence statistics
+select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+  from emaj.emaj_log_stat_table('myschema2', 'myTbl3', 'myGroup2', 'Mk1');
+select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  from emaj.emaj_log_stat_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup2', 'Mk1');
+-- delete both move marks
+begin;
+  select emaj.emaj_delete_mark_group('myGroup2','move table to myGroup1');
+  select emaj.emaj_delete_mark_group('myGroup1','move table to myGroup1');
+  select emaj.emaj_delete_mark_group('myGroup2','move seq to myGroup1');
+  select emaj.emaj_delete_mark_group('myGroup1','move seq to myGroup1');
+  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+    from emaj.emaj_log_stat_table('myschema2', 'myTbl3', 'myGroup2', 'Mk1');
+  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    from emaj.emaj_log_stat_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup2', 'Mk1');
+rollback;
 
 -- generate a sql script crossing the move (before rollback)
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script1.sql',

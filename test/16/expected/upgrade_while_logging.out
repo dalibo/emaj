@@ -303,6 +303,33 @@ Tablespace: "tspemaj"
 primary key, btree, for table "emaj.emaj_log_session"
 Tablespace: "tspemaj"
 
+                   Composite type "emaj.emaj_log_stat_sequence_type"
+           Column           |           Type           | Collation | Nullable | Default 
+----------------------------+--------------------------+-----------+----------+---------
+ stat_group                 | text                     |           |          | 
+ stat_first_mark            | text                     |           |          | 
+ stat_first_mark_datetime   | timestamp with time zone |           |          | 
+ stat_is_log_start          | boolean                  |           |          | 
+ stat_last_mark             | text                     |           |          | 
+ stat_last_mark_datetime    | timestamp with time zone |           |          | 
+ stat_is_log_stop           | boolean                  |           |          | 
+ stat_increments            | bigint                   |           |          | 
+ stat_has_structure_changed | boolean                  |           |          | 
+ stat_rollbacks             | integer                  |           |          | 
+
+                    Composite type "emaj.emaj_log_stat_table_type"
+          Column          |           Type           | Collation | Nullable | Default 
+--------------------------+--------------------------+-----------+----------+---------
+ stat_group               | text                     |           |          | 
+ stat_first_mark          | text                     |           |          | 
+ stat_first_mark_datetime | timestamp with time zone |           |          | 
+ stat_is_log_start        | boolean                  |           |          | 
+ stat_last_mark           | text                     |           |          | 
+ stat_last_mark_datetime  | timestamp with time zone |           |          | 
+ stat_is_log_stop         | boolean                  |           |          | 
+ stat_changes             | bigint                   |           |          | 
+ stat_rollbacks           | integer                  |           |          | 
+
                        Composite type "emaj.emaj_log_stat_type"
           Column          |           Type           | Collation | Nullable | Default 
 --------------------------+--------------------------+-----------+----------+---------

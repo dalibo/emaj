@@ -53,6 +53,34 @@ Tables or sequences level functions
 | :ref:`emaj_get_current_log_table                 | | schema TEXT,                | (log.schema TEXT, log.table TEXT)     |
 | <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_log_stat_table                        | | schema TEXT,                | SETOF emaj_log_stat_table_type        |
+| <emaj_log_stat_table>` (V)                       | | table TEXT,                 |                                       |
+|                                                  | | [ start.date-time           |                                       |
+|                                                  | |     TIMESTAMPTZ, ]          |                                       |
+|                                                  | | [ end.date-time             |                                       |
+|                                                  | |     TIMESTAMPTZ ]           |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_log_stat_table                        | | schema TEXT,                | SETOF emaj_log_stat_table_type        |
+| <emaj_log_stat_table>` (V)                       | | table TEXT,                 |                                       |
+|                                                  | | start.group TEXT,           |                                       |
+|                                                  | | start.mark TEXT,            |                                       |
+|                                                  | | [ end.group TEXT,           |                                       |
+|                                                  | |   end.mark TEXT ]           |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_log_stat_sequence                     | | schema TEXT,                | SETOF emaj_log_stat_sequence_type     |
+| <emaj_log_stat_sequence>` (V)                    | | sequence TEXT,              |                                       |
+|                                                  | | [ start.date-time           |                                       |
+|                                                  | |     TIMESTAMPTZ, ]          |                                       |
+|                                                  | | [ end.date-time             |                                       |
+|                                                  | |     TIMESTAMPTZ ]           |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_log_stat_sequence                     | | schema TEXT,                | SETOF emaj_log_stat_sequence_type     |
+| <emaj_log_stat_sequence>` (V)                    | | sequence TEXT,              |                                       |
+|                                                  | | start.group TEXT,           |                                       |
+|                                                  | | start.mark TEXT,            |                                       |
+|                                                  | | [ end.group TEXT,           |                                       |
+|                                                  | |   end.mark TEXT ]           |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_modify_table                          | | schema TEXT,                | #.tables INT                          |
 | <modify_table>`                                  | | table TEXT,                 |                                       |
 |                                                  | | properties JSONB,           |                                       |

@@ -1442,14 +1442,6 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -----------------+-------------------+--------------+---------------+----------------
  myschema1       | myTbl3_col31_seq  |         3011 |             1 | f
  myschema1       | mytbl2b_col20_seq |         3011 |             1 | f
- myschema1       | myTbl3_col31_seq  |         3012 |             1 | f
- myschema1       | mytbl2b_col20_seq |         3012 |             1 | f
- myschema1       | myTbl3_col31_seq  |         3013 |             1 | f
- myschema1       | mytbl2b_col20_seq |         3013 |             1 | f
- myschema1       | myTbl3_col31_seq  |         3014 |             1 | f
- myschema1       | mytbl2b_col20_seq |         3014 |             1 | f
- myschema1       | myTbl3_col31_seq  |         3015 |             1 | f
- myschema1       | mytbl2b_col20_seq |         3015 |             1 | f
  myschema2       | myTbl3_col31_seq  |         3015 |             1 | f
  myschema2       | myseq1            |         3015 |          1000 | f
  phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
@@ -1460,7 +1452,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1       | mytbl2b_col20_seq |         3600 |             1 | f
  myschema2       | myTbl3_col31_seq  |         3601 |             1 | f
  myschema2       | myseq1            |         3601 |          1000 | f
-(20 rows)
+(12 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
    tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
@@ -1470,26 +1462,6 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1       | mytbl2      |        3011 |                    0
  myschema1       | mytbl2b     |        3011 |                    0
  myschema1       | mytbl4      |        3011 |                    0
- myschema1       | myTbl3      |        3012 |                    0
- myschema1       | mytbl1      |        3012 |                    0
- myschema1       | mytbl2      |        3012 |                    0
- myschema1       | mytbl2b     |        3012 |                    0
- myschema1       | mytbl4      |        3012 |                    0
- myschema1       | myTbl3      |        3013 |                    0
- myschema1       | mytbl1      |        3013 |                    0
- myschema1       | mytbl2      |        3013 |                    0
- myschema1       | mytbl2b     |        3013 |                    0
- myschema1       | mytbl4      |        3013 |                    0
- myschema1       | myTbl3      |        3014 |                    0
- myschema1       | mytbl1      |        3014 |                    0
- myschema1       | mytbl2      |        3014 |                    0
- myschema1       | mytbl2b     |        3014 |                    0
- myschema1       | mytbl4      |        3014 |                    0
- myschema1       | myTbl3      |        3015 |                    0
- myschema1       | mytbl1      |        3015 |                    0
- myschema1       | mytbl2      |        3015 |                    0
- myschema1       | mytbl2b     |        3015 |                    0
- myschema1       | mytbl4      |        3015 |                    0
  myschema2       | myTbl3      |        3015 |                    0
  myschema2       | mytbl1      |        3015 |                    0
  myschema2       | mytbl2      |        3015 |                    0
@@ -1515,7 +1487,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2       | mytbl6      |        3601 |                    0
  myschema2       | mytbl7      |        3601 |                    0
  myschema2       | mytbl8      |        3601 |                    0
-(50 rows)
+(30 rows)
 
 -----------------------------
 -- test end: check

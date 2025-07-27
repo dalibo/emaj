@@ -1,24 +1,31 @@
 Count data content changes
 ==========================
 
-There are six functions that return statistics about recorded data content changes:
+Data stored into E-Maj technical tables or log tables allow to build statistics about recorded changes.
 
-* :ref:`emaj_log_stat_group() <emaj_log_stat_group>` and :ref:`emaj_log_stat_groups() <emaj_log_stat_group>` quickly deliver, for each table from one or several tables groups, the number of changes that have been recorded in the related log tables, either between 2 marks or since a given mark,
-* :ref:`emaj_detailed_log_stat_group()<emaj_detailed_log_stat_group>` and :ref:`emaj_detailed_log_stat_groups()<emaj_detailed_log_stat_group>` provide more detailed information than *emaj_log_stat_group()*, the number of updates been reported per table, SQL verb type and connection role,
-* :ref:`emaj_sequence_stat_group() <emaj_sequence_stat_group>` and :ref:`emaj_sequence_stat_groups() <emaj_sequence_stat_group>` return statistics about how sequences from one or several tables groups change between two marks or since a given mark.
+For this purpose, two functions sets are available for users. They produce statistics either at tables group level, or at individual table or sequence level.
 
 These functions can be used by *emaj_adm* and *emaj_viewer* E-Maj roles.
 
+Tables group level statistics
+=============================
+
+Six functions return statistics about recorded data content changes for **all tables or sequences** belonging to one or several **tables groups** on a **single marks interval** or since a mark:
+
+* :ref:`emaj_log_stat_group() <emaj_log_stat_group>` and :ref:`emaj_log_stat_groups() <emaj_log_stat_group>` quickly deliver, for each table from one or several tables groups, the number of changes that have been recorded in their related log tables,
+* :ref:`emaj_detailed_log_stat_group()<emaj_detailed_log_stat_group>` and :ref:`emaj_detailed_log_stat_groups()<emaj_detailed_log_stat_group>` provide more detailed information than *emaj_log_stat_group()*, the number of updates been reported per table, SQL verb type and connection role,
+* :ref:`emaj_sequence_stat_group() <emaj_sequence_stat_group>` and :ref:`emaj_sequence_stat_groups() <emaj_sequence_stat_group>` return statistics about how sequences from one or several tables groups change.
+
 .. _emaj_log_stat_group:
 
-Global statistics about log tables contents
--------------------------------------------
+Global statistics about log tables contents for one or several tables groups
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Full global statistics about logs content are available with this SQL statement::
+Full global statistics about logs content for a tables group are available with this SQL statement::
 
    SELECT * FROM emaj.emaj_log_stat_group('<group.name>', '<start.mark>', '<end.mark>');
 
-The function returns a set of rows, whose type is named *emaj.emaj_log_stat_type*, and contains the following columns:
+The function returns a set of rows, whose type is named *emaj.emaj_log_stat_type*, and that contains the following columns:
 
 +--------------------------+-------------+-------------------------------------------------------+
 | Column                   | Type        | Description                                           |
@@ -37,7 +44,7 @@ The function returns a set of rows, whose type is named *emaj.emaj_log_stat_type
 +--------------------------+-------------+-------------------------------------------------------+
 | stat_last_mark_datetime  | TIMESTAMPTZ | mark timestamp of the period end                      |
 +--------------------------+-------------+-------------------------------------------------------+
-| stat_rows                | BIGINT      | number of updates recorded into the related log table |
+| stat_rows                | BIGINT      | number of recorded row changes                        |
 +--------------------------+-------------+-------------------------------------------------------+
 
 A *NULL* value supplied as end mark represents the current state.
@@ -74,14 +81,14 @@ More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
 .. _emaj_detailed_log_stat_group:
 
-Detailed statistics about logs
-------------------------------
+Detailed statistics about logs for one or several tables groups
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Scanning log tables brings a more detailed information, at a higher response time cost. So can we get fully detailed statistics with the following SQL statement::
 
    SELECT * FROM emaj.emaj_detailed_log_stat_group('<group.name>', '<start.mark>', '<end.mark>');
 
-The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_stat_type*, and contains the following columns:
+The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_stat_type*, and that contains the following columns:
 
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | Column                   | Type        | Description                                                                                      |
@@ -104,7 +111,7 @@ The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | stat_verb                | TEXT        | type of the SQL verb that has performed the update, with values: *INSERT* / *UPDATE* / *DELETE*) |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
-| stat_rows                | BIGINT      | number of updates recorded into the related log table                                            |
+| stat_rows                | BIGINT      | number of recorded row changes                                                                   |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 
 A *NULL* value supplied as end mark represents the current state.
@@ -125,14 +132,14 @@ More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
 .. _emaj_sequence_stat_group:
 
-Statistics about sequence changes
----------------------------------
+Statistics about sequence changes for one or several tables groups
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Global statistics about how sequences change are available with this SQL statement::
+Global statistics about how sequences of a tables group change are available with this SQL statement::
 
    SELECT * FROM emaj.emaj_sequence_stat_group('<group.name>', '<start.mark>', '<end.mark>');
 
-The function returns a set of rows, whose type is named *emaj.emaj_sequence_stat_type*, and contains the following columns:
+The function returns a set of rows, whose type is named *emaj.emaj_sequence_stat_type*, and that contains the following columns:
 
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
 | Column                     | Type        | Description                                                                          |
@@ -179,3 +186,111 @@ Using the *emaj_sequence_stat_groups()* function, log statistics can be obtained
    SELECT * FROM emaj.emaj_sequence_stat_groups('<group.names.array>', '<start.mark>', '<end.mark>');
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
+
+Table or sequence level statistics
+==================================
+
+Two functions return statistics about recorded data changes for a **single table or sequence** on **each elementary marks interval** of a given time frame:
+
+• :ref:`emaj_log_stat_table() <emaj_log_stat_table>` quickly returns the number of changes that have been recorded for a table on each elementary marks interval,
+• :ref:`emaj_log_stat_sequence() <emaj_log_stat_sequence>` returns the number of increments for a sequence on each elementary marks interval.
+
+.. _emaj_log_stat_table:
+
+Statistics about changes recorded for a table
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Statistics about changes recorded for a single table on a given time frame are available through one of these statements::
+
+   SELECT * FROM emaj.emaj_log_stat_table('<schema.name>', '<table.name>' [, '<start.date-time>' [, '<end.date-time>']] );
+
+   or
+
+   SELECT * FROM emaj.emaj_log_stat_table('<schema.name>', '<table.name>', '<start.tables.group>', '<start.mark>' [, '<end.tables.group>', '<end.mark>'] );
+
+Both functions return a set of rows of type *emaj.emaj_log_stat_table_type* and containing the following columns:
+
++----------------------------+-------------+-------------------------------------------------------+
+| Column                     | Type        | Description                                           |
++============================+=============+=======================================================+
+| stat_group                 | TEXT        | tables group name                                     |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_first_mark            | TEXT        | mark of the time slice lower bound                    |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_first_mark_datetime   | TIMESTAMPTZ | timestamp of the time slice lower bound               |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_is_log_start          | BOOLEAN     | indicator of log start for the table                  |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_last_mark             | TEXT        | mark of the time slice upper bound                    |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_last_mark_datetime    | TIMESTAMPTZ | timestamp of the time slice upper bound               |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_is_log_stop           | BOOLEAN     | indicator of log stop for the table                   |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_changes               | BIGINT      | number of recorded row changes                        |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_rollbacks             | INT         | number of E-Maj rollbacks executed on the time slice  |
++----------------------------+-------------+-------------------------------------------------------+
+
+In the first function variant, the observation is framed by two start date-time and end date-time parameters of type *TIMESTAMPTZ*. The first returned interval surrounds the start date-time. The last returned interval surrounds the end date-time.
+
+In the second function variant, the observation is framed by two marks defined by their tables group and mark names. These marks are just points in time: they not necessarily belong to the tables group owning the examined table. If the lower bound mark doesn’t match a known state of the table (i.e. if the start tables group didn’t owned the table at this start mark time), the first returned interval surrounds this first mark. Similarly, If the upper bound mark doesn’t match a known state of the table (i.e. if the end tables group didn’t owned the table at this end mark time), the last returned interval surrounds this end mark.
+
+If parameters defining the observation start are not set or are set to *NULL*, the observation starts at the oldest available data for the table.
+
+If parameters defining the observation end are not set or are set to *NULL*, the observation ends at the table current state.
+
+These functions don’t return any rows for marks intervals when data changes were not recorded for the table. The *stat_is_log_start* and *stat_is_log_stop* columns help to detect gaps in the changes recording.
+
+These statistics are quickly delivered because they do not need to scan log tables.
+
+But returned values may be approximative (in fact over-estimated). This occurs in particular when transactions executed between both requested marks have performed table updates before being cancelled.
+
+.. _emaj_log_stat_sequence:
+
+Statistics about changes recorded for a sequence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Statistics about changes recorded for a single sequence on a given time frame are available through one of these statements::
+
+   SELECT * FROM emaj.emaj_log_stat_sequence('<schema.name>', '<sequence.name>' [, '<start.date-time>' [, '<end.date-time>']] );
+
+   or
+
+   SELECT * FROM emaj.emaj_log_stat_sequence('<schema.name>', '<sequence.name>', '<start.tables.group>', '<start.mark>' [, '<end.tables.group>', '<end.mark>'] );
+
+Both functions return a set of rows of type *emaj.emaj_log_stat_sequence_type* and containing the following columns:
+
++----------------------------+-------------+--------------------------------------------------------+
+| Column                     | Type        | Description                                            |
++============================+=============+========================================================+
+| stat_group                 | TEXT        | tables group name                                      |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_first_mark            | TEXT        | mark of the time slice lower bound                     |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_first_mark_datetime   | TIMESTAMPTZ | timestamp of the time slice lower bound                |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_is_log_start          | BOOLEAN     | indicator of log start for the sequence                |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_last_mark             | TEXT        | mark of the time slice upper bound                     |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_last_mark_datetime    | TIMESTAMPTZ | timestamp of the time slice upper bound                |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_is_log_stop           | BOOLEAN     | indicator of log stop for the sequence                 |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_increments            | BIGINT      | number of sequence increments                          |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_has_structure_changed | BIGINT      | TRUE if any property other than last_value has changed |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_rollbacks             | INT         | number of E-Maj rollbacks executed on the time slice   |
++----------------------------+-------------+--------------------------------------------------------+
+
+In the first function variant, the observation is framed by two start date-time and end date-time parameters of type TIMESTAMPTZ. The first returned interval surrounds the start date-time. The last returned interval surrounds the end date-time.
+
+In the second function variant, the observation is framed by two marks defined by their tables group and mark names. These marks are just points in time: they not necessarily belong to the tables group owning the examined sequence. If the lower bound mark doesn’t match a known state of the sequence (i.e. if the start tables group didn’t owned the sequence at this start mark time), the first returned interval surrounds this first mark. Similarly, If the upper bound mark doesn’t match a known state of the sequence (i.e. if the end tables group didn’t owned the sequence at this end mark time), the last returned interval surrounds this end mark.
+
+If parameters defining the observation start are not set or are set to *NULL*, the observation starts at the oldest available data for the sequence.
+
+If parameters defining the observation end are not set or are set to *NULL*, the observation ends at the sequence current state.
+
+These functions don’t return any rows for marks intervals when data changes were not recorded for the sequence. The *stat_is_log_start* and *stat_is_log_stop* columns help to detect recording gaps.

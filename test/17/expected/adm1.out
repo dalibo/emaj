@@ -217,19 +217,19 @@ select * from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    40
+    43
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    40
+    43
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   275
+   307
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
@@ -267,7 +267,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                                                      hist_wording                                                                                      
 -----------------+------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 25 emaj_hist rows deleted ; 16 log session rows deleted ; 13 group history rows deleted ; 143 relation history rows deleted ; 95 relation changes deleted ; 40 rollback events deleted
+ PURGE_HISTORIES |            | 25 emaj_hist rows deleted ; 16 log session rows deleted ; 13 group history rows deleted ; 143 relation history rows deleted ; 95 relation changes deleted ; 43 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 
@@ -498,7 +498,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -------------+-------------------+--------------+---------------+----------------
  myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
  myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myTbl3_col31_seq  |        12017 |            11 | f
  myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
@@ -820,7 +820,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -------------+-------------------+--------------+---------------+----------------
  myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
  myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myTbl3_col31_seq  |        12017 |            11 | f
  myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
@@ -1109,7 +1109,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -------------+-------------------+--------------+---------------+----------------
  myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
  myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myTbl3_col31_seq  |        12017 |            11 | f
  myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
@@ -1498,7 +1498,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -------------+-------------------+--------------+---------------+----------------
  myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
  myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myTbl3_col31_seq  |        12017 |            11 | f
  myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
@@ -1850,7 +1850,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -------------+-------------------+--------------+---------------+----------------
  myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
  myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myTbl3_col31_seq  |        12017 |            11 | f
  myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
@@ -2222,7 +2222,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -------------+-------------------+--------------+---------------+----------------
  myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
  myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myTbl3_col31_seq  |        12017 |            11 | f
  myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
@@ -2625,7 +2625,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myTbl3_col31_seq  |        12017 |            11 | f
  myschema2   | myseq1            |        12017 |          1000 | f
  myschema2   | myTbl3_col31_seq  |        12200 |            20 | t
  myschema2   | myseq1            |        12200 |          1000 | t
@@ -2637,9 +2637,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1   | mytbl2b_col20_seq |        12402 |             5 | t
  myschema1   | myTbl3_col31_seq  |        12601 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12601 |             5 | t
- myschema1   | myTbl3_col31_seq  |        12602 |            20 | t
- myschema1   | mytbl2b_col20_seq |        12602 |             5 | t
-(14 rows)
+(12 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
@@ -2677,12 +2675,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1  | mytbl2   |       12601 |                    3
  myschema1  | mytbl2b  |       12601 |                    3
  myschema1  | mytbl4   |       12601 |                   12
- myschema1  | myTbl3   |       12602 |                   40
- myschema1  | mytbl1   |       12602 |                   33
- myschema1  | mytbl2   |       12602 |                    3
- myschema1  | mytbl2b  |       12602 |                    3
- myschema1  | mytbl4   |       12602 |                   14
-(38 rows)
+(33 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 

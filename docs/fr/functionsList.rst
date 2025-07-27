@@ -53,6 +53,34 @@ Fonctions de niveau tables et séquences
 | :ref:`emaj_get_current_log_table                 | | schéma TEXT,                | (schéma.log TEXT, table.log TEXT)     |
 | <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_log_stat_table                        | | schéma TEXT,                | SETOF emaj_log_stat_table_type        |
+| <emaj_log_stat_table>` (V)                       | | table TEXT,                 |                                       |
+|                                                  | | [ date.heure.début          |                                       |
+|                                                  | |     TIMESTAMPTZ, ]          |                                       |
+|                                                  | | [ date.heure.fin            |                                       |
+|                                                  | |     TIMESTAMPTZ ]           |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_log_stat_table                        | | schéma TEXT,                | SETOF emaj_log_stat_table_type        |
+| <emaj_log_stat_table>` (V)                       | | table TEXT,                 |                                       |
+|                                                  | | groupe.début TEXT,          |                                       |
+|                                                  | | marque.debut TEXT,          |                                       |
+|                                                  | | [ groupe.fin TEXT,          |                                       |
+|                                                  | |   marque.fin TEXT ]         |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_log_stat_sequence                     | | schéma TEXT,                | SETOF emaj_log_stat_sequence_type     |
+| <emaj_log_stat_sequence>` (V)                    | | séquence TEXT,              |                                       |
+|                                                  | | [ date.heure.début          |                                       |
+|                                                  | |     TIMESTAMPTZ, ]          |                                       |
+|                                                  | | [ date.heure.fin            |                                       |
+|                                                  | |     TIMESTAMPTZ ]           |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_log_stat_sequence                     | | schéma TEXT,                | SETOF emaj_log_stat_sequence_type     |
+| <emaj_log_stat_sequence>` (V)                    | | séquence TEXT,              |                                       |
+|                                                  | | groupe.début TEXT,          |                                       |
+|                                                  | | marque.debut TEXT,          |                                       |
+|                                                  | | [ groupe.fin TEXT,          |                                       |
+|                                                  | |   marque.fin TEXT ]         |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_modify_table                          | | schéma TEXT,                | nb.tables INT                         |
 | <modify_table>`                                  | | table TEXT,                 |                                       |
 |                                                  | | propriétés JSONB,           |                                       |

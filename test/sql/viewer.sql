@@ -66,6 +66,8 @@ select count(*) from emaj.emaj_detailed_log_stat_group('myGroup1','Start',NULL);
 select count(*) from emaj.emaj_detailed_log_stat_groups(array['myGroup1'],'Start',NULL);
 select count(*) from emaj.emaj_sequence_stat_group('myGroup1','Start',NULL);
 select count(*) from emaj.emaj_sequence_stat_groups(array['myGroup1'],'Start',NULL);
+select count(*) from emaj.emaj_log_stat_table('myschema2', 'mytbl1');
+select count(*) from emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
 select count(*) from emaj._get_sequences_last_value(null, null, null, null, null, null);
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
 select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);

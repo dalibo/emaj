@@ -302,6 +302,18 @@ select count(*) from emaj.emaj_sequence_stat_groups(array['myGroup1'],'Start',NU
      2
 (1 row)
 
+select count(*) from emaj.emaj_log_stat_table('myschema2', 'mytbl1');
+ count 
+-------
+     0
+(1 row)
+
+select count(*) from emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
+ count 
+-------
+     0
+(1 row)
+
 select count(*) from emaj._get_sequences_last_value(null, null, null, null, null, null);
  count 
 -------

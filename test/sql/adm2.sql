@@ -175,6 +175,11 @@ select emaj.emaj_delete_mark_group('phil''s group#3",','M2_again!');
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','M1_rollbackable','');
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
+select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+  from emaj.emaj_log_stat_table('phil''s schema"3', 'phil''s tbl1');
+select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  from emaj.emaj_log_stat_sequence('phil''s schema"3', 'phil''s"seq\1');
+
 --
 select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
