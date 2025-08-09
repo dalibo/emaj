@@ -5859,7 +5859,7 @@ CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(p_groups TEXT[]
 RETURNS JSON LANGUAGE plpgsql AS
 $emaj_export_groups_configuration$
 -- This function returns a JSON formatted structure representing some or all configured tables groups
--- The function can be called by clients like emaj_web.
+-- The function can be called by clients like Emaj_web.
 -- This is just a wrapper of the internal _export_groups_conf() function.
 -- Input: an optional array of goup's names, NULL means all tables groups
 -- Output: the tables groups content in JSON format
@@ -6168,7 +6168,7 @@ CREATE OR REPLACE FUNCTION emaj._import_groups_conf_prepare(p_groupsJson JSON, p
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_prepare$
 -- This function prepares the effective tables groups configuration import.
--- It is called by _import_groups_conf() and by emaj_web
+-- It is called by _import_groups_conf() and by Emaj_web
 -- At the end of the function, the tmp_app_table table is updated with the new configuration of groups
 --   and a temporary table is created to prepare the application triggers management
 -- Input: - the tables groups configuration structure in JSON format
@@ -6484,7 +6484,7 @@ CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(p_json JSON, p_groups T
 RETURNS INT LANGUAGE plpgsql AS
 $_import_groups_conf_exec$
 -- This function completes a tables groups configuration import.
--- It is called by _import_groups_conf() and by emaj_web
+-- It is called by _import_groups_conf() and by Emaj_web
 -- Non existing groups are created empty.
 -- The _import_groups_conf_alter() function is used to process the assignement, the move, the removal or the attributes change for tables
 -- and sequences.
@@ -10808,7 +10808,10 @@ $emaj_log_stat_table$
         LIMIT 1;
     END IF;
 -- Compute the statistics.
-    RETURN QUERY SELECT * FROM emaj._log_stat_table(p_schema, p_table, v_startTimeId, v_endTimeId);
+    RETURN QUERY
+      SELECT stat_group, stat_first_mark, stat_first_mark_datetime, stat_is_log_start, stat_last_mark, stat_last_mark_datetime,
+             stat_is_log_stop, stat_changes, stat_rollbacks
+        FROM emaj._log_stat_table(p_schema, p_table, v_startTimeId, v_endTimeId);
   END;
 $emaj_log_stat_table$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_table(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) IS
@@ -10870,7 +10873,10 @@ $emaj_log_stat_table$
         LIMIT 1;
     END IF;
 -- Call the _log_stat_table() function to build the result.
-    RETURN QUERY SELECT * FROM emaj._log_stat_table(p_schema, p_table, v_startTimeId, v_endTimeId);
+    RETURN QUERY
+      SELECT stat_group, stat_first_mark, stat_first_mark_datetime, stat_is_log_start, stat_last_mark, stat_last_mark_datetime,
+             stat_is_log_stop, stat_changes, stat_rollbacks
+        FROM emaj._log_stat_table(p_schema, p_table, v_startTimeId, v_endTimeId);
   END;
 $emaj_log_stat_table$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_table(TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ) IS
@@ -10950,7 +10956,7 @@ $_log_stat_table$
                    WHERE sqhl_schema = p_schema
                      AND sqhl_table = p_table
                      AND sqhl_begin_time_id >= start_time_id
-                     AND sqhl_end_time_id <= end_time_id)::BIGINT
+                     AND (end_time_id IS NULL OR sqhl_end_time_id <= end_time_id))::BIGINT
                AS stat_changes,
              count(rlbk_id)::INT AS stat_rollbacks
         FROM time_slice
@@ -11037,7 +11043,10 @@ $emaj_log_stat_sequence$
         LIMIT 1;
     END IF;
 -- Compute the statistics.
-    RETURN QUERY SELECT * FROM emaj._log_stat_sequence(p_schema, p_sequence, v_startTimeId, v_endTimeId);
+    RETURN QUERY
+      SELECT stat_group, stat_first_mark, stat_first_mark_datetime, stat_is_log_start, stat_last_mark, stat_last_mark_datetime,
+             stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+        FROM emaj._log_stat_sequence(p_schema, p_sequence, v_startTimeId, v_endTimeId);
   END;
 $emaj_log_stat_sequence$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_sequence(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) IS
@@ -11100,7 +11109,10 @@ $emaj_log_stat_sequence$
         LIMIT 1;
     END IF;
 -- Call the _log_stat_sequence() function to build the result.
-    RETURN QUERY SELECT * FROM emaj._log_stat_sequence(p_schema, p_sequence, v_startTimeId, v_endTimeId);
+    RETURN QUERY
+      SELECT stat_group, stat_first_mark, stat_first_mark_datetime, stat_is_log_start, stat_last_mark, stat_last_mark_datetime,
+             stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+        FROM emaj._log_stat_sequence(p_schema, p_sequence, v_startTimeId, v_endTimeId);
   END;
 $emaj_log_stat_sequence$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_sequence(TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ) IS
@@ -12857,7 +12869,7 @@ CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration()
 RETURNS JSON LANGUAGE plpgsql AS
 $emaj_export_parameters_configuration$
 -- This function returns a JSON formatted structure representing all the parameters registered in the emaj_param table.
--- The function can be called by clients like emaj_web.
+-- The function can be called by clients like Emaj_web.
 -- This is just a wrapper of the internal _export_param_conf() function.
 -- Output: the parameters content in JSON format
   BEGIN
@@ -12958,7 +12970,7 @@ RETURNS INT LANGUAGE plpgsql AS
 $emaj_import_parameters_configuration$
 -- This function import a supplied JSON formatted structure representing E-Maj parameters to load.
 -- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
--- The function can be called by clients like emaj_web.
+-- The function can be called by clients like Emaj_web.
 -- It calls the _import_param_conf() function to perform the emaj_param table changes.
 -- Input: - the parameter configuration structure in JSON format
 --        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
