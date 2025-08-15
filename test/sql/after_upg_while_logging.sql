@@ -77,9 +77,9 @@ update myTbl1 set col11 = 99 where col11 = 1;
 set role emaj_regression_tests_adm_user2;
 select emaj.emaj_set_mark_group('myGroup1','M6');
 --
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_group('myGroup1', 'M2', 'M6') order by 1,2,3,4;
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup1', 'M2', 'M6')
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 
@@ -150,7 +150,7 @@ insert into mySchema6.table_with_51_characters_long_name_____0_________0a values
 delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
 --
 set role emaj_regression_tests_adm_user2;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL) order by 1,2,3,4;
 select * from emaj.emaj_rollback_group('myGroup6', 'Start G6');
 select emaj.emaj_stop_group('myGroup6');

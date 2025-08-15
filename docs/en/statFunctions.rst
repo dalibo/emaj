@@ -40,9 +40,13 @@ The function returns a set of rows, whose type is named *emaj.emaj_log_stat_type
 +--------------------------+-------------+-------------------------------------------------------+
 | stat_first_mark_datetime | TIMESTAMPTZ | mark timestamp of the period start                    |
 +--------------------------+-------------+-------------------------------------------------------+
+| stat_first_time_id       | BIGINT      | internal time id of the period start                  |
++--------------------------+-------------+-------------------------------------------------------+
 | stat_last_mark           | TEXT        | mark name of the period end                           |
 +--------------------------+-------------+-------------------------------------------------------+
 | stat_last_mark_datetime  | TIMESTAMPTZ | mark timestamp of the period end                      |
++--------------------------+-------------+-------------------------------------------------------+
+| stat_last_time_id        | BIGINT      | internal time id of the period end                    |
 +--------------------------+-------------+-------------------------------------------------------+
 | stat_rows                | BIGINT      | number of recorded row changes                        |
 +--------------------------+-------------+-------------------------------------------------------+
@@ -56,6 +60,8 @@ If the marks range is not contained by a single *log session*, i.e. if group sto
 The function returns one row per table, even if there is no logged update for this table. In this case, stat_rows columns value is 0.
 
 Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
+
+If a table is removed from its group and later re-assigned to it during the resquested time frame, several rows are returned in the statistics. In this case, *stat_first_time_id* and *stat_last_time_id* columns can used to reliably sort these multiple time slices (internal server clock fluctuations may produce consecutive *stat_first_datetime* or *stat_last_datetime* not always in ascending order).
 
 It is possible to easily execute more precise requests on these statistics. For instance, it is possible to get the number of database updates by application schema, with a statement like:
 
@@ -103,9 +109,13 @@ The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | stat_first_mark_datetime | TIMESTAMPTZ | mark timestamp of the period start                                                               |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_first_time_id       | BIGINT      | internal time id of the period start                                                             |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | stat_last_mark           | TEXT        | mark name of the period end                                                                      |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | stat_last_mark_datetime  | TIMESTAMPTZ | mark timestamp of the period end                                                                 |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_last_time_id        | BIGINT      | internal time id of the period end                                                               |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | stat_role                | TEXT        | connection role                                                                                  |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
@@ -123,6 +133,8 @@ If the marks range is not contained by a single *log session*, i.e. if group sto
 Unlike :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, the *emaj_detailed_log_stat_group()* function doesn't return any rows for tables having no logged updates inside the requested marks range. So *stat_rows* column never contains 0.
 
 Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
+
+If a table is removed from its group and later re-assigned to it during the resquested time frame, several rows are returned in the statistics. In this case, *stat_first_time_id* and *stat_last_time_id* columns can used to reliably sort these multiple time slices (internal server clock fluctuations may produce consecutive *stat_first_datetime* or *stat_last_datetime* not always in ascending order).
 
 Using the *emaj_detailed_log_stat_groups()* function, detailed log statistics can be obtained for several groups at once::
 
@@ -154,9 +166,13 @@ The function returns a set of rows, whose type is named *emaj.emaj_sequence_stat
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
 | stat_first_mark_datetime   | TIMESTAMPTZ | mark timestamp of the period start                                                   |
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
+| stat_first_time_id         | BIGINT      | internal time id of the period start                                                 |
++----------------------------+-------------+--------------------------------------------------------------------------------------+
 | stat_last_mark             | TEXT        | mark name of the period end                                                          |
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
 | stat_last_mark_datetime    | TIMESTAMPTZ | mark timestamp of the period end                                                     |
++----------------------------+-------------+--------------------------------------------------------------------------------------+
+| stat_last_time_id          | BIGINT      | internal time id of the period end                                                   |
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
 | stat_increments            | BIGINT      | number of increments separating both sequence value at the period beginning and end  |
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
@@ -170,6 +186,8 @@ The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the 
 The function returns one row per sequence, even if no change has been detected during the period.
 
 Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a sequence has been added or removed from the tables group during the requested time interval.
+
+If a sequence is removed from its group and later re-assigned to it during the resquested time frame, several rows are returned in the statistics. In this case, *stat_first_time_id* and *stat_last_time_id* columns can used to reliably sort these multiple time slices (internal server clock fluctuations may produce consecutive *stat_first_datetime* or *stat_last_datetime* not always in ascending order).
 
 Sequence statistics are delivered quickly. Needed data are only stored into the small internal table that records the sequences state when marks are set.
 
@@ -219,11 +237,15 @@ Both functions return a set of rows of type *emaj.emaj_log_stat_table_type* and 
 +----------------------------+-------------+-------------------------------------------------------+
 | stat_first_mark_datetime   | TIMESTAMPTZ | timestamp of the time slice lower bound               |
 +----------------------------+-------------+-------------------------------------------------------+
+| stat_first_time_id         | BIGINT      | internal time id of the time slice lower bound        |
++----------------------------+-------------+-------------------------------------------------------+
 | stat_is_log_start          | BOOLEAN     | indicator of log start for the table                  |
 +----------------------------+-------------+-------------------------------------------------------+
 | stat_last_mark             | TEXT        | mark of the time slice upper bound                    |
 +----------------------------+-------------+-------------------------------------------------------+
 | stat_last_mark_datetime    | TIMESTAMPTZ | timestamp of the time slice upper bound               |
++----------------------------+-------------+-------------------------------------------------------+
+| stat_last_time_id          | BIGINT      | internal time id of the time slice upper bound        |
 +----------------------------+-------------+-------------------------------------------------------+
 | stat_is_log_stop           | BOOLEAN     | indicator of log stop for the table                   |
 +----------------------------+-------------+-------------------------------------------------------+
@@ -270,11 +292,15 @@ Both functions return a set of rows of type *emaj.emaj_log_stat_sequence_type* a
 +----------------------------+-------------+--------------------------------------------------------+
 | stat_first_mark_datetime   | TIMESTAMPTZ | timestamp of the time slice lower bound                |
 +----------------------------+-------------+--------------------------------------------------------+
+| stat_first_time_id         | BIGINT      | internal time id of the time slice lower bound         |
++----------------------------+-------------+--------------------------------------------------------+
 | stat_is_log_start          | BOOLEAN     | indicator of log start for the sequence                |
 +----------------------------+-------------+--------------------------------------------------------+
 | stat_last_mark             | TEXT        | mark of the time slice upper bound                     |
 +----------------------------+-------------+--------------------------------------------------------+
 | stat_last_mark_datetime    | TIMESTAMPTZ | timestamp of the time slice upper bound                |
++----------------------------+-------------+--------------------------------------------------------+
+| stat_last_time_id          | BIGINT      | internal time id of the time slice upper bound         |
 +----------------------------+-------------+--------------------------------------------------------+
 | stat_is_log_stop           | BOOLEAN     | indicator of log stop for the sequence                 |
 +----------------------------+-------------+--------------------------------------------------------+

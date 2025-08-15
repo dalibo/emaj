@@ -338,19 +338,19 @@ begin transaction;
 
 rollback;
 -- look at statistics and log content
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj_log_stat_group('myGroup4','Start', NULL) order by 1,2,3,4;
- stat_group | stat_schema | stat_table | stat_first_mark |      stat_last_mark      | stat_rows 
-------------+-------------+------------+-----------------+--------------------------+-----------
- myGroup4   | myschema4   | mypartp1a  | Start           | Remove partition 1a & 1b |         1
- myGroup4   | myschema4   | mypartp1b  | Start           | Remove partition 1a & 1b |         2
- myGroup4   | myschema4   | mypartp2   | Start           |                          |         4
- myGroup4   | myschema4   | mypartp3   | Add partition 3 |                          |         1
- myGroup4   | myschema4   | mytblc1    | Start           |                          |         0
- myGroup4   | myschema4   | mytblc2    | Start           |                          |         0
- myGroup4   | myschema4   | mytblm     | Start           |                          |         0
- myGroup4   | myschema4   | mytblr1    | Start           |                          |         6
- myGroup4   | myschema4   | mytblr2    | Start           |                          |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id |      stat_last_mark      | stat_last_time_id | stat_rows 
+------------+-------------+------------+-----------------+--------------------+--------------------------+-------------------+-----------
+ myGroup4   | myschema4   | mypartp1a  | Start           |              17200 | Remove partition 1a & 1b |             17204 |         1
+ myGroup4   | myschema4   | mypartp1b  | Start           |              17200 | Remove partition 1a & 1b |             17204 |         2
+ myGroup4   | myschema4   | mypartp2   | Start           |              17200 |                          |                   |         4
+ myGroup4   | myschema4   | mypartp3   | Add partition 3 |              17202 |                          |                   |         1
+ myGroup4   | myschema4   | mytblc1    | Start           |              17200 |                          |                   |         0
+ myGroup4   | myschema4   | mytblc2    | Start           |              17200 |                          |                   |         0
+ myGroup4   | myschema4   | mytblm     | Start           |              17200 |                          |                   |         0
+ myGroup4   | myschema4   | mytblr1    | Start           |              17200 |                          |                   |         6
+ myGroup4   | myschema4   | mytblr2    | Start           |              17200 |                          |                   |         0
 (9 rows)
 
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table,
@@ -1206,31 +1206,31 @@ select emaj_consolidate_rollback_group('grp_tmp','End_logged_rollback');
                                5
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
   order by stat_first_mark_datetime, stat_schema, stat_table;
- stat_group |   stat_schema   | stat_table  |  stat_first_mark  |  stat_last_mark   | stat_rows 
-------------+-----------------+-------------+-------------------+-------------------+-----------
- grp_tmp_4  | myschema4       | mypartp2    | Mk1               | Move_tbl_4_to_tmp |         0
- grp_tmp_4  | myschema4       | mypartp3    | Mk1               | Move_tbl_4_to_tmp |         0
- grp_tmp_4  | myschema4       | mytblc1     | Mk1               | Move_tbl_4_to_tmp |         4
- grp_tmp_4  | myschema4       | mytblc2     | Mk1               | Move_tbl_4_to_tmp |         6
- grp_tmp_4  | myschema4       | mytblm      | Mk1               | Move_tbl_4_to_tmp |         0
- grp_tmp_4  | myschema4       | mytblr1     | Mk1               | Move_tbl_4_to_tmp |         0
- grp_tmp_4  | myschema4       | mytblr2     | Mk1               | Move_tbl_4_to_tmp |         0
- grp_tmp_3  | phil's schema"3 | my"tbl4     | Mk1               | Move_tbl_3_to_tmp |         6
- grp_tmp_3  | phil's schema"3 | myTbl2\     | Mk1               | Move_tbl_3_to_tmp |         8
- grp_tmp_3  | phil's schema"3 | phil's tbl1 | Mk1               | Move_tbl_3_to_tmp |         0
- grp_tmp    | phil's schema"3 | my"tbl4     | Move_tbl_3_to_tmp |                   |         4
- grp_tmp    | phil's schema"3 | myTbl2\     | Move_tbl_3_to_tmp |                   |         1
- grp_tmp    | phil's schema"3 | phil's tbl1 | Move_tbl_3_to_tmp |                   |         0
- grp_tmp    | myschema4       | mypartp2    | Move_tbl_4_to_tmp |                   |         0
- grp_tmp    | myschema4       | mypartp3    | Move_tbl_4_to_tmp |                   |         0
- grp_tmp    | myschema4       | mytblc1     | Move_tbl_4_to_tmp | [deleted mark]    |         0
- grp_tmp    | myschema4       | mytblc2     | Move_tbl_4_to_tmp |                   |         6
- grp_tmp    | myschema4       | mytblm      | Move_tbl_4_to_tmp |                   |         0
- grp_tmp    | myschema4       | mytblr1     | Move_tbl_4_to_tmp |                   |         0
- grp_tmp    | myschema4       | mytblr2     | Move_tbl_4_to_tmp |                   |         0
+ stat_group |   stat_schema   | stat_table  |  stat_first_mark  | stat_first_time_id |  stat_last_mark   | stat_last_time_id | stat_rows 
+------------+-----------------+-------------+-------------------+--------------------+-------------------+-------------------+-----------
+ grp_tmp_4  | myschema4       | mypartp2    | Mk1               |              17610 | Move_tbl_4_to_tmp |             17617 |         0
+ grp_tmp_4  | myschema4       | mypartp3    | Mk1               |              17610 | Move_tbl_4_to_tmp |             17617 |         0
+ grp_tmp_4  | myschema4       | mytblc1     | Mk1               |              17610 | Move_tbl_4_to_tmp |             17617 |         4
+ grp_tmp_4  | myschema4       | mytblc2     | Mk1               |              17610 | Move_tbl_4_to_tmp |             17617 |         6
+ grp_tmp_4  | myschema4       | mytblm      | Mk1               |              17610 | Move_tbl_4_to_tmp |             17617 |         0
+ grp_tmp_4  | myschema4       | mytblr1     | Mk1               |              17610 | Move_tbl_4_to_tmp |             17617 |         0
+ grp_tmp_4  | myschema4       | mytblr2     | Mk1               |              17610 | Move_tbl_4_to_tmp |             17617 |         0
+ grp_tmp_3  | phil's schema"3 | my"tbl4     | Mk1               |              17610 | Move_tbl_3_to_tmp |             17615 |         6
+ grp_tmp_3  | phil's schema"3 | myTbl2\     | Mk1               |              17610 | Move_tbl_3_to_tmp |             17615 |         8
+ grp_tmp_3  | phil's schema"3 | phil's tbl1 | Mk1               |              17610 | Move_tbl_3_to_tmp |             17615 |         0
+ grp_tmp    | phil's schema"3 | my"tbl4     | Move_tbl_3_to_tmp |              17615 |                   |                   |         4
+ grp_tmp    | phil's schema"3 | myTbl2\     | Move_tbl_3_to_tmp |              17615 |                   |                   |         1
+ grp_tmp    | phil's schema"3 | phil's tbl1 | Move_tbl_3_to_tmp |              17615 |                   |                   |         0
+ grp_tmp    | myschema4       | mypartp2    | Move_tbl_4_to_tmp |              17617 |                   |                   |         0
+ grp_tmp    | myschema4       | mypartp3    | Move_tbl_4_to_tmp |              17617 |                   |                   |         0
+ grp_tmp    | myschema4       | mytblc1     | Move_tbl_4_to_tmp |              17617 | [deleted mark]    |             17622 |         0
+ grp_tmp    | myschema4       | mytblc2     | Move_tbl_4_to_tmp |              17617 |                   |                   |         6
+ grp_tmp    | myschema4       | mytblm      | Move_tbl_4_to_tmp |              17617 |                   |                   |         0
+ grp_tmp    | myschema4       | mytblr1     | Move_tbl_4_to_tmp |              17617 |                   |                   |         0
+ grp_tmp    | myschema4       | mytblr2     | Move_tbl_4_to_tmp |              17617 |                   |                   |         0
 (20 rows)
 
 select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_group,
@@ -1332,31 +1332,31 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | Tables group change not rolled back: E-Maj priority for "phil's schema""3"."phil's tbl1"
 (19 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
   order by stat_first_mark_datetime, stat_schema, stat_table;
- stat_group |   stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_rows 
-------------+-----------------+-------------+-----------------+----------------+-----------
- grp_tmp_4  | myschema4       | mypartp2    | Mk1             | [deleted mark] |         0
- grp_tmp_4  | myschema4       | mypartp3    | Mk1             | [deleted mark] |         0
- grp_tmp_4  | myschema4       | mytblc1     | Mk1             | [deleted mark] |         4
- grp_tmp_4  | myschema4       | mytblc2     | Mk1             | [deleted mark] |         6
- grp_tmp_4  | myschema4       | mytblm      | Mk1             | [deleted mark] |         0
- grp_tmp_4  | myschema4       | mytblr1     | Mk1             | [deleted mark] |         0
- grp_tmp_4  | myschema4       | mytblr2     | Mk1             | [deleted mark] |         0
- grp_tmp_3  | phil's schema"3 | my"tbl4     | Mk1             | [deleted mark] |         6
- grp_tmp_3  | phil's schema"3 | myTbl2\     | Mk1             | [deleted mark] |         8
- grp_tmp_3  | phil's schema"3 | phil's tbl1 | Mk1             | [deleted mark] |         0
- grp_tmp    | phil's schema"3 | my"tbl4     | [deleted mark]  |                |         0
- grp_tmp    | phil's schema"3 | myTbl2\     | [deleted mark]  |                |         0
- grp_tmp    | phil's schema"3 | phil's tbl1 | [deleted mark]  |                |         0
- grp_tmp    | myschema4       | mypartp2    | [deleted mark]  |                |         0
- grp_tmp    | myschema4       | mypartp3    | [deleted mark]  |                |         0
- grp_tmp    | myschema4       | mytblc1     | [deleted mark]  | [deleted mark] |         0
- grp_tmp    | myschema4       | mytblc2     | [deleted mark]  |                |         0
- grp_tmp    | myschema4       | mytblm      | [deleted mark]  |                |         0
- grp_tmp    | myschema4       | mytblr1     | [deleted mark]  |                |         0
- grp_tmp    | myschema4       | mytblr2     | [deleted mark]  |                |         0
+ stat_group |   stat_schema   | stat_table  | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
+------------+-----------------+-------------+-----------------+--------------------+----------------+-------------------+-----------
+ grp_tmp_4  | myschema4       | mypartp2    | Mk1             |              17610 | [deleted mark] |             17617 |         0
+ grp_tmp_4  | myschema4       | mypartp3    | Mk1             |              17610 | [deleted mark] |             17617 |         0
+ grp_tmp_4  | myschema4       | mytblc1     | Mk1             |              17610 | [deleted mark] |             17617 |         4
+ grp_tmp_4  | myschema4       | mytblc2     | Mk1             |              17610 | [deleted mark] |             17617 |         6
+ grp_tmp_4  | myschema4       | mytblm      | Mk1             |              17610 | [deleted mark] |             17617 |         0
+ grp_tmp_4  | myschema4       | mytblr1     | Mk1             |              17610 | [deleted mark] |             17617 |         0
+ grp_tmp_4  | myschema4       | mytblr2     | Mk1             |              17610 | [deleted mark] |             17617 |         0
+ grp_tmp_3  | phil's schema"3 | my"tbl4     | Mk1             |              17610 | [deleted mark] |             17615 |         6
+ grp_tmp_3  | phil's schema"3 | myTbl2\     | Mk1             |              17610 | [deleted mark] |             17615 |         8
+ grp_tmp_3  | phil's schema"3 | phil's tbl1 | Mk1             |              17610 | [deleted mark] |             17615 |         0
+ grp_tmp    | phil's schema"3 | my"tbl4     | [deleted mark]  |              17615 |                |                   |         0
+ grp_tmp    | phil's schema"3 | myTbl2\     | [deleted mark]  |              17615 |                |                   |         0
+ grp_tmp    | phil's schema"3 | phil's tbl1 | [deleted mark]  |              17615 |                |                   |         0
+ grp_tmp    | myschema4       | mypartp2    | [deleted mark]  |              17617 |                |                   |         0
+ grp_tmp    | myschema4       | mypartp3    | [deleted mark]  |              17617 |                |                   |         0
+ grp_tmp    | myschema4       | mytblc1     | [deleted mark]  |              17617 | [deleted mark] |             17622 |         0
+ grp_tmp    | myschema4       | mytblc2     | [deleted mark]  |              17617 |                |                   |         0
+ grp_tmp    | myschema4       | mytblm      | [deleted mark]  |              17617 |                |                   |         0
+ grp_tmp    | myschema4       | mytblr1     | [deleted mark]  |              17617 |                |                   |         0
+ grp_tmp    | myschema4       | mytblr2     | [deleted mark]  |              17617 |                |                   |         0
 (20 rows)
 
 -- delete all marks before Mk3
@@ -2159,14 +2159,14 @@ select emaj_set_mark_group('truncateTestGroup','M2');
                   10
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
-    stat_group     |   stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
--------------------+-----------------+-------------+-----------------+----------------+-----------+-----------+-----------
- truncateTestGroup | myschema4       | mytblc2     | M1              |                | postgres  | TRUNCATE  |         6
- truncateTestGroup | phil's schema"3 | my"tbl4     | M1              |                | postgres  | TRUNCATE  |         8
- truncateTestGroup | phil's schema"3 | myTbl2\     | M1              |                | postgres  | TRUNCATE  |         6
- truncateTestGroup | phil's schema"3 | phil's tbl1 | M1              |                | postgres  | TRUNCATE  |        19
+    stat_group     |   stat_schema   | stat_table  | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
+-------------------+-----------------+-------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
+ truncateTestGroup | myschema4       | mytblc2     | M1              |              18003 |                |                   | postgres  | TRUNCATE  |         6
+ truncateTestGroup | phil's schema"3 | my"tbl4     | M1              |              18003 |                |                   | postgres  | TRUNCATE  |         8
+ truncateTestGroup | phil's schema"3 | myTbl2\     | M1              |              18003 |                |                   | postgres  | TRUNCATE  |         6
+ truncateTestGroup | phil's schema"3 | phil's tbl1 | M1              |              18003 |                |                   | postgres  | TRUNCATE  |        19
 (4 rows)
 
 SELECT emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=NONE, EMAJ_COLUMNS=MIN', '{"myschema4.mypartp3"}', :'EMAJTESTTMPDIR');
@@ -2192,18 +2192,18 @@ select * from emaj_logged_rollback_group('truncateTestGroup','M1', false);
  Notice        | 4 / 10 tables effectively processed.
 (2 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
-    stat_group     |   stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
--------------------+-----------------+-------------+-----------------+----------------+-----------+-----------+-----------
- truncateTestGroup | myschema4       | mytblc2     | M1              |                | postgres  | INSERT    |         6
- truncateTestGroup | myschema4       | mytblc2     | M1              |                | postgres  | TRUNCATE  |         6
- truncateTestGroup | phil's schema"3 | my"tbl4     | M1              |                | postgres  | INSERT    |         8
- truncateTestGroup | phil's schema"3 | my"tbl4     | M1              |                | postgres  | TRUNCATE  |         8
- truncateTestGroup | phil's schema"3 | myTbl2\     | M1              |                | postgres  | INSERT    |         6
- truncateTestGroup | phil's schema"3 | myTbl2\     | M1              |                | postgres  | TRUNCATE  |         6
- truncateTestGroup | phil's schema"3 | phil's tbl1 | M1              |                | postgres  | INSERT    |        19
- truncateTestGroup | phil's schema"3 | phil's tbl1 | M1              |                | postgres  | TRUNCATE  |        19
+    stat_group     |   stat_schema   | stat_table  | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
+-------------------+-----------------+-------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
+ truncateTestGroup | myschema4       | mytblc2     | M1              |              18003 |                |                   | postgres  | INSERT    |         6
+ truncateTestGroup | myschema4       | mytblc2     | M1              |              18003 |                |                   | postgres  | TRUNCATE  |         6
+ truncateTestGroup | phil's schema"3 | my"tbl4     | M1              |              18003 |                |                   | postgres  | INSERT    |         8
+ truncateTestGroup | phil's schema"3 | my"tbl4     | M1              |              18003 |                |                   | postgres  | TRUNCATE  |         8
+ truncateTestGroup | phil's schema"3 | myTbl2\     | M1              |              18003 |                |                   | postgres  | INSERT    |         6
+ truncateTestGroup | phil's schema"3 | myTbl2\     | M1              |              18003 |                |                   | postgres  | TRUNCATE  |         6
+ truncateTestGroup | phil's schema"3 | phil's tbl1 | M1              |              18003 |                |                   | postgres  | INSERT    |        19
+ truncateTestGroup | phil's schema"3 | phil's tbl1 | M1              |              18003 |                |                   | postgres  | TRUNCATE  |        19
 (8 rows)
 
 select emaj_gen_sql_group('truncateTestGroup','M1','M2',:'EMAJTESTTMPDIR' || '/gensql.sql');

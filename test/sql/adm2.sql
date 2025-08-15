@@ -54,16 +54,16 @@ select emaj.emaj_delete_mark_group('myGroup1','Multi-2');
 
 -- use this mark for the other group before delete it
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup2', 'Multi-2', NULL)
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
 select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
 
 -- get statistics using old marks
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup2', 'M1', 'M2')
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 
@@ -172,8 +172,8 @@ select emaj.emaj_rename_mark_group('phil''s group#3",','phil''s mark #1','phil''
 -- 
 select emaj.emaj_delete_mark_group('phil''s group#3",','M2_again!');
 --
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','M1_rollbackable','');
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','M1_rollbackable','');
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
   from emaj.emaj_log_stat_table('phil''s schema"3', 'phil''s tbl1');
@@ -508,7 +508,7 @@ select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d
        cons_target_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_target_rlbk_mark_time_id, cons_rows, cons_marks
   from emaj.emaj_get_consolidable_rollbacks();
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 
 -- 2 consolidations of 2 nested logged rollbacks
@@ -552,7 +552,7 @@ set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 
 -- consolidation of 2 logged rollbacks referencing the same mark
@@ -584,7 +584,7 @@ set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 
 -- consolidation of 1 from 2 overlapping logged rollbacks
@@ -619,7 +619,7 @@ set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 
 reset role;

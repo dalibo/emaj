@@ -7,6 +7,8 @@ E-Maj - Change log
     generated columns.
   * Add 2 functions sets to show changes statistics for a single table or
     sequence on a given time frame.
+  * Add 2 columns to the ouput composite type of statistics functions, namely
+    stat_first_time_id and stat_last_time_id.
   * Add checks on the stability of "GENERATED ALWAYS AS expression" columns
     in application tables.
   * Add a check on the existence of application triggers registered as "to be

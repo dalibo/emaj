@@ -88,7 +88,7 @@ select nextval('myschema2.myseq2');
 select nextval('myschema2.myseq2');
 
 -- get statistics
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
@@ -124,7 +124,7 @@ begin;
   select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add myseq2';
   select emaj.emaj_delete_mark_group('myGroup2','Add myseq2');
   select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_id limit 1;
-  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
     from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
     order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
   select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
@@ -218,7 +218,7 @@ select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK','S
 select sql_text from emaj_temp_sql where sql_line_number = 0;
 
 -- testing statistics
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
@@ -232,7 +232,7 @@ select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', :'EMAJTESTTM
 begin;
   -- testing the alter_group mark deletion
   select emaj.emaj_delete_mark_group('myGroup1','Sequence_removed');
-  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
     from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
     order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
   select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
@@ -316,7 +316,7 @@ insert into myschema2.mytbl7 values (4),(5);
 -- remove the alter group mark just after the alter operation and then get statistics and set a mark
 begin;
   select emaj.emaj_delete_mark_group('myGroup2','Add mytbl7');
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
     from emaj.emaj_log_stat_group('myGroup2','Before ADD_TBL',NULL);
   select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
   select mark_log_rows_before_next from emaj.emaj_mark where mark_name = 'Before ADD_TBL';
@@ -326,10 +326,10 @@ rollback;
 select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
 update myschema2.mytbl7 set col71 = 6 where col71 = 2;
 select col71, emaj_verb, emaj_tuple from emaj_myschema2.mytbl7_log order by emaj_gid;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
 select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test','After ADD_TBL');
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
   from emaj.emaj_log_stat_table('myschema2', 'mytbl7', 'myGroup2', 'Mk1');
@@ -376,7 +376,7 @@ begin;
   select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
     where tbl_schema = 'myschema2' and tbl_name = 'mytbl7' order by tbl_time_id;
   select * from emaj.emaj_seq_hole where sqhl_schema = 'myschema2' and sqhl_table = 'mytbl7';
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
     from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
 rollback;
 
@@ -416,9 +416,9 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
 delete from myschema2.myTbl7 where col71 = 9;
 
 -- get statistics
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
   from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows 
   from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test',NULL);
 
 -- dump changes
@@ -470,14 +470,14 @@ begin;
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
     from emaj.emaj_rollback_group('myGroup1','Mk2c',true);
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
     from emaj.emaj_log_stat_group('myGroup1','Mk2b',NULL) order by 1,2,3,4;
 rollback;
 
 -- get statistics
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
   from emaj.emaj_log_stat_group('myGroup1','Mk1',NULL);
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows 
   from emaj.emaj_detailed_log_stat_group('myGroup1','Mk1',NULL);
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
   from emaj.emaj_log_stat_table('myschema1', 'myTbl3', 'myGroup1', 'Revert_sequences_removal');
@@ -661,10 +661,10 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','after move');
 update myschema2."myTbl3" set col33 = 12.0 where col31 >= 9;
 
 -- groups statistics
-select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select  stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL)
   where stat_schema = 'myschema2' and stat_table = 'myTbl3';
-select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_verb, stat_role, stat_rows
+select  stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_verb, stat_role, stat_rows
   from emaj.emaj_detailed_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL) where stat_schema = 'myschema2' and stat_table = 'myTbl3';
 
 -- table and sequence statistics

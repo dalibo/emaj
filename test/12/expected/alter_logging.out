@@ -313,14 +313,14 @@ select nextval('myschema2.myseq2');
 (1 row)
 
 -- get statistics
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
- stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_last_mark | stat_increments | stat_has_structure_changed 
-------------+-------------+------------------+-----------------+----------------+-----------------+----------------------------
- myGroup2   | myschema2   | myTbl3_col31_seq | ADD_SEQ test    |                |               0 | f
- myGroup2   | myschema2   | myseq1           | ADD_SEQ test    |                |               0 | f
- myGroup2   | myschema2   | myseq2           | Add myseq2      |                |               3 | f
+ stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
+------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
+ myGroup2   | myschema2   | myTbl3_col31_seq | ADD_SEQ test    |               9100 |                |                   |               0 | f
+ myGroup2   | myschema2   | myseq1           | ADD_SEQ test    |               9100 |                |                   |               0 | f
+ myGroup2   | myschema2   | myseq2           | Add myseq2      |               9102 |                |                   |               3 | f
 (3 rows)
 
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
@@ -427,14 +427,14 @@ begin;
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
 (1 row)
 
-  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
     from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
     order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
- stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_last_mark | stat_increments | stat_has_structure_changed 
-------------+-------------+------------------+-----------------+----------------+-----------------+----------------------------
- myGroup2   | myschema2   | myTbl3_col31_seq | ADD_SEQ test    |                |               0 | f
- myGroup2   | myschema2   | myseq1           | ADD_SEQ test    |                |               0 | f
- myGroup2   | myschema2   | myseq2           | [deleted mark]  |                |               3 | f
+ stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
+------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
+ myGroup2   | myschema2   | myTbl3_col31_seq | ADD_SEQ test    |               9100 |                |                   |               0 | f
+ myGroup2   | myschema2   | myseq1           | ADD_SEQ test    |               9100 |                |                   |               0 | f
+ myGroup2   | myschema2   | myseq2           | [deleted mark]  |               9102 |                |                   |               3 | f
 (3 rows)
 
   select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
@@ -813,13 +813,13 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
 (3 rows)
 
 -- testing statistics
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
- stat_group | stat_schema |   stat_sequence   | stat_first_mark |  stat_last_mark  | stat_increments | stat_has_structure_changed 
-------------+-------------+-------------------+-----------------+------------------+-----------------+----------------------------
- myGroup1   | myschema1   | myTbl3_col31_seq  | Before_remove   | Sequence_removed |               0 | f
- myGroup1   | myschema1   | mytbl2b_col20_seq | Before_remove   |                  |               0 | f
+ stat_group | stat_schema |   stat_sequence   | stat_first_mark | stat_first_time_id |  stat_last_mark  | stat_last_time_id | stat_increments | stat_has_structure_changed 
+------------+-------------+-------------------+-----------------+--------------------+------------------+-------------------+-----------------+----------------------------
+ myGroup1   | myschema1   | myTbl3_col31_seq  | Before_remove   |               9301 | Sequence_removed |              9302 |               0 | f
+ myGroup1   | myschema1   | mytbl2b_col20_seq | Before_remove   |               9301 |                  |                   |               0 | f
 (2 rows)
 
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
@@ -859,13 +859,13 @@ begin;
                       1
 (1 row)
 
-  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
     from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
     order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
- stat_group | stat_schema |   stat_sequence   | stat_first_mark | stat_last_mark | stat_increments | stat_has_structure_changed 
-------------+-------------+-------------------+-----------------+----------------+-----------------+----------------------------
- myGroup1   | myschema1   | myTbl3_col31_seq  | Before_remove   | [deleted mark] |               0 | f
- myGroup1   | myschema1   | mytbl2b_col20_seq | Before_remove   |                |               0 | f
+ stat_group | stat_schema |   stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
+------------+-------------+-------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
+ myGroup1   | myschema1   | myTbl3_col31_seq  | Before_remove   |               9301 | [deleted mark] |              9302 |               0 | f
+ myGroup1   | myschema1   | mytbl2b_col20_seq | Before_remove   |               9301 |                |                   |               0 | f
 (2 rows)
 
   select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
@@ -1139,17 +1139,17 @@ begin;
                       1
 (1 row)
 
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
     from emaj.emaj_log_stat_group('myGroup2','Before ADD_TBL',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------
- myGroup2   | myschema2   | myTbl3     | Before ADD_TBL  |                |         0
- myGroup2   | myschema2   | mytbl1     | Before ADD_TBL  |                |         0
- myGroup2   | myschema2   | mytbl2     | Before ADD_TBL  |                |         0
- myGroup2   | myschema2   | mytbl4     | Before ADD_TBL  |                |         0
- myGroup2   | myschema2   | mytbl5     | Before ADD_TBL  |                |         0
- myGroup2   | myschema2   | mytbl6     | Before ADD_TBL  |                |         0
- myGroup2   | myschema2   | mytbl7     | [deleted mark]  |                |         2
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
+ myGroup2   | myschema2   | myTbl3     | Before ADD_TBL  |               9501 |                |                   |         0
+ myGroup2   | myschema2   | mytbl1     | Before ADD_TBL  |               9501 |                |                   |         0
+ myGroup2   | myschema2   | mytbl2     | Before ADD_TBL  |               9501 |                |                   |         0
+ myGroup2   | myschema2   | mytbl4     | Before ADD_TBL  |               9501 |                |                   |         0
+ myGroup2   | myschema2   | mytbl5     | Before ADD_TBL  |               9501 |                |                   |         0
+ myGroup2   | myschema2   | mytbl6     | Before ADD_TBL  |               9501 |                |                   |         0
+ myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               9502 |                |                   |         2
 (7 rows)
 
   select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
@@ -1182,17 +1182,17 @@ select col71, emaj_verb, emaj_tuple from emaj_myschema2.mytbl7_log order by emaj
      6 | UPD       | NEW
 (4 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------
- myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl7     | Add mytbl7      |                |         3
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
+ myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl7     | Add mytbl7      |               9502 |                |                   |         3
 (7 rows)
 
 select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
@@ -1201,12 +1201,12 @@ select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
                    9
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test','After ADD_TBL');
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl7     | Add mytbl7      | After ADD_TBL  | postgres  | INSERT    |         2
- myGroup2   | myschema2   | mytbl7     | Add mytbl7      | After ADD_TBL  | postgres  | UPDATE    |         1
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl7     | Add mytbl7      |               9502 | After ADD_TBL  |              9505 | postgres  | INSERT    |         2
+ myGroup2   | myschema2   | mytbl7     | Add mytbl7      |               9502 | After ADD_TBL  |              9505 | postgres  | UPDATE    |         1
 (2 rows)
 
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
@@ -1363,17 +1363,17 @@ begin;
  myschema2   | mytbl7     |               9502 |             9506 |              3
 (1 row)
 
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
     from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------
- myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl7     | [deleted mark]  |                |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
+ myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               9502 |                |                   |         0
 (7 rows)
 
 rollback;
@@ -1500,26 +1500,26 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
 
 delete from myschema2.myTbl7 where col71 = 9;
 -- get statistics
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
   from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------
- myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |                |         0
- myGroup2   | myschema2   | mytbl7     | [deleted mark]  | Remove mytbl7  |         3
- myGroup2   | myschema2   | mytbl7     | Re-add mytbl7   |                |         1
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
+ myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |               9500 |                |                   |         0
+ myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               9502 | Remove mytbl7  |              9509 |         3
+ myGroup2   | myschema2   | mytbl7     | Re-add mytbl7   |               9510 |                |                   |         1
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows 
   from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl7     | [deleted mark]  | Remove mytbl7  | postgres  | INSERT    |         3
- myGroup2   | myschema2   | mytbl7     | Re-add mytbl7   |                | postgres  | DELETE    |         1
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               9502 | Remove mytbl7  |              9509 | postgres  | INSERT    |         3
+ myGroup2   | myschema2   | mytbl7     | Re-add mytbl7   |               9510 |                |                   | postgres  | DELETE    |         1
 (2 rows)
 
 -- dump changes
@@ -1771,35 +1771,35 @@ begin;
  Warning       | The table myschema1.mytbl2b has been left unchanged (not in group anymore since <timestamp>)
 (5 rows)
 
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
     from emaj.emaj_log_stat_group('myGroup1','Mk2b',NULL) order by 1,2,3,4;
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------
- myGroup1   | myschema1   | myTbl3     | Mk2b            | [deleted mark] |         2
- myGroup1   | myschema1   | mytbl1     | Mk2b            |                |         0
- myGroup1   | myschema1   | mytbl2     | Mk2b            |                |         0
- myGroup1   | myschema1   | mytbl2b    | Mk2b            | [deleted mark] |         0
- myGroup1   | myschema1   | mytbl4     | Mk2b            |                |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
+ myGroup1   | myschema1   | myTbl3     | Mk2b            |               9300 | [deleted mark] |              9701 |         2
+ myGroup1   | myschema1   | mytbl1     | Mk2b            |               9300 |                |                   |         0
+ myGroup1   | myschema1   | mytbl2     | Mk2b            |               9300 |                |                   |         0
+ myGroup1   | myschema1   | mytbl2b    | Mk2b            |               9300 | [deleted mark] |              9701 |         0
+ myGroup1   | myschema1   | mytbl4     | Mk2b            |               9300 |                |                   |         0
 (5 rows)
 
 rollback;
 -- get statistics
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
   from emaj.emaj_log_stat_group('myGroup1','Mk1',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark |         stat_last_mark         | stat_rows 
-------------+-------------+------------+-----------------+--------------------------------+-----------
- myGroup1   | myschema1   | myTbl3     | Mk1             | 2 tables removed from myGroup1 |         2
- myGroup1   | myschema1   | mytbl1     | Mk1             |                                |         0
- myGroup1   | myschema1   | mytbl2     | Mk1             |                                |         0
- myGroup1   | myschema1   | mytbl2b    | Mk1             | 2 tables removed from myGroup1 |         0
- myGroup1   | myschema1   | mytbl4     | Mk1             |                                |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id |         stat_last_mark         | stat_last_time_id | stat_rows 
+------------+-------------+------------+-----------------+--------------------+--------------------------------+-------------------+-----------
+ myGroup1   | myschema1   | myTbl3     | Mk1             |               9001 | 2 tables removed from myGroup1 |              9701 |         2
+ myGroup1   | myschema1   | mytbl1     | Mk1             |               9001 |                                |                   |         0
+ myGroup1   | myschema1   | mytbl2     | Mk1             |               9001 |                                |                   |         0
+ myGroup1   | myschema1   | mytbl2b    | Mk1             |               9001 | 2 tables removed from myGroup1 |              9701 |         0
+ myGroup1   | myschema1   | mytbl4     | Mk1             |               9001 |                                |                   |         0
 (5 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows 
   from emaj.emaj_detailed_log_stat_group('myGroup1','Mk1',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark |         stat_last_mark         | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------------+--------------------------------+-----------+-----------+-----------
- myGroup1   | myschema1   | myTbl3     | Mk1             | 2 tables removed from myGroup1 | postgres  | INSERT    |         2
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id |         stat_last_mark         | stat_last_time_id | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------+--------------------------------+-------------------+-----------+-----------+-----------
+ myGroup1   | myschema1   | myTbl3     | Mk1             |               9001 | 2 tables removed from myGroup1 |              9701 | postgres  | INSERT    |         2
 (1 row)
 
 select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
@@ -2628,21 +2628,21 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','after move');
 
 update myschema2."myTbl3" set col33 = 12.0 where col31 >= 9;
 -- groups statistics
-select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select  stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL)
   where stat_schema = 'myschema2' and stat_table = 'myTbl3';
- stat_group | stat_schema | stat_table |    stat_first_mark     |     stat_last_mark     | stat_rows 
-------------+-------------+------------+------------------------+------------------------+-----------
- myGroup2   | myschema2   | myTbl3     | before move            | move table to myGroup1 |         3
- myGroup1   | myschema2   | myTbl3     | move table to myGroup1 |                        |         2
+ stat_group | stat_schema | stat_table |    stat_first_mark     | stat_first_time_id |     stat_last_mark     | stat_last_time_id | stat_rows 
+------------+-------------+------------+------------------------+--------------------+------------------------+-------------------+-----------
+ myGroup2   | myschema2   | myTbl3     | before move            |              10004 | move table to myGroup1 |             10005 |         3
+ myGroup1   | myschema2   | myTbl3     | move table to myGroup1 |              10005 |                        |                   |         2
 (2 rows)
 
-select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_verb, stat_role, stat_rows
+select  stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_verb, stat_role, stat_rows
   from emaj.emaj_detailed_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL) where stat_schema = 'myschema2' and stat_table = 'myTbl3';
- stat_group | stat_schema | stat_table |    stat_first_mark     |     stat_last_mark     | stat_verb | stat_role | stat_rows 
-------------+-------------+------------+------------------------+------------------------+-----------+-----------+-----------
- myGroup2   | myschema2   | myTbl3     | before move            | move table to myGroup1 | UPDATE    | postgres  |         3
- myGroup1   | myschema2   | myTbl3     | move table to myGroup1 |                        | UPDATE    | postgres  |         2
+ stat_group | stat_schema | stat_table |    stat_first_mark     | stat_first_time_id |     stat_last_mark     | stat_last_time_id | stat_verb | stat_role | stat_rows 
+------------+-------------+------------+------------------------+--------------------+------------------------+-------------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | myTbl3     | before move            |              10004 | move table to myGroup1 |             10005 | UPDATE    | postgres  |         3
+ myGroup1   | myschema2   | myTbl3     | move table to myGroup1 |              10005 |                        |                   | UPDATE    | postgres  |         2
 (2 rows)
 
 -- table and sequence statistics

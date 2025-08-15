@@ -210,23 +210,23 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 (1 row)
 
 --
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_group('myGroup1', 'M2', 'M6') order by 1,2,3,4;
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------
- myGroup1   | myschema1   | myTbl3     | M2              | [deleted mark] |         0
- myGroup1   | myschema1   | mytbl1     | M2              | M6             |        12
- myGroup1   | myschema1   | mytbl2     | M2              | M6             |         1
- myGroup1   | myschema1   | mytbl2b    | M2              | M6             |         1
- myGroup1   | myschema1   | mytbl4     | M2              | M6             |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
+ myGroup1   | myschema1   | myTbl3     | M2              |                 17 | [deleted mark] |                28 |         0
+ myGroup1   | myschema1   | mytbl1     | M2              |                 17 | M6             |                37 |        12
+ myGroup1   | myschema1   | mytbl2     | M2              |                 17 | M6             |                37 |         1
+ myGroup1   | myschema1   | mytbl2b    | M2              |                 17 | M6             |                37 |         1
+ myGroup1   | myschema1   | mytbl4     | M2              |                 17 | M6             |                37 |         0
 (5 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup1', 'M2', 'M6')
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
- stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_last_mark | stat_increments | stat_has_structure_changed 
-------------+-------------+------------------+-----------------+----------------+-----------------+----------------------------
- myGroup1   | myschema1   | myTbl3_col31_seq | M2              | M6             |               1 | f
+ stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
+------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
+ myGroup1   | myschema1   | myTbl3_col31_seq | M2              |                 17 | M6             |                37 |               1 | f
 (1 row)
 
 -----------------------------
@@ -360,13 +360,13 @@ insert into mySchema6.table_with_51_characters_long_name_____0_________0a values
 delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
 --
 set role emaj_regression_tests_adm_user2;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL) order by 1,2,3,4;
- stat_group | stat_schema |                       stat_table                        | stat_first_mark | stat_last_mark | stat_rows 
-------------+-------------+---------------------------------------------------------+-----------------+----------------+-----------
- myGroup6   | myschema6   | table_with_50_characters_long_name_____0_________0      | Start G6        |                |         0
- myGroup6   | myschema6   | table_with_51_characters_long_name_____0_________0a     | Start G6        |                |         6
- myGroup6   | myschema6   | table_with_55_characters_long_name_____0_________0fghij | Start G6        |                |         0
+ stat_group | stat_schema |                       stat_table                        | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
+------------+-------------+---------------------------------------------------------+-----------------+--------------------+----------------+-------------------+-----------
+ myGroup6   | myschema6   | table_with_50_characters_long_name_____0_________0      | Start G6        |                 44 |                |                   |         0
+ myGroup6   | myschema6   | table_with_51_characters_long_name_____0_________0a     | Start G6        |                 44 |                |                   |         6
+ myGroup6   | myschema6   | table_with_55_characters_long_name_____0_________0fghij | Start G6        |                 44 |                |                   |         0
 (3 rows)
 
 select * from emaj.emaj_rollback_group('myGroup6', 'Start G6');

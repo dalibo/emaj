@@ -40,9 +40,13 @@ La fonction retourne un ensemble de lignes, de type *emaj.emaj_log_stat_type* et
 +--------------------------+-------------+-----------------------------------------------------------------------------------------+
 | stat_first_mark_datetime | TIMESTAMPTZ | date et heure de la marque de début de période                                          |
 +--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_first_time_id       | BIGINT      | identifiant interne de temps correspondant au début de la période                       |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
 | stat_last_mark           | TEXT        | nom de la marque de fin de période                                                      |
 +--------------------------+-------------+-----------------------------------------------------------------------------------------+
 | stat_last_mark_datetime  | TIMESTAMPTZ | date et heure de la marque de fin de période                                            |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_last_time_id        | BIGINT      | identifiant interne de temps correspondant à la fin de la période                       |
 +--------------------------+-------------+-----------------------------------------------------------------------------------------+
 | stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées                                          |
 +--------------------------+-------------+-----------------------------------------------------------------------------------------+
@@ -56,6 +60,8 @@ Si l’intervalle de marques n’est pas contenu dans une seule *session de log*
 La fonction retourne une ligne par table, même si aucune mise à jour n'est enregistrée pour la table entre les deux marques. Dans ce cas, la colonne *stat_rows* contient la valeur 0.
 
 La plupart du temps, les colonnes *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* et *stat_last_mark_datetime* référencent les marques de début et de fin de période demandée. Mais elles peuvent contenir des valeurs différentes si une table a été ajoutée ou supprimée du groupe de tables pendant l’intervalle de temps demandé.
+
+Si, sur l’intervalle de temps demandé, une table a été supprimée du groupe de tables puis y a été assignée à nouveau, plusieurs lignes sont restituées dans les statistiques. Les colonnes *stat_first_time_id* ou *stat_last_time_id* permettent alors de trier ces tranches de temps de manière fiable (les fluctuations de l’horloge interne des serveurs peuvent produire des *stat_first_datetime* et *stat_last_datetime* qui ne sont pas toujours croissantes dans le temps).
 
 Il est possible aisément d'exécuter des requêtes plus précises sur ces statistiques. Ainsi par exemple, on peut obtenir le nombre de mises à jour par schéma applicatif avec une requête du type :
 
@@ -90,29 +96,33 @@ Le parcours des tables de log permet d'obtenir des informations plus détaillée
 
 La fonction retourne un ensemble de lignes, de type *emaj.emaj_detailed_log_stat_type* et comportant les colonnes suivantes :
 
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| Column                   | Type        | Description                                                                              |
-+==========================+=============+==========================================================================================+
-| stat_group               | TEXT        | nom du groupe de tables                                                                  |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_schema              | TEXT        | nom du schéma                                                                            |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_table               | TEXT        | nom de la table                                                                          |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_first_mark          | TEXT        | nom de la marque de début de période                                                     |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_first_mark_datetime | TIMESTAMPTZ | date et heure de la marque de début de période                                           |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_last_mark           | TEXT        | nom de la marque de fin de période                                                       |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_last_mark_datetime  | TIMESTAMPTZ | date et heure de la marque de fin de période                                             |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_role                | TEXT        | rôle de connexion                                                                        |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_verb                | TEXT        | verbe SQL à l'origine de la mise à jour (*INSERT* / *UPDATE* / *DELETE* / *TRUNCATE*)    |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées                                           |
-+--------------------------+-------------+------------------------------------------------------------------------------------------+
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| Column                   | Type        | Description                                                                             |
++==========================+=============+=========================================================================================+
+| stat_group               | TEXT        | nom du groupe de tables                                                                 |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_schema              | TEXT        | nom du schéma                                                                           |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_table               | TEXT        | nom de la table                                                                         |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_first_mark          | TEXT        | nom de la marque de début de période                                                    |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_first_mark_datetime | TIMESTAMPTZ | date et heure de la marque de début de période                                          |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_first_time_id       | BIGINT      | identifiant interne de temps correspondant au début de la période                       |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_last_mark           | TEXT        | nom de la marque de fin de période                                                      |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_last_mark_datetime  | TIMESTAMPTZ | date et heure de la marque de fin de période                                            |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_last_time_id        | BIGINT      | identifiant interne de temps correspondant à la fin de la période                       |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_role                | TEXT        | rôle de connexion                                                                       |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_verb                | TEXT        | verbe SQL à l'origine de la mise à jour (*INSERT* / *UPDATE* / *DELETE* / *TRUNCATE*)   |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées                                          |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
 
 Une valeur *NULL* fournie comme marque de fin représente la situation courante.
 
@@ -123,6 +133,8 @@ Si l’intervalle de marques n’est pas contenu dans une seule *session de log*
 Contrairement à la fonction :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, *emaj_detailed_log_stat_group()* ne retourne aucune ligne pour les tables sans mise à jour enregistrée sur l'intervalle de marques demandées. La colonne *stat_rows* ne contient donc jamais de valeur 0. 
 
 La plupart du temps, les colonnes *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* et *stat_last_mark_datetime* référencent les marques de début et de fin de période demandée. Mais elles peuvent contenir des valeurs différentes si une table a été ajoutée ou supprimée du groupe de tables pendant l’intervalle de temps demandé.
+
+Si, sur l’intervalle de temps demandé, une table a été supprimée du groupe de tables puis y a été assignée à nouveau, plusieurs lignes sont restituées dans les statistiques. Les colonnes *stat_first_time_id* ou *stat_last_time_id* permettent alors de trier ces tranches de temps de manière fiable (les fluctuations de l’horloge interne des serveurs peuvent produire des *stat_first_datetime* et *stat_last_datetime* qui ne sont pas toujours croissantes dans le temps).
 
 Des statistiques détaillées peuvent être obtenues sur plusieurs groupes de tables en même temps, en utilisant la fonction *emaj_detailed_log_stat_groups()* ::
 
@@ -154,9 +166,13 @@ La fonction retourne un ensemble de lignes, de type *emaj.emaj_sequence_stat_typ
 +----------------------------+-------------+----------------------------------------------------------------------------------------------+
 | stat_first_mark_datetime   | TIMESTAMPTZ | date et heure de la marque de début de période                                               |
 +----------------------------+-------------+----------------------------------------------------------------------------------------------+
+| stat_first_time_id         | BIGINT      | identifiant interne de temps correspondant au début de la période                            |
++----------------------------+-------------+----------------------------------------------------------------------------------------------+
 | stat_last_mark             | TEXT        | nom de la marque de fin de période                                                           |
 +----------------------------+-------------+----------------------------------------------------------------------------------------------+
 | stat_last_mark_datetime    | TIMESTAMPTZ | date et heure de la marque de fin de période                                                 |
++----------------------------+-------------+----------------------------------------------------------------------------------------------+
+| stat_last_time_id          | BIGINT      | identifiant interne de temps correspondant à la fin de la période                            |
 +----------------------------+-------------+----------------------------------------------------------------------------------------------+
 | stat_increments            | BIGINT      | nombre d’incréments séparant la valeur de la séquence entre le début et la fin de la période |
 +----------------------------+-------------+----------------------------------------------------------------------------------------------+
@@ -170,6 +186,8 @@ Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque. Il repr�
 La fonction retourne une ligne par séquence, même si aucun changement n’est détecté pour la séquence sur la période.
 
 La plupart du temps, les colonnes *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* et *stat_last_mark_datetime* référencent les marques de début et de fin de période demandée. Mais elles peuvent contenir des valeurs différentes si une séquence a été ajoutée ou supprimée du groupe de tables pendant l’intervalle de temps demandé.
+
+Si, sur l’intervalle de temps demandé, une séquence a été supprimée du groupe de tables puis y a été assignée à nouveau, plusieurs lignes sont restituées dans les statistiques. Les colonnes *stat_first_time_id* ou *stat_last_time_id* permettent alors de trier ces tranches de temps de manière fiable (les fluctuations de l’horloge interne des serveurs peuvent produire des *stat_first_datetime* et *stat_last_datetime* qui ne sont pas toujours croissantes dans le temps).
 
 L'obtention de ces statistiques est rapide. Elle ne nécessite que la consultation de la petite table interne qui recense l'état des séquences lors des poses de marques.
 
@@ -210,27 +228,31 @@ On peut obtenir les statistiques pour une seule table sur un intervalle de temps
 
 Les deux fonctions retournent un ensemble de lignes, de type *emaj.emaj_log_stat_table_type* et comportant les colonnes suivantes :
 
-+----------------------------+-------------+-------------------------------------------------------+
-| Column                     | Type        | Description                                           |
-+============================+=============+=======================================================+
-| stat_group                 | TEXT        | nom du groupe de tables                               |
-+----------------------------+-------------+-------------------------------------------------------+
-| stat_first_mark            | TEXT        | nom de la marque de début de période                  |
-+----------------------------+-------------+-------------------------------------------------------+
-| stat_first_mark_datetime   | TIMESTAMPTZ | date et heure de la marque de début de période        |
-+----------------------------+-------------+-------------------------------------------------------+
-| stat_is_log_start          | BOOLEAN     | indicateur de début de log pour la table              |
-+----------------------------+-------------+-------------------------------------------------------+
-| stat_last_mark             | TEXT        | nom de la marque de fin de période                    |
-+----------------------------+-------------+-------------------------------------------------------+
-| stat_last_mark_datetime    | TIMESTAMPTZ | date et heure de la marque de fin de période          |
-+----------------------------+-------------+-------------------------------------------------------+
-| stat_is_log_stop           | BOOLEAN     | indicateur de fin de log pour la table                |
-+----------------------------+-------------+-------------------------------------------------------+
-| stat_changes               | BIGINT      | nombre de modifications de lignes enregistrées        |
-+----------------------------+-------------+-------------------------------------------------------+
-| stat_rollbacks             | INT         | nombre de rollbacks E-Maj exécutés sur la période     |
-+----------------------------+-------------+-------------------------------------------------------+
++----------------------------+-------------+-------------------------------------------------------------------+
+| Column                     | Type        | Description                                                       |
++============================+=============+===================================================================+
+| stat_group                 | TEXT        | nom du groupe de tables                                           |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_first_mark            | TEXT        | nom de la marque de début de période                              |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_first_mark_datetime   | TIMESTAMPTZ | date et heure de la marque de début de période                    |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_first_time_id         | BIGINT      | identifiant interne de temps correspondant au début de la période |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_is_log_start          | BOOLEAN     | indicateur de début de log pour la table                          |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_last_mark             | TEXT        | nom de la marque de fin de période                                |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_last_mark_datetime    | TIMESTAMPTZ | date et heure de la marque de fin de période                      |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_last_time_id          | BIGINT      | identifiant interne de temps correspondant à la fin de la période |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_is_log_stop           | BOOLEAN     | indicateur de fin de log pour la table                            |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_changes               | BIGINT      | nombre de modifications de lignes enregistrées                    |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_rollbacks             | INT         | nombre de rollbacks E-Maj exécutés sur la période                 |
++----------------------------+-------------+-------------------------------------------------------------------+
 
 Dans la première variante de la fonction, l’observation est bornée par deux paramètres date-heure début et date-heure de fin de type *TIMESTAMPTZ*. Le premier intervalle de marques retourné encadre la date-heure de début. Le dernier intervalle de marques retourné encadre la date-heure de fin.
 
@@ -261,29 +283,33 @@ On peut obtenir les statistiques pour une seule table sur un intervalle de temps
 
 Les deux fonctions retournent un ensemble de lignes, de type *emaj.emaj_log_stat_sequence_type* et comportant les colonnes suivantes :
 
-+----------------------------+-------------+------------------------------------------------------------------+
-| Column                     | Type        | Description                                                      |
-+============================+=============+==================================================================+
-| stat_group                 | TEXT        | nom du groupe de tables                                          |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_first_mark            | TEXT        | nom de la marque de début de période                             |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_first_mark_datetime   | TIMESTAMPTZ | date et heure de la marque de début de période                   |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_is_log_start          | BOOLEAN     | indicateur de début de log pour la séquence                      |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_last_mark             | TEXT        | nom de la marque de fin de période                               |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_last_mark_datetime    | TIMESTAMPTZ | date et heure de la marque de fin de période                     |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_is_log_stop           | BOOLEAN     | indicateur de fin de log pour la séquence                        |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_increments            | BIGINT      | nombre d’incréments de la séquence                               |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_has_structure_changed | BIGINT      | indicateur d’un changement de propriété autre que last_value     |
-+----------------------------+-------------+------------------------------------------------------------------+
-| stat_rollbacks             | INT         | nombre de rollbacks E-Maj exécutés sur la période                |
-+----------------------------+-------------+------------------------------------------------------------------+
++----------------------------+-------------+-------------------------------------------------------------------+
+| Column                     | Type        | Description                                                       |
++============================+=============+===================================================================+
+| stat_group                 | TEXT        | nom du groupe de tables                                           |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_first_mark            | TEXT        | nom de la marque de début de période                              |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_first_mark_datetime   | TIMESTAMPTZ | date et heure de la marque de début de période                    |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_first_time_id         | BIGINT      | identifiant interne de temps correspondant au début de la période |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_is_log_start          | BOOLEAN     | indicateur de début de log pour la séquence                       |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_last_mark             | TEXT        | nom de la marque de fin de période                                |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_last_mark_datetime    | TIMESTAMPTZ | date et heure de la marque de fin de période                      |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_last_time_id          | BIGINT      | identifiant interne de temps correspondant à la fin de la période |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_is_log_stop           | BOOLEAN     | indicateur de fin de log pour la séquence                         |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_increments            | BIGINT      | nombre d’incréments de la séquence                                |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_has_structure_changed | BIGINT      | indicateur d’un changement de propriété autre que last_value      |
++----------------------------+-------------+-------------------------------------------------------------------+
+| stat_rollbacks             | INT         | nombre de rollbacks E-Maj exécutés sur la période                 |
++----------------------------+-------------+-------------------------------------------------------------------+
 
 Dans la première variante de la fonction, l’observation est bornée par deux paramètres date-heure début et date-heure de fin de type *TIMESTAMPTZ*. Le premier intervalle de marques retourné encadre la date-heure de début. Le dernier intervalle de marques retourné encadre la date-heure de fin.
 

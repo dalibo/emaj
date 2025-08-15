@@ -227,6 +227,22 @@ select emaj.emaj_get_version();
  cons_rows                     | bigint  |           |          | 
  cons_marks                    | integer |           |          | 
 
+               Composite type "emaj.emaj_detailed_log_stat_group_type"
+          Column          |           Type           | Collation | Nullable | Default 
+--------------------------+--------------------------+-----------+----------+---------
+ stat_group               | text                     |           |          | 
+ stat_schema              | text                     |           |          | 
+ stat_table               | text                     |           |          | 
+ stat_first_mark          | text                     |           |          | 
+ stat_first_mark_datetime | timestamp with time zone |           |          | 
+ stat_first_time_id       | bigint                   |           |          | 
+ stat_last_mark           | text                     |           |          | 
+ stat_last_mark_datetime  | timestamp with time zone |           |          | 
+ stat_last_time_id        | bigint                   |           |          | 
+ stat_role                | text                     |           |          | 
+ stat_verb                | text                     |           |          | 
+ stat_rows                | bigint                   |           |          | 
+
                   Composite type "emaj.emaj_detailed_log_stat_type"
           Column          |           Type           | Collation | Nullable | Default 
 --------------------------+--------------------------+-----------+----------+---------
@@ -366,15 +382,31 @@ gist, for table "emaj.emaj_log_session"
  lses_time_range | int8range | yes  | lses_time_range
 primary key, btree, for table "emaj.emaj_log_session"
 
+                    Composite type "emaj.emaj_log_stat_group_type"
+          Column          |           Type           | Collation | Nullable | Default 
+--------------------------+--------------------------+-----------+----------+---------
+ stat_group               | text                     |           |          | 
+ stat_schema              | text                     |           |          | 
+ stat_table               | text                     |           |          | 
+ stat_first_mark          | text                     |           |          | 
+ stat_first_mark_datetime | timestamp with time zone |           |          | 
+ stat_first_time_id       | bigint                   |           |          | 
+ stat_last_mark           | text                     |           |          | 
+ stat_last_mark_datetime  | timestamp with time zone |           |          | 
+ stat_last_time_id        | bigint                   |           |          | 
+ stat_rows                | bigint                   |           |          | 
+
                    Composite type "emaj.emaj_log_stat_sequence_type"
            Column           |           Type           | Collation | Nullable | Default 
 ----------------------------+--------------------------+-----------+----------+---------
  stat_group                 | text                     |           |          | 
  stat_first_mark            | text                     |           |          | 
  stat_first_mark_datetime   | timestamp with time zone |           |          | 
+ stat_first_time_id         | bigint                   |           |          | 
  stat_is_log_start          | boolean                  |           |          | 
  stat_last_mark             | text                     |           |          | 
  stat_last_mark_datetime    | timestamp with time zone |           |          | 
+ stat_last_time_id          | bigint                   |           |          | 
  stat_is_log_stop           | boolean                  |           |          | 
  stat_increments            | bigint                   |           |          | 
  stat_has_structure_changed | boolean                  |           |          | 
@@ -386,9 +418,11 @@ primary key, btree, for table "emaj.emaj_log_session"
  stat_group               | text                     |           |          | 
  stat_first_mark          | text                     |           |          | 
  stat_first_mark_datetime | timestamp with time zone |           |          | 
+ stat_first_time_id       | bigint                   |           |          | 
  stat_is_log_start        | boolean                  |           |          | 
  stat_last_mark           | text                     |           |          | 
  stat_last_mark_datetime  | timestamp with time zone |           |          | 
+ stat_last_time_id        | bigint                   |           |          | 
  stat_is_log_stop         | boolean                  |           |          | 
  stat_changes             | bigint                   |           |          | 
  stat_rollbacks           | integer                  |           |          | 
@@ -830,6 +864,21 @@ Tablespace: "tspemaj"
  sequ_time_id | bigint | yes  | sequ_time_id
 primary key, btree, for table "emaj.emaj_sequence"
 Tablespace: "tspemaj"
+
+                  Composite type "emaj.emaj_sequence_stat_group_type"
+           Column           |           Type           | Collation | Nullable | Default 
+----------------------------+--------------------------+-----------+----------+---------
+ stat_group                 | text                     |           |          | 
+ stat_schema                | text                     |           |          | 
+ stat_sequence              | text                     |           |          | 
+ stat_first_mark            | text                     |           |          | 
+ stat_first_mark_datetime   | timestamp with time zone |           |          | 
+ stat_first_time_id         | bigint                   |           |          | 
+ stat_last_mark             | text                     |           |          | 
+ stat_last_mark_datetime    | timestamp with time zone |           |          | 
+ stat_last_time_id          | bigint                   |           |          | 
+ stat_increments            | bigint                   |           |          | 
+ stat_has_structure_changed | boolean                  |           |          | 
 
                      Composite type "emaj.emaj_sequence_stat_type"
            Column           |           Type           | Collation | Nullable | Default 

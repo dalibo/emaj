@@ -1890,16 +1890,16 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 drop table emaj_temp_script cascade;
 NOTICE:  drop cascades to view emaj_sql_script
 -- should be ok, with tables and sequences filtering
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK');
- stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
- myGroup2   | myschema2   | myTbl3     | Mark21          | Multi-3        | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | DELETE    |       100
- myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | INSERT    |     10100
- myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | UPDATE    |       500
- myGroup2   | myschema2   | mytbl2     | Mark21          | Multi-3        | postgres  | INSERT    |       900
- myGroup2   | myschema2   | mytbl4     | Mark21          | Multi-3        | postgres  | INSERT    |       100
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | myTbl3     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl1     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | DELETE    |       100
+ myGroup2   | myschema2   | mytbl1     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | INSERT    |     10100
+ myGroup2   | myschema2   | mytbl1     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | UPDATE    |       500
+ myGroup2   | myschema2   | mytbl2     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | INSERT    |       900
+ myGroup2   | myschema2   | mytbl4     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | INSERT    |       100
 (6 rows)
 
 -- all tables and sequences

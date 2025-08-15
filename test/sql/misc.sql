@@ -574,7 +574,7 @@ select emaj.emaj_gen_sql_group('myGroup1', 'Mark21', NULL, NULL);
 drop table emaj_temp_script cascade;
 
 -- should be ok, with tables and sequences filtering
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK');
 -- all tables and sequences
 select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
