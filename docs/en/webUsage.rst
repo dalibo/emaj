@@ -71,7 +71,7 @@ The page headers contain:
 * a breadcrumb trail,
 * and a button to directly go to the page bottom.
 
-The user can navigate in Emaj_web functions using two icon bars: one for the general purpose functions and the other for the functions concerning a single tables group.
+The user can navigate in Emaj_web functions using four icon bars: one for the general purpose functions, two similar bars for the functions concerning respectively a single tables group or a single table, and the last for the functions concerning a single sequence.
 
 .. figure:: images/emajweb_maintabs.png
    :align: center
@@ -79,11 +79,17 @@ The user can navigate in Emaj_web functions using two icon bars: one for the gen
 
    Figure 3 – Main icons bar.
 
-.. figure:: images/emajweb_groupstabs.png
+.. figure:: images/emajweb_grouptabletabs.png
    :align: center
    :class: screenshot
 
-   Figure 4 – Tables groups icons bar.
+   Figure 4 – Tables groups annd tables icons bar.
+
+.. figure:: images/emajweb_sequencetabs.png
+   :align: center
+   :class: screenshot
+
+   Figure 5 – Sequences icons bar.
 
 For *emaj_viewer* roles, some icons are not visible.
 
@@ -95,7 +101,7 @@ On most tables too, an icon located at the left of the header row, let show or h
    :align: center
    :class: screenshot
 
-   Figure 5 – Filtering the tables groups in *LOGGING* state. Here, only tables groups whose name contains “my” and having more than 2 marks are displayed, sorted in descending order by number of tables.
+   Figure 6 – Filtering the tables groups in *LOGGING* state. Here, only tables groups whose name contains “my” and having more than 2 marks are displayed, sorted in descending order by number of tables.
 
 Some tables allow to perform actions on several objects at once. In this case, the user selects the objects with the checkboxes on the first column of the table and choose the action to perform among the available buttons under the table.
 
@@ -112,7 +118,7 @@ From the tables groups list page, it is possible to get more information about a
    :align: center
    :class: screenshot
 
-   Figure 6 – Details of a tables group
+   Figure 7 – Details of a tables group
 
 A first line repeats information already displayed on the groups list (number of tables and sequences, type, state and number of marks). It also shows the disk space used by its log tables.
 
@@ -149,7 +155,7 @@ The figure below shows an example of detailed statistics for tables.
    :align: center
    :class: screenshot
 
-   Figure 7 – Detailed statistics about updates recorded between two marks
+   Figure 8 – Detailed statistics about updates recorded between two marks
 
 The displayed page contains a first line returning global counters.
 
@@ -159,7 +165,7 @@ On each line of the statistics table, the user can click on a button to easily l
    :align: center
    :class: screenshot
 
-   Figure 8 – Form to generate the SQL statement displaying table changes
+   Figure 9 – Form to generate the SQL statement displaying table changes
 
 Tables group content
 --------------------
@@ -172,7 +178,7 @@ For each table belonging to the group, the displayed sheet shows its E-Maj chara
    :align: center
    :class: screenshot
 
-   Figure 9 – A tables group's content.
+   Figure 10 – A tables group's content.
 
 Tables group history
 --------------------
@@ -183,7 +189,7 @@ The “*History*” tab displays the periods of time when the tables group exist
    :align: center
    :class: screenshot
 
-Figure 10 – A tables group’s history.
+   Figure 11 – A tables group’s history.
 
 Schemas and tables groups configuration
 ---------------------------------------
@@ -198,25 +204,81 @@ For both lists, the E-Maj properties and some general properties of each object 
    :align: center
    :class: screenshot
 
-   Figure 11 – Schema content and tables groups configuration.
+   Figure 12 – Schema content and tables groups configuration.
 
 By clicking on a table or sequence name or on an eye icon, one gets details about the table or sequence characteristics and content.
 
-Regarding tables, the *"Properties"* tab shows the table structure, its E-Maj properties (the history of the group assignments) and its triggers. The *"Content"* tab allows to visualize the table rows.
+Table details
+-------------
+
+By selecting a table from a schema tables list, one reaches a first "*Properties*" tab that shows the current E-Maj properties, the table structure, and its triggers.
+
+E-Maj properties like tables group assignement, move or removal are available through appropriate buttons.
 
 .. figure:: images/emajweb_tableproperties.png
    :align: center
    :class: screenshot
 
-   Figure 12 – Table properties.
+   Figure 13 – Table properties.
 
-Regarding sequences, the unique *"Properties"* tab shows the sequence characteristics and its E-Maj properties.
+Thanks to the specific table tabs bar three other functions are available.
+
+The "*Change statistics*" tab offers statistics about changes registered for the table, on a specified time frame, like statistics about tables groups. However, they differ in several ways:
+
+* a single table is processed,
+* but one gets one statistic row per elementary marks interval,
+* the number of executed E-Maj rollbacks is also reported for each marks interval.
+
+Alike for tables groups, an "eye" icon allows to look at changes details.
+
+.. figure:: images/emajweb_tablestat.png
+   :align: center
+   :class: screenshot
+
+   Figure 14 – Table changes statistics.
+
+The "*Content*" tab allows to visualize the current table rows.
+
+Lastly, the "*History*" tab shows the E-Maj properties evolutions of the table, and in particular its tables groups assignements.
+
+.. figure:: images/emajweb_tablehistory.png
+   :align: center
+   :class: screenshot
+
+   Figure 15 – E-Maj history for a table.
+
+Sequence details
+----------------
+
+Regarding sequences, the "*Properties*" tab shows the E-Maj properties and the characteristics of a single sequence. Some buttons allow to modify the sequence E-Maj properties (tables group assignment, move or removal).
 
 .. figure:: images/emajweb_sequenceproperties.png
    :align: center
    :class: screenshot
 
-   Figure 13 – Sequence properties.
+   Figure 16 – Sequence properties.
+
+Thanks to the sequence specific tabs bar, two other functions are available.
+
+The "*Changes statistics*" tab returns statistics about the sequence state evolution on a specified time frame, with, for each elementary marks interval:
+
+* the numer of sequence increments,
+* a flag indicating whether another sequence property has changed (min value, max value, increment, etc),
+* the number of executed E-Maj rollbacks.
+
+.. figure:: images/emajweb_sequencestat.png
+   :align: center
+   :class: screenshot
+
+   Figure 17 – Sequence statistics.
+
+Lastly, the "*History*" tab shows the sequence E-Maj characterics changes, in particular the assignment into tables groups.
+
+.. figure:: images/emajweb_sequencehistory.png
+   :align: center
+   :class: screenshot
+
+   Figure 18 – Sequence E-Maj history.
 
 Triggers
 --------
@@ -229,7 +291,7 @@ A button allows to switch their de-activation mode at E-Maj rollback time.
    :align: center
    :class: screenshot
 
-   Figure 14 – Application triggers list.
+   Figure 19 – Application triggers list.
 
 Monitoring rollback operations
 ------------------------------
@@ -246,7 +308,7 @@ For each consolidable rollback, a button allows to effectively consolidate the o
    :align: center
    :class: screenshot
 
-   Figure 15 – Rollback operations monitoring.
+   Figure 20 – Rollback operations monitoring.
 
 Clicking on a rollback identifier in one of these tables displays a page that shows information details about the selected in progress or completed operation.
 
@@ -262,7 +324,7 @@ More precisely, are displayed:
    :align: center
    :class: screenshot
 
-   Figure 16 – Details of a Rollback operation.
+   Figure 21 – Details of a Rollback operation.
 
 E-Maj activity
 --------------
@@ -273,7 +335,7 @@ The *"Activity"* tab allows to monitor in real time the activity of E-Maj log tr
    :align: center
    :class: screenshot
 
-   Figure 17 – E-Maj activity.
+   Figure 22 – E-Maj activity.
 
 At the page top, the form alllows to define the monitoring wishes, by default the 5 most active tables groups, the 20 most active tables and the 20 most active sequences. Regular expressions may be set to filter (include or exclude) tables groups, tables and sequences.
 
@@ -316,4 +378,4 @@ Two buttons allow to export and import parameters configurations to or from a lo
    :align: center
    :class: screenshot
 
-   Figure 18 – The E-Maj environment state.
+   Figure 23 – The E-Maj environment state.

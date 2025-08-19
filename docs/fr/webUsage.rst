@@ -71,7 +71,7 @@ Les entêtes de page contiennent :
 * un fil d’ariane permettant de se repérer dans l’arborescence,
 * et un bouton pour aller directement en bas de page.
 
-Deux barres d'icônes permettent de naviguer dans les différentes fonctions d'Emaj_web : l'une regroupe les fonctions globales de l'interface, et l'autre les fonctions associées à un groupe de tables particulier.
+Quatre barres d'icônes permettent de naviguer dans les différentes fonctions d'Emaj_web : l'une regroupe les fonctions globales de l'interface, deux autres, similaires, les fonctions associées respectivement à un groupe de tables et à une table particulière, et la dernière les fonctions associées à une séquence particulière.
 
 .. figure:: images/emajweb_maintabs.png
    :align: center
@@ -79,11 +79,17 @@ Deux barres d'icônes permettent de naviguer dans les différentes fonctions d'E
 
    Figure 3 – Barre d'icônes principale.
 
-.. figure:: images/emajweb_groupstabs.png
+.. figure:: images/emajweb_grouptabletabs.png
    :align: center
    :class: screenshot
 
-   Figure 4 – Barre d'icônes des groupes de tables.
+   Figure 4 – Barre d'icônes des groupes de tables et des tables.
+
+.. figure:: images/emajweb_sequencetabs.png
+   :align: center
+   :class: screenshot
+
+   Figure 5 – Barre d'icônes des séquences.
 
 Pour les rôles de type *emaj_viewer*, certaines icônes ne sont pas visibles.
 
@@ -95,7 +101,7 @@ Sur la plupart des tableaux également, une icône à gauche de la ligne de titr
    :align: center
    :class: screenshot
 
-   Figure 5 – Filtrage des groupes de tables démarrés. Ne sont affichés ici que les groupes de tables dont le nom comprend « *my* » et contenant plus de 2 marques, cette liste étant triée par ordre décroissant du nombre de tables.
+   Figure 6 – Filtrage des groupes de tables démarrés. Ne sont affichés ici que les groupes de tables dont le nom comprend « *my* » et contenant plus de 2 marques, cette liste étant triée par ordre décroissant du nombre de tables.
 
 Certains tableaux permettent d’exécuter des actions pour plusieurs objets simultanément. Dans ce cas, l’utilisateur sélectionne les objets à l’aide des cases à cocher dans la première colonne du tableau et choisit l’action à exécuter parmi les boutons accessibles sous le tableau.
 
@@ -113,7 +119,7 @@ Depuis la page listant les groupes de tables, il est possible d'en savoir davant
    :align: center
    :class: screenshot
 
-   Figure 6 – Détail d'un groupe de tables
+   Figure 7 – Détail d'un groupe de tables
 
 Une première ligne reprend des informations déjà affichées sur le tableau des groupes (nombre de tables et de séquences, type et nombre de marques), complété par l'espace disque utilisé par les tables de log du groupe.
 
@@ -149,7 +155,7 @@ La figure suivante montre un exemple de statistiques détaillées pour les table
    :align: center
    :class: screenshot
 
-   Figure 7 – Statistiques détaillées des mises à jour enregistrées entre 2 marques
+   Figure 8 – Statistiques détaillées des mises à jour enregistrées entre 2 marques
 
 La page restituée contient une première ligne contenant des compteurs globaux.
 
@@ -159,7 +165,7 @@ Sur chacune des lignes du tableau de statistiques, un bouton permet à l'utilisa
    :align: center
    :class: screenshot
 
-   Figure 8 – Formulaire de génération des requêtes de consultation des changements 
+   Figure 9 – Formulaire de génération des requêtes de consultation des changements 
 
 Contenu d'un groupe de tables
 -----------------------------
@@ -172,7 +178,7 @@ Pour chaque table du groupe, le tableau affiché reprend ses propriétés E-Maj,
    :align: center
    :class: screenshot
 
-   Figure 9 – Contenu d'un groupe de tables.
+   Figure 10 – Contenu d'un groupe de tables.
 
 Historique des groupes de tables
 --------------------------------
@@ -183,7 +189,7 @@ L’onglet « *Historique* » permet de visualiser les périodes durant lesque
    :align: center
    :class: screenshot
 
-   Figure 10 – Historique d'un groupe de tables.
+   Figure 11 – Historique d'un groupe de tables.
 
 Schémas et configuration des groupes de tables
 ----------------------------------------------
@@ -192,32 +198,87 @@ L’onglet « *Schémas* » permet de lister les schémas présents dans la ba
 
 En en sélectionnant un, deux listes sont alors affichées : celle des tables puis celle des séquences contenues dans ce schéma.
 
-Pour chaque liste, on trouve les propriétés E-Maj et quelques caractéristiques générales des objets. Des boutons d’action permettent d’accéder à leur structure ou contenu, et de gérer l’assignation des objets dans les groupes de tables.
+Pour chaque liste, on trouve les propriétés E-Maj et quelques caractéristiques générales des objets. Des boutons d’action permettent d’accéder à leur propriétés, ou leur contenu, et de gérer l’assignation des objets dans les groupes de tables.
 
 .. figure:: images/emajweb_schemas.png
    :align: center
    :class: screenshot
 
-   Figure 11 – Contenu des schémas et configuration des groupes de tables.
+   Figure 12 – Contenu des schémas et configuration des groupes de tables.
 
 En cliquant sur un nom de table ou de séquence ou sur une icône œil associée, on peut obtenir des détails sur les caractéristiques et le contenu de la table ou de la séquence.
 
-Pour les tables, l’onglet *"Propriétés"* montre la structure de la table, ses propriétés E-Maj (historique de rattachement aux groupes de tables) et ses éventuels triggers. L’onglet *"Contenu"* permet de visualiser les lignes présentes dans la table.
+Détails d’une table
+-------------------
+
+En sélectionnant l’une des tables d’un schéma, on accède à un premier onglet « *Propriétés* » qui montre les propriétés E-Maj courantes, la structure de la table, et ses éventuels triggers.
+
+L’onglet permet aussi de modifier les propriétés E-Maj de la table (assignation à un groupe de tables, sortie ou changement de groupe de tables, modification des autres propriétés).
 
 .. figure:: images/emajweb_tableproperties.png
    :align: center
    :class: screenshot
 
-   Figure 12 – Propriétés d’une table.
+   Figure 13 – Propriétés d’une table.
 
-Pour les séquences, l’unique onglet *"Propriétés"* montre les caractéristiques de la séquence et ses propriétés E-Maj.
+Grâce à la barre d’onglets propres aux tables, on accède alors à 3 autres fonctions.
+
+L’onglet « *Statistiques / Mises à jour* » fournit des statistiques sur les changements enregistrés pour la table, sur une tranche de temps, de manière similaire aux statistiques sur les groupes de tables. Néanmoins, elles diffèrent sur plusieurs points :
+
+* une seule table est traitée,
+* mais on obtient une ligne par intervalle élémentaire de marques,
+* le nombre de rollbacks E-Maj exécutés est également rapporté.
+
+Comme pour les groupes de tables, une icône « oeil » sur chaque ligne permet de consulter le détail des mises à jour.
+
+.. figure:: images/emajweb_tablestat.png
+   :align: center
+   :class: screenshot
+
+   Figure 14 – Statistiques des mises à jour pour une table.
+
+L’onglet « Contenu » permet de visualiser les lignes présentes dans la table.
+
+Enfin, l’onglet « *Historique* » montre l’évolution des propriétés E-Maj de la table, en particulier ses rattachements aux groupes de tables.
+
+.. figure:: images/emajweb_tablehistory.png
+   :align: center
+   :class: screenshot
+
+   Figure 15 – Historique E-Maj d’une table.
+
+Détails d’une séquence
+----------------------
+
+Pour les séquences, l’onglet « *Propriétés* » montre les propriétés E-Maj et les caractéristiques courantes de la séquence. Des boutons permettent aussi de modifier les propriétés E-Maj de la séquence (assignation à un groupe de tables, sortie ou changement de groupe de tables).
 
 .. figure:: images/emajweb_sequenceproperties.png
    :align: center
    :class: screenshot
 
-   Figure 13 – Propriétés d’une séquence.
+   Figure 16 – Propriétés d’une séquence.
 
+Grâce à la barre d’onglets propres aux séquences, on accède alors à deux autres fonctions.
+
+L’onglet « *Statistiques / Mises à jour* » fournit des statistiques sur l’évolution de l’état de la séquence au fil du temps, avec, pour chaque intervalle élémentaire de marques :
+
+* le nombre d’incréments de la séquence,
+* un indicateur permettant de savoir si une autre caractéristique de la séquence (valeur minimum, maximum, incrément, etc) a été modifiée,
+* le nombre de rollbacks E-Maj exécutés.
+
+.. figure:: images/emajweb_sequencestat.png
+   :align: center
+   :class: screenshot
+
+   Figure 17 – Statistiques d’une séquence.
+
+Enfin, l’onglet « *Historique* » montre l’évolution des propriétés E-Maj de la séquence, en particulier ses rattachements aux groupes de tables.
+
+.. figure:: images/emajweb_sequencehistory.png
+   :align: center
+   :class: screenshot
+
+   Figure 18 – Historique E-Maj d’une séquence.
 
 Triggers
 --------
@@ -230,7 +291,7 @@ Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
    :align: center
    :class: screenshot
 
-   Figure 14 – Liste des triggers applicatifs
+   Figure 19 – Liste des triggers applicatifs
 
 
 Suivre les opérations de rollback
@@ -248,7 +309,7 @@ Pour chaque rollback tracé consolidable listé, un bouton permet d’exécuter 
    :align: center
    :class: screenshot
 
-   Figure 15 – Suivi des opérations de rollback.
+   Figure 20 – Suivi des opérations de rollback.
 
 En cliquant sur un identifiant de rollback dans l’un de ces tableaux, on accède à une page présentant des informations détaillées sur le déroulement en cours ou passé de l’opération sélectionnée.
 
@@ -264,7 +325,7 @@ On y trouve plus précisément des données concernant :
    :align: center
    :class: screenshot
 
-   Figure 16 – Détails d’une opération de rollback.
+   Figure 21 – Détails d’une opération de rollback.
 
 Activité E-Maj
 --------------
@@ -275,7 +336,7 @@ L’onglet *"Activité"* permet de suivre en temps réel l’activité de mise �
    :align: center
    :class: screenshot
 
-   Figure 17 – Activité E-Maj.
+   Figure 22 – Activité E-Maj.
 
 Le formulaire en haut de page permet de définir ce que l’on veut suivre, par défaut les 5 groupes de tables les plus actifs, les 20 tables et les 20 séquences les plus actives. Des expressions rationnelles peuvent être valorisées pour filtrer (inclure ou exclure) les groupes de tables, tables et séquences.
 
@@ -318,4 +379,4 @@ Deux boutons en bas de page permettent d’exporter ou d’importer une configur
    :align: center
    :class: screenshot
 
-   Figure 18 – État de l'environnement E-Maj 
+   Figure 23 – État de l'environnement E-Maj 
