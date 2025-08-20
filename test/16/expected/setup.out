@@ -165,19 +165,10 @@ CREATE TABLE myTbl6 (
   col66       INET             ,
   col67       myEnum           ,
   col68       myComposite      ,
---col69       POINT            GENERATED ALWAYS AS (point(col63)) STORED,     -- fails in PG11-
+  col69       POINT            GENERATED ALWAYS AS (point(col63)) STORED,     -- failed in PG11-
   PRIMARY KEY (col61),
   EXCLUDE USING gist (col63 WITH &&)
 );
-DO $$
-BEGIN
-  IF emaj._pg_version_num() >= 120000 THEN
-    EXECUTE 'ALTER TABLE myTbl6 ADD COLUMN col69 POINT GENERATED ALWAYS AS (point(col63)) STORED';
-  ELSE
-    EXECUTE 'ALTER TABLE myTbl6 ADD COLUMN col69 POINT';
-  END IF;
-END;
-$$;
 -- This table will remain outside table groups
 DROP TABLE IF EXISTS myTbl7 ;
 CREATE TABLE myTbl7 (
@@ -344,6 +335,7 @@ create role emaj_regression_tests_adm_user2 login password 'adm';
 create role emaj_regression_tests_viewer_user login password 'viewer';
 ERROR:  role "emaj_regression_tests_viewer_user" already exists
 create role emaj_regression_tests_anonym_user login password 'anonym';
+ERROR:  role "emaj_regression_tests_anonym_user" already exists
 --
 grant create on tablespace tsplog1, "tsp log'2"
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;

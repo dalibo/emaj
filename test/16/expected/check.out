@@ -138,7 +138,7 @@ select funcname, calls from pg_stat_user_functions
  _estimate_rlbk_step_duration              |   820
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   208
- _event_trigger_table_rewrite_fnct         |     5
+ _event_trigger_table_rewrite_fnct         |     4
  _export_groups_conf                       |    11
  _export_param_conf                        |     7
  _gen_sql_dump_changes_group               |    49
@@ -167,7 +167,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    24
  _move_tbl                                 |    50
- _pg_version_num                           |    22
+ _pg_version_num                           |    21
  _purge_histories                          |   101
  _remove_seq                               |    15
  _remove_sequences                         |    20
