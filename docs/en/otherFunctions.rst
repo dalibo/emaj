@@ -194,7 +194,7 @@ In order to manipulate generated files more easily, any unconvenient in file nam
 
 Each file corresponding to a sequence has only one row, containing all characteristics of the sequence.
 
-Files corresponding to tables contain one record per row, in the format corresponding to the supplied parameter. These records are sorted in ascending order of the primary key.
+Files corresponding to tables contain one record per row, in the format corresponding to the supplied parameter. These records are sorted on the primary key ascending order (or on all columns if the table has no primary key). Each row contains all table columns, including generated columns.
 
 At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains a message including the tables group name and the date and time of the snap operation.
 

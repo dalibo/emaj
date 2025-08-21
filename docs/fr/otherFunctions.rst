@@ -191,7 +191,7 @@ Pour faciliter la manipulation des fichiers générés, d’éventuels caractèr
 
 Les fichiers correspondant aux séquences ne comportent qu'une seule ligne, qui contient les caractéristiques de la séquence.
 
-Les fichiers correspondant aux tables contiennent un enregistrement par ligne de la table, dans le format spécifié en paramètre. Ces enregistrements sont triés dans l'ordre croissant de la clé primaire.
+Les fichiers correspondant aux tables contiennent un enregistrement par ligne de la table, dans le format spécifié en paramètre. Ces enregistrements sont triés dans l'ordre croissant de la clé primaire (ou dans l’ordre de toutes les colonnes, en l’absence de clé primaire). Chaque ligne contient toutes les colonnes de la table, y compris les colonnes générées.
 
 En fin d'opération, un fichier *_INFO* est créé dans ce même répertoire. Il contient un message incluant le nom du groupe de tables et la date et l'heure de l'opération.
 
