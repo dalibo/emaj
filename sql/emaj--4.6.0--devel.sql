@@ -4508,8 +4508,8 @@ $emaj_snap_group$
 -- For tables, these files contain all rows sorted on primary key.
 -- For sequences, they contain a single row describing the sequence.
 -- To do its job, the function performs COPY TO statement, with all default parameters.
--- For table without primary key, rows are sorted on all columns.
--- There is no need for the group not to be logging.
+-- For table without primary key, rows are sorted on all non generated columns.
+-- There is no need for the group to be in IDLE state.
 -- As all COPY statements are executed inside a single transaction:
 --   - the function can be called while other transactions are running,
 --   - the snap files will present a coherent state of tables.
@@ -4522,12 +4522,9 @@ $emaj_snap_group$
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_nbRel                  INT = 0;
-    r_tblsq                  RECORD;
-    v_fullTableName          TEXT;
-    v_relOid                 OID;
     v_colList                TEXT;
-    v_pathName               TEXT;
     v_stmt                   TEXT;
+    r_tblsq                  RECORD;
   BEGIN
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -4544,59 +4541,45 @@ $emaj_snap_group$
     END IF;
 -- For each table/sequence of the emaj_relation table.
     FOR r_tblsq IN
-      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind,
+             quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name,
+             emaj._build_path_name(p_dir, rel_schema || '_' || rel_tblseq || '.snap') AS path_name
         FROM emaj.emaj_relation
         WHERE upper_inf(rel_time_range)
           AND rel_group = p_groupName
         ORDER BY rel_priority, rel_schema, rel_tblseq
     LOOP
-      v_pathName = emaj._build_path_name(p_dir, r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap');
       CASE r_tblsq.rel_kind
         WHEN 'r' THEN
 -- It is a table.
-          v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-          SELECT pg_class.oid INTO v_relOid
-            FROM pg_class
-                 JOIN pg_namespace ON (pg_namespace.oid = relnamespace)
-            WHERE nspname = r_tblsq.rel_schema
-              AND relname = r_tblsq.rel_tblseq;
---   Build the order by column list.
-          IF EXISTS
-               (SELECT 0
-                  FROM pg_catalog.pg_class
-                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                       JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = pg_class.oid)
-                  WHERE contype = 'p'
-                    AND nspname = r_tblsq.rel_schema
-                    AND relname = r_tblsq.rel_tblseq
-               ) THEN
---   The table has a pkey.
+--   Build the order by columns list, using the PK, if it exists.
+          SELECT string_agg(quote_ident(attname), ',') INTO v_colList
+            FROM
+              (SELECT attname
+                 FROM pg_catalog.pg_attribute
+                      JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
+                 WHERE attnum = ANY (indkey)
+                   AND indrelid = (r_tblsq.full_relation_name)::regclass
+                   AND indisprimary
+                   AND attnum > 0
+                   AND attisdropped = FALSE
+              ) AS t;
+          IF v_colList IS NULL THEN
+--   The table has no pkey, so get all columns, except generated ones.
             SELECT string_agg(quote_ident(attname), ',') INTO v_colList
               FROM
                 (SELECT attname
                    FROM pg_catalog.pg_attribute
-                        JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
-                   WHERE attnum = ANY (indkey)
-                     AND indrelid = v_relOid
-                     AND indisprimary
+                   WHERE attrelid = (r_tblsq.full_relation_name)::regclass
                      AND attnum > 0
                      AND attisdropped = FALSE
-                ) AS t;
-          ELSE
---   The table has no pkey.
-            SELECT string_agg(quote_ident(attname), ',') INTO v_colList
-              FROM
-                (SELECT attname
-                   FROM pg_catalog.pg_attribute
-                   WHERE attrelid = v_relOid
-                     AND attnum > 0
-                     AND attisdropped = FALSE
+                     AND attgenerated = ''
                 ) AS t;
           END IF;
 --   Dump the table
-          v_stmt = format('(SELECT * FROM %s ORDER BY %s)', v_fullTableName, v_colList);
+          v_stmt = format('(SELECT * FROM %I.%I ORDER BY %s)', r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_colList);
           EXECUTE format ('COPY %s TO %L %s',
-                          v_stmt, v_pathName, coalesce(p_copyOptions, ''));
+                          v_stmt, r_tblsq.path_name, coalesce(p_copyOptions, ''));
         WHEN 'S' THEN
 -- It is a sequence.
           v_stmt = format('(SELECT relname, rel.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, rel.is_called'
@@ -4608,7 +4591,7 @@ $emaj_snap_group$
                          r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_schema, r_tblsq.rel_tblseq);
 --    Dump the sequence properties.
           EXECUTE format ('COPY %s TO %L %s',
-                          v_stmt, v_pathName, coalesce(p_copyOptions, ''));
+                          v_stmt, r_tblsq.path_name, coalesce(p_copyOptions, ''));
       END CASE;
       v_nbRel = v_nbRel + 1;
     END LOOP;

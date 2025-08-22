@@ -228,6 +228,10 @@ select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','CSV HEADER DELIMITER '
 \! ls $EMAJTESTTMPDIR
 \! rm $EMAJTESTTMPDIR/*
 
+select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR','');
+\! ls $EMAJTESTTMPDIR
+\! rm $EMAJTESTTMPDIR/*
+
 -----------------------------
 -- emaj_get_current_log_table() tests
 -----------------------------

@@ -403,36 +403,36 @@ select emaj.emaj_snap_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 31 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 28 at PERFORM
 select emaj.emaj_snap_group('unknownGroup',NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 31 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 28 at PERFORM
 -- invalid directory
 select emaj.emaj_snap_group('myGroup1',NULL,NULL);
 ERROR:  emaj_snap_group: The directory parameter cannot be NULL.
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 34 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 31 at RAISE
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 93 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 76 at EXECUTE
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 93 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 76 at EXECUTE
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...l31) TO '/tmp/emaj_15/misc/myschema1_myTbl3.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_15/misc/myschema1_myTbl3.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 93 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 76 at EXECUTE
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: The COPY options parameter format is invalid.
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 38 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 35 at RAISE
 -- should be OK (even when executed twice, files being overwriten)
 select emaj.emaj_snap_group('emptyGroup',:'EMAJTESTTMPDIR','');
  emaj_snap_group 
@@ -464,6 +464,19 @@ myschema1_mytbl2b.snap
 myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
 \! rm $EMAJTESTTMPDIR/*
+select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR','');
+ emaj_snap_group 
+-----------------
+               4
+(1 row)
+
+\! ls $EMAJTESTTMPDIR
+_INFO
+phil_s_schema_3_myTbl2_.snap
+phil_s_schema_3_myTbl2__col21_seq.snap
+phil_s_schema_3_phil_s_seq_1.snap
+phil_s_schema_3_phil_s_tbl1.snap
+\! rm $EMAJTESTTMPDIR/*
 -----------------------------
 -- emaj_get_current_log_table() tests
 -----------------------------
@@ -492,15 +505,17 @@ select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
   from (select * from emaj.emaj_hist where hist_id >= 5300 order by hist_id) as t;
- hist_id | hist_function | hist_event | hist_object |        regexp_replace        | hist_user 
----------+---------------+------------+-------------+------------------------------+-----------
-    5307 | SNAP_GROUP    | BEGIN      | emptyGroup  | /tmp/emaj_15/misc            | postgres
-    5308 | SNAP_GROUP    | END        | emptyGroup  | 0 tables/sequences processed | postgres
-    5309 | SNAP_GROUP    | BEGIN      | myGroup1    | /tmp/emaj_15/misc            | postgres
-    5310 | SNAP_GROUP    | END        | myGroup1    | 7 tables/sequences processed | postgres
-    5311 | SNAP_GROUP    | BEGIN      | myGroup1    | /tmp/emaj_15/misc            | postgres
-    5312 | SNAP_GROUP    | END        | myGroup1    | 7 tables/sequences processed | postgres
-(6 rows)
+ hist_id | hist_function | hist_event |   hist_object    |        regexp_replace        | hist_user 
+---------+---------------+------------+------------------+------------------------------+-----------
+    5307 | SNAP_GROUP    | BEGIN      | emptyGroup       | /tmp/emaj_15/misc            | postgres
+    5308 | SNAP_GROUP    | END        | emptyGroup       | 0 tables/sequences processed | postgres
+    5309 | SNAP_GROUP    | BEGIN      | myGroup1         | /tmp/emaj_15/misc            | postgres
+    5310 | SNAP_GROUP    | END        | myGroup1         | 7 tables/sequences processed | postgres
+    5311 | SNAP_GROUP    | BEGIN      | myGroup1         | /tmp/emaj_15/misc            | postgres
+    5312 | SNAP_GROUP    | END        | myGroup1         | 7 tables/sequences processed | postgres
+    5313 | SNAP_GROUP    | BEGIN      | phil's group#3", | /tmp/emaj_15/misc            | postgres
+    5314 | SNAP_GROUP    | END        | phil's group#3", | 4 tables/sequences processed | postgres
+(8 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(5400);

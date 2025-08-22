@@ -203,7 +203,8 @@ DROP TABLE IF EXISTS "myTbl2\" ;
 CREATE TABLE "myTbl2\" (
   col21            SERIAL           NOT NULL,
   col22            TEXT             ,
-  col23            DATE
+  col23            DATE             ,
+  col24            INT              GENERATED ALWAYS AS (extract(DOW FROM col23)) STORED
 );
 DROP TABLE IF EXISTS "my""tbl4" ;
 CREATE TABLE "my""tbl4" (
@@ -335,7 +336,6 @@ create role emaj_regression_tests_adm_user2 login password 'adm';
 create role emaj_regression_tests_viewer_user login password 'viewer';
 ERROR:  role "emaj_regression_tests_viewer_user" already exists
 create role emaj_regression_tests_anonym_user login password 'anonym';
-ERROR:  role "emaj_regression_tests_anonym_user" already exists
 --
 grant create on tablespace tsplog1, "tsp log'2"
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;

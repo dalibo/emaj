@@ -203,7 +203,8 @@ DROP TABLE IF EXISTS "myTbl2\" ;
 CREATE TABLE "myTbl2\" (
   col21            SERIAL           NOT NULL,
   col22            TEXT             ,
-  col23            DATE
+  col23            DATE             ,
+  col24            INT              GENERATED ALWAYS AS (extract(DOW FROM col23)) STORED
 );
 DROP TABLE IF EXISTS "my""tbl4" ;
 CREATE TABLE "my""tbl4" (

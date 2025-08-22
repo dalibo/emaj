@@ -1357,6 +1357,7 @@ Sequence "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_lo
  col21        | integer                  |           |          | 
  col22        | text                     |           |          | 
  col23        | date                     |           |          | 
+ col24        | integer                  |           |          | 
  emaj_verb    | character varying(3)     |           | not null | 
  emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
@@ -1529,7 +1530,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_gen_expr_cols from emaj.emaj_
  myschema6       | table_with_51_characters_long_name_____0_________0a     | [4,)           | 
  myschema6       | table_with_55_characters_long_name_____0_________0abcde | [4,20)         | 
  myschema6       | table_with_55_characters_long_name_____0_________0fghij | [4,)           | 
- phil's schema"3 | myTbl2\                                                 | [3,)           | 
+ phil's schema"3 | myTbl2\                                                 | [3,)           | {col24}
  phil's schema"3 | phil's tbl1                                             | [3,)           | 
  phil's schema"3 | phil's"seq\1                                            | [3,)           | 
 (19 rows)

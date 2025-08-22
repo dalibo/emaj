@@ -1128,10 +1128,10 @@ select * from "phil's schema""3"."phil's tbl1" order by "phil's col11","phil's c
 (19 rows)
 
 select * from "phil's schema""3"."myTbl2\" order by col21;
- col21 | col22 |   col23    
--------+-------+------------
-     1 | ABC   | 12-31-2010
-     2 | DEF   | 
+ col21 | col22 |   col23    | col24 
+-------+-------+------------+-------
+     1 | ABC   | 12-31-2010 |     5
+     2 | DEF   |            |      
 (2 rows)
 
 -- log tables
@@ -1665,7 +1665,7 @@ UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 19, "phil's co
 UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 20, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c27' WHERE "phil's col11" = 20 AND "phil's col12" = 'AB''C';
 UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 21, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c27' WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
 UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 22, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c27' WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
-INSERT INTO "phil's schema""3"."myTbl2\" VALUES (1, 'ABC', '2010-12-31');
+INSERT INTO "phil's schema""3"."myTbl2\" (col21, col22, col23) VALUES (1, 'ABC', '2010-12-31');
 DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 23 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 24 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 25 AND "phil's col12" = 'AB''C';
@@ -1677,7 +1677,7 @@ DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 30 AND 
 DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 31 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
-INSERT INTO "phil's schema""3"."myTbl2\" VALUES (2, 'DEF', NULL);
+INSERT INTO "phil's schema""3"."myTbl2\" (col21, col22, col23) VALUES (2, 'DEF', NULL);
 DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 10 AND "phil's col12" = 'AB''C';
 UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 1, "phil's col12" = 'DEF', "phil\s""col13" = E'\\x1c' WHERE "phil's col11" = 1 AND "phil's col12" = 'AB''C';
 UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 2, "phil's col12" = 'DEF', "phil\s""col13" = E'\\x1c' WHERE "phil's col11" = 2 AND "phil's col12" = 'AB''C';
