@@ -500,11 +500,9 @@ DROP VIEW IF EXISTS public.myTbl3_cons_log_view_M4_M5;
 -- Step 21 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
 -----------------------------
 
-SET client_min_messages TO WARNING;
 select emaj_create_group('truncateTestGroup');
 select emaj_assign_tables('phil''s schema"3','.*','','truncateTestGroup');
 select emaj_assign_tables('myschema4','.*','','truncateTestGroup');
-RESET client_min_messages;
 select emaj_start_group('truncateTestGroup','M1');
 
 reset role;

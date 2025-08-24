@@ -290,18 +290,12 @@ select emaj.emaj_comment_group('myGroup1','This is group #1');
 (1 row)
 
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
 select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
-NOTICE:  table "mytbl2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_table 
 -------------------
@@ -309,27 +303,18 @@ WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be au
 (1 row)
 
 select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2","log_index_tablespace":"tsp log''2"}'::jsonb);
-NOTICE:  table "mytbl2b_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
 select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"log_data_tablespace":"tsplog1"}'::jsonb);
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
 select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20,"log_data_tablespace":"tsplog1","log_index_tablespace":"tsp log''2"}'::jsonb);
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -348,24 +333,6 @@ select emaj.emaj_create_group('myGroup2',true,'This is group #2');
 (1 row)
 
 select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl4" does not exist, skipping
-NOTICE:  table "mytbl5_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl5" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl5" does not exist, skipping
-NOTICE:  table "mytbl6_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl6" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl6" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   6

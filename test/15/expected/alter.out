@@ -84,7 +84,6 @@ select emaj.emaj_create_group('myGroup1');
 (1 row)
 
 -- rebuild all original groups
-SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4','myGroup5'], true);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
 WARNING:  _create_tbl: The table "myschema4.mypartp1a" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
@@ -103,7 +102,6 @@ select emaj.emaj_assign_table('phil''s schema"3', 'myTbl2\', 'myGroup5');
                  1
 (1 row)
 
-RESET client_min_messages;
 -----------------------------------
 -- emaj_remove_table
 -----------------------------------
@@ -373,7 +371,6 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 (1 row)
 
 -- rebuild all original groups
-SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
  emaj_import_groups_configuration 
@@ -381,7 +378,6 @@ WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be au
                                 4
 (1 row)
 
-RESET client_min_messages;
 -- check for emaj_remove_table() and emaj_remove_sequence() functions family
 select * from emaj.emaj_relation_change where rlchg_time_id >= 8000 order by 1,2,3,4;
  rlchg_time_id |  rlchg_schema   |   rlchg_tblseq    | rlchg_change_kind |   rlchg_group    | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 

@@ -84,33 +84,9 @@ select emaj_create_group('myGroup4');
 
 select emaj_assign_tables('myschema4','.*',null,'myGroup4');
 WARNING:  _assign_tables: Some partitionned tables (mypartp1, mytblp) are not selected.
-NOTICE:  table "mytblr2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr2" does not exist, skipping
-NOTICE:  table "mytblr1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr1" does not exist, skipping
-NOTICE:  table "mytblm_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
-NOTICE:  table "mytblc2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
-NOTICE:  table "mypartp2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp2" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema4.mypartp2" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
-NOTICE:  table "mytblc1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
-NOTICE:  table "mypartp1a_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1a" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1a" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema4.mypartp1a" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
-NOTICE:  table "mypartp1b_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1b" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1b" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema4.mypartp1b" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_tables 
 --------------------
@@ -293,9 +269,6 @@ ERROR:  multiple primary keys for table "mypartp3" are not allowed
 grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 set role emaj_regression_tests_adm_user1;
 select emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
-NOTICE:  table "mypartp3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema4.mypartp3" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_table 
 -------------------
@@ -541,15 +514,6 @@ select emaj_create_group('phil''s group#3",',false);
 (1 row)
 
 select emaj_assign_tables('phil''s schema"3','.*',null,'phil''s group#3",');
-NOTICE:  table "my"tbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
-NOTICE:  table "myTbl2\_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
-NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   3
@@ -562,9 +526,6 @@ select emaj_assign_sequences('phil''s schema"3','.*',null,'phil''s group#3",');
 (1 row)
 
 select emaj_assign_tables('myschema5','.*',null,'phil''s group#3",');
-NOTICE:  table "myunloggedtbl_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema5.myunloggedtbl" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema5.myunloggedtbl" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   1
@@ -622,9 +583,6 @@ select emaj_remove_table('phil''s schema"3','my"tbl4','remove_the_damaged_table'
 (1 row)
 
 select emaj_assign_table('phil''s schema"3', 'my"tbl4', 'phil''s group#3",', null, 're_add_the_table');
-NOTICE:  table "my"tbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -659,9 +617,6 @@ NOTICE:  relation "my"tbl4_log_idx" does not exist, skipping
 (1 row)
 
 select emaj_assign_table('phil''s schema"3', 'my"tbl4', 'phil''s group#3",', null, 're_add_the_table_2');
-NOTICE:  table "my"tbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -720,8 +675,6 @@ alter table "phil's schema""3"."my""tbl4" alter column col45 type char(10);
 alter sequence "phil's schema""3"."phil's""seq\1_sav" rename to "phil's""seq\1";
 set role emaj_regression_tests_adm_user1;
 select emaj_assign_table('phil''s schema"3','my"tbl4','phil''s group#3",',null,'revert_last_changes_tbl');
-NOTICE:  table "my"tbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -932,15 +885,6 @@ select emaj_start_groups('{"grp_tmp","grp_tmp_4"}','Start');
 
 begin;
   select emaj_assign_tables('phil''s schema"3','.*','','grp_tmp_3');
-NOTICE:  table "my"tbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
-NOTICE:  table "myTbl2\_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
-NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   3
@@ -954,30 +898,9 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.phil's tbl1" doe
 
   select emaj_assign_tables('myschema4','.*','','grp_tmp_4');
 WARNING:  _assign_tables: Some partitionned tables (mypartp1, mytblp) are not selected.
-NOTICE:  table "mytblr2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr2" does not exist, skipping
-NOTICE:  table "mypartp3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema4.mypartp3" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
-NOTICE:  table "mytblr1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr1" does not exist, skipping
-NOTICE:  table "mytblm_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
-NOTICE:  table "mytblc2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
-NOTICE:  table "mypartp2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp2" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema4.mypartp2" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
-NOTICE:  table "mytblc1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   7
@@ -1285,7 +1208,6 @@ select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d
 
 -- generate sql script
 select emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,:'EMAJTESTTMPDIR' || '/allGroups.sql');
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_groups 
 ---------------------
                   26
@@ -1439,9 +1361,6 @@ NOTICE:  sequence "my"tbl4_log_seq" does not exist, skipping
 (1 row)
 
 select emaj_assign_table('phil''s schema"3','my"tbl4','grp_tmp');
-NOTICE:  table "my"tbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.my"tbl4" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -1462,11 +1381,6 @@ select emaj_start_group('grp_tmp','Group restart');
 
 -- import the groups configuration
 select emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true, 'REVERT_CHANGES');
-NOTICE:  table "tmp_app_table" does not exist, skipping
-NOTICE:  table "tmp_app_sequence" does not exist, skipping
-NOTICE:  table "mytblc1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
  emaj_import_groups_configuration 
 ----------------------------------
                                 3
@@ -2023,7 +1937,6 @@ select public.handle_emaj_sequences(18000);
 -- Step 20 : test emaj_gen_sql_dump_changes_group() and emaj_dump_changes_group()
 -----------------------------
 select emaj_gen_sql_dump_changes_group('myGroup1','M4','M5','Consolidation=FULL',NULL,:'EMAJTESTTMPDIR' || '/dump_changes.sql');
-NOTICE:  table "emaj_temp_sql" does not exist, skipping
                             emaj_gen_sql_dump_changes_group                            
 ---------------------------------------------------------------------------------------
  9 SQL statements have been written into the "/tmp/emaj_17/adm3/dump_changes.sql" file
@@ -2032,7 +1945,6 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 \! wc -l $EMAJTESTTMPDIR/dump_changes.sql
 17 /tmp/emaj_17/adm3/dump_changes.sql
 select emaj_dump_changes_group('myGroup1','M4','M5',NULL,'{"myschema1.myTbl3"}',:'EMAJTESTTMPDIR');
-NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
  2 files have been created in /tmp/emaj_17/adm3
@@ -2047,7 +1959,6 @@ SELECT emaj_gen_sql_dump_changes_group('myGroup1','M4','M5',
                                             'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_verb), CONSOLIDATION=FULL, ORDER_BY=TIME',
                                             (SELECT array_agg(distinct stat_schema || '.' || stat_table) FROM emaj_log_stat_group('myGroup1','M4','M5'))
                                            );
-NOTICE:  table "emaj_temp_sql" does not exist, skipping
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
  7 SQL statements are available in the "emaj_temp_sql" temporary table
@@ -2101,7 +2012,6 @@ NOTICE:  view "mytbl3_cons_log_view_m4_m5" does not exist, skipping
 -----------------------------
 -- Step 21 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
 -----------------------------
-SET client_min_messages TO WARNING;
 select emaj_create_group('truncateTestGroup');
  emaj_create_group 
 -------------------
@@ -2124,7 +2034,6 @@ WARNING:  _create_tbl: The table "myschema4.mypartp2" has triggers that will be 
                   7
 (1 row)
 
-RESET client_min_messages;
 select emaj_start_group('truncateTestGroup','M1');
  emaj_start_group 
 ------------------
@@ -2180,7 +2089,6 @@ SELECT emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=N
 
 \! cat $EMAJTESTTMPDIR/myschema4_mypartp3.changes
 SELECT emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=PARTIAL', '{"myschema4.mypartp3"}', :'EMAJTESTTMPDIR');
-NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
  2 files have been created in /tmp/emaj_17/adm3
@@ -2210,7 +2118,6 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
 (8 rows)
 
 select emaj_gen_sql_group('truncateTestGroup','M1','M2',:'EMAJTESTTMPDIR' || '/gensql.sql');
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   4

@@ -99,8 +99,6 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 
 -- revert the properties changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
-NOTICE:  table "tmp_app_table" does not exist, skipping
-NOTICE:  table "tmp_app_sequence" does not exist, skipping
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_import_groups_configuration 
@@ -343,7 +341,6 @@ select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
 myseq2	5	1	1	9223372036854775807	1	1	f	t
 \! rm $EMAJTESTTMPDIR/snap/*
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','After ADD_SEQ','SEQUENCES_ONLY',NULL);
-NOTICE:  table "emaj_temp_sql" does not exist, skipping
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
  3 SQL statements are available in the "emaj_temp_sql" temporary table
@@ -359,7 +356,6 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
 (4 rows)
 
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile');
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   0
@@ -370,7 +366,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMP
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.myseq2) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 51 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 52 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/myFile
 -- testing mark deletions
@@ -832,7 +828,6 @@ select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_l
 
 -- testing sql script generation
 select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3_col31_seq']);
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   0
@@ -994,8 +989,6 @@ NOTICE:  drop cascades to default value for column col31 of table myschema1."myT
 rollback;
 -- revert the changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true, 'Revert_sequences_removal');
-NOTICE:  table "tmp_app_table" does not exist, skipping
-NOTICE:  table "tmp_app_sequence" does not exist, skipping
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
@@ -1106,9 +1099,6 @@ select emaj.emaj_set_mark_group('myGroup2','Before ADD_TBL');
 delete from myschema2.mytbl7 where col71 = 3;
 -- then add the table to the group
 select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Add mytbl7');
-NOTICE:  table "mytbl7_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_assign_table 
 -------------------
@@ -1260,7 +1250,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMP
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.mytbl7) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 51 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 52 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/script.sql
 rm: cannot remove '/tmp/emaj_13/alter_logging/script.sql': No such file or directory
@@ -1481,9 +1471,6 @@ select emaj.emaj_remove_table('myschema2', 'mytbl7', 'Remove mytbl7');
 (1 row)
 
 select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Re-add mytbl7');
-NOTICE:  table "mytbl7_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_assign_table 
 -------------------
@@ -1544,8 +1531,6 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
 
 -- and finaly revert the group configuration changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
-NOTICE:  table "tmp_app_table" does not exist, skipping
-NOTICE:  table "tmp_app_sequence" does not exist, skipping
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_import_groups_configuration 
@@ -1849,7 +1834,6 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
 (6 rows)
 
 select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3']);
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   2
@@ -2150,17 +2134,6 @@ begin;
 rollback;
 -- re-add all removed tables
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true, 'Revert_tables_removal');
-NOTICE:  table "tmp_app_table" does not exist, skipping
-NOTICE:  table "tmp_app_sequence" does not exist, skipping
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl2b_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
@@ -2722,7 +2695,6 @@ rollback;
 -- generate a sql script crossing the move (before rollback)
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script1.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_groups 
 ---------------------
                    3
@@ -2758,11 +2730,10 @@ select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, :'EMAJTESTTMPDIR
 ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 51 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 52 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script3.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_groups 
 ---------------------
                    3
@@ -2778,16 +2749,12 @@ select emaj.emaj_stop_group('myGroup2');
 
 -- This first import try fails because a myGroup1 is missing
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
-NOTICE:  table "tmp_app_table" does not exist, skipping
-NOTICE:  table "tmp_app_sequence" does not exist, skipping
 WARNING:  _import_groups_conf (2): in the group myGroup2, the table myschema2."myTbl3" already belongs to the group "myGroup1".
 WARNING:  _import_groups_conf (2): in the group myGroup2, the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 30 at RETURN
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
-NOTICE:  table "tmp_app_table" does not exist, skipping
-NOTICE:  table "tmp_app_sequence" does not exist, skipping
  emaj_import_groups_configuration 
 ----------------------------------
                                 2
@@ -2826,15 +2793,6 @@ begin;
 (1 row)
 
   select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'myGroup2',null,'ASSIGN_3_TABLES');
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_assign_tables 
@@ -2889,15 +2847,6 @@ NOTICE:  function emaj_myschema2.mytbl1_log_fnct() does not exist, skipping
 
   select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
                                  '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_assign_tables 
@@ -2934,9 +2883,6 @@ select emaj.emaj_remove_table('myschema1','mytbl4');
 
 alter table myschema1.mytbl4 alter column col45 type varchar(15);
 select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -2951,9 +2897,6 @@ begin;
 
   alter table myschema1.mytbl4 alter column col45 type varchar(10);
   select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1',NULL,'Assign_mytbl4');
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -3031,9 +2974,6 @@ begin;
 (1 row)
 
   select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1',NULL,'Reassign_mytbl4');
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -3165,8 +3105,6 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1_new_nam
 (1 row)
 
 select emaj.emaj_assign_table('myschema1','mytbl1_new_name','myGroup1');
-NOTICE:  table "mytbl1_new_name_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1_new_name" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -3182,8 +3120,6 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table public.mytbl1_new_name
 (1 row)
 
 select emaj.emaj_assign_table('public','mytbl1_new_name','myGroup1');
-NOTICE:  table "mytbl1_new_name_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "public.mytbl1_new_name" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -3200,8 +3136,6 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
 (1 row)
 
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1

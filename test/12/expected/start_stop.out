@@ -2,7 +2,6 @@
 --                      emaj_stop_group(), emaj_stop_groups(), emaj_force_stop_group(),
 --                      emaj_protect_group() and emaj_unprotect_group() functions
 --
-SET client_min_messages TO WARNING;
 -- set sequence restart value
 -- define and create the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/create_drop'
@@ -60,6 +59,7 @@ SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 46 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 -- detection of a missing application schema
+SET client_min_messages TO WARNING;
 begin;
   drop schema myschema1 cascade;
   select emaj.emaj_start_group('myGroup1','M1');
@@ -70,6 +70,7 @@ SQL statement "SELECT 0
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
+RESET client_min_messages;
 -- detection of a missing application relation
 begin;
   drop table myschema1.mytbl4;
@@ -93,6 +94,7 @@ PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PER
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing E-Maj log schema
+SET client_min_messages TO WARNING;
 begin;
   drop schema emaj_myschema1 cascade;
   select emaj.emaj_start_group('myGroup1','M1');
@@ -103,6 +105,7 @@ SQL statement "SELECT 0
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
+RESET client_min_messages;
 -- detection of a missing log trigger
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
@@ -117,6 +120,7 @@ rollback;
 -- detection of a missing log function
 begin;
   drop function emaj_myschema1.mytbl1_log_fnct() cascade;
+NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
   select emaj.emaj_start_group('myGroup1','M1');
 ERROR:  _verify_groups (3): In tables group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 80 at RAISE
@@ -386,7 +390,6 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boole
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
-SET client_min_messages TO NOTICE;
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
 ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
@@ -412,7 +415,6 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 --  select emaj.emaj_stop_group('myGroup4');
 --  select emaj.emaj_start_group('myGroup4',NULL,false);
 --rollback;
-SET client_min_messages TO WARNING;
 -- check for emaj_start_group()
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
     group_name    | group_is_logging | group_is_rlbk_protected 
@@ -1025,6 +1027,7 @@ PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL 
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 -- should be OK
 -- missing application schema
+SET client_min_messages TO WARNING;
 begin;
   drop schema mySchema2 cascade;
   select emaj.emaj_force_stop_group('myGroup2');
@@ -1043,6 +1046,7 @@ WARNING:  _stop_groups: The table "myschema2.mytbl8" does not exist anymore.
 (1 row)
 
 rollback;
+RESET client_min_messages;
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;

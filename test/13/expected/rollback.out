@@ -1931,9 +1931,6 @@ select * from emaj.emaj_logged_rollback_group('emptyGroup','EGM3');
 -----------------------------
 insert into mySchema4.myTblR1 values (-2), (-1), (0), (1), (2);
 select emaj.emaj_assign_table('myschema4', 'mytblr2', 'myGroup4');
-NOTICE:  table "mytblr2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr2" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -2665,9 +2662,6 @@ select emaj.emaj_cleanup_rollback_state();
 
 -- Finaly add mytblr1 to the group
 select emaj.emaj_assign_table('myschema4', 'mytblr1', 'myGroup4', null, 'Assign mytblr1');
-NOTICE:  table "mytblr1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr1" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1

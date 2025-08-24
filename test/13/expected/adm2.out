@@ -646,12 +646,6 @@ select emaj.emaj_create_group('phil''s group#3",');
 (1 row)
 
 select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
-NOTICE:  table "myTbl2\_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
-NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   2
@@ -1437,7 +1431,6 @@ phil_s_schema_3_phil_s_seq_1.snap
 phil_s_schema_3_phil_s_tbl1.snap
 -- generate a sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   6
@@ -1452,7 +1445,6 @@ select coalesce(sum(stat_rows),0) + 1 /* sequence change */ as check from emaj.e
 select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup2.sql', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                  26
@@ -1465,7 +1457,6 @@ select sum(stat_rows) + 1 /* sequence change */ as check from emaj.emaj_detailed
 (1 row)
 
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, :'EMAJTESTTMPDIR' || '/Group3.sql');
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                  56
@@ -1479,7 +1470,6 @@ select sum(stat_rows) + 1 /* sequence change*/ as check from emaj.emaj_detailed_
 
 -- generate another sql script for myGroup1 but with a manual export and check both scripts are the same
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
-NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   6
@@ -1786,9 +1776,6 @@ reset role;
 alter table "phil's schema""3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 set role emaj_regression_tests_adm_user1;
 select emaj.emaj_assign_table('phil''s schema"3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
-NOTICE:  table "table_with_very_looooooooooooooooooooooooooooooooo#1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1

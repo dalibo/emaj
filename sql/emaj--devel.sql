@@ -3069,6 +3069,7 @@ $_create_tbl$
     v_sequenceName           TEXT;
     v_dataTblSpace           TEXT;
     v_idxTblSpace            TEXT;
+    v_prevCMM                TEXT;
     v_pkCols                 TEXT[];
     v_genExprCols            TEXT[];
     v_rlbkColList            TEXT;
@@ -3112,9 +3113,17 @@ $_create_tbl$
 -- Prepare the TABLESPACE clauses for data and index
     v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(p_logDatTsp),'');
     v_idxTblSpace = coalesce('USING INDEX TABLESPACE ' || quote_ident(p_logIdxTsp),'');
--- Create the log table: it looks like the application table, with some additional technical columns.
+-- Drop a potential log table or E-Maj trigger leftover.
+    v_prevCMM = current_setting('client_min_messages');
+    SET client_min_messages TO WARNING;
     EXECUTE format('DROP TABLE IF EXISTS %s',
                    v_logTableName);
+    EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %I.%I',
+                   p_schema, p_tbl);
+    EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %I.%I',
+                   p_schema, p_tbl);
+    PERFORM set_config ('client_min_messages', v_prevCMM, FALSE);
+-- Create the log table: it looks like the application table, with some additional technical columns.
     EXECUTE format('CREATE TABLE %s (LIKE %s,'
                    '  emaj_verb      VARCHAR(3)  NOT NULL,'
                    '  emaj_tuple     VARCHAR(3)  NOT NULL,'
@@ -3188,14 +3197,10 @@ $_create_tbl$
          || 'END;'
          || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
 -- Create the log and truncate triggers.
-    EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %I.%I',
-                   p_schema, p_tbl);
     EXECUTE format('CREATE TRIGGER emaj_log_trg'
                    ' AFTER INSERT OR UPDATE OR DELETE ON %I.%I'
                    '  FOR EACH ROW EXECUTE PROCEDURE %s()',
                    p_schema, p_tbl, v_logFnctName);
-    EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %I.%I',
-                   p_schema, p_tbl);
     EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
                    '  BEFORE TRUNCATE ON %I.%I'
                    '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
@@ -6181,6 +6186,7 @@ $_import_groups_conf_prepare$
 --        - the input file name, if any, to record in the emaj_hist table
 -- Output: diagnostic records
   DECLARE
+    v_prevCMM                TEXT;
     v_rollbackableGroups     TEXT[];
     v_ignoredTriggers        TEXT[];
     r_group                  RECORD;
@@ -6241,7 +6247,10 @@ $_import_groups_conf_prepare$
       END IF;
     END IF;
 -- Drop temporary tables in case of...
+    v_prevCMM = current_setting('client_min_messages');
+    SET client_min_messages TO WARNING;
     DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence;
+    PERFORM set_config ('client_min_messages', v_prevCMM, FALSE);
 -- Create the temporary table that will hold the application tables configured in groups.
     CREATE TEMP TABLE tmp_app_table (
       tmp_group            TEXT NOT NULL,
@@ -11780,6 +11789,7 @@ $_gen_sql_dump_changes_group$
     v_isPsqlCopy             BOOLEAN = FALSE;
     v_noEmptyFiles           BOOLEAN = FALSE;
     v_orderBy                TEXT;
+    v_prevCMM                TEXT;
     v_sequencesOnly          BOOLEAN = FALSE;
     v_sqlFormat              TEXT = 'RAW';
     v_tablesOnly             BOOLEAN = FALSE;
@@ -11982,7 +11992,10 @@ $_gen_sql_dump_changes_group$
 -- Set the ORDER_BY clause if not explicitely done in the supplied options.
     v_orderBy = coalesce(v_orderBy, CASE WHEN v_consolidation = 'NONE' THEN 'TIME' ELSE 'PK' END);
 -- Create a temporary table to hold the SQL statements.
+    v_prevCMM = current_setting('client_min_messages');
+    SET client_min_messages TO WARNING;
     DROP TABLE IF EXISTS emaj_temp_sql CASCADE;
+    PERFORM set_config ('client_min_messages', v_prevCMM, FALSE);
     CREATE TEMP TABLE emaj_temp_sql (
       sql_stmt_number        INT,                 -- SQL statement number
       sql_line_number        INT,                 -- line number for the statement (0 for an initial comment)
@@ -12566,6 +12579,7 @@ $_gen_sql_groups$
     v_lastMarkTs             TIMESTAMPTZ;
     v_tblseqErr              TEXT;
     v_count                  INT;
+    v_prevCMM                TEXT;
     v_nbSQL                  BIGINT;
     v_nbSeq                  INT;
     v_cumNbSQL               BIGINT = 0;
@@ -12610,7 +12624,10 @@ $_gen_sql_groups$
           v_count, v_tblseqErr, p_firstMark;
       END IF;
 -- Create a temporary table to hold the generated script.
+      v_prevCMM = current_setting('client_min_messages');
+      SET client_min_messages TO WARNING;
       DROP TABLE IF EXISTS emaj_temp_script CASCADE;
+      PERFORM set_config ('client_min_messages', v_prevCMM, FALSE);
       CREATE TEMP TABLE emaj_temp_script (
         scr_emaj_gid           BIGINT,              -- the emaj_gid of the corresponding log row,
                                                     --   0 for initial technical statements,

@@ -23,22 +23,7 @@ select emaj.emaj_create_group('myGroup1');
 (1 row)
 
 select emaj.emaj_assign_tables('myschema1','.*',null,'myGroup1');
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
-NOTICE:  table "mytbl2b_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   5
@@ -63,24 +48,6 @@ select emaj.emaj_create_group('myGroup2');
 (1 row)
 
 select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl4" does not exist, skipping
-NOTICE:  table "mytbl5_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl5" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl5" does not exist, skipping
-NOTICE:  table "mytbl6_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl6" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl6" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   6
@@ -349,7 +316,6 @@ select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
 (1 row)
 
 select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Start','Start',NULL,NULL);
-NOTICE:  table "emaj_temp_sql" does not exist, skipping
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
  0 SQL statements are available in the "emaj_temp_sql" temporary table

@@ -3,7 +3,6 @@
 -- emaj_export_groups_configuration(), emaj_import_groups_configuration(),
 -- emaj_drop_group() and emaj_force_drop_group() functions
 --
-SET client_min_messages TO WARNING;
 -- define and create the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/create_drop'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
@@ -276,7 +275,7 @@ ERROR:  syntax error at or near "dummmy"
 LINE 1: ALTER TABLE emaj_myschema1.mytbl1_log dummmy content
                                               ^
 QUERY:  ALTER TABLE emaj_myschema1.mytbl1_log dummmy content
-CONTEXT:  PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean) line 96 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean) line 105 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
                              p_timeId, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 18 at PERFORM
@@ -1421,6 +1420,7 @@ select emaj.emaj_enable_protection_by_event_triggers();
 (1 row)
 
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
+NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
  emaj_import_groups_configuration 
 ----------------------------------
                                 7

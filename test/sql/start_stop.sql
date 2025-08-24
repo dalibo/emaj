@@ -2,7 +2,6 @@
 --                      emaj_stop_group(), emaj_stop_groups(), emaj_force_stop_group(),
 --                      emaj_protect_group() and emaj_unprotect_group() functions
 --
-SET client_min_messages TO WARNING;
 
 -- set sequence restart value
 -- define and create the temp file directory to be used by the script
@@ -28,11 +27,14 @@ select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 select emaj.emaj_start_groups(array['unknownGroup1','unknownGroup2'],NULL,NULL);
 -- reserved mark name
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
+
 -- detection of a missing application schema
+SET client_min_messages TO WARNING;
 begin;
   drop schema myschema1 cascade;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
+RESET client_min_messages;
 -- detection of a missing application relation
 begin;
   drop table myschema1.mytbl4;
@@ -44,10 +46,12 @@ begin;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
 -- detection of a missing E-Maj log schema
+SET client_min_messages TO WARNING;
 begin;
   drop schema emaj_myschema1 cascade;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
+RESET client_min_messages;
 -- detection of a missing log trigger
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
@@ -171,8 +175,6 @@ select emaj.emaj_start_group('myGroup2','',false);
 -- group already started
 select emaj.emaj_start_group('myGroup2','Mark3');
 
-SET client_min_messages TO NOTICE;
-
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
@@ -184,8 +186,6 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 --  select emaj.emaj_stop_group('myGroup4');
 --  select emaj.emaj_start_group('myGroup4',NULL,false);
 --rollback;
-
-SET client_min_messages TO WARNING;
 
 -- check for emaj_start_group()
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
@@ -343,10 +343,12 @@ select emaj.emaj_force_stop_group('unknownGroup');
 
 -- should be OK
 -- missing application schema
+SET client_min_messages TO WARNING;
 begin;
   drop schema mySchema2 cascade;
   select emaj.emaj_force_stop_group('myGroup2');
 rollback;
+RESET client_min_messages;
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;

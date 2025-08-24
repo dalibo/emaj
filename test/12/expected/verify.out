@@ -577,7 +577,6 @@ rollback;
 --------------------------------
 -- User errors and recovery tests 
 --------------------------------
-SET client_min_messages TO WARNING;
 -- cases when an application table is altered
 begin;
   alter table myschema2.mytbl4 add column newcol int;
@@ -697,6 +696,7 @@ PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text
   rollback to savepoint sp1;
 -- removing and re-assigning the table solves the issue 
   select emaj.emaj_remove_table('myschema2','mytbl4');
+NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl4" does not exist, skipping
  emaj_remove_table 
 -------------------
                  1
@@ -729,6 +729,7 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- removing and re-assigning the table solves the issue 
   select emaj.emaj_remove_table('myschema2','mytbl4');
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl4" does not exist, skipping
  emaj_remove_table 
 -------------------
                  1
@@ -819,6 +820,7 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 (1 row)
 
   select emaj.emaj_remove_table('myschema2','mytbl4');
+NOTICE:  sequence "mytbl4_log_seq" does not exist, skipping
  emaj_remove_table 
 -------------------
                  1
@@ -861,6 +863,7 @@ WARNING:  _check_tblseqs_array: In schema "myschema2", some sequences (myseq1) d
 
 rollback;
 -- cases when an application schema is dropped
+SET client_min_messages TO WARNING;
 begin;
   drop schema myschema2 cascade;
 -- stopping group fails
@@ -901,6 +904,7 @@ WARNING:  _stop_groups: The table "myschema2.mytbl8" does not exist anymore.
 (2 rows)
 
 rollback;
+RESET client_min_messages;
 -- cases when non E-Maj related objects are stored in emaj log schemas
 begin;
   select emaj.emaj_stop_group('myGroup1');
@@ -930,6 +934,7 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 15 at SQL statement
 
 -- use emaj_force_drop_group to solve the problem
   select emaj.emaj_force_drop_group('myGroup1');
+NOTICE:  drop cascades to sequence emaj_myschema1.dummyseq
  emaj_force_drop_group 
 -----------------------
                      7
@@ -973,6 +978,7 @@ select emaj.emaj_enable_protection_by_event_triggers();
 -- drop application components (the related tables group is currently in logging state)
 begin;
   drop table myschema1.mytbl1 cascade;
+NOTICE:  drop cascades to constraint mytbl4_col44_fkey on table myschema1.mytbl4
 ERROR:  E-Maj event trigger: Attempting to drop the application table "myschema1.mytbl1". But it belongs to the active tables group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 52 at RAISE
 rollback;
@@ -981,11 +987,13 @@ begin;
 ERROR:  E-Maj event trigger: Attempting to drop the application sequence "myschema2.myseq1". But it belongs to the active tables group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 76 at RAISE
 rollback;
+SET client_min_messages TO WARNING;
 begin;
   drop schema myschema1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application schema "myschema1". But it belongs to the active tables groups "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 29 at RAISE
 rollback;
+RESET client_min_messages;
 -- drop primary keys
 -- drop a primary key for a table belonging to a rollbackable tables group (should be blocked)
 begin;
@@ -996,6 +1004,7 @@ rollback;
 -- drop a primary key for a table belonging to an audit_only tables group (should not fail)
 begin;
   alter table "phil's schema""3"."phil's tbl1" drop constraint "phil's tbl1_pkey" cascade;
+NOTICE:  drop cascades to constraint my"tbl4_col44_fkey on table "phil's schema""3"."my""tbl4"
 rollback;
 -- drop emaj components
 begin;
@@ -1010,6 +1019,7 @@ CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 86 at RAISE
 rollback;
 begin;
   drop function emaj_myschema1."myTbl3_log_fnct"() cascade;
+NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 ERROR:  E-Maj event trigger: Attempting to drop the log function "emaj_myschema1."myTbl3_log_fnct"()". But dropping an E-Maj log function is not allowed.
 CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 97 at RAISE
 rollback;
@@ -1018,6 +1028,7 @@ begin;
 ERROR:  E-Maj event trigger: Attempting to drop the "emaj_log_trg on myschema1.mytbl1" E-Maj trigger. But dropping an E-Maj trigger is not allowed.
 CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 111 at RAISE
 rollback;
+SET client_min_messages TO WARNING;
 begin;
   drop schema emaj cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj". Please execute the emaj.emaj_drop_extension() function if you really want to remove all E-Maj components.
@@ -1028,6 +1039,7 @@ begin;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj_myschema1". But dropping an E-Maj schema is not allowed.
 CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 38 at RAISE
 rollback;
+RESET client_min_messages;
 -- dropping the extension in tested by the install sql script because it depends on the way the extension is created
 -- change a table structure that leads to a table rewrite
 begin;
@@ -1060,10 +1072,12 @@ begin;
 
   alter table myschema1.mytbl1 alter column col13 type varchar(10);
   drop table myschema1.mytbl1 cascade;
+NOTICE:  drop cascades to constraint mytbl4_col44_fkey on table myschema1.mytbl4
   drop sequence myschema2.mySeq1;
 rollback;
 -- drop the public._emaj_protection_event_trigger_fnct() technical function that is left outside the emaj extension
 drop function public._emaj_protection_event_trigger_fnct() CASCADE;
+NOTICE:  drop cascades to event trigger emaj_protection_trg
 ERROR:  E-Maj event trigger: Attempting to drop the public._emaj_protection_event_trigger_fnct() function. But dropping this E-Maj technical function is not allowed.
 CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 102 at RAISE
 -- missing event triggers

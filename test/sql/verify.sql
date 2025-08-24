@@ -275,7 +275,6 @@ rollback;
 --------------------------------
 -- User errors and recovery tests 
 --------------------------------
-SET client_min_messages TO WARNING;
 
 -- cases when an application table is altered
 begin;
@@ -370,6 +369,7 @@ begin;
 rollback;
 
 -- cases when an application schema is dropped
+SET client_min_messages TO WARNING;
 begin;
   drop schema myschema2 cascade;
 -- stopping group fails
@@ -382,6 +382,7 @@ begin;
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
 rollback;
+RESET client_min_messages;
 
 -- cases when non E-Maj related objects are stored in emaj log schemas
 begin;
@@ -420,9 +421,11 @@ rollback;
 begin;
   drop sequence myschema2.mySeq1;
 rollback;
+SET client_min_messages TO WARNING;
 begin;
   drop schema myschema1 cascade;
 rollback;
+RESET client_min_messages;
 
 -- drop primary keys
 -- drop a primary key for a table belonging to a rollbackable tables group (should be blocked)
@@ -447,12 +450,16 @@ rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
 rollback;
+
+SET client_min_messages TO WARNING;
 begin;
   drop schema emaj cascade;
 rollback;
 begin;
   drop schema emaj_myschema1 cascade;
 rollback;
+RESET client_min_messages;
+
 -- dropping the extension in tested by the install sql script because it depends on the way the extension is created
 
 -- change a table structure that leads to a table rewrite

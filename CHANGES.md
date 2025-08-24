@@ -13,6 +13,8 @@ E-Maj - Change log
     in application tables.
   * Add a check on the existence of application triggers registered as "to be
     ignored at rollback time".
+  * Remove useless NOTICE messages issued by emaj functions, in particular when
+    assigning a table to a tables group.
   * Minor code changes.
 
 ###Bug fixes:###

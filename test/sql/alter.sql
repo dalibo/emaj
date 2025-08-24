@@ -28,12 +28,9 @@ select emaj.emaj_drop_group('emptyGroup');
 select emaj.emaj_create_group('myGroup1');
 
 -- rebuild all original groups
-SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4','myGroup5'], true);
 -- add a table without PK to the audit_only group
 select emaj.emaj_assign_table('phil''s schema"3', 'myTbl2\', 'myGroup5');
-
-RESET client_min_messages;
 
 -----------------------------------
 -- emaj_remove_table
@@ -133,9 +130,7 @@ select emaj.emaj_remove_sequences('myschema2','.*','');
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2';
 
 -- rebuild all original groups
-SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
-RESET client_min_messages;
 
 -- check for emaj_remove_table() and emaj_remove_sequence() functions family
 select * from emaj.emaj_relation_change where rlchg_time_id >= 8000 order by 1,2,3,4;
