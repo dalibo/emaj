@@ -24,9 +24,9 @@ DO LANGUAGE plpgsql
 $do$
   BEGIN
 -- Check postgres version is >= 11.
-    IF current_setting('server_version_num')::INT < 110000 THEN
+    IF pg_catalog.current_setting('server_version_num')::INT < 110000 THEN
       RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 11.',
-        current_setting('server_version');
+        pg_catalog.current_setting('server_version');
     END IF;
 -- Create both emaj_adm and emaj_viewer roles (NOLOGIN), if they do not exist.
     IF NOT EXISTS
@@ -667,7 +667,7 @@ $$Represents a generic notice, warning or error message structure that can be tr
 -- The 'alter_log_table' parameter allows to adjust the log tables content by adding extra information column.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
 --     'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(),
---      ADD COLUMN emaj_appname TEXT DEFAULT current_setting(''application_name'')');
+--      ADD COLUMN emaj_appname TEXT DEFAULT pg_catalog.current_setting(''application_name'')');
 -- 6 parameters are used by the emaj_estimate_rollback_group(s) and the rollback functions as default values to compute the approximate
 -- duration of a rollback operation.
 -- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
@@ -742,7 +742,7 @@ CREATE OR REPLACE FUNCTION emaj._pg_version_num()
 RETURNS INTEGER LANGUAGE SQL IMMUTABLE AS
 $$
 -- This function returns as an integer the current postgresql version.
-SELECT current_setting('server_version_num')::INT;
+SELECT pg_catalog.current_setting('server_version_num')::INT;
 $$;
 CREATE OR REPLACE FUNCTION emaj._set_time_stamp(p_function TEXT, p_timeEvent CHAR(1))
 RETURNS BIGINT LANGUAGE SQL AS
@@ -806,10 +806,10 @@ $_dblink_open_cnx$
       LIMIT 1;
     IF NOT FOUND THEN
       p_status = -1;                      -- dblink is not installed
-    ELSIF NOT has_function_privilege(p_callerRole, quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
+    ELSIF NOT pg_catalog.has_function_privilege(p_callerRole, quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
       p_status = -3;                      -- current role has not the execute rights on dblink functions
     ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'emaj_verify_all') AND
-          current_setting('transaction_isolation') <> 'read committed' THEN
+          pg_catalog.current_setting('transaction_isolation') <> 'read committed' THEN
       p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
                                           --   READ COMMITTED transaction
     ELSE
@@ -830,13 +830,13 @@ $_dblink_open_cnx$
 -- Build the connect string.
           v_connectString = 'host='
                          || CASE
-                              WHEN current_setting('listen_addresses') = ''
-                                THEN coalesce(substring(current_setting('unix_socket_directories') from '(.*?)\s*,'),
-                                              current_setting('unix_socket_directories'))
+                              WHEN pg_catalog.current_setting('listen_addresses') = ''
+                                THEN coalesce(substring(pg_catalog.current_setting('unix_socket_directories') from '(.*?)\s*,'),
+                                              pg_catalog.current_setting('unix_socket_directories'))
                               ELSE 'localhost'
                             END
-                         || ' port=' || current_setting('port')
-                         || ' dbname=' || current_database()
+                         || ' port=' || pg_catalog.current_setting('port')
+                         || ' dbname=' || pg_catalog.current_database()
                          || ' ' || v_userPassword;
 -- Try to connect.
           BEGIN
@@ -845,7 +845,7 @@ $_dblink_open_cnx$
             p_status = 1;                   -- the connection is successful
 -- For E-Maj rollback first connections and test connections, check the role is member of emaj_adm.
             IF (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
-              v_stmt = 'SELECT pg_has_role(''emaj_adm'', ''MEMBER'') AS is_emaj_adm';
+              v_stmt = 'SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'') AS is_emaj_adm';
               EXECUTE format('SELECT is_emaj_adm FROM %I.dblink(%L, %L) AS (is_emaj_adm BOOLEAN)',
                              p_schema, p_cnxName, v_stmt)
                 INTO v_isEmajadm;
@@ -934,7 +934,7 @@ $_get_default_tablespace$
   BEGIN
 -- Get the default tablespace set for the current session or set for the entire instance by GUC.
     SELECT setting INTO v_tablespace
-      FROM pg_settings
+      FROM pg_catalog.pg_settings
       WHERE name = 'default_tablespace';
     IF v_tablespace = '' THEN
 -- Get the default tablespace for the current database (pg_default if no specific tablespace name has been set for the database).
@@ -3035,7 +3035,7 @@ $_create_tbl$
     v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(p_logDatTsp),'');
     v_idxTblSpace = coalesce('USING INDEX TABLESPACE ' || quote_ident(p_logIdxTsp),'');
 -- Drop a potential log table or E-Maj trigger leftover.
-    v_prevCMM = current_setting('client_min_messages');
+    v_prevCMM = pg_catalog.current_setting('client_min_messages');
     SET client_min_messages TO WARNING;
     EXECUTE format('DROP TABLE IF EXISTS %s',
                    v_logTableName);
@@ -3043,7 +3043,7 @@ $_create_tbl$
                    p_schema, p_tbl);
     EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %I.%I',
                    p_schema, p_tbl);
-    PERFORM set_config ('client_min_messages', v_prevCMM, FALSE);
+    PERFORM pg_catalog.set_config ('client_min_messages', v_prevCMM, FALSE);
 -- Create the log table: it looks like the application table, with some additional technical columns.
     EXECUTE format('CREATE TABLE %s (LIKE %s,'
                    '  emaj_verb      VARCHAR(3)  NOT NULL,'
@@ -4331,8 +4331,8 @@ $_add_seq$
                      '         seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
                      '    FROM %I.%I sq,'
                      '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
                      '    WHERE nspname = %L AND relname = %L',
                      p_timeId, p_schema, p_sequence, p_schema, p_sequence);
     END IF;
@@ -4491,12 +4491,12 @@ $_rlbk_tbl$
 -- Create the temporary table containing all primary key values with their earliest emaj_gid.
     IF p_nbSession = 1 THEN
       v_tableType = 'TEMP';
-      v_tmpTable = 'emaj_tmp_' || pg_backend_pid();
+      v_tmpTable = 'emaj_tmp_' || pg_catalog.pg_backend_pid();
     ELSE
 -- With multi session parallel rollbacks, the table cannot be a TEMP table because it would not be usable in 2PC
 -- but it may be an UNLOGGED table.
       v_tableType = 'UNLOGGED';
-      v_tmpTable = 'emaj.emaj_tmp_' || pg_backend_pid();
+      v_tmpTable = 'emaj.emaj_tmp_' || pg_catalog.pg_backend_pid();
     END IF;
     EXECUTE format('CREATE %s TABLE %s AS '
                    '  SELECT %s, min(emaj_gid) as emaj_gid FROM %s'
@@ -4605,8 +4605,8 @@ $_rlbk_seq$
     EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
                    '  FROM %I.%I sq,'
                    '       pg_catalog.pg_sequence s'
-                   '       JOIN pg_class c ON (c.oid = s.seqrelid)'
-                   '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                   '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                   '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
                    '  WHERE nspname = %L AND relname = %L',
                    r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
       INTO STRICT curr_seq_rec;
@@ -4833,8 +4833,8 @@ $_sequence_stat_seq$
       EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
                      '  FROM %I.%I sq,'
                      '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
                      '  WHERE nspname = %L AND relname = %L',
                      r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
         INTO STRICT r_endSeq;
@@ -4882,8 +4882,8 @@ $_gen_sql_seq$
       EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
                      '  FROM %I.%I sq,'
                      '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
                      '  WHERE nspname = %L AND relname = %L',
                      r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
         INTO STRICT trg_seq_rec;
@@ -4927,7 +4927,7 @@ $_get_log_sequence_last_value$
   DECLARE
     v_lastValue                BIGINT;
   BEGIN
-    SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass) INTO v_lastValue;
+    SELECT pg_catalog.pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass) INTO v_lastValue;
     IF v_lastValue IS NULL THEN
 -- The is_called attribute seems to be false, so reach the sequence itself.
       EXECUTE format('SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END as last_value FROM %I.%I',
@@ -4952,14 +4952,14 @@ $_get_app_sequence_last_value$
   DECLARE
     v_lastValue                BIGINT;
   BEGIN
-    SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass) INTO v_lastValue;
+    SELECT pg_catalog.pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass) INTO v_lastValue;
     IF v_lastValue IS NULL THEN
 -- The is_called attribute seems to be false, so reach the sequence itself.
       EXECUTE format('SELECT CASE WHEN is_called THEN last_value ELSE last_value -'
                      '         (SELECT seqincrement'
                      '            FROM pg_catalog.pg_sequence s'
-                     '                 JOIN pg_class c ON (c.oid = s.seqrelid)'
-                     '                 JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '                 JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                     '                 JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
                      '            WHERE nspname = %L AND relname = %L'
                      '         ) END as last_value FROM %I.%I',
                      p_schema, p_sequence, p_schema, p_sequence)
@@ -6114,10 +6114,10 @@ $_import_groups_conf_prepare$
       END IF;
     END IF;
 -- Drop temporary tables in case of...
-    v_prevCMM = current_setting('client_min_messages');
+    v_prevCMM = pg_catalog.current_setting('client_min_messages');
     SET client_min_messages TO WARNING;
     DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence;
-    PERFORM set_config ('client_min_messages', v_prevCMM, FALSE);
+    PERFORM pg_catalog.set_config ('client_min_messages', v_prevCMM, FALSE);
 -- Create the temporary table that will hold the application tables configured in groups.
     CREATE TEMP TABLE tmp_app_table (
       tmp_group            TEXT NOT NULL,
@@ -7221,8 +7221,8 @@ $_set_mark_groups$
                      '         seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
                      '    FROM %I.%I sq,'
                      '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
                      '    WHERE nspname = %L AND relname = %L',
                      p_timeId, r_seq.rel_schema, r_seq.rel_tblseq, r_seq.rel_schema, r_seq.rel_tblseq);
       v_nbSeq = v_nbSeq + 1;
@@ -8570,8 +8570,8 @@ $_rlbk_planning$
             rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_batch_number, rlbp_object_def,
             rlbp_estimated_quantity
             ) VALUES (
-            p_rlbkId, 'ADD_FK', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number, pg_get_constraintdef(r_fk.conoid),
-            r_fk.reltuples
+            p_rlbkId, 'ADD_FK', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number,
+            pg_catalog.pg_get_constraintdef(r_fk.conoid), r_fk.reltuples
             );
         ELSE
 -- Other deferrable but not deferred fkeys need to be set deferred.
@@ -10979,8 +10979,8 @@ $_log_stat_sequence$
       EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
                      '  FROM %I.%I sq,'
                      '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
                      '  WHERE nspname = %L AND relname = %L',
                      p_schema, p_sequence, p_schema, p_sequence)
         INTO STRICT r_endSeq;
@@ -11784,10 +11784,10 @@ $_gen_sql_dump_changes_group$
 -- Set the ORDER_BY clause if not explicitely done in the supplied options.
     v_orderBy = coalesce(v_orderBy, CASE WHEN v_consolidation = 'NONE' THEN 'TIME' ELSE 'PK' END);
 -- Create a temporary table to hold the SQL statements.
-    v_prevCMM = current_setting('client_min_messages');
+    v_prevCMM = pg_catalog.current_setting('client_min_messages');
     SET client_min_messages TO WARNING;
     DROP TABLE IF EXISTS emaj_temp_sql CASCADE;
-    PERFORM set_config ('client_min_messages', v_prevCMM, FALSE);
+    PERFORM pg_catalog.set_config ('client_min_messages', v_prevCMM, FALSE);
     CREATE TEMP TABLE emaj_temp_sql (
       sql_stmt_number        INT,                 -- SQL statement number
       sql_line_number        INT,                 -- line number for the statement (0 for an initial comment)
@@ -12267,8 +12267,8 @@ $emaj_snap_group$
           v_stmt = format('(SELECT relname, rel.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, rel.is_called'
                           '  FROM %I.%I rel,'
                           '       pg_catalog.pg_sequence s'
-                          '       JOIN pg_class c ON (c.oid = s.seqrelid)'
-                          '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                          '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                          '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
                           '  WHERE nspname = %L AND relname = %L)',
                          r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_schema, r_tblsq.rel_tblseq);
 --    Dump the sequence properties.
@@ -12410,10 +12410,10 @@ $_gen_sql_groups$
           v_count, v_tblseqErr, p_firstMark;
       END IF;
 -- Create a temporary table to hold the generated script.
-      v_prevCMM = current_setting('client_min_messages');
+      v_prevCMM = pg_catalog.current_setting('client_min_messages');
       SET client_min_messages TO WARNING;
       DROP TABLE IF EXISTS emaj_temp_script CASCADE;
-      PERFORM set_config ('client_min_messages', v_prevCMM, FALSE);
+      PERFORM pg_catalog.set_config ('client_min_messages', v_prevCMM, FALSE);
       CREATE TEMP TABLE emaj_temp_script (
         scr_emaj_gid           BIGINT,              -- the emaj_gid of the corresponding log row,
                                                     --   0 for initial technical statements,
@@ -12438,7 +12438,7 @@ $_gen_sql_groups$
         v_endComment = ' and the current state';
       END IF;
       SELECT setting INTO v_dateStyle
-        FROM pg_settings
+        FROM pg_catalog.pg_settings
         WHERE name = 'DateStyle';
       INSERT INTO emaj_temp_script VALUES
         (0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp()),
@@ -13576,10 +13576,10 @@ $emaj_verify_all$
       RETURN NEXT 'Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).';
     END If;
 -- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks
-    IF current_setting('max_prepared_transactions')::INT <= 1 THEN
+    IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
       RETURN NEXT format('Warning: The max_prepared_transactions parameter value (%s) on this cluster is too low to launch parallel '
                          'rollback.',
-                         current_setting('max_prepared_transactions'));
+                         pg_catalog.current_setting('max_prepared_transactions'));
     END IF;
 -- Report a warning if the emaj_protection_trg event triggers is missing.
 -- The other event triggers are protected by the emaj extension they belong to.
@@ -13664,7 +13664,7 @@ $_event_trigger_sql_drop_fnct$
 -- Scan all dropped objects.
     FOR r_dropped IN
       SELECT object_type, schema_name, object_name, object_identity, original
-        FROM pg_event_trigger_dropped_objects()
+        FROM pg_catalog.pg_event_trigger_dropped_objects()
     LOOP
       CASE
         WHEN r_dropped.object_type = 'schema' THEN
@@ -13984,7 +13984,7 @@ $emaj_drop_extension$
 -- First perform some checks to verify that the conditions to execute the function are met.
 --
 -- Check emaj schema is present.
-    PERFORM 1 FROM pg_namespace WHERE nspname = 'emaj';
+    PERFORM 1 FROM pg_catalog.pg_namespace WHERE nspname = 'emaj';
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_drop_extension: The schema ''emaj'' doesn''t exist';
     END IF;
@@ -14379,9 +14379,9 @@ $do$
       RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser. This may lead to permission issues when using E-Maj.', current_user;
     END IF;
 -- Check the max_prepared_transactions GUC value and report a warning if its value is too low for parallel rollback.
-    IF current_setting('max_prepared_transactions')::INT <= 1 THEN
+    IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
       RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
-                    ' rollback is possible.', current_setting('max_prepared_transactions');
+                    ' rollback is possible.', pg_catalog.current_setting('max_prepared_transactions');
     END IF;
 --
     RETURN;

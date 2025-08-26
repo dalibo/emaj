@@ -578,7 +578,6 @@ rollback;
 --------------------------------
 -- User errors and recovery tests 
 --------------------------------
-----SET client_min_messages TO WARNING;
 -- cases when an application table is altered
 begin;
   alter table myschema2.mytbl4 add column newcol int;
@@ -761,7 +760,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
-CONTEXT:  SQL statement "SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
+CONTEXT:  SQL statement "SELECT pg_catalog.pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
 PL/pgSQL function emaj._get_log_sequence_last_value(text,text) line 12 at SQL statement
 SQL expression "(SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence))
            -- the log sequence last value at begin time id
@@ -790,7 +789,7 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- removing the table fails also
   select emaj.emaj_remove_table('myschema2','mytbl4');
 ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
-CONTEXT:  SQL statement "SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
+CONTEXT:  SQL statement "SELECT pg_catalog.pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
 PL/pgSQL function emaj._get_log_sequence_last_value(text,text) line 12 at SQL statement
 SQL expression "(SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence))
            -- the log sequence last value at begin time id

@@ -1318,7 +1318,7 @@ select * from emaj_verify_all() as t(msg) where msg not like '%foreign key%';
 --     a removal while the group is LOGGING fails
 select emaj_remove_table('phil''s schema"3','my"tbl4');
 ERROR:  relation "emaj_phil's schema"3.my"tbl4_log_seq" does not exist
-CONTEXT:  SQL statement "SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
+CONTEXT:  SQL statement "SELECT pg_catalog.pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
 PL/pgSQL function emaj._get_log_sequence_last_value(text,text) line 12 at SQL statement
 SQL statement "SELECT (SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence))
            -- the log sequence last value at begin time id
