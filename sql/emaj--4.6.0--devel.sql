@@ -493,6 +493,45 @@ $_get_default_tablespace$
   END;
 $_get_default_tablespace$;
 
+CREATE OR REPLACE FUNCTION emaj._check_schema(p_schema TEXT, p_exceptionIfMissing BOOLEAN, p_checkNotEmaj BOOLEAN)
+RETURNS BOOLEAN LANGUAGE plpgsql AS
+$_check_schema$
+-- This function checks if a schema exists. If not, it either raises an exception or just a warning.
+-- If requested, it also checks that the schema is not an emaj schema. If the check fails, it raises an exception.
+-- Input: schema, boolean indicating whether a missing schema raises an exception,
+--        boolean indicating whether the schema must not be an emaj schema.
+-- Output : boolean indicating whether the schema exists
+  DECLARE
+    v_schemaExists           BOOLEAN = TRUE;
+  BEGIN
+-- Check that the schema exists.
+    IF NOT EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_namespace
+            WHERE nspname = p_schema
+         ) THEN
+      IF p_exceptionIfMissing THEN
+        RAISE EXCEPTION '_check_schema: The schema "%" does not exist!', p_schema;
+      ELSE
+        RAISE WARNING '_check_schema: The schema "%" does not exist.', p_schema;
+        v_schemaExists = FALSE;
+      END IF;
+    END IF;
+-- Check that the schema is not an emaj schema.
+    IF p_checkNotEmaj THEN
+      IF EXISTS
+           (SELECT 0
+              FROM emaj.emaj_schema
+              WHERE sch_name = p_schema
+           ) THEN
+        RAISE EXCEPTION '_check_schema: The schema "%" is an E-Maj schema.', p_schema;
+      END IF;
+    END IF;
+--
+    RETURN v_schemaExists;
+  END;
+$_check_schema$;
+
 CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN,
                                                                      p_callingFunction TEXT)
 RETURNS TEXT[] LANGUAGE plpgsql AS
@@ -550,6 +589,125 @@ $_check_tables_for_rollbackable_group$
     RETURN p_tables;
   END;
 $_check_tables_for_rollbackable_group$;
+
+CREATE OR REPLACE FUNCTION emaj._build_tblseqs_array_from_regexp(p_schema TEXT, p_relkind TEXT, p_includeFilter TEXT, p_excludeFilter TEXT,
+                                                                 p_exceptionIfMissing BOOLEAN)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_build_tblseqs_array_from_regexp$
+-- The function builds the names array of tables or sequences belonging to any tables groups, based on include and exclude regexp filters.
+-- Depending on the p_exceptionIfMissing parameter, it warns or raises an error if the schema doesn't exist.
+-- (WARNING only is used by removal functions so that it is possible to remove from its group relations of a dropped or renamed schema)
+-- Inputs: schema,
+--         relation kind ('r' or 'S'),
+--         2 patterns to filter table names (one to include and another to exclude),
+--         boolean indicating whether a missing schema must raise an exception or just a warning.
+-- Outputs: tables or sequences names array
+  BEGIN
+-- Check that the schema exists.
+    PERFORM emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
+-- Process empty filters as NULL.
+    SELECT CASE WHEN p_includeFilter = '' THEN NULL ELSE p_includeFilter END,
+           CASE WHEN p_excludeFilter = '' THEN NULL ELSE p_excludeFilter END
+      INTO p_includeFilter, p_excludeFilter;
+-- Build and return the list of relations names satisfying the pattern.
+    RETURN array_agg(rel_tblseq)
+      FROM (
+        SELECT rel_tblseq
+          FROM emaj.emaj_relation
+          WHERE rel_schema = p_schema
+            AND rel_tblseq ~ p_includeFilter
+            AND (p_excludeFilter IS NULL OR rel_tblseq !~ p_excludeFilter)
+            AND rel_kind = p_relkind
+            AND upper_inf(rel_time_range)
+          ORDER BY rel_tblseq
+           ) AS t;
+  END;
+$_build_tblseqs_array_from_regexp$;
+
+CREATE OR REPLACE FUNCTION emaj._check_tblseqs_array(p_schema TEXT, p_tblseqs TEXT[], p_relkind TEXT, p_exceptionIfMissing BOOLEAN)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_check_tblseqs_array$
+-- The function checks a names array of tables or sequences.
+-- Depending on the p_exceptionIfMissing parameter, it warns or raises an error if the schema or any table or sequence doesn't exist.
+-- (WARNING only is used by removal functions so that it is possible to remove a dropped or renamed relation from its group)
+-- It verifies that the schema and the tables or sequences belong to a tables group (not necessary the same one).
+-- It returns the names array, duplicates and empty names being removed.
+-- Inputs: schema,
+--         tables or sequences names array,
+--         relation kind ('r' or 'S'),
+--         boolean indicating whether a missing schema or relation must raise an exception or just a warning.
+-- Outputs: tables or sequences names array.
+  DECLARE
+    v_relationKind           TEXT;
+    v_schemaExists           BOOLEAN;
+    v_list                   TEXT;
+    v_tblseqs                TEXT[];
+  BEGIN
+-- Setup constant.
+    IF p_relkind = 'r' THEN
+      v_relationKind = 'tables';
+    ELSE
+      v_relationKind = 'sequences';
+    END IF;
+-- Check that the schema exists.
+    v_schemaExists = emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
+-- Clean up the relation names array: remove duplicates values, NULL and empty strings.
+    SELECT array_agg(DISTINCT tblseq) INTO v_tblseqs
+      FROM unnest(p_tblseqs) AS tblseq
+      WHERE tblseq IS NOT NULL AND tblseq <> '';
+-- If the schema exists, check that all relations exist.
+    IF v_schemaExists THEN
+      WITH tblseqs AS (
+        SELECT unnest(v_tblseqs) AS tblseq
+        )
+      SELECT string_agg(quote_ident(tblseq), ', ') INTO v_list
+        FROM
+          (SELECT tblseq
+             FROM tblseqs
+             WHERE NOT EXISTS
+                     (SELECT 0
+                        FROM pg_catalog.pg_class
+                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        WHERE nspname = p_schema
+                          AND relname = tblseq
+                          AND relkind = p_relkind
+                     )
+          ) AS t;
+      IF v_list IS NOT NULL THEN
+        IF p_exceptionIfMissing THEN
+          RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not exist!', p_schema, v_relationKind, v_list;
+        ELSE
+          RAISE WARNING '_check_tblseqs_array: In schema "%", some % (%) do not exist.', p_schema, v_relationKind, v_list;
+        END IF;
+      END IF;
+    END IF;
+-- Check that the relations currently belong to a tables group (not necessarily the same for all relations).
+    WITH all_supplied_tblseqs AS (
+      SELECT unnest(v_tblseqs) AS tblseq
+      ),
+         tblseqs_in_groups AS (
+      SELECT rel_tblseq
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = ANY(v_tblseqs)
+          AND rel_kind = p_relkind
+          AND upper_inf(rel_time_range)
+      )
+    SELECT string_agg(quote_ident(tblseq), ', ') INTO v_list
+      FROM
+        (  SELECT tblseq
+             FROM all_supplied_tblseqs
+         EXCEPT
+           SELECT rel_tblseq FROM tblseqs_in_groups
+        ) AS t;
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not currently belong to any tables group.',
+                      p_schema, v_relationKind, v_list;
+    END IF;
+--
+    RETURN v_tblseqs;
+  END;
+$_check_tblseqs_array$;
 
 CREATE OR REPLACE FUNCTION emaj._create_log_schemas(p_function TEXT, p_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql
@@ -641,20 +799,7 @@ $_assign_tables$
       FROM emaj.emaj_group
       WHERE group_name = p_group;
 -- Check the supplied schema exists and is not an E-Maj schema.
-    IF NOT EXISTS
-         (SELECT 0
-            FROM pg_catalog.pg_namespace
-            WHERE nspname = p_schema
-         ) THEN
-      RAISE EXCEPTION '_assign_tables: The schema "%" does not exist.', p_schema;
-    END IF;
-    IF EXISTS
-         (SELECT 0
-            FROM emaj.emaj_schema
-            WHERE sch_name = p_schema
-         ) THEN
-      RAISE EXCEPTION '_assign_tables: The schema "%" is an E-Maj schema.', p_schema;
-    END IF;
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
 -- Check tables.
     IF NOT p_arrayFromRegex THEN
 -- From the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array.
@@ -1426,6 +1571,126 @@ $_drop_tbl$
     RETURN;
   END;
 $_drop_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._assign_sequences(p_schema TEXT, p_sequences TEXT[], p_group TEXT, p_mark TEXT,
+                                                  p_multiSequence BOOLEAN, p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_assign_sequences$
+-- The function effectively assigns sequences into a tables group.
+-- Inputs: schema, array of sequence names, group name,
+--         mark to set for lonnging groups, a boolean indicating whether several sequences need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of sequences effectively assigned to the tables group
+-- The JSONB v_properties parameter has currenlty only one field '{"priority":...}' the properties being NULL by default
+  DECLARE
+    v_function               TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_list                   TEXT;
+    v_array                  TEXT[];
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_oneSequence            TEXT;
+    v_nbAssignedSeq          INT = 0;
+  BEGIN
+    v_function = CASE WHEN p_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END;
+-- Insert the begin entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check supplied parameters
+-- Check the group name and if ok, get some properties of the group.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE);
+    SELECT group_is_logging INTO v_groupIsLogging
+      FROM emaj.emaj_group
+      WHERE group_name = p_group;
+-- Check the supplied schema exists and is not an E-Maj schema.
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
+-- Check sequences.
+    IF NOT p_arrayFromRegex THEN
+-- Remove duplicates values, NULL and empty strings from the sequence names array supplied by the user.
+      SELECT array_agg(DISTINCT sequence_name) INTO p_sequences
+        FROM unnest(p_sequences) AS sequence_name
+        WHERE sequence_name IS NOT NULL AND sequence_name <> '';
+-- Check that application sequences exist.
+      WITH sequences AS (
+        SELECT unnest(p_sequences) AS sequence_name)
+      SELECT string_agg(quote_ident(sequence_name), ', ') INTO v_list
+        FROM
+          (SELECT sequence_name
+             FROM sequences
+             WHERE NOT EXISTS
+                    (SELECT 0
+                       FROM pg_catalog.pg_class
+                            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                       WHERE nspname = p_schema
+                         AND relname = sequence_name
+                         AND relkind = 'S')
+          ) AS t;
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) do not exist.', quote_ident(p_schema), v_list;
+      END IF;
+    END IF;
+-- Check or discard sequences already assigned to a group.
+    SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = ANY(p_sequences)
+        AND upper_inf(rel_time_range);
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) already belong to a group.', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_sequences: Some sequences already belonging to a group (%) are not selected.', v_list;
+        -- remove these sequences from the sequences to process
+        SELECT array_agg(remaining_sequence) INTO p_sequences
+          FROM
+            (  SELECT unnest(p_sequences)
+             EXCEPT
+               SELECT unnest(v_array)
+            ) AS t(remaining_sequence);
+      END IF;
+    END IF;
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(array[p_group], p_mark) INTO v_markName;
+-- OK,
+    IF p_sequences IS NULL OR p_sequences = '{}' THEN
+-- When no sequences are finaly selected, just warn.
+      RAISE WARNING '_assign_sequences: No sequence to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_groupIsLogging THEN
+-- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+-- vacuum operation,
+        PERFORM emaj._lock_groups(ARRAY[p_group], 'ROW EXCLUSIVE', FALSE);
+-- ... and set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+      END IF;
+-- Effectively create the log components for each table.
+      FOREACH v_oneSequence IN ARRAY p_sequences
+      LOOP
+        PERFORM emaj._add_seq(p_schema, v_oneSequence, p_group, v_groupIsLogging, v_timeId, v_function);
+        v_nbAssignedSeq = v_nbAssignedSeq + 1;
+      END LOOP;
+-- Adjust the group characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_sequence =
+              (SELECT count(*)
+                 FROM emaj.emaj_relation
+                 WHERE rel_group = group_name
+                   AND upper_inf(rel_time_range)
+                   AND rel_kind = 'S'
+              )
+        WHERE group_name = p_group;
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbAssignedSeq || ' sequences assigned to the group ' || p_group);
+--
+    RETURN v_nbAssignedSeq;
+  END;
+$_assign_sequences$;
 
 CREATE OR REPLACE FUNCTION emaj._add_seq(p_schema TEXT, p_sequence TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
                                          p_timeId BIGINT, p_function TEXT)

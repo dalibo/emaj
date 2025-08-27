@@ -1481,6 +1481,45 @@ $_check_json_param_conf$
   END;
 $_check_json_param_conf$;
 
+CREATE OR REPLACE FUNCTION emaj._check_schema(p_schema TEXT, p_exceptionIfMissing BOOLEAN, p_checkNotEmaj BOOLEAN)
+RETURNS BOOLEAN LANGUAGE plpgsql AS
+$_check_schema$
+-- This function checks if a schema exists. If not, it either raises an exception or just a warning.
+-- If requested, it also checks that the schema is not an emaj schema. If the check fails, it raises an exception.
+-- Input: schema, boolean indicating whether a missing schema raises an exception,
+--        boolean indicating whether the schema must not be an emaj schema.
+-- Output : boolean indicating whether the schema exists
+  DECLARE
+    v_schemaExists           BOOLEAN = TRUE;
+  BEGIN
+-- Check that the schema exists.
+    IF NOT EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_namespace
+            WHERE nspname = p_schema
+         ) THEN
+      IF p_exceptionIfMissing THEN
+        RAISE EXCEPTION '_check_schema: The schema "%" does not exist!', p_schema;
+      ELSE
+        RAISE WARNING '_check_schema: The schema "%" does not exist.', p_schema;
+        v_schemaExists = FALSE;
+      END IF;
+    END IF;
+-- Check that the schema is not an emaj schema.
+    IF p_checkNotEmaj THEN
+      IF EXISTS
+           (SELECT 0
+              FROM emaj.emaj_schema
+              WHERE sch_name = p_schema
+           ) THEN
+        RAISE EXCEPTION '_check_schema: The schema "%" is an E-Maj schema.', p_schema;
+      END IF;
+    END IF;
+--
+    RETURN v_schemaExists;
+  END;
+$_check_schema$;
+
 CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN,
                                                                      p_callingFunction TEXT)
 RETURNS TEXT[] LANGUAGE plpgsql AS
@@ -1553,17 +1592,7 @@ $_build_tblseqs_array_from_regexp$
 -- Outputs: tables or sequences names array
   BEGIN
 -- Check that the schema exists.
-    IF NOT EXISTS
-         (SELECT 0
-            FROM pg_catalog.pg_namespace
-            WHERE nspname = p_schema
-         ) THEN
-      IF p_exceptionIfMissing THEN
-        RAISE EXCEPTION '_build_tblseqs_array_from_regexp: The schema "%" does not exist!', p_schema;
-      ELSE
-        RAISE WARNING '_build_tblseqs_array_from_regexp: The schema "%" does not exist.', p_schema;
-      END IF;
-    END IF;
+    PERFORM emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
 -- Process empty filters as NULL.
     SELECT CASE WHEN p_includeFilter = '' THEN NULL ELSE p_includeFilter END,
            CASE WHEN p_excludeFilter = '' THEN NULL ELSE p_excludeFilter END
@@ -1598,7 +1627,7 @@ $_check_tblseqs_array$
 -- Outputs: tables or sequences names array.
   DECLARE
     v_relationKind           TEXT;
-    v_schemaExists           BOOLEAN = TRUE;
+    v_schemaExists           BOOLEAN;
     v_list                   TEXT;
     v_tblseqs                TEXT[];
   BEGIN
@@ -1609,18 +1638,7 @@ $_check_tblseqs_array$
       v_relationKind = 'sequences';
     END IF;
 -- Check that the schema exists.
-    IF NOT EXISTS
-         (SELECT 0
-            FROM pg_catalog.pg_namespace
-            WHERE nspname = p_schema
-         ) THEN
-      IF p_exceptionIfMissing THEN
-        RAISE EXCEPTION '_check_tblseqs_array: The schema "%" does not exist!', p_schema;
-      ELSE
-        RAISE WARNING '_check_tblseqs_array: The schema "%" does not exist.', p_schema;
-      END IF;
-      v_schemaExists = FALSE;
-    END IF;
+    v_schemaExists = emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
 -- Clean up the relation names array: remove duplicates values, NULL and empty strings.
     SELECT array_agg(DISTINCT tblseq) INTO v_tblseqs
       FROM unnest(p_tblseqs) AS tblseq
@@ -2261,20 +2279,7 @@ $_assign_tables$
       FROM emaj.emaj_group
       WHERE group_name = p_group;
 -- Check the supplied schema exists and is not an E-Maj schema.
-    IF NOT EXISTS
-         (SELECT 0
-            FROM pg_catalog.pg_namespace
-            WHERE nspname = p_schema
-         ) THEN
-      RAISE EXCEPTION '_assign_tables: The schema "%" does not exist.', p_schema;
-    END IF;
-    IF EXISTS
-         (SELECT 0
-            FROM emaj.emaj_schema
-            WHERE sch_name = p_schema
-         ) THEN
-      RAISE EXCEPTION '_assign_tables: The schema "%" is an E-Maj schema.', p_schema;
-    END IF;
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
 -- Check tables.
     IF NOT p_arrayFromRegex THEN
 -- From the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array.
@@ -4023,20 +4028,7 @@ $_assign_sequences$
       FROM emaj.emaj_group
       WHERE group_name = p_group;
 -- Check the supplied schema exists and is not an E-Maj schema.
-    IF NOT EXISTS
-         (SELECT 0
-            FROM pg_catalog.pg_namespace
-            WHERE nspname = p_schema
-         ) THEN
-      RAISE EXCEPTION '_assign_sequences: The schema "%" does not exist.', p_schema;
-    END IF;
-    IF EXISTS
-         (SELECT 0
-            FROM emaj.emaj_schema
-            WHERE sch_name = p_schema
-         ) THEN
-      RAISE EXCEPTION '_assign_sequences: The schema "%" is an E-Maj schema.', p_schema;
-    END IF;
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
 -- Check sequences.
     IF NOT p_arrayFromRegex THEN
 -- Remove duplicates values, NULL and empty strings from the sequence names array supplied by the user.
