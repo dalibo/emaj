@@ -4554,6 +4554,26 @@ $_drop_seq$
   END;
 $_drop_seq$;
 
+CREATE OR REPLACE FUNCTION emaj._get_current_seq(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT)
+RETURNS emaj.emaj_sequence LANGUAGE plpgsql AS
+$_get_current_seq$
+-- This function reads the current characteristics of a sequence and returns it in an emaj_sequence format.
+  DECLARE
+    r_seq                    emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+    EXECUTE format(
+        'SELECT nspname, relname, %s, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+        '  FROM %I.%I sq,'
+        '     pg_catalog.pg_sequence s'
+        '     JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+        '     JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
+        '  WHERE nspname = %L AND relname = %L',
+        p_timeId, p_schema, p_sequence, p_schema, p_sequence)
+      INTO STRICT r_seq;
+    RETURN r_seq;
+  END;
+$_get_current_seq$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, p_minGlobalSeq BIGINT, p_maxGlobalSeq BIGINT, p_nbSession INT,
                                           p_isLoggedRlbk BOOLEAN, p_isReplRoleReplica BOOLEAN)
 RETURNS BIGINT LANGUAGE plpgsql
@@ -4695,12 +4715,12 @@ $_rlbk_seq$
   DECLARE
     v_stmt                   TEXT;
     v_fullSeqName            TEXT;
-    mark_seq_rec             emaj.emaj_sequence%ROWTYPE;
-    curr_seq_rec             emaj.emaj_sequence%ROWTYPE;
+    r_markSeq                emaj.emaj_sequence%ROWTYPE;
+    r_currSeq                emaj.emaj_sequence%ROWTYPE;
   BEGIN
 -- Read sequence's characteristics at mark time.
     SELECT *
-      INTO mark_seq_rec
+      INTO r_markSeq
       FROM emaj.emaj_sequence
       WHERE sequ_schema = r_rel.rel_schema
         AND sequ_name = r_rel.rel_tblseq
@@ -4710,17 +4730,10 @@ $_rlbk_seq$
         p_timeId, r_rel.rel_schema, r_rel.rel_tblseq;
     END IF;
 -- Read the current sequence's characteristics.
-    EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
-                   '  FROM %I.%I sq,'
-                   '       pg_catalog.pg_sequence s'
-                   '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
-                   '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
-                   '  WHERE nspname = %L AND relname = %L',
-                   r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
-      INTO STRICT curr_seq_rec;
+    r_currSeq = emaj._get_current_seq(r_rel.rel_schema, r_rel.rel_tblseq, 0);
 -- Build the ALTER SEQUENCE statement, depending on the differences between the current sequence state and its characteristics
 -- at the requested mark time.
-    SELECT emaj._build_alter_seq(curr_seq_rec, mark_seq_rec) INTO v_stmt;
+    SELECT emaj._build_alter_seq(r_currSeq, r_markSeq) INTO v_stmt;
 -- If there is no change to apply, return with 0.
     IF v_stmt = '' THEN
       RETURN 0;
@@ -4942,14 +4955,7 @@ $_sequence_stat_seq$
           AND sequ_name = r_rel.rel_tblseq
           AND sequ_time_id = p_endTimeId;
     ELSE
-      EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
-                     '  FROM %I.%I sq,'
-                     '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
-                     '  WHERE nspname = %L AND relname = %L',
-                     r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
-        INTO STRICT r_endSeq;
+      r_endSeq = emaj._get_current_seq(r_rel.rel_schema, r_rel.rel_tblseq, 0);
     END IF;
 -- Compute the statistics
     p_increments = (r_endSeq.sequ_last_val - r_beginSeq.sequ_last_val) / r_beginSeq.sequ_increment
@@ -4992,14 +4998,7 @@ $_gen_sql_seq$
 -- Get the sequence characteristics at end mark or the current state.
     IF p_lastMarkTimeId IS NULL AND upper_inf(r_rel.rel_time_range) THEN
 -- No supplied last mark and the sequence currently belongs to its group, so get the current sequence characteritics.
-      EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
-                     '  FROM %I.%I sq,'
-                     '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
-                     '  WHERE nspname = %L AND relname = %L',
-                     r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
-        INTO STRICT trg_seq_rec;
+      trg_seq_rec = emaj._get_current_seq(r_rel.rel_schema, r_rel.rel_tblseq, 0);
     ELSE
 -- A last mark is supplied, or the sequence does not belong to its group anymore, so get the sequence characteristics
 -- from the emaj_sequence table.
@@ -7339,6 +7338,7 @@ $_set_mark_groups$
     v_nbTbl                  INT;
     v_stmt                   TEXT;
     r_seq                    RECORD;
+    r_currSeq                emaj.emaj_sequence%ROWTYPE;
   BEGIN
     v_function = CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END;
 -- If requested by the calling function, record the set mark begin in emaj_hist.
@@ -7362,16 +7362,8 @@ $_set_mark_groups$
           AND rel_kind = 'S'
           AND rel_group = ANY (p_groupNames)
     LOOP
-      EXECUTE format('INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,'
-                     '            sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)'
-                     '  SELECT nspname, relname, %s, sq.last_value, seqstart,'
-                     '         seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
-                     '    FROM %I.%I sq,'
-                     '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
-                     '    WHERE nspname = %L AND relname = %L',
-                     p_timeId, r_seq.rel_schema, r_seq.rel_tblseq, r_seq.rel_schema, r_seq.rel_tblseq);
+      r_currSeq = emaj._get_current_seq(r_seq.rel_schema, r_seq.rel_tblseq, p_timeId);
+      INSERT INTO emaj.emaj_sequence VALUES (r_currSeq.*);
       v_nbSeq = v_nbSeq + 1;
     END LOOP;
 -- Record the number of log rows for the previous last mark of each selected group.
@@ -11173,14 +11165,7 @@ $_log_stat_sequence$
           AND p_endTimeId IS NULL
       );
     IF v_needCurrentState THEN
-      EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
-                     '  FROM %I.%I sq,'
-                     '       pg_catalog.pg_sequence s'
-                     '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
-                     '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
-                     '  WHERE nspname = %L AND relname = %L',
-                     p_schema, p_sequence, p_schema, p_sequence)
-        INTO STRICT r_endSeq;
+      r_endSeq = emaj._get_current_seq(p_schema, p_sequence, 0);
     END IF;
 -- OK, compute and return the statistics by scanning the sequence history in the emaj_sequence table.
     RETURN QUERY
