@@ -58,11 +58,11 @@ CREATE EXTENSION IF NOT EXISTS dblink;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
-------------------------------------------------
---                                            --
--- emaj enum types, sequences and tables      --
---                                            --
-------------------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                      Enumerated types                      --
+--                                                            --
+----------------------------------------------------------------
 -- Table containing the history of all installed E-Maj versions.
 -- It is the very first created structure, in order to record the installation duration.
 CREATE TABLE emaj.emaj_version_hist (
@@ -124,6 +124,11 @@ CREATE TYPE emaj._rlbk_step_enum AS ENUM (
   'CTRL+DBLINK',             -- pseudo step representing the periods between 2 steps execution, when dblink is used
   'CTRL-DBLINK'              -- pseudo step representing the periods between 2 steps execution, when dblink is not used
   );
+----------------------------------------------------------------
+--                                                            --
+--                         Sequences                          --
+--                                                            --
+----------------------------------------------------------------
 -- The emaj_global_seq sequence provides a unique identifier for all rows inserted into all emaj log tables of the database.
 -- It is used to order all these rows in insertion time order for rollback as well as other purposes.
 -- (So this order is not based on system time that can be unsafe).
@@ -134,6 +139,11 @@ CREATE TYPE emaj._rlbk_step_enum AS ENUM (
 CREATE SEQUENCE emaj.emaj_global_seq;
 COMMENT ON SEQUENCE emaj.emaj_global_seq IS
 $$Global sequence to identifiy all rows of emaj log tables.$$;
+----------------------------------------------------------------
+--                                                            --
+--                           Tables                           --
+--                                                            --
+----------------------------------------------------------------
 -- Table containing E-maj parameters.
 CREATE TABLE emaj.emaj_param (
   param_key                    TEXT        NOT NULL,       -- parameter key
@@ -503,11 +513,11 @@ CREATE TABLE emaj.emaj_rlbk_stat (
   );
 COMMENT ON TABLE emaj.emaj_rlbk_stat IS
 $$Contains statistics about previous E-Maj rollback durations.$$;
-------------------------------------
---                                --
--- emaj composite types           --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                      Composite types                       --
+--                                                            --
+----------------------------------------------------------------
 -- Composite types usable by end-user.
 CREATE TYPE emaj.emaj_log_stat_group_type AS (
   stat_group                   TEXT,                       -- group name owning the schema.table
@@ -652,11 +662,11 @@ CREATE TYPE emaj._report_message_type AS (
   );
 COMMENT ON TYPE emaj._report_message_type IS
 $$Represents a generic notice, warning or error message structure that can be translated by external clients.$$;
-------------------------------------
---                                --
--- Parameters                     --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                      E-Maj Parameters                      --
+--                                                            --
+----------------------------------------------------------------
 -- All parameters are optional. They may be set by E-Maj administrators, if needed.
 -- The 'dblink_user_password' parameter defines the role and its associated password, if any, to establish a dblink
 -- connection for the monitoring of rollback operations.
@@ -689,11 +699,11 @@ CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
                                                       ELSE param_value_text END AS param_value_text,
          param_value_numeric, param_value_boolean, param_value_interval
     FROM emaj.emaj_param;
-------------------------------------
---                                --
--- Triggers on internal tables    --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                Triggers on internal tables                 --
+--                                                            --
+----------------------------------------------------------------
 -- Triggers for changes and truncate on the emaj_param table.
 -- It traces changes into the emaj_hist table, masking the 'dblink_user_password' parameter value, if concerned.
 -- TRUNCATE verb are blocked to allow the tracing of deleted parameters.
@@ -733,11 +743,11 @@ CREATE TRIGGER emaj_param_change_trg
 CREATE TRIGGER emaj_param_truncate_trg
   BEFORE TRUNCATE ON emaj.emaj_param
   FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_param_change_fnct();
-------------------------------------
---                                --
--- Low level Functions            --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                    Low level Functions                     --
+--                                                            --
+----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION emaj._pg_version_num()
 RETURNS INTEGER LANGUAGE SQL IMMUTABLE AS
 $$
@@ -2095,11 +2105,11 @@ $_build_path_name$
 -- Both names are concatenated with a / character between.
 SELECT p_dir || '/' || translate(p_file, E' /\\|$<>*\'"', '__________');
 $_build_path_name$;
----------------------------------------------------
---                                               --
--- Elementary functions for tables and sequences --
---                                               --
----------------------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--       Elementary functions for tables and sequences        --
+--                                                            --
+----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_table(p_schema TEXT, p_table TEXT, p_group TEXT, p_properties JSONB DEFAULT NULL,
                                                   p_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -4957,11 +4967,11 @@ $_get_app_sequence_last_value$
     RETURN v_lastValue;
   END;
 $_get_app_sequence_last_value$;
---------------------------------------------
---                                        --
---       Functions to manage groups       --
---                                        --
---------------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                 Functions to manage groups                 --
+--                                                            --
+----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION emaj._verify_groups(p_groups TEXT[], p_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
 $_verify_groups$
@@ -7753,6 +7763,156 @@ $_delete_intermediate_mark_group$
     RETURN;
   END;
 $_delete_intermediate_mark_group$;
+CREATE OR REPLACE FUNCTION emaj._delete_between_marks_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT,
+                                                            OUT p_nbMark INT, OUT p_nbTbl INT)
+RETURNS RECORD LANGUAGE plpgsql AS
+$_delete_between_marks_group$
+-- This function deletes all logs and intermediate marks set between two given marks.
+-- The function is called by the emaj_consolidate_rollback_group() function.
+-- It deletes rows corresponding to the marks to delete from emaj_mark and emaj_sequence.
+-- It deletes rows from emaj_relation corresponding to old versions that become unreacheable.
+-- It deletes rows from all concerned log tables.
+-- It also manages sequence holes in emaj_seq_hole.
+-- Input: group name, name of both marks that defines the range to delete.
+-- Output: number of deleted marks, number of tables effectively processed (for which at least one log row has been deleted)
+  DECLARE
+    v_firstMarkGlobalSeq     BIGINT;
+    v_firstMarkTimeId        BIGINT;
+    v_lastMarkGlobalSeq      BIGINT;
+    v_lastMarkTimeId         BIGINT;
+    v_nbUpd                  BIGINT;
+    r_rel                    RECORD;
+  BEGIN
+-- Retrieve the timestamp and the emaj_gid value and the time stamp id of the first mark.
+    SELECT time_last_emaj_gid, mark_time_id INTO v_firstMarkGlobalSeq, v_firstMarkTimeId
+      FROM emaj.emaj_mark
+           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+      WHERE mark_group = p_groupName
+        AND mark_name = p_firstMark;
+-- Retrieve the timestamp and the emaj_gid value and the time stamp id of the last mark.
+    SELECT time_last_emaj_gid, mark_time_id INTO v_lastMarkGlobalSeq, v_lastMarkTimeId
+      FROM emaj.emaj_mark
+           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+      WHERE mark_group = p_groupName
+        AND mark_name = p_lastMark;
+-- Delete rows from all log tables (no need to try to delete if v_firstMarkGlobalSeq and v_lastMarkGlobalSeq are equal).
+    p_nbTbl = 0;
+    IF v_firstMarkGlobalSeq < v_lastMarkGlobalSeq THEN
+-- Loop on all tables that belonged to the group at the end of the period.
+      FOR r_rel IN
+        SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name
+          FROM emaj.emaj_relation
+          WHERE rel_group = p_groupName
+            AND rel_kind = 'r'
+            AND rel_time_range @> v_lastMarkTimeId
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- Delete log rows.
+        EXECUTE format('DELETE FROM %s WHERE emaj_gid > $1 AND emaj_gid <= $2',
+                       r_rel.log_table_name)
+          USING v_firstMarkGlobalSeq, v_lastMarkGlobalSeq;
+        GET DIAGNOSTICS v_nbUpd = ROW_COUNT;
+        IF v_nbUpd > 0 THEN
+           p_nbTbl = p_nbTbl + 1;
+        END IF;
+      END LOOP;
+    END IF;
+-- Process emaj_seq_hole content.
+-- Delete all existing holes (if any) between both marks for tables that belonged to the group at the end of the period.
+    DELETE FROM emaj.emaj_seq_hole
+      USING emaj.emaj_relation
+      WHERE rel_group = p_groupName
+        AND rel_kind = 'r'
+        AND rel_time_range @> v_lastMarkTimeId
+        AND rel_schema = sqhl_schema
+        AND rel_tblseq = sqhl_table
+        AND sqhl_begin_time_id >= v_firstMarkTimeId
+        AND sqhl_begin_time_id < v_lastMarkTimeId;
+-- Create holes representing the deleted logs.
+    INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size)
+      SELECT rel_schema, rel_tblseq, greatest(v_firstMarkTimeId, lower(rel_time_range)), v_lastMarkTimeId,
+             (SELECT tbl_log_seq_last_val
+                FROM emaj.emaj_table
+                WHERE tbl_schema = rel_schema
+                  AND tbl_name = rel_tblseq
+                  AND tbl_time_id = v_lastMarkTimeId
+             )
+             -
+             (SELECT tbl_log_seq_last_val
+                FROM emaj.emaj_table
+                WHERE tbl_schema = rel_schema
+                  AND tbl_name = rel_tblseq
+                  AND tbl_time_id = greatest(v_firstMarkTimeId, lower(rel_time_range))
+             )
+        FROM emaj.emaj_relation
+        WHERE rel_group = p_groupName
+          AND rel_kind = 'r'
+          AND rel_time_range @> v_lastMarkTimeId
+          AND (SELECT tbl_log_seq_last_val
+                 FROM emaj.emaj_table
+                 WHERE tbl_schema = rel_schema
+                   AND tbl_name = rel_tblseq
+                   AND tbl_time_id = v_lastMarkTimeId
+              )
+              -
+              (SELECT tbl_log_seq_last_val
+                 FROM emaj.emaj_table
+                 WHERE tbl_schema = rel_schema
+                   AND tbl_name = rel_tblseq
+                   AND tbl_time_id = greatest(v_firstMarkTimeId, lower(rel_time_range))
+              ) > 0;
+-- Now the sequences related to the mark to delete can be suppressed:
+--   Delete first application sequences related data for the group (excluding the time range bounds).
+    DELETE FROM emaj.emaj_sequence
+      USING emaj.emaj_relation
+      WHERE sequ_schema = rel_schema
+        AND sequ_name = rel_tblseq
+        AND rel_time_range @> v_lastMarkTimeId
+        AND rel_group = p_groupName
+        AND rel_kind = 'S'
+        AND sequ_time_id > v_firstMarkTimeId
+        AND sequ_time_id < v_lastMarkTimeId
+        AND lower(rel_time_range) <> sequ_time_id;
+--   Delete then tables related data for the group (excluding the time range bounds).
+    DELETE FROM emaj.emaj_table
+      USING emaj.emaj_relation
+      WHERE tbl_schema = rel_schema
+        AND tbl_name = rel_tblseq
+        AND rel_time_range @> v_lastMarkTimeId
+        AND rel_group = p_groupName
+        AND rel_kind = 'r'
+        AND tbl_time_id > v_firstMarkTimeId
+        AND tbl_time_id < v_lastMarkTimeId
+        AND tbl_time_id <@ rel_time_range
+        AND tbl_time_id <> lower(rel_time_range);
+-- In emaj_mark, reset the mark_logged_rlbk_target_mark column to null for marks of the group that will remain
+--    and that may have one of the deleted marks as target mark from a previous logged rollback operation.
+    UPDATE emaj.emaj_mark
+      SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = p_groupName
+        AND mark_time_id >= v_lastMarkTimeId
+        AND mark_logged_rlbk_target_mark IN
+              (SELECT mark_name
+                 FROM emaj.emaj_mark
+                 WHERE mark_group = p_groupName
+                   AND mark_time_id > v_firstMarkTimeId
+                   AND mark_time_id < v_lastMarkTimeId
+              );
+-- Set the mark_log_rows_before_next of the first mark to 0.
+    UPDATE emaj.emaj_mark
+      SET mark_log_rows_before_next = 0
+      WHERE mark_group = p_groupName
+        AND mark_name = p_firstMark;
+-- And finaly delete all intermediate marks.
+    DELETE FROM emaj.emaj_mark
+      WHERE mark_group = p_groupName
+        AND mark_time_id > v_firstMarkTimeId
+        AND mark_time_id < v_lastMarkTimeId;
+    GET DIAGNOSTICS p_nbMark = ROW_COUNT;
+--
+    RETURN;
+  END;
+$_delete_between_marks_group$;
 CREATE OR REPLACE FUNCTION emaj.emaj_rename_mark_group(p_groupName TEXT, p_mark TEXT, p_newName TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $emaj_rename_mark_group$
@@ -9616,87 +9776,6 @@ $_rlbk_error$
     RETURN;
   END;
 $_rlbk_error$;
-CREATE OR REPLACE FUNCTION emaj.emaj_cleanup_rollback_state()
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_cleanup_rollback_state$
--- This function sets the status of not yet "COMMITTED" or "ABORTED" rollback events.
--- To perform its tasks, it just calls the _cleanup_rollback_state() function.
--- Input: no parameter
--- Output: number of updated rollback events
-  BEGIN
-    RETURN emaj._cleanup_rollback_state();
-  END;
-$emaj_cleanup_rollback_state$;
-COMMENT ON FUNCTION emaj.emaj_cleanup_rollback_state() IS
-$$Sets the status of pending E-Maj rollback events.$$;
-CREATE OR REPLACE FUNCTION emaj._cleanup_rollback_state()
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_cleanup_rollback_state$
--- This function effectively cleans the rollback states up. It is called by the emaj_cleanup_rollback_state()
--- and by other emaj functions.
--- The rollbacks whose transaction(s) is/are active are left as is.
--- Among the others, those which are also visible in the emaj_hist table are set "COMMITTED",
---   while those which are not visible in the emaj_hist table are set "ABORTED".
--- Input: no parameter
--- Output: number of updated rollback events
--- The function is defined as SECURITY DEFINER so that emaj_viewer role can update emaj_rlbk and emaj_hist tables.
-  DECLARE
-    v_nbRlbk                 INT = 0;
-    v_nbInProgressTx         INT;
-    v_newStatus              emaj._rlbk_status_enum;
-    r_rlbk                   RECORD;
-  BEGIN
--- Scan all pending rollback events, counting their in-progress sessions.
-    FOR r_rlbk IN
-      SELECT rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session
-        FROM emaj.emaj_rlbk
-             JOIN emaj.emaj_rlbk_session ON (rlbs_rlbk_id = rlbk_id AND rlbs_session = 1)
-        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')  -- only pending rollback events
-          AND rlbs_txid <> txid_current()                                       -- exclude the current tx, to not process the current
-                                                                                --   rollback when start/stop marks are created
-        ORDER BY rlbk_id
-    LOOP
--- Get the number of unterminated sessions.
-      SELECT count(*) INTO v_nbInProgressTx
-        FROM emaj.emaj_rlbk_session
-        WHERE rlbs_rlbk_id = r_rlbk.rlbk_id
-          AND NOT txid_visible_in_snapshot(rlbs_txid, txid_current_snapshot());
--- Only process rollback id with no in-progress session.
-      IF v_nbInProgressTx = 0 THEN
--- Try to lock the current rlbk_id, but skip it if it is not immediately possible to avoid deadlocks in rare cases.
-        IF EXISTS
-             (SELECT 0
-                FROM emaj.emaj_rlbk
-                WHERE rlbk_id = r_rlbk.rlbk_id
-                FOR UPDATE SKIP LOCKED
-             ) THEN
--- Look at the emaj_hist to find the trace of the rollback begin event.
-          IF EXISTS
-               (SELECT 0
-                  FROM emaj.emaj_hist
-                  WHERE hist_id = r_rlbk.rlbk_begin_hist_id
-               ) THEN
--- If the emaj_hist rollback_begin event is visible, the rollback transaction has been committed.
--- So set the rollback event in emaj_rlbk as "COMMITTED".
-          v_newStatus = 'COMMITTED';
-          ELSE
--- Otherwise, set the rollback event in emaj_rlbk as "ABORTED"
-            v_newStatus = 'ABORTED';
-          END IF;
-          UPDATE emaj.emaj_rlbk
-            SET rlbk_status = v_newStatus
-            WHERE rlbk_id = r_rlbk.rlbk_id;
-          INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-            VALUES ('CLEANUP_RLBK_STATE', 'Rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
-          v_nbRlbk = v_nbRlbk + 1;
-        END IF;
-      END IF;
-    END LOOP;
---
-    RETURN v_nbRlbk;
-  END;
-$_cleanup_rollback_state$;
 CREATE OR REPLACE FUNCTION emaj.emaj_comment_rollback(p_rlbkId INT, p_comment TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $emaj_comment_rollback$
@@ -9723,6 +9802,101 @@ $emaj_comment_rollback$
 $emaj_comment_rollback$;
 COMMENT ON FUNCTION emaj.emaj_comment_rollback(INT, TEXT) IS
 $$Sets a comment on an E-Maj Rollback.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_group(p_groupName TEXT, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
+RETURNS INTERVAL LANGUAGE plpgsql AS
+$emaj_estimate_rollback_group$
+-- This function computes an approximate duration of a rollback to a predefined mark for a group.
+-- It uses the _estimate_rollback_group() function to effectively compute this estimate.
+-- Input: group name, the mark name of the rollback operation, the rollback type.
+-- Output: the approximate duration that the rollback would need as time interval
+  BEGIN
+    RETURN emaj._estimate_rollback_groups(ARRAY[p_groupName], FALSE, p_mark, p_isLoggedRlbk);
+  END;
+$emaj_estimate_rollback_group$;
+COMMENT ON FUNCTION emaj.emaj_estimate_rollback_group(TEXT,TEXT,BOOLEAN) IS
+$$Estimates the duration of a potential rollback for a tables group to a given mark.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_groups(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN)
+RETURNS INTERVAL LANGUAGE plpgsql AS
+$emaj_estimate_rollback_groups$
+-- This function computes an approximate duration of a rollback to a predefined mark for a groups array.
+-- It uses the _estimate_rollback_group() function to effectively compute this estimate.
+-- Input: a group names array, the mark name of the rollback operation, the rollback type.
+-- Output: the approximate duration that the rollback would need as time interval
+  BEGIN
+    RETURN emaj._estimate_rollback_groups(p_groupNames, TRUE, p_mark, p_isLoggedRlbk);
+  END;
+$emaj_estimate_rollback_groups$;
+COMMENT ON FUNCTION emaj.emaj_estimate_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
+$$Estimates the duration of a potential rollback for a set of tables groups to a given mark.$$;
+CREATE OR REPLACE FUNCTION emaj._estimate_rollback_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
+RETURNS INTERVAL LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_estimate_rollback_groups$
+-- This function effectively computes an approximate duration of a rollback to a predefined mark for a groups array.
+-- It simulates a rollback on 1 session, by calling the _rlbk_planning function that already estimates elementary.
+-- rollback steps duration. Once the global estimate is got, the rollback planning is cancelled.
+-- Input: group names array, a boolean indicating whether the groups array may contain several groups,
+--        the mark name of the rollback operation, the rollback type.
+-- Output: the approximate duration that the rollback would need as time interval.
+-- The function is declared SECURITY DEFINER so that emaj_viewer doesn't need a specific INSERT permission on emaj_rlbk.
+  DECLARE
+    v_markName               TEXT;
+    v_nbTbl                  INT;
+    v_nbSeq                  INT;
+    v_fixed_table_rlbk       INTERVAL;
+    v_rlbkId                 INT;
+    v_estimDuration          INTERVAL;
+  BEGIN
+-- Check the group names (the groups state checks are delayed for later).
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
+      INTO p_groupNames;
+-- If the group names array is null, immediately return NULL.
+    IF p_groupNames IS NULL THEN
+      RETURN NULL;
+    END IF;
+-- Check supplied group names and mark parameters with the isAlterGroupAllowed and isRollbackSimulation flags set to true.
+    SELECT emaj._rlbk_check(p_groupNames, p_mark, TRUE, TRUE) INTO v_markName;
+-- Compute the number of tables and sequences contained in groups to rollback.
+    SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTbl, v_nbSeq
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(p_groupNames);
+-- Compute a random negative rollback-id (not to interfere with ids of real rollbacks).
+    SELECT (random() * -2147483648)::INT INTO v_rlbkId;
+--
+-- Simulate a rollback planning.
+--
+    BEGIN
+-- Insert a row into the emaj_rlbk table for this simulated rollback operation.
+      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed,
+                                  rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence)
+        SELECT v_rlbkId, p_groupNames, v_markName, mark_time_id, p_isLoggedRlbk, FALSE, 1, v_nbTbl, v_nbSeq
+          FROM emaj.emaj_mark
+          WHERE mark_group = p_groupNames[1]
+            AND mark_name = v_markName;
+-- Call the _rlbk_planning function to build the simulated plan with the duration estimate for elementary steps.
+      PERFORM emaj._rlbk_planning(v_rlbkId);
+-- Compute the sum of the duration estimates of all elementary steps (except LOCK_TABLE).
+      SELECT coalesce(sum(rlbp_estimated_duration), '0 SECONDS'::INTERVAL) INTO v_estimDuration
+        FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId
+          AND rlbp_step <> 'LOCK_TABLE';
+-- Cancel the effect of the rollback planning.
+      RAISE EXCEPTION '';
+    EXCEPTION
+      WHEN RAISE_EXCEPTION THEN                 -- catch the raised exception and continue
+    END;
+-- Get the "fixed_table_rollback_duration" parameter from the emaj_param table.
+    SELECT coalesce(
+             (SELECT param_value_interval
+                FROM emaj.emaj_param
+                WHERE param_key = 'fixed_table_rollback_duration'
+             ),'1 millisecond'::INTERVAL) INTO v_fixed_table_rlbk;
+-- Compute the final estimated duration, by adding the minimum cost for LOCK_TABLE steps.
+    v_estimDuration = v_estimDuration + (v_nbTbl * v_fixed_table_rlbk);
+--
+    RETURN v_estimDuration;
+  END;
+$_estimate_rollback_groups$;
 CREATE OR REPLACE FUNCTION emaj.emaj_consolidate_rollback_group(p_groupName TEXT, p_endRlbkMark TEXT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $emaj_consolidate_rollback_group$
@@ -9785,156 +9959,6 @@ $emaj_consolidate_rollback_group$
 $emaj_consolidate_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_consolidate_rollback_group(TEXT,TEXT) IS
 $$Consolidate a rollback for a group.$$;
-CREATE OR REPLACE FUNCTION emaj._delete_between_marks_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT,
-                                                            OUT p_nbMark INT, OUT p_nbTbl INT)
-RETURNS RECORD LANGUAGE plpgsql AS
-$_delete_between_marks_group$
--- This function deletes all logs and intermediate marks set between two given marks.
--- The function is called by the emaj_consolidate_rollback_group() function.
--- It deletes rows corresponding to the marks to delete from emaj_mark and emaj_sequence.
--- It deletes rows from emaj_relation corresponding to old versions that become unreacheable.
--- It deletes rows from all concerned log tables.
--- It also manages sequence holes in emaj_seq_hole.
--- Input: group name, name of both marks that defines the range to delete.
--- Output: number of deleted marks, number of tables effectively processed (for which at least one log row has been deleted)
-  DECLARE
-    v_firstMarkGlobalSeq     BIGINT;
-    v_firstMarkTimeId        BIGINT;
-    v_lastMarkGlobalSeq      BIGINT;
-    v_lastMarkTimeId         BIGINT;
-    v_nbUpd                  BIGINT;
-    r_rel                    RECORD;
-  BEGIN
--- Retrieve the timestamp and the emaj_gid value and the time stamp id of the first mark.
-    SELECT time_last_emaj_gid, mark_time_id INTO v_firstMarkGlobalSeq, v_firstMarkTimeId
-      FROM emaj.emaj_mark
-           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
-      WHERE mark_group = p_groupName
-        AND mark_name = p_firstMark;
--- Retrieve the timestamp and the emaj_gid value and the time stamp id of the last mark.
-    SELECT time_last_emaj_gid, mark_time_id INTO v_lastMarkGlobalSeq, v_lastMarkTimeId
-      FROM emaj.emaj_mark
-           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
-      WHERE mark_group = p_groupName
-        AND mark_name = p_lastMark;
--- Delete rows from all log tables (no need to try to delete if v_firstMarkGlobalSeq and v_lastMarkGlobalSeq are equal).
-    p_nbTbl = 0;
-    IF v_firstMarkGlobalSeq < v_lastMarkGlobalSeq THEN
--- Loop on all tables that belonged to the group at the end of the period.
-      FOR r_rel IN
-        SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name
-          FROM emaj.emaj_relation
-          WHERE rel_group = p_groupName
-            AND rel_kind = 'r'
-            AND rel_time_range @> v_lastMarkTimeId
-          ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
--- Delete log rows.
-        EXECUTE format('DELETE FROM %s WHERE emaj_gid > $1 AND emaj_gid <= $2',
-                       r_rel.log_table_name)
-          USING v_firstMarkGlobalSeq, v_lastMarkGlobalSeq;
-        GET DIAGNOSTICS v_nbUpd = ROW_COUNT;
-        IF v_nbUpd > 0 THEN
-           p_nbTbl = p_nbTbl + 1;
-        END IF;
-      END LOOP;
-    END IF;
--- Process emaj_seq_hole content.
--- Delete all existing holes (if any) between both marks for tables that belonged to the group at the end of the period.
-    DELETE FROM emaj.emaj_seq_hole
-      USING emaj.emaj_relation
-      WHERE rel_group = p_groupName
-        AND rel_kind = 'r'
-        AND rel_time_range @> v_lastMarkTimeId
-        AND rel_schema = sqhl_schema
-        AND rel_tblseq = sqhl_table
-        AND sqhl_begin_time_id >= v_firstMarkTimeId
-        AND sqhl_begin_time_id < v_lastMarkTimeId;
--- Create holes representing the deleted logs.
-    INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size)
-      SELECT rel_schema, rel_tblseq, greatest(v_firstMarkTimeId, lower(rel_time_range)), v_lastMarkTimeId,
-             (SELECT tbl_log_seq_last_val
-                FROM emaj.emaj_table
-                WHERE tbl_schema = rel_schema
-                  AND tbl_name = rel_tblseq
-                  AND tbl_time_id = v_lastMarkTimeId
-             )
-             -
-             (SELECT tbl_log_seq_last_val
-                FROM emaj.emaj_table
-                WHERE tbl_schema = rel_schema
-                  AND tbl_name = rel_tblseq
-                  AND tbl_time_id = greatest(v_firstMarkTimeId, lower(rel_time_range))
-             )
-        FROM emaj.emaj_relation
-        WHERE rel_group = p_groupName
-          AND rel_kind = 'r'
-          AND rel_time_range @> v_lastMarkTimeId
-          AND (SELECT tbl_log_seq_last_val
-                 FROM emaj.emaj_table
-                 WHERE tbl_schema = rel_schema
-                   AND tbl_name = rel_tblseq
-                   AND tbl_time_id = v_lastMarkTimeId
-              )
-              -
-              (SELECT tbl_log_seq_last_val
-                 FROM emaj.emaj_table
-                 WHERE tbl_schema = rel_schema
-                   AND tbl_name = rel_tblseq
-                   AND tbl_time_id = greatest(v_firstMarkTimeId, lower(rel_time_range))
-              ) > 0;
--- Now the sequences related to the mark to delete can be suppressed:
---   Delete first application sequences related data for the group (excluding the time range bounds).
-    DELETE FROM emaj.emaj_sequence
-      USING emaj.emaj_relation
-      WHERE sequ_schema = rel_schema
-        AND sequ_name = rel_tblseq
-        AND rel_time_range @> v_lastMarkTimeId
-        AND rel_group = p_groupName
-        AND rel_kind = 'S'
-        AND sequ_time_id > v_firstMarkTimeId
-        AND sequ_time_id < v_lastMarkTimeId
-        AND lower(rel_time_range) <> sequ_time_id;
---   Delete then tables related data for the group (excluding the time range bounds).
-    DELETE FROM emaj.emaj_table
-      USING emaj.emaj_relation
-      WHERE tbl_schema = rel_schema
-        AND tbl_name = rel_tblseq
-        AND rel_time_range @> v_lastMarkTimeId
-        AND rel_group = p_groupName
-        AND rel_kind = 'r'
-        AND tbl_time_id > v_firstMarkTimeId
-        AND tbl_time_id < v_lastMarkTimeId
-        AND tbl_time_id <@ rel_time_range
-        AND tbl_time_id <> lower(rel_time_range);
--- In emaj_mark, reset the mark_logged_rlbk_target_mark column to null for marks of the group that will remain
---    and that may have one of the deleted marks as target mark from a previous logged rollback operation.
-    UPDATE emaj.emaj_mark
-      SET mark_logged_rlbk_target_mark = NULL
-      WHERE mark_group = p_groupName
-        AND mark_time_id >= v_lastMarkTimeId
-        AND mark_logged_rlbk_target_mark IN
-              (SELECT mark_name
-                 FROM emaj.emaj_mark
-                 WHERE mark_group = p_groupName
-                   AND mark_time_id > v_firstMarkTimeId
-                   AND mark_time_id < v_lastMarkTimeId
-              );
--- Set the mark_log_rows_before_next of the first mark to 0.
-    UPDATE emaj.emaj_mark
-      SET mark_log_rows_before_next = 0
-      WHERE mark_group = p_groupName
-        AND mark_name = p_firstMark;
--- And finaly delete all intermediate marks.
-    DELETE FROM emaj.emaj_mark
-      WHERE mark_group = p_groupName
-        AND mark_time_id > v_firstMarkTimeId
-        AND mark_time_id < v_lastMarkTimeId;
-    GET DIAGNOSTICS p_nbMark = ROW_COUNT;
---
-    RETURN;
-  END;
-$_delete_between_marks_group$;
 CREATE OR REPLACE FUNCTION emaj.emaj_get_consolidable_rollbacks()
 RETURNS SETOF emaj.emaj_consolidable_rollback_type LANGUAGE plpgsql AS
 $emaj_get_consolidable_rollbacks$
@@ -11106,193 +11130,6 @@ $_get_sequences_last_value$
     RETURN;
   END;
 $_get_sequences_last_value$;
-CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_group(p_groupName TEXT, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
-RETURNS INTERVAL LANGUAGE plpgsql AS
-$emaj_estimate_rollback_group$
--- This function computes an approximate duration of a rollback to a predefined mark for a group.
--- It uses the _estimate_rollback_group() function to effectively compute this estimate.
--- Input: group name, the mark name of the rollback operation, the rollback type.
--- Output: the approximate duration that the rollback would need as time interval
-  BEGIN
-    RETURN emaj._estimate_rollback_groups(ARRAY[p_groupName], FALSE, p_mark, p_isLoggedRlbk);
-  END;
-$emaj_estimate_rollback_group$;
-COMMENT ON FUNCTION emaj.emaj_estimate_rollback_group(TEXT,TEXT,BOOLEAN) IS
-$$Estimates the duration of a potential rollback for a tables group to a given mark.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_groups(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN)
-RETURNS INTERVAL LANGUAGE plpgsql AS
-$emaj_estimate_rollback_groups$
--- This function computes an approximate duration of a rollback to a predefined mark for a groups array.
--- It uses the _estimate_rollback_group() function to effectively compute this estimate.
--- Input: a group names array, the mark name of the rollback operation, the rollback type.
--- Output: the approximate duration that the rollback would need as time interval
-  BEGIN
-    RETURN emaj._estimate_rollback_groups(p_groupNames, TRUE, p_mark, p_isLoggedRlbk);
-  END;
-$emaj_estimate_rollback_groups$;
-COMMENT ON FUNCTION emaj.emaj_estimate_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
-$$Estimates the duration of a potential rollback for a set of tables groups to a given mark.$$;
-CREATE OR REPLACE FUNCTION emaj._estimate_rollback_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
-RETURNS INTERVAL LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_estimate_rollback_groups$
--- This function effectively computes an approximate duration of a rollback to a predefined mark for a groups array.
--- It simulates a rollback on 1 session, by calling the _rlbk_planning function that already estimates elementary.
--- rollback steps duration. Once the global estimate is got, the rollback planning is cancelled.
--- Input: group names array, a boolean indicating whether the groups array may contain several groups,
---        the mark name of the rollback operation, the rollback type.
--- Output: the approximate duration that the rollback would need as time interval.
--- The function is declared SECURITY DEFINER so that emaj_viewer doesn't need a specific INSERT permission on emaj_rlbk.
-  DECLARE
-    v_markName               TEXT;
-    v_nbTbl                  INT;
-    v_nbSeq                  INT;
-    v_fixed_table_rlbk       INTERVAL;
-    v_rlbkId                 INT;
-    v_estimDuration          INTERVAL;
-  BEGIN
--- Check the group names (the groups state checks are delayed for later).
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
-      INTO p_groupNames;
--- If the group names array is null, immediately return NULL.
-    IF p_groupNames IS NULL THEN
-      RETURN NULL;
-    END IF;
--- Check supplied group names and mark parameters with the isAlterGroupAllowed and isRollbackSimulation flags set to true.
-    SELECT emaj._rlbk_check(p_groupNames, p_mark, TRUE, TRUE) INTO v_markName;
--- Compute the number of tables and sequences contained in groups to rollback.
-    SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTbl, v_nbSeq
-      FROM emaj.emaj_group
-      WHERE group_name = ANY(p_groupNames);
--- Compute a random negative rollback-id (not to interfere with ids of real rollbacks).
-    SELECT (random() * -2147483648)::INT INTO v_rlbkId;
---
--- Simulate a rollback planning.
---
-    BEGIN
--- Insert a row into the emaj_rlbk table for this simulated rollback operation.
-      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed,
-                                  rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence)
-        SELECT v_rlbkId, p_groupNames, v_markName, mark_time_id, p_isLoggedRlbk, FALSE, 1, v_nbTbl, v_nbSeq
-          FROM emaj.emaj_mark
-          WHERE mark_group = p_groupNames[1]
-            AND mark_name = v_markName;
--- Call the _rlbk_planning function to build the simulated plan with the duration estimate for elementary steps.
-      PERFORM emaj._rlbk_planning(v_rlbkId);
--- Compute the sum of the duration estimates of all elementary steps (except LOCK_TABLE).
-      SELECT coalesce(sum(rlbp_estimated_duration), '0 SECONDS'::INTERVAL) INTO v_estimDuration
-        FROM emaj.emaj_rlbk_plan
-        WHERE rlbp_rlbk_id = v_rlbkId
-          AND rlbp_step <> 'LOCK_TABLE';
--- Cancel the effect of the rollback planning.
-      RAISE EXCEPTION '';
-    EXCEPTION
-      WHEN RAISE_EXCEPTION THEN                 -- catch the raised exception and continue
-    END;
--- Get the "fixed_table_rollback_duration" parameter from the emaj_param table.
-    SELECT coalesce(
-             (SELECT param_value_interval
-                FROM emaj.emaj_param
-                WHERE param_key = 'fixed_table_rollback_duration'
-             ),'1 millisecond'::INTERVAL) INTO v_fixed_table_rlbk;
--- Compute the final estimated duration, by adding the minimum cost for LOCK_TABLE steps.
-    v_estimDuration = v_estimDuration + (v_nbTbl * v_fixed_table_rlbk);
---
-    RETURN v_estimDuration;
-  END;
-$_estimate_rollback_groups$;
-CREATE OR REPLACE FUNCTION emaj.emaj_rollback_activity()
-RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
-$emaj_rollback_activity$
--- This function returns the list of rollback operations currently in execution, with information about their progress.
--- It returns a set of emaj_rollback_activity_type records.
-  BEGIN
--- Cleanup the freshly completed rollback operations, if any.
-    PERFORM emaj._cleanup_rollback_state();
--- And retrieve information regarding the rollback operations that are always in execution.
-    RETURN QUERY
-      SELECT *
-        FROM emaj._rollback_activity();
-  END;
-$emaj_rollback_activity$;
-COMMENT ON FUNCTION emaj.emaj_rollback_activity() IS
-$$Returns the list of rollback operations currently in execution, with information about their progress.$$;
-CREATE OR REPLACE FUNCTION emaj._rollback_activity()
-RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
-$_rollback_activity$
--- This function effectively builds the list of rollback operations currently in execution.
--- It is called by the emaj_rollback_activity() function.
--- This is a separate function to help in testing the feature (avoiding the effects of _cleanup_rollback_state()).
--- The number of parallel rollback sessions is not taken into account here,
---   as it is difficult to estimate the benefit brought by several parallel sessions.
-  DECLARE
-    v_now                    TIMESTAMPTZ;        -- The clock timestamp at the function entry
-    v_ipsDuration            INTERVAL;           -- In Progress Steps Duration
-    v_nyssDuration           INTERVAL;           -- Not Yes Started Steps Duration
-    v_nbNyss                 INT;                -- Number of Net Yes Started Steps
-    v_ctrlDuration           INTERVAL;
-    v_currentTotalEstimate   INTERVAL;
-    r_rlbk                   emaj.emaj_rollback_activity_type;
-  BEGIN
-    v_now = clock_timestamp();
--- Retrieve all not completed rollback operations (ie in 'PLANNING', 'LOCKING' or 'EXECUTING' state).
-    FOR r_rlbk IN
-      SELECT rlbk_id, rlbk_groups, rlbk_mark, tm.time_clock_timestamp, rlbk_is_logged, rlbk_is_alter_group_allowed,
-             rlbk_comment, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence,
-             rlbk_status, rlbk_start_datetime,
-             rlbk_end_planning_datetime - rlbk_start_datetime AS rlbk_planning_duration,
-             rlbk_end_locking_datetime - rlbk_end_planning_datetime AS rlbk_locking_duration,
-             v_now - rlbk_start_datetime AS "elapse", NULL, 0
-        FROM emaj.emaj_rlbk
-             JOIN emaj.emaj_time_stamp tm ON (tm.time_id = rlbk_mark_time_id)
-        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
-        ORDER BY rlbk_id
-    LOOP
--- Compute the estimated remaining duration for rollback operations in 'PLANNING' state, the remaining duration is NULL.
-      IF r_rlbk.rlbk_status IN ('LOCKING', 'EXECUTING') THEN
--- Estimated duration of remaining work of in progress steps.
-        SELECT coalesce(
-               sum(CASE WHEN rlbp_start_datetime + rlbp_estimated_duration - v_now > '0'::INTERVAL
-                        THEN rlbp_start_datetime + rlbp_estimated_duration - v_now
-                        ELSE '0'::INTERVAL END),'0'::INTERVAL) INTO v_ipsDuration
-          FROM emaj.emaj_rlbk_plan
-          WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
-            AND rlbp_start_datetime IS NOT NULL
-            AND rlbp_duration IS NULL;
--- Estimated duration and number of not yet started steps.
-        SELECT coalesce(sum(rlbp_estimated_duration),'0'::INTERVAL), count(*) INTO v_nyssDuration, v_nbNyss
-          FROM emaj.emaj_rlbk_plan
-          WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
-            AND rlbp_start_datetime IS NULL
-            AND rlbp_step NOT IN ('CTRL-DBLINK','CTRL+DBLINK');
--- Estimated duration of inter-step duration for not yet started steps.
-        SELECT coalesce(sum(rlbp_estimated_duration) * v_nbNyss / sum(rlbp_estimated_quantity),'0'::INTERVAL)
-          INTO v_ctrlDuration
-          FROM emaj.emaj_rlbk_plan
-          WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
-            AND rlbp_step IN ('CTRL-DBLINK','CTRL+DBLINK');
--- Update the global remaining duration estimate.
-        r_rlbk.rlbk_remaining = v_ipsDuration + v_nyssDuration + v_ctrlDuration;
-      END IF;
--- Compute the completion pct for rollback operations in 'PLANNING' or 'LOCKING' state, the completion_pct = 0.
-      IF r_rlbk.rlbk_status = 'EXECUTING' THEN
--- First compute the new total duration estimate, using the estimate of the remaining work,
-        SELECT v_now - rlbk_start_datetime + r_rlbk.rlbk_remaining INTO v_currentTotalEstimate
-          FROM emaj.emaj_rlbk
-          WHERE rlbk_id = r_rlbk.rlbk_id;
--- ... and then the completion pct.
-        IF v_currentTotalEstimate <> '0'::INTERVAL THEN
-          SELECT 100 - (extract(epoch FROM r_rlbk.rlbk_remaining) * 100
-                      / extract(epoch FROM v_currentTotalEstimate))::SMALLINT
-            INTO r_rlbk.rlbk_completion_pct;
-        END IF;
-      END IF;
-      RETURN NEXT r_rlbk;
-    END LOOP;
---
-    RETURN;
-  END;
-$_rollback_activity$;
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT,
                                                                 p_optionsList TEXT, p_tblseqs TEXT[])
 RETURNS TEXT LANGUAGE plpgsql AS
@@ -12491,11 +12328,11 @@ $_gen_sql_groups$
     RETURN v_cumNbSQL;
   END;
 $_gen_sql_groups$;
-------------------------------------
---                                --
--- Global purpose functions       --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                  Global purpose functions                  --
+--                                                            --
+----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION emaj.emaj_get_version()
 RETURNS TEXT LANGUAGE SQL STABLE AS
 $$
@@ -13585,11 +13422,184 @@ $emaj_verify_all$
 $emaj_verify_all$;
 COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
-------------------------------------------
---                                      --
--- event trigger related functions      --
---                                      --
-------------------------------------------
+CREATE OR REPLACE FUNCTION emaj.emaj_cleanup_rollback_state()
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_cleanup_rollback_state$
+-- This function sets the status of not yet "COMMITTED" or "ABORTED" rollback events.
+-- To perform its tasks, it just calls the _cleanup_rollback_state() function.
+-- Input: no parameter
+-- Output: number of updated rollback events
+  BEGIN
+    RETURN emaj._cleanup_rollback_state();
+  END;
+$emaj_cleanup_rollback_state$;
+COMMENT ON FUNCTION emaj.emaj_cleanup_rollback_state() IS
+$$Sets the status of pending E-Maj rollback events.$$;
+CREATE OR REPLACE FUNCTION emaj._cleanup_rollback_state()
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_cleanup_rollback_state$
+-- This function effectively cleans the rollback states up. It is called by the emaj_cleanup_rollback_state()
+-- and by other emaj functions.
+-- The rollbacks whose transaction(s) is/are active are left as is.
+-- Among the others, those which are also visible in the emaj_hist table are set "COMMITTED",
+--   while those which are not visible in the emaj_hist table are set "ABORTED".
+-- Input: no parameter
+-- Output: number of updated rollback events
+-- The function is defined as SECURITY DEFINER so that emaj_viewer role can update emaj_rlbk and emaj_hist tables.
+  DECLARE
+    v_nbRlbk                 INT = 0;
+    v_nbInProgressTx         INT;
+    v_newStatus              emaj._rlbk_status_enum;
+    r_rlbk                   RECORD;
+  BEGIN
+-- Scan all pending rollback events, counting their in-progress sessions.
+    FOR r_rlbk IN
+      SELECT rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session
+        FROM emaj.emaj_rlbk
+             JOIN emaj.emaj_rlbk_session ON (rlbs_rlbk_id = rlbk_id AND rlbs_session = 1)
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')  -- only pending rollback events
+          AND rlbs_txid <> txid_current()                                       -- exclude the current tx, to not process the current
+                                                                                --   rollback when start/stop marks are created
+        ORDER BY rlbk_id
+    LOOP
+-- Get the number of unterminated sessions.
+      SELECT count(*) INTO v_nbInProgressTx
+        FROM emaj.emaj_rlbk_session
+        WHERE rlbs_rlbk_id = r_rlbk.rlbk_id
+          AND NOT txid_visible_in_snapshot(rlbs_txid, txid_current_snapshot());
+-- Only process rollback id with no in-progress session.
+      IF v_nbInProgressTx = 0 THEN
+-- Try to lock the current rlbk_id, but skip it if it is not immediately possible to avoid deadlocks in rare cases.
+        IF EXISTS
+             (SELECT 0
+                FROM emaj.emaj_rlbk
+                WHERE rlbk_id = r_rlbk.rlbk_id
+                FOR UPDATE SKIP LOCKED
+             ) THEN
+-- Look at the emaj_hist to find the trace of the rollback begin event.
+          IF EXISTS
+               (SELECT 0
+                  FROM emaj.emaj_hist
+                  WHERE hist_id = r_rlbk.rlbk_begin_hist_id
+               ) THEN
+-- If the emaj_hist rollback_begin event is visible, the rollback transaction has been committed.
+-- So set the rollback event in emaj_rlbk as "COMMITTED".
+          v_newStatus = 'COMMITTED';
+          ELSE
+-- Otherwise, set the rollback event in emaj_rlbk as "ABORTED"
+            v_newStatus = 'ABORTED';
+          END IF;
+          UPDATE emaj.emaj_rlbk
+            SET rlbk_status = v_newStatus
+            WHERE rlbk_id = r_rlbk.rlbk_id;
+          INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+            VALUES ('CLEANUP_RLBK_STATE', 'Rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
+          v_nbRlbk = v_nbRlbk + 1;
+        END IF;
+      END IF;
+    END LOOP;
+--
+    RETURN v_nbRlbk;
+  END;
+$_cleanup_rollback_state$;
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_activity()
+RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
+$emaj_rollback_activity$
+-- This function returns the list of rollback operations currently in execution, with information about their progress.
+-- It returns a set of emaj_rollback_activity_type records.
+  BEGIN
+-- Cleanup the freshly completed rollback operations, if any.
+    PERFORM emaj._cleanup_rollback_state();
+-- And retrieve information regarding the rollback operations that are always in execution.
+    RETURN QUERY
+      SELECT *
+        FROM emaj._rollback_activity();
+  END;
+$emaj_rollback_activity$;
+COMMENT ON FUNCTION emaj.emaj_rollback_activity() IS
+$$Returns the list of rollback operations currently in execution, with information about their progress.$$;
+CREATE OR REPLACE FUNCTION emaj._rollback_activity()
+RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
+$_rollback_activity$
+-- This function effectively builds the list of rollback operations currently in execution.
+-- It is called by the emaj_rollback_activity() function.
+-- This is a separate function to help in testing the feature (avoiding the effects of _cleanup_rollback_state()).
+-- The number of parallel rollback sessions is not taken into account here,
+--   as it is difficult to estimate the benefit brought by several parallel sessions.
+  DECLARE
+    v_now                    TIMESTAMPTZ;        -- The clock timestamp at the function entry
+    v_ipsDuration            INTERVAL;           -- In Progress Steps Duration
+    v_nyssDuration           INTERVAL;           -- Not Yes Started Steps Duration
+    v_nbNyss                 INT;                -- Number of Net Yes Started Steps
+    v_ctrlDuration           INTERVAL;
+    v_currentTotalEstimate   INTERVAL;
+    r_rlbk                   emaj.emaj_rollback_activity_type;
+  BEGIN
+    v_now = clock_timestamp();
+-- Retrieve all not completed rollback operations (ie in 'PLANNING', 'LOCKING' or 'EXECUTING' state).
+    FOR r_rlbk IN
+      SELECT rlbk_id, rlbk_groups, rlbk_mark, tm.time_clock_timestamp, rlbk_is_logged, rlbk_is_alter_group_allowed,
+             rlbk_comment, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence,
+             rlbk_status, rlbk_start_datetime,
+             rlbk_end_planning_datetime - rlbk_start_datetime AS rlbk_planning_duration,
+             rlbk_end_locking_datetime - rlbk_end_planning_datetime AS rlbk_locking_duration,
+             v_now - rlbk_start_datetime AS "elapse", NULL, 0
+        FROM emaj.emaj_rlbk
+             JOIN emaj.emaj_time_stamp tm ON (tm.time_id = rlbk_mark_time_id)
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
+        ORDER BY rlbk_id
+    LOOP
+-- Compute the estimated remaining duration for rollback operations in 'PLANNING' state, the remaining duration is NULL.
+      IF r_rlbk.rlbk_status IN ('LOCKING', 'EXECUTING') THEN
+-- Estimated duration of remaining work of in progress steps.
+        SELECT coalesce(
+               sum(CASE WHEN rlbp_start_datetime + rlbp_estimated_duration - v_now > '0'::INTERVAL
+                        THEN rlbp_start_datetime + rlbp_estimated_duration - v_now
+                        ELSE '0'::INTERVAL END),'0'::INTERVAL) INTO v_ipsDuration
+          FROM emaj.emaj_rlbk_plan
+          WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+            AND rlbp_start_datetime IS NOT NULL
+            AND rlbp_duration IS NULL;
+-- Estimated duration and number of not yet started steps.
+        SELECT coalesce(sum(rlbp_estimated_duration),'0'::INTERVAL), count(*) INTO v_nyssDuration, v_nbNyss
+          FROM emaj.emaj_rlbk_plan
+          WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+            AND rlbp_start_datetime IS NULL
+            AND rlbp_step NOT IN ('CTRL-DBLINK','CTRL+DBLINK');
+-- Estimated duration of inter-step duration for not yet started steps.
+        SELECT coalesce(sum(rlbp_estimated_duration) * v_nbNyss / sum(rlbp_estimated_quantity),'0'::INTERVAL)
+          INTO v_ctrlDuration
+          FROM emaj.emaj_rlbk_plan
+          WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+            AND rlbp_step IN ('CTRL-DBLINK','CTRL+DBLINK');
+-- Update the global remaining duration estimate.
+        r_rlbk.rlbk_remaining = v_ipsDuration + v_nyssDuration + v_ctrlDuration;
+      END IF;
+-- Compute the completion pct for rollback operations in 'PLANNING' or 'LOCKING' state, the completion_pct = 0.
+      IF r_rlbk.rlbk_status = 'EXECUTING' THEN
+-- First compute the new total duration estimate, using the estimate of the remaining work,
+        SELECT v_now - rlbk_start_datetime + r_rlbk.rlbk_remaining INTO v_currentTotalEstimate
+          FROM emaj.emaj_rlbk
+          WHERE rlbk_id = r_rlbk.rlbk_id;
+-- ... and then the completion pct.
+        IF v_currentTotalEstimate <> '0'::INTERVAL THEN
+          SELECT 100 - (extract(epoch FROM r_rlbk.rlbk_remaining) * 100
+                      / extract(epoch FROM v_currentTotalEstimate))::SMALLINT
+            INTO r_rlbk.rlbk_completion_pct;
+        END IF;
+      END IF;
+      RETURN NEXT r_rlbk;
+    END LOOP;
+--
+    RETURN;
+  END;
+$_rollback_activity$;
+----------------------------------------------------------------
+--                                                            --
+--              Event trigger related functions               --
+--                                                            --
+----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
  RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
 $_emaj_protection_event_trigger_fnct$
@@ -13935,11 +13945,11 @@ $_enable_event_triggers$
   RETURN p_eventTriggers;
   END;
 $_enable_event_triggers$;
-------------------------------------------
---                                      --
--- Extension drop function              --
---                                      --
-------------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                  Extension drop function                   --
+--                                                            --
+----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION emaj.emaj_drop_extension()
 RETURNS VOID LANGUAGE plpgsql AS
 $emaj_drop_extension$
@@ -14158,11 +14168,11 @@ $emaj_drop_extension$;
 COMMENT ON FUNCTION emaj.emaj_drop_extension() IS
 $$Uninstalls the E-Maj components from the current database.$$;
 --
-------------------------------------------
---                                      --
--- event triggers                       --
---                                      --
-------------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                       Event triggers                       --
+--                                                            --
+----------------------------------------------------------------
 --
 -- Event triggers creation depends on postgres version:
 -- - sql_drop event trigger needs postgres 9.3+
@@ -14192,24 +14202,21 @@ CREATE EVENT TRIGGER emaj_table_rewrite_trg
   EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
 --COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
 --$$Controls some changes in E-Maj tables structure.$$;
-------------------------------------
---                                --
--- Rights on emaj components      --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                 Rights on emaj components                  --
+--                                                            --
+----------------------------------------------------------------
 -- Global rights on functions.
---
 -- Revoke all rights on all created functions from PUBLIC.
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA emaj FROM PUBLIC;
 -- Rights given to emaj_adm.
---
 -- emaj_adm can execute all emaj functions and access all emaj tables without any restrictions.
 GRANT ALL ON SCHEMA emaj TO emaj_adm;
 GRANT ALL ON ALL TABLES IN SCHEMA emaj TO emaj_adm;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA emaj TO emaj_adm;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
 -- Rights given to emaj_viewer.
---
 -- emaj_viewer can only
 -- ... view the emaj objects, i.e. the content of emaj and log tables,
 --     except the emaj_param table that emaj_viewer should only see through the emaj_visible_param view
@@ -14300,11 +14307,11 @@ GRANT EXECUTE ON FUNCTION emaj._gen_sql_dump_changes_seq(p_schema TEXT, p_sequen
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
-----------------------------------------
---                                    --
--- specific operations for extension  --
---                                    --
-----------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--           Specific operations for the extension            --
+--                                                            --
+----------------------------------------------------------------
 -- Register emaj tables content as candidate for pg_dump.
 --SELECT pg_catalog.pg_extension_config_dump('emaj_version_hist','WHERE NOT upper_inf(verh_time_range)');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_param','');
@@ -14362,7 +14369,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:14628: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:14641: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;
