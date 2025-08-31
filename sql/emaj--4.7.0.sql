@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table changes : Version <devel>
+-- E-Maj : logs and rollbacks table changes : Version 4.7.0
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -69,7 +69,7 @@ CREATE TABLE emaj.emaj_version_hist (
   PRIMARY KEY (verh_version),
   EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
   );
-INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range) VALUES ('<devel>', TSTZRANGE(clock_timestamp(), null, '[]'));
+INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range) VALUES ('4.7.0', TSTZRANGE(clock_timestamp(), null, '[]'));
 COMMENT ON TABLE emaj.emaj_version_hist IS
 $$Contains E-Maj versions history.$$;
 
@@ -14625,7 +14625,7 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 -- Insert the emaj schema into the emaj_schema table.
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 -- Insert the INIT event into the operations history.
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 4.7.0', 'Initialisation completed');
 -- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
 WITH start_time_data AS (
   SELECT clock_timestamp() - lower(verh_time_range) AS duration

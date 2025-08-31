@@ -1,6 +1,7 @@
 E-Maj - Change log
 ==================
-<devel>
+
+4.7.0 (2025-Aug-31)
 ------
 ###Enhancements:###
   * E-Maj is compatible with PostgreSQL V18, including the support of virtual

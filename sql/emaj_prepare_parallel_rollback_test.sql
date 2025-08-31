@@ -1,4 +1,4 @@
--- emaj_prepare_parallel_rollback_test.sql : Version <devel>
+-- emaj_prepare_parallel_rollback_test.sql : Version 4.7.0
 --
 -- This script prepares an application and an E-Maj context to test parallel rollback 
 -- using the emajParallelRollback client. 

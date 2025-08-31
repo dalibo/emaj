@@ -4,7 +4,7 @@
 -----------------------------
 -- emaj installation as extension
 -----------------------------
-CREATE EXTENSION emaj VERSION 'devel' CASCADE;
+CREATE EXTENSION emaj VERSION '4.7.0' CASCADE;
 
 -----------------------------
 -- verify that dropping the extension is blocked by event trigger
