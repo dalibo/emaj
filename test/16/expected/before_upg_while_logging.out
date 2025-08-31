@@ -46,22 +46,7 @@ select emaj.emaj_create_group('myGroup6');
 -- prepare groups
 -----------------------------
 select emaj.emaj_assign_tables('myschema1','.*',NULL,'myGroup1');
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
-NOTICE:  table "mytbl2b_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   5
@@ -92,18 +77,6 @@ select emaj.emaj_assign_sequence('myschema1','myTbl3_col31_seq','myGroup1');
 (1 row)
 
 select emaj.emaj_assign_tables('myschema2','{"mytbl1", "mytbl2", "myTbl3", "mytbl4"}','myGroup2');
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  table "mytbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl4" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   4
@@ -117,12 +90,6 @@ select emaj.emaj_assign_sequences('myschema2','{"myTbl3_col31_seq","myseq1"}','m
 
 -- The third group name contains space, comma # and '
 select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
-NOTICE:  table "myTbl2\_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
-NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   2
@@ -136,18 +103,6 @@ select emaj.emaj_assign_sequence('phil''s schema"3',E'phil''s"seq\\1','phil''s g
 
 -- Group with long name tables
 select emaj.emaj_assign_tables('myschema6','.*',NULL,'myGroup6');
-NOTICE:  table "table_with_50_characters_long_name_____0_________0_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema6.table_with_50_characters_long_name_____0_________0" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema6.table_with_50_characters_long_name_____0_________0" does not exist, skipping
-NOTICE:  table "table_with_51_characters_long_name_____0_________0#1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema6.table_with_51_characters_long_name_____0_________0a" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema6.table_with_51_characters_long_name_____0_________0a" does not exist, skipping
-NOTICE:  table "table_with_55_characters_long_name_____0_________0#1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema6.table_with_55_characters_long_name_____0_________0abcde" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema6.table_with_55_characters_long_name_____0_________0abcde" does not exist, skipping
-NOTICE:  table "table_with_55_characters_long_name_____0_________0#2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema6.table_with_55_characters_long_name_____0_________0fghij" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema6.table_with_55_characters_long_name_____0_________0fghij" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   4

@@ -17,7 +17,7 @@ use POSIX qw(strftime);
 
 use vars qw($VERSION $PROGRAM $APPNAME);
 
-$VERSION = '4.7.0';
+$VERSION = '<devel>';
 $PROGRAM = 'emajRollbackMonitor.pl';
 $APPNAME = 'emajRollbackMonitor';
 

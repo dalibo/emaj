@@ -1,5 +1,13 @@
 E-Maj - Change log
 ==================
+<devel>
+------
+###Enhancements:###
+
+
+###Bug fixes:###
+
+
 
 4.7.0 (2025-Aug-31)
 ------
