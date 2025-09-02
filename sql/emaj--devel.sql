@@ -15,6 +15,12 @@
 -- Complain if this script is executed in psql, rather than via a CREATE EXTENSION statement.
 \echo Use "CREATE EXTENSION emaj CASCADE" to install the E-Maj extension. \quit
 
+----------------------------------------------------------------
+--                                                            --
+--                   Checks and E-Maj roles                   --
+--                                                            --
+----------------------------------------------------------------
+
 -- Perform some checks and create emaj roles.
 DO LANGUAGE plpgsql
 $do$
@@ -13835,7 +13841,7 @@ $_rollback_activity$;
 ----------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
- RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
 $_emaj_protection_event_trigger_fnct$
 -- This function is called by the emaj_protection_trg event trigger.
 -- The function only blocks any attempt to drop the emaj schema or the emaj extension.

@@ -19,6 +19,11 @@
 -- The user executing the installation may set it to a particular value using a "set default_tablespace to <name>;" statement.
 --
 -- The emaj extension also installs the dblink and btree_gist extensions into the database if they are not already installed.
+----------------------------------------------------------------
+--                                                            --
+--                   Checks and E-Maj roles                   --
+--                                                            --
+----------------------------------------------------------------
 -- Perform some checks and create emaj roles.
 DO LANGUAGE plpgsql
 $do$
@@ -52,7 +57,7 @@ $do$
 $do$;
 BEGIN TRANSACTION;
 DROP SCHEMA IF EXISTS emaj CASCADE;
-psql:sql/emaj-devel.sql:52: NOTICE:  schema "emaj" does not exist, skipping
+psql:sql/emaj-devel.sql:58: NOTICE:  schema "emaj" does not exist, skipping
 CREATE SCHEMA emaj;
 CREATE EXTENSION IF NOT EXISTS dblink;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
@@ -13601,7 +13606,7 @@ $_rollback_activity$;
 --                                                            --
 ----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
- RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
 $_emaj_protection_event_trigger_fnct$
 -- This function is called by the emaj_protection_trg event trigger.
 -- The function only blocks any attempt to drop the emaj schema or the emaj extension.
@@ -14369,7 +14374,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:14641: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:14647: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;

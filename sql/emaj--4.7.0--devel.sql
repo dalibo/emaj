@@ -114,6 +114,46 @@ SET client_min_messages TO NOTICE;
 
 
 --<begin_functions>                              pattern used by the tool that extracts and inserts the functions definition
+------------------------------------------------------------------
+-- drop obsolete functions or functions with modified interface --
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+-- create new or modified functions                             --
+------------------------------------------------------------------
+ALTER EXTENSION emaj ADD FUNCTION public._emaj_protection_event_trigger_fnct();
+CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
+$_emaj_protection_event_trigger_fnct$
+-- This function is called by the emaj_protection_trg event trigger.
+-- The function only blocks any attempt to drop the emaj schema or the emaj extension.
+-- It is located into the public schema to be able to detect the emaj schema removal attempt.
+-- It is also unlinked from the emaj extension to be able to detect the emaj extension removal attempt.
+-- Another pair of function and event trigger handles all other drop attempts.
+  DECLARE
+    r_dropped                RECORD;
+  BEGIN
+-- Scan all dropped objects.
+    FOR r_dropped IN
+      SELECT object_type, object_name
+        FROM pg_event_trigger_dropped_objects()
+    LOOP
+      IF r_dropped.object_type = 'schema' AND r_dropped.object_name = 'emaj' THEN
+-- Detecting an attempt to drop the emaj object.
+        RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the schema "emaj".'
+                        ' Please execute the emaj.emaj_drop_extension() function if you really want to remove all E-Maj components.';
+      END IF;
+      IF r_dropped.object_type = 'extension' AND r_dropped.object_name = 'emaj' THEN
+-- Detecting an attempt to drop the emaj extension.
+        RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the emaj extension.'
+                        ' Please execute the emaj.emaj_drop_extension() function if you really want to remove all E-Maj components.';
+      END IF;
+    END LOOP;
+  END;
+$_emaj_protection_event_trigger_fnct$;
+COMMENT ON FUNCTION public._emaj_protection_event_trigger_fnct() IS
+$$E-Maj extension: support of the emaj_protection_trg event trigger.$$;
+ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
 
 --<end_functions>                                pattern used by the tool that extracts and inserts the functions definition
 

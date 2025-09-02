@@ -298,7 +298,6 @@ use warnings; use strict;
   }
   print UPGSCR "\n";
 
-#print "dropped tables = $droppedTablesList\n";
   # write the new or modified functions
   print UPGSCR "------------------------------------------------------------------\n";
   print UPGSCR "-- create new or modified functions                             --\n";
@@ -310,6 +309,10 @@ use warnings; use strict;
         $prevFunctions{$fnctSignature} ne $currFunctions{$fnctSignature} ||      # the function has changed or
         ($droppedTablesList ne '' && $fnctSignature =~ /$droppedTablesList/i)) { # the function has a parameter whose type is a recreated table
 
+      # specific case of the _emaj_protection_event_trigger_fnct() function that must be temporarily re-added to the emaj extension
+      if ($fnctSignature eq 'public._emaj_protection_event_trigger_fnct()') {
+        print UPGSCR "ALTER EXTENSION emaj ADD FUNCTION public._emaj_protection_event_trigger_fnct();\n"
+      }
       # write the function in the upgrade script
       print UPGSCR $currFunctions{$fnctSignature};
       $nbFctUpgrade++;
@@ -322,6 +325,9 @@ use warnings; use strict;
       if (exists($currComments{$shortSignature})) {
         print UPGSCR $currComments{$shortSignature};
         $nbCommentUpgrade++;
+      }
+      if ($fnctSignature eq 'public._emaj_protection_event_trigger_fnct()') {
+        print UPGSCR "ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();\n"
       }
       # add a blank line
       print UPGSCR "\n";

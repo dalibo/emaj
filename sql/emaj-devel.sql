@@ -15,6 +15,12 @@
 -- The emaj extension also installs the dblink and btree_gist extensions into the database if they are not already installed.
 
 
+----------------------------------------------------------------
+--                                                            --
+--                   Checks and E-Maj roles                   --
+--                                                            --
+----------------------------------------------------------------
+
 -- Perform some checks and create emaj roles.
 DO LANGUAGE plpgsql
 $do$
@@ -13842,7 +13848,7 @@ $_rollback_activity$;
 ----------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
- RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
 $_emaj_protection_event_trigger_fnct$
 -- This function is called by the emaj_protection_trg event trigger.
 -- The function only blocks any attempt to drop the emaj schema or the emaj extension.
