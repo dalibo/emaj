@@ -12,11 +12,12 @@
 --SET client_min_messages TO WARNING;
 SET client_min_messages TO NOTICE;
 
-------------------------------------
---                                --
--- Checks                         --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                           Checks                           --
+--                                                            --
+----------------------------------------------------------------
+
 -- Check that the upgrade conditions are met.
 DO
 $do$
@@ -65,7 +66,11 @@ $do$
   END;
 $do$;
 
--- OK, the upgrade operation can start...
+----------------------------------------------------------------
+--                                                            --
+--                       Upgrade start                        --
+--                                                            --
+----------------------------------------------------------------
 
 -- Insert the upgrade begin record in the operation history.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -77,45 +82,52 @@ LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
 -- Disable the event triggers during the upgrade operation.
 SELECT emaj._disable_event_triggers();
 
-----------------------------------------------
---                                          --
--- emaj enums, tables, views and sequences  --
---                                          --
-----------------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--       Enumerated types, tables, sequences and views        --
+--                                                            --
+----------------------------------------------------------------
 
+
+SET client_min_messages TO WARNING;
+DROP TYPE IF EXISTS emaj.emaj_log_stat_type;
+DROP TYPE IF EXISTS emaj.emaj_detailed_log_stat_type;
+DROP TYPE IF EXISTS emaj.emaj_sequence_stat_type;
+SET client_min_messages TO NOTICE;
 
 --
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
 
-------------------------------------
---                                --
--- emaj types                     --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                      Composite types                       --
+--                                                            --
+----------------------------------------------------------------
 
-------------------------------------
---                                --
--- emaj functions                 --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                         Functions                          --
+--                                                            --
+----------------------------------------------------------------
 -- Recreate functions that have been previously dropped in the tables structure upgrade step and will not be recreated later in this script.
 
 
---<begin_functions>                              pattern used by the tool that extracts and insert the functions definition
+--<begin_functions>                              pattern used by the tool that extracts and inserts the functions definition
 
---<end_functions>                                pattern used by the tool that extracts and insert the functions definition
-------------------------------------------
---                                      --
--- event triggers and related functions --
---                                      --
-------------------------------------------
+--<end_functions>                                pattern used by the tool that extracts and inserts the functions definition
 
-------------------------------------
---                                --
--- emaj roles and rights          --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                       Event triggers                       --
+--                                                            --
+----------------------------------------------------------------
+
+----------------------------------------------------------------
+--                                                            --
+--                 Rights on emaj components                  --
+--                                                            --
+----------------------------------------------------------------
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA emaj FROM PUBLIC;
 
 GRANT ALL ON ALL TABLES IN SCHEMA emaj TO emaj_adm;
@@ -127,11 +139,11 @@ GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
 
-------------------------------------
---                                --
--- Complete the upgrade           --
---                                --
-------------------------------------
+----------------------------------------------------------------
+--                                                            --
+--                    Complete the upgrade                    --
+--                                                            --
+----------------------------------------------------------------
 
 -- Enable the event triggers.
 DO

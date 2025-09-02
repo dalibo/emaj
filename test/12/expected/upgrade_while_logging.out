@@ -244,20 +244,6 @@ select emaj.emaj_get_version();
  stat_verb                | text                     |           |          | 
  stat_rows                | bigint                   |           |          | 
 
-                  Composite type "emaj.emaj_detailed_log_stat_type"
-          Column          |           Type           | Collation | Nullable | Default 
---------------------------+--------------------------+-----------+----------+---------
- stat_group               | text                     |           |          | 
- stat_schema              | text                     |           |          | 
- stat_table               | text                     |           |          | 
- stat_first_mark          | text                     |           |          | 
- stat_first_mark_datetime | timestamp with time zone |           |          | 
- stat_last_mark           | text                     |           |          | 
- stat_last_mark_datetime  | timestamp with time zone |           |          | 
- stat_role                | text                     |           |          | 
- stat_verb                | text                     |           |          | 
- stat_rows                | bigint                   |           |          | 
-
                        Sequence "emaj.emaj_global_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
 --------+-------+---------+---------------------+-----------+---------+-------
@@ -427,18 +413,6 @@ primary key, btree, for table "emaj.emaj_log_session"
  stat_is_log_stop         | boolean                  |           |          | 
  stat_changes             | bigint                   |           |          | 
  stat_rollbacks           | integer                  |           |          | 
-
-                       Composite type "emaj.emaj_log_stat_type"
-          Column          |           Type           | Collation | Nullable | Default 
---------------------------+--------------------------+-----------+----------+---------
- stat_group               | text                     |           |          | 
- stat_schema              | text                     |           |          | 
- stat_table               | text                     |           |          | 
- stat_first_mark          | text                     |           |          | 
- stat_first_mark_datetime | timestamp with time zone |           |          | 
- stat_last_mark           | text                     |           |          | 
- stat_last_mark_datetime  | timestamp with time zone |           |          | 
- stat_rows                | bigint                   |           |          | 
 
                          Table "emaj.emaj_mark"
             Column            |  Type   | Collation | Nullable | Default 
@@ -878,19 +852,6 @@ Tablespace: "tspemaj"
  stat_last_mark             | text                     |           |          | 
  stat_last_mark_datetime    | timestamp with time zone |           |          | 
  stat_last_time_id          | bigint                   |           |          | 
- stat_increments            | bigint                   |           |          | 
- stat_has_structure_changed | boolean                  |           |          | 
-
-                     Composite type "emaj.emaj_sequence_stat_type"
-           Column           |           Type           | Collation | Nullable | Default 
-----------------------------+--------------------------+-----------+----------+---------
- stat_group                 | text                     |           |          | 
- stat_schema                | text                     |           |          | 
- stat_sequence              | text                     |           |          | 
- stat_first_mark            | text                     |           |          | 
- stat_first_mark_datetime   | timestamp with time zone |           |          | 
- stat_last_mark             | text                     |           |          | 
- stat_last_mark_datetime    | timestamp with time zone |           |          | 
  stat_increments            | bigint                   |           |          | 
  stat_has_structure_changed | boolean                  |           |          | 
 
