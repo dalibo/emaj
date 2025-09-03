@@ -73,8 +73,6 @@ CREATE FUNCTION
 ALTER FUNCTION
 CREATE FUNCTION
 ALTER FUNCTION
-CREATE FUNCTION
-ALTER FUNCTION
 ERROR:  function "_emaj_protection_event_trigger_fnct" already exists with same argument types
 ALTER FUNCTION
 COMMENT

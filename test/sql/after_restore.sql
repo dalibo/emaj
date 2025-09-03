@@ -6,6 +6,8 @@
 -- Checking restore
 -----------------------------
 
+-- Compare the number of rows for each emaj table and the properties of each emaj sequence with their saved state before the dump.
+
 DO LANGUAGE plpgsql $$
 DECLARE
   r             RECORD;
@@ -39,11 +41,11 @@ BEGIN
      ORDER BY 1,2
   LOOP
     EXECUTE 'SELECT * FROM emaj.emaj_regtest_dump_seq WHERE sequ_schema = ' || quote_literal(r.nspname) || ' AND sequ_name = ' || quote_literal(r.relname)
-         || ' EXCEPT SELECT * FROM emaj.tmp_get_current_sequence_state(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)';
+         || ' EXCEPT SELECT * FROM emaj._get_current_seq(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)';
     GET DIAGNOSTICS delta = ROW_COUNT;
     IF delta > 0 THEN
       SELECT sequ_last_val INTO expected_val FROM emaj.emaj_regtest_dump_seq WHERE sequ_schema = r.nspname AND sequ_name = r.relname;
-      EXECUTE 'SELECT sequ_last_val FROM emaj.tmp_get_current_sequence_state(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)'
+      EXECUTE 'SELECT sequ_last_val FROM emaj._get_current_seq(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)'
         INTO returned_val;
       IF expected_val <> returned_val THEN
         RAISE WARNING 'Error, the sequence %.% has last_val equal to % instead of %', quote_ident(r.nspname), quote_ident(r.relname), returned_val, expected_val;
@@ -57,9 +59,10 @@ BEGIN
   IF NOT keepTable THEN
     DROP TABLE emaj.emaj_regtest_dump_tbl, emaj.emaj_regtest_dump_seq;
   END IF;
--- drop the specific function created just before the database dump.
-  DROP FUNCTION emaj.tmp_get_current_sequence_state(TEXT, TEXT, BIGINT);
 END $$;
+
+-- Let E-maj check its environment.
+SELECT * FROM emaj.emaj_verify_all();
 
 -----------------------------
 -- Let's use the E-Maj environment

@@ -160,11 +160,6 @@ migrat_test()
     echo "  Error: can't drop control tables from the ${1} regression database"
     return 1
   fi
-  ${oldPGBIN}/psql -p ${oldPGPORT} -U ${oldPGUSER} regression -q -c "DROP FUNCTION emaj.tmp_get_current_sequence_state(TEXT, TEXT, BIGINT);"
-  if [ $? -ne 0 ]; then
-    echo "  Error: can't drop the temporary function from the ${1} regression database"
-    return 1
-  fi
   return 0
 }
 # Function pg_upgrade_test(): test of a postgres version change
