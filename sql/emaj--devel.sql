@@ -5388,7 +5388,7 @@ $_verify_groups$
              GROUP BY 1,2,3,4
           ) AS t
         WHERE registered_gen_columns <> current_gen_columns
-        ORDER BY 1,2,3
+        ORDER BY 1,2,3,4
     LOOP
       IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
@@ -5415,7 +5415,7 @@ $_verify_groups$
                       AND relname = rel_tblseq
                       AND tgname = trg_name
                  )
-        ORDER BY 1,2,3
+        ORDER BY 1,2,3,4
     LOOP
       IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (11): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
