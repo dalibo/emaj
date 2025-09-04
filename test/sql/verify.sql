@@ -16,6 +16,14 @@ select emaj.emaj_disable_protection_by_event_triggers();
 select * from emaj.emaj_verify_all();
 
 --
+-- Unknown emaj_param parameter key
+--
+begin;
+  insert into emaj.emaj_param (param_key) VALUES ('dummy_2'), ('dummy_1');
+  select * from emaj.emaj_verify_all();
+rollback;
+
+--
 -- dblink connection tests
 --
 -- The "dblink not installed" test is located into the install_psql.sql script
@@ -28,30 +36,26 @@ reset role;
 -- Test a transaction isolation not READ COMMITTED
 begin transaction isolation level REPEATABLE READ;
   select * from emaj.emaj_verify_all();
-  rollback;
-end;
+rollback;
 
 -- Test the lack of dblink_user_password parameter
 begin;
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
   select * from emaj.emaj_verify_all();
-  rollback;
-end;
+rollback;
 
 -- Test a bad dblink_user_password parameter content
 begin;
   update emaj.emaj_param set param_value_text = 'bad_content' where param_key = 'dblink_user_password';
   select * from emaj.emaj_verify_all();
-  rollback;
-end;
+rollback;
 
 -- Test a dblink_user_password without emaj_adm rights
 begin;
   update emaj.emaj_param set param_value_text = 'user=emaj_regression_tests_viewer_user password=viewer' 
     where param_key = 'dblink_user_password';
   select * from emaj.emaj_verify_all();
-  rollback;
-end;
+rollback;
 
 -- Warnings on foreign keys
 begin;

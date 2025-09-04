@@ -3,6 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Add a check into emaj_verify_all() to warn of unknown parameter keys in
+    the emaj_param table.
   * Minor code changes.
 
 ###Bug fixes:###

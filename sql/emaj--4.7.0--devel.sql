@@ -483,6 +483,118 @@ $_verify_groups$
   END;
 $_verify_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
+RETURNS SETOF TEXT LANGUAGE plpgsql AS
+$emaj_verify_all$
+-- The function verifies the consistency between all emaj objects present inside emaj schema and
+-- emaj objects related to tables and sequences referenced in the emaj_relation table.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
+  DECLARE
+    v_errorFound             BOOLEAN = FALSE;
+    v_status                 INT;
+    v_schema                 TEXT;
+    v_paramList              TEXT;
+    r_object                 RECORD;
+  BEGIN
+-- Check the postgres version compatibility.
+    IF emaj._pg_version_num() < 120000 THEN
+      RETURN NEXT 'Error: The current postgres version (' || version()
+               || ') is not compatible with this E-Maj version. It should be at least 12';
+      v_errorFound = TRUE;
+    END IF;
+-- Check all E-Maj schemas.
+    FOR r_object IN
+      SELECT msg
+        FROM emaj._verify_all_schemas() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- Check all groups components.
+    FOR r_object IN
+      SELECT msg
+        FROM emaj._verify_all_groups() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- Report a warning if emaj_param contains an unknown parameter.
+    SELECT string_agg(param_key, ', ' ORDER BY param_key)
+      INTO v_paramList
+      FROM emaj.emaj_visible_param
+      WHERE param_key NOT IN
+        ('dblink_user_password', 'history_retention', 'alter_log_table', 'avg_row_rollback_duration', 'avg_row_delete_log_duration',
+         'avg_fkey_check_duration', 'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration');
+    IF v_paramList IS NOT NULL THEN
+      RETURN NEXT format('Warning: the emaj_param table contains unknown parameters (%s).',
+                         v_paramList);
+    END IF;
+-- Report a warning if dblink connections are not operational.
+    IF has_function_privilege('emaj._dblink_open_cnx(text,text)', 'execute') THEN
+      SELECT p_status, p_schema INTO v_status, v_schema
+        FROM emaj._dblink_open_cnx('emaj_verify_all', current_role);
+      CASE v_status
+        WHEN 0, 1 THEN
+          PERFORM emaj._dblink_close_cnx('emaj_verify_all', v_schema);
+        WHEN -1 THEN
+          RETURN NEXT 'Warning: The dblink extension is not installed.';
+        WHEN -3 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the current role is not granted to execute dblink_connect_u().';
+        WHEN -4 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the transaction isolation level is not READ COMMITTED.';
+        WHEN -5 THEN
+          RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set in the emaj_param table.';
+        WHEN -6 THEN
+          RETURN NEXT 'Warning: The dblink connection test failed. The ''dblink_user_password'' parameter value is probably incorrect.';
+        WHEN -7 THEN
+          RETURN NEXT 'Warning: The role set in the ''dblink_user_password'' parameter has not emaj_adm rights.';
+        ELSE
+          RETURN NEXT format('Warning: The dblink connection test failed for an unknown reason (status = %s).',
+                             v_status::TEXT);
+      END CASE;
+    ELSE
+      RETURN NEXT 'Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).';
+    END If;
+-- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks.
+    IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
+      RETURN NEXT format('Warning: The max_prepared_transactions parameter value (%s) on this cluster is too low to launch parallel '
+                         'rollback.',
+                         pg_catalog.current_setting('max_prepared_transactions'));
+    END IF;
+-- Report a warning if the emaj_protection_trg event triggers is missing.
+-- The other event triggers are protected by the emaj extension they belong to.
+    PERFORM 0
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname = 'emaj_protection_trg';
+    IF NOT FOUND THEN
+      RETURN NEXT 'Warning: The "emaj_protection_trg" event triggers is missing. It can be recreated using the '
+                  'emaj_enable_protection_by_event_triggers() function.';
+    END IF;
+-- Report a warning if some E-Maj event triggers exist but are not enabled.
+    IF EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_event_trigger
+              WHERE evtname LIKE 'emaj%'
+                AND evtenabled = 'D'
+         ) THEN
+      RETURN NEXT 'Warning: Some E-Maj event triggers are disabled. You may enable them using the '
+                  'emaj_enable_protection_by_event_triggers() function.';
+    END IF;
+-- Final message if no error has been yet detected.
+    IF NOT v_errorFound THEN
+      RETURN NEXT 'No error detected';
+    END IF;
+--
+    RETURN;
+  END;
+$emaj_verify_all$;
+COMMENT ON FUNCTION emaj.emaj_verify_all() IS
+$$Verifies the consistency between existing E-Maj and application objects.$$;
+
 ALTER EXTENSION emaj ADD FUNCTION public._emaj_protection_event_trigger_fnct();
 CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
 RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS

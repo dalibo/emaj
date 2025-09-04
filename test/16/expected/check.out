@@ -121,8 +121,8 @@ select funcname, calls from pg_stat_user_functions
  _create_log_schemas                       |    21
  _create_seq                               |    46
  _create_tbl                               |   169
- _dblink_close_cnx                         |   124
- _dblink_open_cnx                          |   149
+ _dblink_close_cnx                         |   125
+ _dblink_open_cnx                          |   150
  _dblink_sql_exec                          |  2429
  _delete_before_mark_group                 |    24
  _delete_between_marks_group               |    15
@@ -134,7 +134,7 @@ select funcname, calls from pg_stat_user_functions
  _drop_log_schemas                         |   132
  _drop_seq                                 |    69
  _drop_tbl                                 |   222
- _emaj_param_change_fnct                   |    46
+ _emaj_param_change_fnct                   |    48
  _enable_event_triggers                    |   314
  _estimate_rlbk_step_duration              |   820
  _estimate_rollback_groups                 |    13
@@ -198,8 +198,8 @@ select funcname, calls from pg_stat_user_functions
  _start_groups                             |    55
  _stop_groups                              |    67
  _truncate_trigger_fnct                    |    15
- _verify_all_groups                        |    56
- _verify_all_schemas                       |    56
+ _verify_all_groups                        |    57
+ _verify_all_schemas                       |    57
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
@@ -284,14 +284,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |     9
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    56
+ emaj_verify_all                           |    57
 (191 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1165
+ 1166
 (1 row)
 
 -----------------------------

@@ -13566,10 +13566,10 @@ $emaj_verify_all$
     v_errorFound             BOOLEAN = FALSE;
     v_status                 INT;
     v_schema                 TEXT;
+    v_paramList              TEXT;
     r_object                 RECORD;
   BEGIN
--- Global checks.
--- Detect if the current postgres version is at least 11.
+-- Check the postgres version compatibility.
     IF emaj._pg_version_num() < 120000 THEN
       RETURN NEXT 'Error: The current postgres version (' || version()
                || ') is not compatible with this E-Maj version. It should be at least 12';
@@ -13595,7 +13595,18 @@ $emaj_verify_all$
         v_errorFound = TRUE;
       END IF;
     END LOOP;
--- Report a warning if dblink connections are not operational
+-- Report a warning if emaj_param contains an unknown parameter.
+    SELECT string_agg(param_key, ', ' ORDER BY param_key)
+      INTO v_paramList
+      FROM emaj.emaj_visible_param
+      WHERE param_key NOT IN
+        ('dblink_user_password', 'history_retention', 'alter_log_table', 'avg_row_rollback_duration', 'avg_row_delete_log_duration',
+         'avg_fkey_check_duration', 'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration');
+    IF v_paramList IS NOT NULL THEN
+      RETURN NEXT format('Warning: the emaj_param table contains unknown parameters (%s).',
+                         v_paramList);
+    END IF;
+-- Report a warning if dblink connections are not operational.
     IF has_function_privilege('emaj._dblink_open_cnx(text,text)', 'execute') THEN
       SELECT p_status, p_schema INTO v_status, v_schema
         FROM emaj._dblink_open_cnx('emaj_verify_all', current_role);
@@ -13621,7 +13632,7 @@ $emaj_verify_all$
     ELSE
       RETURN NEXT 'Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).';
     END If;
--- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks
+-- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks.
     IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
       RETURN NEXT format('Warning: The max_prepared_transactions parameter value (%s) on this cluster is too low to launch parallel '
                          'rollback.',

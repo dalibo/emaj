@@ -28,6 +28,20 @@ select * from emaj.emaj_verify_all();
 (2 rows)
 
 --
+-- Unknown emaj_param parameter key
+--
+begin;
+  insert into emaj.emaj_param (param_key) VALUES ('dummy_2'), ('dummy_1');
+  select * from emaj.emaj_verify_all();
+                                                           emaj_verify_all                                                           
+-------------------------------------------------------------------------------------------------------------------------------------
+ Warning: the emaj_param table contains unknown parameters (dummy_1, dummy_2).
+ Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(3 rows)
+
+rollback;
+--
 -- dblink connection tests
 --
 -- The "dblink not installed" test is located into the install_psql.sql script
@@ -52,9 +66,7 @@ begin transaction isolation level REPEATABLE READ;
  No error detected
 (3 rows)
 
-  rollback;
-end;
-WARNING:  there is no transaction in progress
+rollback;
 -- Test the lack of dblink_user_password parameter
 begin;
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
@@ -66,9 +78,7 @@ begin;
  No error detected
 (3 rows)
 
-  rollback;
-end;
-WARNING:  there is no transaction in progress
+rollback;
 -- Test a bad dblink_user_password parameter content
 begin;
   update emaj.emaj_param set param_value_text = 'bad_content' where param_key = 'dblink_user_password';
@@ -80,9 +90,7 @@ begin;
  No error detected
 (3 rows)
 
-  rollback;
-end;
-WARNING:  there is no transaction in progress
+rollback;
 -- Test a dblink_user_password without emaj_adm rights
 begin;
   update emaj.emaj_param set param_value_text = 'user=emaj_regression_tests_viewer_user password=viewer' 
@@ -95,9 +103,7 @@ begin;
  No error detected
 (3 rows)
 
-  rollback;
-end;
-WARNING:  there is no transaction in progress
+rollback;
 -- Warnings on foreign keys
 begin;
 -- FK with one of both tables outside the tables group
