@@ -177,14 +177,14 @@ ERROR:  Error trapped on emaj_assign_table() call
 CONTEXT:  PL/pgSQL function inline_code_block line 12 at RAISE
 -- UNLOGGED table on a rollbackable group
 select emaj.emaj_assign_table('myschema5','myunloggedtbl','myGroup1');
-ERROR:  _assign_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
-CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 44 at RAISE
+ERROR:  _check_tables_for_rollbackable_group: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
+CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean) line 47 at RAISE
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 116 at assignment
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- table without PKEY on a rollbackable group
 select emaj.emaj_assign_table('phil''s schema"3','myTbl2\','myGroup1');
-ERROR:  _assign_tables: In schema "phil's schema""3", some tables ("myTbl2\") have no PRIMARY KEY.
-CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 27 at RAISE
+ERROR:  _check_tables_for_rollbackable_group: In schema "phil's schema""3", some tables ("myTbl2\") have no PRIMARY KEY.
+CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean) line 28 at RAISE
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 116 at assignment
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
@@ -501,7 +501,7 @@ WARNING:  _assign_tables: No table to process.
 (1 row)
 
 select emaj.emaj_assign_tables('myschema5','unlogged','','myGroup2');
-WARNING:  _assign_tables: Some UNLOGGED tables (myunloggedtbl) are not selected.
+WARNING:  _check_tables_for_rollbackable_group: Some UNLOGGED tables (myunloggedtbl) are not selected.
 WARNING:  _assign_tables: No table to process.
  emaj_assign_tables 
 --------------------
@@ -526,7 +526,7 @@ WARNING:  _assign_tables: No table to process.
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_assign_tables('phil''s schema"3','myTbl2\\','','myGroup2');
-WARNING:  _assign_tables: Some tables without PRIMARY KEY ("myTbl2\") are not selected.
+WARNING:  _check_tables_for_rollbackable_group: Some tables without PRIMARY KEY ("myTbl2\") are not selected.
 WARNING:  _assign_tables: No table to process.
  emaj_assign_tables 
 --------------------

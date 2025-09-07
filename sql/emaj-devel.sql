@@ -1540,8 +1540,7 @@ $_check_schema$
   END;
 $_check_schema$;
 
-CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN,
-                                                                     p_callingFunction TEXT)
+CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN)
 RETURNS TEXT[] LANGUAGE plpgsql AS
 $_check_tables_for_rollbackable_group$
 -- This function filters or verifies that tables are compatible with ROLLBACKABLE groups.
@@ -1553,7 +1552,8 @@ $_check_tables_for_rollbackable_group$
     v_array                  TEXT[];
   BEGIN
 -- Check or discard tables without primary key.
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class t
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema AND t.relname = ANY(p_tables)
@@ -1569,15 +1569,17 @@ $_check_tables_for_rollbackable_group$
               );
     IF v_list IS NOT NULL THEN
       IF NOT p_arrayFromRegex THEN
-        RAISE EXCEPTION '%: In schema %, some tables (%) have no PRIMARY KEY.', p_callingFunction, quote_ident(p_schema), v_list;
+        RAISE EXCEPTION '_check_tables_for_rollbackable_group: In schema %, some tables (%) have no PRIMARY KEY.',
+                        quote_ident(p_schema), v_list;
       ELSE
-        RAISE WARNING '%: Some tables without PRIMARY KEY (%) are not selected.', p_callingFunction, v_list;
+        RAISE WARNING '_check_tables_for_rollbackable_group: Some tables without PRIMARY KEY (%) are not selected.', v_list;
         -- remove these tables from the tables to process
         p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check or discard UNLOGGED tables.
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema
@@ -1586,9 +1588,10 @@ $_check_tables_for_rollbackable_group$
         AND relpersistence = 'u';
     IF v_list IS NOT NULL THEN
       IF NOT p_arrayFromRegex THEN
-        RAISE EXCEPTION '%: In schema %, some tables (%) are UNLOGGED tables.', p_callingFunction, quote_ident(p_schema), v_list;
+        RAISE EXCEPTION '_check_tables_for_rollbackable_group: In schema %, some tables (%) are UNLOGGED tables.',
+                        quote_ident(p_schema), v_list;
       ELSE
-        RAISE WARNING '%: Some UNLOGGED tables (%) are not selected.', p_callingFunction, v_list;
+        RAISE WARNING '_check_tables_for_rollbackable_group: Some UNLOGGED tables (%) are not selected.', v_list;
         -- remove these tables from the tables to process
         p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
@@ -1660,27 +1663,23 @@ $_check_tblseqs_array$
 -- Check that the schema exists.
     v_schemaExists = emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
 -- Clean up the relation names array: remove duplicates values, NULL and empty strings.
-    SELECT array_agg(DISTINCT tblseq) INTO v_tblseqs
+    SELECT array_agg(DISTINCT tblseq)
+      INTO v_tblseqs
       FROM unnest(p_tblseqs) AS tblseq
       WHERE tblseq IS NOT NULL AND tblseq <> '';
 -- If the schema exists, check that all relations exist.
     IF v_schemaExists THEN
-      WITH tblseqs AS (
-        SELECT unnest(v_tblseqs) AS tblseq
-        )
-      SELECT string_agg(quote_ident(tblseq), ', ') INTO v_list
-        FROM
-          (SELECT tblseq
-             FROM tblseqs
-             WHERE NOT EXISTS
-                     (SELECT 0
-                        FROM pg_catalog.pg_class
-                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                        WHERE nspname = p_schema
-                          AND relname = tblseq
-                          AND relkind = p_relkind
-                     )
-          ) AS t;
+      SELECT string_agg(quote_ident(tblseq), ', ' ORDER BY tblseq)
+        INTO v_list
+        FROM unnest(v_tblseqs) AS tblseq
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = p_schema
+                     AND relname = tblseq
+                     AND relkind = p_relkind
+                );
       IF v_list IS NOT NULL THEN
         IF p_exceptionIfMissing THEN
           RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not exist!', p_schema, v_relationKind, v_list;
@@ -1690,23 +1689,18 @@ $_check_tblseqs_array$
       END IF;
     END IF;
 -- Check that the relations currently belong to a tables group (not necessarily the same for all relations).
-    WITH all_supplied_tblseqs AS (
-      SELECT unnest(v_tblseqs) AS tblseq
-      ),
-         tblseqs_in_groups AS (
-      SELECT rel_tblseq
-        FROM emaj.emaj_relation
-        WHERE rel_schema = p_schema
-          AND rel_tblseq = ANY(v_tblseqs)
-          AND rel_kind = p_relkind
-          AND upper_inf(rel_time_range)
-      )
-    SELECT string_agg(quote_ident(tblseq), ', ') INTO v_list
+    SELECT string_agg(quote_ident(tblseq), ', ' ORDER BY tblseq)
+      INTO v_list
       FROM
         (  SELECT tblseq
-             FROM all_supplied_tblseqs
+             FROM unnest(v_tblseqs) AS tblseq
          EXCEPT
-           SELECT rel_tblseq FROM tblseqs_in_groups
+           SELECT rel_tblseq
+             FROM emaj.emaj_relation
+             WHERE rel_schema = p_schema
+               AND rel_tblseq = ANY(v_tblseqs)
+               AND rel_kind = p_relkind
+               AND upper_inf(rel_time_range)
         ) AS t;
     IF v_list IS NOT NULL THEN
       RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not currently belong to any tables group.',
@@ -2373,7 +2367,7 @@ $_assign_tables$
     END IF;
 -- If the group is ROLLBACKABLE, perform additional checks or filters (a PK, not UNLOGGED).
     IF v_groupIsRollbackable THEN
-      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex, '_assign_tables');
+      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex);
     END IF;
 -- Check or discard tables already assigned to a group.
     SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
@@ -2780,7 +2774,7 @@ $_move_tables$
 -- If at least 1 source tables group is of type AUDIT_ONLY and the target tables group is ROLLBACKABLE, add some checks on tables.
 -- They may be incompatible with ROLLBACKABLE groups.
     IF v_nbAuditOnlyGroups > 0 AND v_newGroupIsRollbackable THEN
-      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex, '_move_tables');
+      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex);
     END IF;
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
