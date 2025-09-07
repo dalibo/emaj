@@ -16,7 +16,7 @@ drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl4
 drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl2b
 drop cascades to function emaj_parallel_rollback_test_app_schema.mytbl2trgfct()
 NOTICE:  extension "emaj" does not exist, skipping
-NOTICE:  drop cascades to 221 other objects
+NOTICE:  drop cascades to 231 other objects
 DETAIL:  drop cascades to table emaj.emaj_version_hist
 drop cascades to type emaj._relation_change_kind_enum
 drop cascades to type emaj._rlbk_status_enum
@@ -40,9 +40,11 @@ drop cascades to table emaj.emaj_rlbk
 drop cascades to table emaj.emaj_rlbk_session
 drop cascades to table emaj.emaj_rlbk_plan
 drop cascades to table emaj.emaj_rlbk_stat
-drop cascades to type emaj.emaj_log_stat_type
-drop cascades to type emaj.emaj_detailed_log_stat_type
-drop cascades to type emaj.emaj_sequence_stat_type
+drop cascades to type emaj.emaj_log_stat_group_type
+drop cascades to type emaj.emaj_detailed_log_stat_group_type
+drop cascades to type emaj.emaj_sequence_stat_group_type
+drop cascades to type emaj.emaj_log_stat_table_type
+drop cascades to type emaj.emaj_log_stat_sequence_type
 drop cascades to type emaj.emaj_rollback_activity_type
 drop cascades to type emaj.emaj_consolidable_rollback_type
 drop cascades to type emaj._verify_groups_type
@@ -59,6 +61,7 @@ drop cascades to function emaj._check_group_names(text[],boolean,boolean,boolean
 drop cascades to function emaj._check_json_groups_conf(json)
 drop cascades to function emaj._check_json_table_properties(jsonb)
 drop cascades to function emaj._check_json_param_conf(json)
+drop cascades to function emaj._check_schema(text,boolean,boolean)
 drop cascades to function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text)
 drop cascades to function emaj._build_tblseqs_array_from_regexp(text,text,text,text,boolean)
 drop cascades to function emaj._check_tblseqs_array(text,text[],text,boolean)
@@ -68,7 +71,7 @@ drop cascades to function emaj._check_new_mark(text[],text)
 drop cascades to function emaj._check_marks_range(text[],text,text,boolean,boolean)
 drop cascades to function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean)
 drop cascades to function emaj._truncate_trigger_fnct()
-drop cascades to function emaj._create_log_schemas(text)
+drop cascades to function emaj._create_log_schemas(text,bigint)
 drop cascades to function emaj._drop_log_schemas(text,boolean)
 drop cascades to function emaj._build_path_name(text,text)
 drop cascades to function emaj.emaj_assign_table(text,text,text,jsonb,text)
@@ -114,13 +117,10 @@ drop cascades to function emaj._move_sequences(text,text[],text,text,boolean,boo
 drop cascades to function emaj._create_seq(text,text,text,bigint)
 drop cascades to function emaj._add_seq(text,text,text,boolean,bigint,text)
 drop cascades to function emaj._remove_seq(text,text,text,boolean,bigint,text)
-drop cascades to function emaj._move_seq(text,text,text,boolean,text,boolean,bigint,text)
-drop cascades to function emaj._drop_seq(emaj.emaj_relation,bigint)
-drop cascades to function emaj._rlbk_tbl(emaj.emaj_relation,bigint,bigint,integer,boolean,boolean)
-and 121 other objects (see server log for list)
+and 131 other objects (see server log for list)
 NOTICE:  drop cascades to event trigger emaj_protection_trg
-WARNING:  emaj_drop_extension: emaj_viewer role is also referenced in some other databases (postgres)
-WARNING:  emaj_drop_extension: emaj_adm role is also referenced in some other databases (postgres)
+WARNING:  emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (postgres)
+WARNING:  emaj_drop_extension: The emaj_adm role is also referenced in some other databases (postgres)
 WARNING:  emaj_drop_extension: There are remaining roles (emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2) who have been granted emaj_adm role.
 WARNING:  emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.
  emaj_drop_extension 

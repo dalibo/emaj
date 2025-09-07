@@ -13973,16 +13973,16 @@ $emaj_drop_extension$
 -- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
 -- - or with the alternate psql script.
   DECLARE
-    v_nbObject              INTEGER;
-    v_roleToDrop            BOOLEAN;
-    v_dbList                TEXT;
-    v_granteeRoleList       TEXT;
-    v_granteeClassList      TEXT;
-    v_granteeFunctionList   TEXT;
-    v_tspList               TEXT;
-    r_object                RECORD;
+    v_nbObject               INTEGER;
+    v_roleToDrop             BOOLEAN;
+    v_dbList                 TEXT;
+    v_granteeRoleList        TEXT;
+    v_granteeClassList       TEXT;
+    v_granteeFunctionList    TEXT;
+    v_tspList                TEXT;
+    r_object                 RECORD;
   BEGIN
--- First perform some checks to verify that the conditions to execute the function are met.
+-- Perform some checks to verify that the conditions to execute the function are met.
 --
 -- Check emaj schema is present.
     PERFORM 1 FROM pg_catalog.pg_namespace WHERE nspname = 'emaj';
@@ -13992,10 +13992,10 @@ $emaj_drop_extension$
 --
 -- For extensions, check the current role is superuser.
     IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
-       PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
-       IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
-       END IF;
+      PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
+      END IF;
     ELSE
 -- Otherwise, check the current role is the owner of the emaj schema, i.e. the role who installed emaj.
       PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
@@ -14005,7 +14005,7 @@ $emaj_drop_extension$
       END IF;
     END IF;
 --
--- Check that no E-Maj schema contain any non E-Maj object.
+-- Check that no E-Maj schema contains any non E-Maj object.
     v_nbObject = 0;
     FOR r_object IN
       SELECT msg FROM emaj._verify_all_schemas() msg
@@ -14050,7 +14050,7 @@ $emaj_drop_extension$
 -- Drop the event trigger that protects the extension against unattempted drop and its function (they are external to the extension).
     DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
 --
--- Revoke also the grant given to emaj_adm on the dblink_connect_u function at install time.
+-- Revoke also the grants given to emaj_adm on the dblink_connect_u function at install time.
     FOR r_object IN
       SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
         WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
@@ -14064,108 +14064,129 @@ $emaj_drop_extension$
     END LOOP;
 --
 -- Check if emaj roles can be dropped.
-    v_roleToDrop = true;
+    v_roleToDrop = TRUE;
 --
--- Are emaj_roles also used in other databases of the cluster ?
+-- Are emaj roles also used in other databases of the cluster ?
     v_dbList = NULL;
-    SELECT string_agg(datname,', ') INTO v_dbList FROM (
-      SELECT DISTINCT datname FROM pg_catalog.pg_shdepend shd, pg_catalog.pg_database db, pg_catalog.pg_roles r
-        WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_viewer' AND datname <> current_database()
-      ) AS t;
+    SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+      INTO v_dbList
+      FROM pg_database db
+           JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+      WHERE rolname = 'emaj_viewer'
+        AND datname <> current_database();
     IF v_dbList IS NOT NULL THEN
-      RAISE WARNING 'emaj_drop_extension: emaj_viewer role is also referenced in some other databases (%)',v_dbList;
-      v_roleToDrop = false;
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (%)', v_dbList;
+      v_roleToDrop = FALSE;
     END IF;
 --
     v_dbList = NULL;
-    SELECT string_agg(datname,', ') INTO v_dbList FROM (
-      SELECT DISTINCT datname FROM pg_catalog.pg_shdepend shd, pg_catalog.pg_database db, pg_catalog.pg_roles r
-        WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_adm' AND datname <> current_database()
-      ) AS t;
+    SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+      INTO v_dbList
+      FROM pg_database db
+           JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+      WHERE rolname = 'emaj_adm'
+        AND datname <> current_database();
     IF v_dbList IS NOT NULL THEN
-      RAISE WARNING 'emaj_drop_extension: emaj_adm role is also referenced in some other databases (%)',v_dbList;
-      v_roleToDrop = false;
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role is also referenced in some other databases (%)', v_dbList;
+      v_roleToDrop = FALSE;
     END IF;
 --
 -- Are emaj roles granted to other roles ?
     v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList
-      FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
-      WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_viewer';
+    SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+      INTO v_granteeRoleList
+      FROM pg_catalog.pg_roles q
+           JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+      WHERE r.rolname = 'emaj_viewer';
     IF v_granteeRoleList IS NOT NULL THEN
       RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_viewer role.',
                     v_granteeRoleList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
     v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList
-      FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
-      WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_adm';
+    SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+      INTO v_granteeRoleList
+      FROM pg_catalog.pg_roles q
+           JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+      WHERE r.rolname = 'emaj_adm';
     IF v_granteeRoleList IS NOT NULL THEN
       RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_adm role.',
             v_granteeRoleList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
 -- Are emaj roles granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
     v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList
-      FROM pg_catalog.pg_namespace, pg_catalog.pg_class
-      WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_viewer=%';
+    SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+      INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+      WHERE array_to_string (relacl,';') LIKE '%emaj_viewer=%';
     IF v_granteeClassList IS NOT NULL THEN
       IF length(v_granteeClassList) > 200 THEN
         v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
       END IF;
-      RAISE WARNING 'emaj_drop_extension: emaj_viewer role has some remaining grants on tables, views or sequences (%).',
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on tables, views or sequences (%).',
                     v_granteeClassList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
     v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList
-      FROM pg_catalog.pg_namespace, pg_catalog.pg_class
-      WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_adm=%';
+    SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+      INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+      WHERE array_to_string (relacl,';') LIKE '%emaj_adm=%';
     IF v_granteeClassList IS NOT NULL THEN
       IF length(v_granteeClassList) > 200 THEN
         v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
       END IF;
-      RAISE WARNING 'emaj_drop_extension: emaj_adm role has some remaining grants on tables, views or sequences (%).',
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on tables, views or sequences (%).',
                     v_granteeClassList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
 -- Are emaj roles granted to functions (other than just dropped emaj ones) ?
     v_granteeFunctionList = NULL;
-    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList
-      FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
-      WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_viewer=%';
+    SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+      INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+      WHERE array_to_string (proacl,';') LIKE '%emaj_viewer=%';
     IF v_granteeFunctionList IS NOT NULL THEN
       IF length(v_granteeFunctionList) > 200 THEN
         v_granteeFunctionList = substr(v_granteeFunctionList,1,200) || '...';
       END IF;
-      RAISE WARNING 'emaj_drop_extension: emaj_viewer role has some remaining grants on functions (%).',
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on functions (%).',
                     v_granteeFunctionList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
     v_granteeFunctionList = NULL;
-    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList
-      FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
-      WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_adm=%';
+    SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+      INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+      WHERE array_to_string (proacl,';') LIKE '%emaj_adm=%';
     IF v_granteeFunctionList IS NOT NULL THEN
       IF length(v_granteeFunctionList) > 200 THEN
         v_granteeClassList = substr(v_granteeFunctionList,1,200) || '...';
       END IF;
-      RAISE WARNING 'emaj_drop_extension: emaj_adm role has some remaining grants on functions (%).',
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on functions (%).',
                     v_granteeFunctionList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
 -- If emaj roles can be dropped, drop them.
     IF v_roleToDrop THEN
 -- Revoke the remaining grants set on tablespaces
-      SELECT string_agg(spcname, ', ') INTO v_tspList
+      SELECT string_agg(spcname, ', ')
+        INTO v_tspList
         FROM pg_catalog.pg_tablespace
         WHERE array_to_string (spcacl,';') LIKE '%emaj_viewer=%' OR array_to_string (spcacl,';') LIKE '%emaj_adm=%';
       IF v_tspList IS NOT NULL THEN
@@ -14385,7 +14406,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:14658: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:14679: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;
