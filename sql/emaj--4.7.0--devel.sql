@@ -312,28 +312,24 @@ $_assign_tables$
         FROM unnest(p_tables) AS table_name
         WHERE table_name IS NOT NULL AND table_name <> '';
 -- Check that application tables exist.
-      WITH tables AS (
-        SELECT unnest(p_tables) AS table_name
-      )
-      SELECT string_agg(quote_ident(table_name), ', ') INTO v_list
-        FROM
-          (SELECT table_name
-             FROM tables
-             WHERE NOT EXISTS
-                     (SELECT 0
-                        FROM pg_catalog.pg_class
-                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                        WHERE nspname = p_schema
-                          AND relname = table_name
-                          AND relkind IN ('r','p')
-                     )
-          ) AS t;
+      SELECT string_agg(quote_ident(table_name), ', ' ORDER BY table_name)
+        INTO v_list
+        FROM unnest(p_tables) AS table_name
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = p_schema
+                     AND relname = table_name
+                     AND relkind IN ('r','p')
+                );
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) do not exist.', quote_ident(p_schema), v_list;
       END IF;
     END IF;
 -- Check or discard partitioned application tables (only elementary partitions can be managed by E-Maj).
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema
@@ -355,7 +351,8 @@ $_assign_tables$
       END IF;
     END IF;
 -- Check or discard TEMP tables.
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema
@@ -381,7 +378,8 @@ $_assign_tables$
       p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex);
     END IF;
 -- Check or discard tables already assigned to a group.
-    SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
+    SELECT string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_array
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
         AND rel_tblseq = ANY(p_tables)
@@ -472,7 +470,8 @@ $_assign_tables$
       FOREACH v_oneTable IN ARRAY p_tables
       LOOP
 -- Check that the triggers listed in ignored_triggers property exists for the table.
-        SELECT string_agg(quote_ident(trigger_name), ', ') INTO v_list
+        SELECT string_agg(quote_ident(trigger_name), ', ' ORDER BY trigger_name)
+          INTO v_list
           FROM
             (  SELECT trigger_name
                  FROM unnest(v_ignoredTriggers) AS trigger_name
@@ -492,17 +491,16 @@ $_assign_tables$
         END IF;
 -- Build the array of "triggers to ignore at rollback time".
         IF v_selectConditions IS NOT NULL THEN
-          EXECUTE format(
-            $$SELECT array_agg(tgname ORDER BY tgname)
-                FROM pg_catalog.pg_trigger
-                     JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
-                     JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
-                WHERE nspname = %L
-                  AND relname = %L
-                  AND tgconstraint = 0
-                  AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
-                  AND (%s)
-            $$, p_schema, v_oneTable, v_selectConditions)
+          EXECUTE format('SELECT array_agg(tgname ORDER BY tgname)'
+                         '  FROM pg_catalog.pg_trigger'
+                         '       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)'
+                         '       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)'
+                         '  WHERE nspname = %L'
+                         '    AND relname = %L'
+                         '    AND tgconstraint = 0'
+                         '    AND tgname NOT IN (''emaj_log_trg'',''emaj_trunc_trg'')'
+                         '    AND (%s)',
+                         p_schema, v_oneTable, v_selectConditions)
             INTO v_selectedIgnoredTrgs;
         END IF;
 -- Create the table.
@@ -643,6 +641,289 @@ $_move_tables$
     RETURN v_nbMovedTbl;
   END;
 $_move_tables$;
+
+CREATE OR REPLACE FUNCTION emaj._modify_tables(p_schema TEXT, p_tables TEXT[], p_changedProperties JSONB, p_mark TEXT,
+                                               p_multiTable BOOLEAN, p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_modify_tables$
+-- The function effectively modify the assignment properties of tables.
+-- Inputs: schema, array of table names, properties as JSON structure
+--         mark to set for logging groups, a boolean indicating whether several tables need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of tables effectively modified
+-- The JSONB v_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
+--   each properties can be set to NULL to delete a previously set value
+  DECLARE
+    v_function               TEXT;
+    v_priorityChanged        BOOLEAN;
+    v_logDatTspChanged       BOOLEAN;
+    v_logIdxTspChanged       BOOLEAN;
+    v_ignoredTrgChanged      BOOLEAN;
+    v_newPriority            INT;
+    v_newLogDatTsp           TEXT;
+    v_newLogIdxTsp           TEXT;
+    v_ignoredTriggers        TEXT[];
+    v_ignoredTrgProfiles     TEXT[];
+    v_groups                 TEXT[];
+    v_loggingGroups          TEXT[];
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_selectConditions       TEXT;
+    v_isTableChanged         BOOLEAN;
+    v_newIgnoredTriggers     TEXT[];
+    v_nbChangedTbl           INT = 0;
+    r_rel                    RECORD;
+  BEGIN
+    v_function = CASE WHEN p_multiTable THEN 'MODIFY_TABLES' ELSE 'MODIFY_TABLE' END;
+-- Insert the begin entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check supplied parameters.
+-- Check tables.
+    IF NOT p_arrayFromRegex THEN
+      p_tables = emaj._check_tblseqs_array(p_schema, p_tables, 'r', TRUE);
+    END IF;
+-- Determine which properties are listed in the json parameter.
+    v_priorityChanged = p_changedProperties ? 'priority';
+    v_logDatTspChanged = p_changedProperties ? 'log_data_tablespace';
+    v_logIdxTspChanged = p_changedProperties ? 'log_index_tablespace';
+    v_ignoredTrgChanged = p_changedProperties ? 'ignored_triggers' OR p_changedProperties ? 'ignored_triggers_profiles';
+-- Check and extract the tables JSON properties.
+    IF p_changedProperties IS NOT NULL THEN
+      SELECT * INTO v_newPriority, v_newLogDatTsp, v_newLogIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
+        FROM emaj._check_json_table_properties(p_changedProperties);
+    END IF;
+-- Get and lock the tables groups and logging groups holding these tables.
+    SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
+      FROM emaj._get_lock_tblseqs_groups(p_schema, p_tables, NULL);
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
+-- OK,
+    IF p_tables IS NULL OR p_tables = '{}' THEN
+-- When no tables are finaly selected, just warn.
+      RAISE WARNING '_modified_tables: No table to process.';
+    ELSIF p_changedProperties IS NULL OR p_changedProperties = '{}' THEN
+      RAISE WARNING '_modified_tables: No property change to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_loggingGroups IS NOT NULL THEN
+-- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+        PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
+-- And set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, TRUE, TRUE, NULL, v_timeId);
+      END IF;
+-- Build the SQL conditions to use in order to build the array of "triggers to ignore at rollback time" for each table.
+      IF v_ignoredTriggers IS NOT NULL OR v_ignoredTrgProfiles IS NOT NULL THEN
+--   Build the condition on trigger names using the ignored_triggers parameters.
+        IF v_ignoredTriggers IS NOT NULL THEN
+          v_selectConditions = 'tgname = ANY (' || quote_literal(v_ignoredTriggers) || ') OR ';
+        ELSE
+          v_selectConditions = '';
+        END IF;
+--   Build the regexp conditions on trigger names using the ignored_triggers_profile parameters.
+        IF v_ignoredTrgProfiles IS NOT NULL THEN
+          SELECT v_selectConditions || string_agg('tgname ~ ' || quote_literal(profile), ' OR ')
+            INTO v_selectConditions
+            FROM unnest(v_ignoredTrgProfiles) AS profile;
+        ELSE
+          v_selectConditions = v_selectConditions || 'FALSE';
+        END IF;
+      END IF;
+-- Process the changes for each table, if any.
+      FOR r_rel IN
+        SELECT rel_tblseq, rel_time_range, rel_log_schema, rel_priority, rel_log_table, rel_log_index, rel_log_dat_tsp,
+               rel_log_idx_tsp, rel_ignored_triggers, rel_group, group_is_logging
+          FROM emaj.emaj_relation
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE rel_schema = p_schema
+            AND rel_tblseq = ANY(p_tables)
+            AND upper_inf(rel_time_range)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+        v_isTableChanged = FALSE;
+-- Change the priority, if needed.
+        IF v_priorityChanged AND
+            (r_rel.rel_priority <> v_newPriority
+            OR (r_rel.rel_priority IS NULL AND v_newPriority IS NOT NULL)
+            OR (r_rel.rel_priority IS NOT NULL AND v_newPriority IS NULL)) THEN
+          v_isTableChanged = TRUE;
+          PERFORM emaj._change_priority_tbl(p_schema, r_rel.rel_tblseq, r_rel.rel_priority, v_newPriority,
+                                            v_timeId, r_rel.rel_group, v_function);
+        END IF;
+-- Change the log data tablespace, if needed.
+        IF v_logDatTspChanged AND coalesce(v_newLogDatTsp, '') <> coalesce(r_rel.rel_log_dat_tsp, '') THEN
+          v_isTableChanged = TRUE;
+          PERFORM emaj._change_log_data_tsp_tbl(p_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_table,
+                                                r_rel.rel_log_dat_tsp, v_newLogDatTsp, v_timeId, r_rel.rel_group, v_function);
+        END IF;
+-- Change the log index tablespace, if needed.
+        IF v_logIdxTspChanged AND coalesce(v_newLogIdxTsp, '') <> coalesce(r_rel.rel_log_idx_tsp, '') THEN
+          v_isTableChanged = TRUE;
+          PERFORM emaj._change_log_index_tsp_tbl(p_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_index,
+                                                 r_rel.rel_log_idx_tsp, v_newLogIdxTsp, v_timeId, r_rel.rel_group, v_function);
+        END IF;
+-- Change the ignored_trigger array if needed.
+        IF v_ignoredTrgChanged THEN
+--   Compute the new list of "triggers to ignore at rollback time".
+          IF v_selectConditions IS NOT NULL THEN
+            EXECUTE format('SELECT array_agg(tgname ORDER BY tgname)'
+                           '  FROM pg_catalog.pg_trigger'
+                           '       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)'
+                           '       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)'
+                           '  WHERE nspname = %L'
+                           '    AND relname = %L'
+                           '    AND tgconstraint = 0'
+                           '    AND tgname NOT IN (''emaj_log_trg'',''emaj_trunc_trg'')'
+                           '    AND (%s)',
+                           p_schema, r_rel.rel_tblseq, v_selectConditions)
+              INTO v_newIgnoredTriggers;
+          END IF;
+          IF (r_rel.rel_ignored_triggers <> v_newIgnoredTriggers
+             OR (r_rel.rel_ignored_triggers IS NULL AND v_newIgnoredTriggers IS NOT NULL)
+             OR (r_rel.rel_ignored_triggers IS NOT NULL AND v_newIgnoredTriggers IS NULL)) THEN
+            v_isTableChanged = TRUE;
+--   If changes must be recorded, call the dedicated function.
+            PERFORM emaj._change_ignored_triggers_tbl(p_schema, r_rel.rel_tblseq, r_rel.rel_ignored_triggers, v_newIgnoredTriggers,
+                                                      v_timeId, r_rel.rel_group, v_function);
+          END IF;
+        END IF;
+--
+        IF v_isTableChanged THEN
+          v_nbChangedTbl = v_nbChangedTbl + 1;
+        END IF;
+      END LOOP;
+-- Adjust the groups characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId
+        WHERE group_name = ANY(v_groups);
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbChangedTbl || ' tables effectively modified');
+--
+    RETURN v_nbChangedTbl;
+  END;
+$_modify_tables$;
+
+CREATE OR REPLACE FUNCTION emaj._assign_sequences(p_schema TEXT, p_sequences TEXT[], p_group TEXT, p_mark TEXT,
+                                                  p_multiSequence BOOLEAN, p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_assign_sequences$
+-- The function effectively assigns sequences into a tables group.
+-- Inputs: schema, array of sequence names, group name,
+--         mark to set for lonnging groups, a boolean indicating whether several sequences need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of sequences effectively assigned to the tables group
+-- The JSONB v_properties parameter has currenlty only one field '{"priority":...}' the properties being NULL by default
+  DECLARE
+    v_function               TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_list                   TEXT;
+    v_array                  TEXT[];
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_oneSequence            TEXT;
+    v_nbAssignedSeq          INT = 0;
+  BEGIN
+    v_function = CASE WHEN p_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END;
+-- Insert the begin entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check supplied parameters
+-- Check the group name and if ok, get some properties of the group.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE);
+    SELECT group_is_logging INTO v_groupIsLogging
+      FROM emaj.emaj_group
+      WHERE group_name = p_group;
+-- Check the supplied schema exists and is not an E-Maj schema.
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
+-- Check sequences.
+    IF NOT p_arrayFromRegex THEN
+-- Remove duplicates values, NULL and empty strings from the sequence names array supplied by the user.
+      SELECT array_agg(DISTINCT sequence_name) INTO p_sequences
+        FROM unnest(p_sequences) AS sequence_name
+        WHERE sequence_name IS NOT NULL AND sequence_name <> '';
+-- Check that application sequences exist.
+      SELECT string_agg(quote_ident(sequence_name), ', ' ORDER BY sequence_name)
+        INTO v_list
+        FROM unnest(p_sequences) AS sequence_name
+        WHERE NOT EXISTS
+               (SELECT 0
+                  FROM pg_catalog.pg_class
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                  WHERE nspname = p_schema
+                    AND relname = sequence_name
+                    AND relkind = 'S');
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) do not exist.', quote_ident(p_schema), v_list;
+      END IF;
+    END IF;
+-- Check or discard sequences already assigned to a group.
+    SELECT string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_array
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = ANY(p_sequences)
+        AND upper_inf(rel_time_range);
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) already belong to a group.', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_sequences: Some sequences already belonging to a group (%) are not selected.', v_list;
+        -- remove these sequences from the sequences to process
+        SELECT array_agg(remaining_sequence) INTO p_sequences
+          FROM
+            (  SELECT unnest(p_sequences)
+             EXCEPT
+               SELECT unnest(v_array)
+            ) AS t(remaining_sequence);
+      END IF;
+    END IF;
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(array[p_group], p_mark) INTO v_markName;
+-- OK,
+    IF p_sequences IS NULL OR p_sequences = '{}' THEN
+-- When no sequences are finaly selected, just warn.
+      RAISE WARNING '_assign_sequences: No sequence to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_groupIsLogging THEN
+-- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+-- vacuum operation,
+        PERFORM emaj._lock_groups(ARRAY[p_group], 'ROW EXCLUSIVE', FALSE);
+-- ... and set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+      END IF;
+-- Effectively create the log components for each table.
+      FOREACH v_oneSequence IN ARRAY p_sequences
+      LOOP
+        PERFORM emaj._add_seq(p_schema, v_oneSequence, p_group, v_groupIsLogging, v_timeId, v_function);
+        v_nbAssignedSeq = v_nbAssignedSeq + 1;
+      END LOOP;
+-- Adjust the group characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_sequence =
+              (SELECT count(*)
+                 FROM emaj.emaj_relation
+                 WHERE rel_group = group_name
+                   AND upper_inf(rel_time_range)
+                   AND rel_kind = 'S'
+              )
+        WHERE group_name = p_group;
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbAssignedSeq || ' sequences assigned to the group ' || p_group);
+--
+    RETURN v_nbAssignedSeq;
+  END;
+$_assign_sequences$;
 
 CREATE OR REPLACE FUNCTION emaj._verify_groups(p_groups TEXT[], p_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
@@ -1005,6 +1286,122 @@ $_verify_groups$
     RETURN;
   END;
 $_verify_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql AS
+$_export_groups_conf$
+-- This function generates a JSON formatted structure representing the current configuration of some or all tables groups.
+-- Input: an optional array of goup's names, NULL means all tables groups
+-- Output: the tables groups configuration in JSON format
+  DECLARE
+    v_groupsText             TEXT;
+    v_unknownGroupsList      TEXT;
+    v_groupsJson             JSON;
+    r_group                  RECORD;
+    r_table                  RECORD;
+    r_sequence               RECORD;
+  BEGIN
+-- Build the header of the JSON structure.
+    v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
+                           emaj.emaj_get_version() || ', at ' || statement_timestamp() || E'",\n';
+-- Check the group names array, if supplied. All the listed groups must exist.
+    IF p_groups IS NOT NULL THEN
+      SELECT string_agg(group_name, ', ' ORDER BY group_name)
+        INTO v_unknownGroupsList
+        FROM unnest(p_groups) AS grp(group_name)
+        WHERE NOT EXISTS
+               (SELECT group_name
+                  FROM emaj.emaj_group
+                  WHERE emaj_group.group_name = grp.group_name
+               );
+      IF v_unknownGroupsList IS NOT NULL THEN
+        RAISE EXCEPTION '_export_groups_conf: The tables groups % are unknown.', v_unknownGroupsList;
+      END IF;
+    END IF;
+-- Build the tables groups description.
+    v_groupsText = v_groupsText
+                || E'  "tables_groups": [\n';
+    FOR r_group IN
+      SELECT group_name, group_is_rollbackable, group_comment, group_nb_table, group_nb_sequence
+        FROM emaj.emaj_group
+        WHERE (p_groups IS NULL OR group_name = ANY(p_groups))
+        ORDER BY group_name
+    LOOP
+      v_groupsText = v_groupsText
+                  || E'    {\n'
+                  ||  '      "group": ' || to_json(r_group.group_name) || E',\n'
+                  ||  '      "is_rollbackable": ' || to_json(r_group.group_is_rollbackable) || E',\n';
+      IF r_group.group_comment IS NOT NULL THEN
+        v_groupsText = v_groupsText
+                  ||  '      "comment": ' || to_json(r_group.group_comment) || E',\n';
+      END IF;
+      IF r_group.group_nb_table > 0 THEN
+-- Build the tables list, if any.
+        v_groupsText = v_groupsText
+                    || E'      "tables": [\n';
+        FOR r_table IN
+          SELECT rel_schema, rel_tblseq, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp, rel_ignored_triggers
+            FROM emaj.emaj_relation
+            WHERE rel_kind = 'r'
+              AND upper_inf(rel_time_range)
+              AND rel_group = r_group.group_name
+            ORDER BY rel_schema, rel_tblseq
+        LOOP
+          v_groupsText = v_groupsText
+                      || E'        {\n'
+                      ||  '          "schema": ' || to_json(r_table.rel_schema) || E',\n'
+                      ||  '          "table": ' || to_json(r_table.rel_tblseq) || E',\n'
+                      || coalesce('          "priority": '|| to_json(r_table.rel_priority) || E',\n', '')
+                      || coalesce('          "log_data_tablespace": '|| to_json(r_table.rel_log_dat_tsp) || E',\n', '')
+                      || coalesce('          "log_index_tablespace": '|| to_json(r_table.rel_log_idx_tsp) || E',\n', '')
+                      || coalesce('          "ignored_triggers": ' || array_to_json(r_table.rel_ignored_triggers) || E',\n', '')
+                      || E'        },\n';
+        END LOOP;
+        v_groupsText = v_groupsText
+                    || E'      ],\n';
+      END IF;
+      IF r_group.group_nb_sequence > 0 THEN
+-- Build the sequences list, if any.
+        v_groupsText = v_groupsText
+                    || E'      "sequences": [\n';
+        FOR r_sequence IN
+          SELECT rel_schema, rel_tblseq
+            FROM emaj.emaj_relation
+            WHERE rel_kind = 'S'
+              AND upper_inf(rel_time_range)
+              AND rel_group = r_group.group_name
+            ORDER BY rel_schema, rel_tblseq
+        LOOP
+          v_groupsText = v_groupsText
+                      || E'        {\n'
+                      ||  '          "schema": ' || to_json(r_sequence.rel_schema) || E',\n'
+                      ||  '          "sequence": ' || to_json(r_sequence.rel_tblseq) || E',\n'
+                      || E'        },\n';
+        END LOOP;
+        v_groupsText = v_groupsText
+                    || E'      ],\n';
+      END IF;
+      v_groupsText = v_groupsText
+                  || E'    },\n';
+    END LOOP;
+    v_groupsText = v_groupsText
+                || E'  ]\n';
+-- Build the trailer and remove illicite commas at the end of arrays and attributes lists.
+    v_groupsText = v_groupsText
+                || E'}\n';
+    v_groupsText = regexp_replace(v_groupsText, E',(\n *(\]|}))', '\1', 'g');
+-- Test the JSON format by casting the text structure to json and report a warning in case of problem
+-- (this should not fail, unless the function code is bogus).
+    BEGIN
+      v_groupsJson = v_groupsText::JSON;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE EXCEPTION '_export_groups_conf: The generated JSON structure is not properly formatted. '
+                        'Please report the bug to the E-Maj project.';
+    END;
+--
+    RETURN v_groupsJson;
+  END;
+$_export_groups_conf$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS

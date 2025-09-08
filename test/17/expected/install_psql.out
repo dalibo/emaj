@@ -2223,28 +2223,24 @@ $_assign_tables$
         FROM unnest(p_tables) AS table_name
         WHERE table_name IS NOT NULL AND table_name <> '';
 -- Check that application tables exist.
-      WITH tables AS (
-        SELECT unnest(p_tables) AS table_name
-      )
-      SELECT string_agg(quote_ident(table_name), ', ') INTO v_list
-        FROM
-          (SELECT table_name
-             FROM tables
-             WHERE NOT EXISTS
-                     (SELECT 0
-                        FROM pg_catalog.pg_class
-                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                        WHERE nspname = p_schema
-                          AND relname = table_name
-                          AND relkind IN ('r','p')
-                     )
-          ) AS t;
+      SELECT string_agg(quote_ident(table_name), ', ' ORDER BY table_name)
+        INTO v_list
+        FROM unnest(p_tables) AS table_name
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = p_schema
+                     AND relname = table_name
+                     AND relkind IN ('r','p')
+                );
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) do not exist.', quote_ident(p_schema), v_list;
       END IF;
     END IF;
 -- Check or discard partitioned application tables (only elementary partitions can be managed by E-Maj).
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema
@@ -2266,7 +2262,8 @@ $_assign_tables$
       END IF;
     END IF;
 -- Check or discard TEMP tables.
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema
@@ -2292,7 +2289,8 @@ $_assign_tables$
       p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex);
     END IF;
 -- Check or discard tables already assigned to a group.
-    SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
+    SELECT string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_array
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
         AND rel_tblseq = ANY(p_tables)
@@ -2383,7 +2381,8 @@ $_assign_tables$
       FOREACH v_oneTable IN ARRAY p_tables
       LOOP
 -- Check that the triggers listed in ignored_triggers property exists for the table.
-        SELECT string_agg(quote_ident(trigger_name), ', ') INTO v_list
+        SELECT string_agg(quote_ident(trigger_name), ', ' ORDER BY trigger_name)
+          INTO v_list
           FROM
             (  SELECT trigger_name
                  FROM unnest(v_ignoredTriggers) AS trigger_name
@@ -2403,17 +2402,16 @@ $_assign_tables$
         END IF;
 -- Build the array of "triggers to ignore at rollback time".
         IF v_selectConditions IS NOT NULL THEN
-          EXECUTE format(
-            $$SELECT array_agg(tgname ORDER BY tgname)
-                FROM pg_catalog.pg_trigger
-                     JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
-                     JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
-                WHERE nspname = %L
-                  AND relname = %L
-                  AND tgconstraint = 0
-                  AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
-                  AND (%s)
-            $$, p_schema, v_oneTable, v_selectConditions)
+          EXECUTE format('SELECT array_agg(tgname ORDER BY tgname)'
+                         '  FROM pg_catalog.pg_trigger'
+                         '       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)'
+                         '       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)'
+                         '  WHERE nspname = %L'
+                         '    AND relname = %L'
+                         '    AND tgconstraint = 0'
+                         '    AND tgname NOT IN (''emaj_log_trg'',''emaj_trunc_trg'')'
+                         '    AND (%s)',
+                         p_schema, v_oneTable, v_selectConditions)
             INTO v_selectedIgnoredTrgs;
         END IF;
 -- Create the table.
@@ -2913,17 +2911,16 @@ $_modify_tables$
         IF v_ignoredTrgChanged THEN
 --   Compute the new list of "triggers to ignore at rollback time".
           IF v_selectConditions IS NOT NULL THEN
-            EXECUTE format(
-              $$SELECT array_agg(tgname ORDER BY tgname)
-                  FROM pg_catalog.pg_trigger
-                       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
-                       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
-                  WHERE nspname = %L
-                    AND relname = %L
-                    AND tgconstraint = 0
-                    AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
-                    AND (%s)
-              $$, p_schema, r_rel.rel_tblseq, v_selectConditions)
+            EXECUTE format('SELECT array_agg(tgname ORDER BY tgname)'
+                           '  FROM pg_catalog.pg_trigger'
+                           '       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)'
+                           '       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)'
+                           '  WHERE nspname = %L'
+                           '    AND relname = %L'
+                           '    AND tgconstraint = 0'
+                           '    AND tgname NOT IN (''emaj_log_trg'',''emaj_trunc_trg'')'
+                           '    AND (%s)',
+                           p_schema, r_rel.rel_tblseq, v_selectConditions)
               INTO v_newIgnoredTriggers;
           END IF;
           IF (r_rel.rel_ignored_triggers <> v_newIgnoredTriggers
@@ -3944,26 +3941,23 @@ $_assign_sequences$
         FROM unnest(p_sequences) AS sequence_name
         WHERE sequence_name IS NOT NULL AND sequence_name <> '';
 -- Check that application sequences exist.
-      WITH sequences AS (
-        SELECT unnest(p_sequences) AS sequence_name)
-      SELECT string_agg(quote_ident(sequence_name), ', ') INTO v_list
-        FROM
-          (SELECT sequence_name
-             FROM sequences
-             WHERE NOT EXISTS
-                    (SELECT 0
-                       FROM pg_catalog.pg_class
-                            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                       WHERE nspname = p_schema
-                         AND relname = sequence_name
-                         AND relkind = 'S')
-          ) AS t;
+      SELECT string_agg(quote_ident(sequence_name), ', ' ORDER BY sequence_name)
+        INTO v_list
+        FROM unnest(p_sequences) AS sequence_name
+        WHERE NOT EXISTS
+               (SELECT 0
+                  FROM pg_catalog.pg_class
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                  WHERE nspname = p_schema
+                    AND relname = sequence_name
+                    AND relkind = 'S');
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) do not exist.', quote_ident(p_schema), v_list;
       END IF;
     END IF;
 -- Check or discard sequences already assigned to a group.
-    SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
+    SELECT string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_array
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
         AND rel_tblseq = ANY(p_sequences)
@@ -5795,16 +5789,14 @@ $_export_groups_conf$
                            emaj.emaj_get_version() || ', at ' || statement_timestamp() || E'",\n';
 -- Check the group names array, if supplied. All the listed groups must exist.
     IF p_groups IS NOT NULL THEN
-      SELECT string_agg(group_name, ', ') INTO v_unknownGroupsList
-        FROM
-          (SELECT *
-             FROM unnest(p_groups) AS grp(group_name)
-             WHERE NOT EXISTS
-                    (SELECT group_name
-                       FROM emaj.emaj_group
-                       WHERE emaj_group.group_name = grp.group_name
-                    )
-          ) AS t;
+      SELECT string_agg(group_name, ', ' ORDER BY group_name)
+        INTO v_unknownGroupsList
+        FROM unnest(p_groups) AS grp(group_name)
+        WHERE NOT EXISTS
+               (SELECT group_name
+                  FROM emaj.emaj_group
+                  WHERE emaj_group.group_name = grp.group_name
+               );
       IF v_unknownGroupsList IS NOT NULL THEN
         RAISE EXCEPTION '_export_groups_conf: The tables groups % are unknown.', v_unknownGroupsList;
       END IF;
@@ -14400,7 +14392,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:14673: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:14665: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;
