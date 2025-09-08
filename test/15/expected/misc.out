@@ -416,19 +416,19 @@ CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 31 at RAIS
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 76 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 73 at EXECUTE
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 76 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 73 at EXECUTE
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...l31) TO '/tmp/emaj_15/misc/myschema1_myTbl3.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_15/misc/myschema1_myTbl3.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 76 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 73 at EXECUTE
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: The COPY options parameter format is invalid.
@@ -610,7 +610,7 @@ SQL statement "SELECT p_nbStmt
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'COLS_ORDER = PK', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
-CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 212 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
@@ -628,13 +628,13 @@ SQL statement "SELECT p_nbStmt
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = FULL', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
-CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 212 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = partial', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
-CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 212 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
@@ -653,7 +653,7 @@ PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = (emaj_tuple , dummy)', NULL);
 ERROR:  _gen_sql_dump_changes_tbl: The emaj column "dummy" from the EMAJ_COLUMNS option (emaj_tuple,dummy) is not valid for table emaj_myschema2.myTbl3_log.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_tbl(text,text,integer,text[],bigint,bigint,text,text,text,text) line 64 at RAISE
-PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 328 at assignment
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 327 at assignment
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
@@ -677,7 +677,7 @@ SQL statement "SELECT p_nbStmt
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'ORDER_BY = pk', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
-CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 212 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
@@ -745,7 +745,7 @@ PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) 
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['dummy']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (dummy) never belonged to any of the selected tables groups during the requested marks range.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 48 at RAISE
-PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 220 at assignment
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 219 at assignment
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement

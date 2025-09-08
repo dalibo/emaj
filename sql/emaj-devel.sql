@@ -8931,7 +8931,7 @@ $_rlbk_planning$
         END IF;
       END LOOP;
 -- Raise an exception if DROP_FK steps concerns inherited FK (i.e. FK set on a partitionned table)
-      SELECT string_agg(rlbp_schema || '.' || rlbp_table || '.' || rlbp_object, ', ')
+      SELECT string_agg(rlbp_schema || '.' || rlbp_table || '.' || rlbp_object, ', ' ORDER BY rlbp_schema, rlbp_table, rlbp_object)
         INTO v_fkList
         FROM emaj.emaj_rlbk_plan r
              JOIN pg_catalog.pg_class t ON (t.relname = r.rlbp_table)
@@ -11766,9 +11766,9 @@ $_gen_sql_dump_changes_group$
       IF v_isPsqlCopy AND v_sqlFormat = 'PRETTY' THEN
         RAISE EXCEPTION '_gen_sql_dump_changes_group: PSQL_COPY_DIR and FORMAT=PRETTY options are mutually exclusive.';
       END IF;
--- When one or several options need PRIMARY KEYS, check that all selected tables have a PK.
+-- When one or several options need PRIMARY KEYS, check that all selected tables have a PK during the selected time frame.
       IF v_consolidation IN ('PARTIAL', 'FULL') OR v_colsOrder = 'PK' OR v_orderBy = 'PK' THEN
-        SELECT string_agg(table_name, ', ')
+        SELECT string_agg(DISTINCT table_name, ', ' ORDER BY table_name)
           INTO v_tableWithoutPkList
           FROM (
             SELECT rel_schema || '.' || rel_tblseq AS table_name
@@ -11778,7 +11778,6 @@ $_gen_sql_dump_changes_group$
                 AND (p_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (p_tblseqs))
                 AND rel_time_range && int8range(v_firstMarkTimeId, v_lastMarkTimeId,'[)')
                 AND rel_pk_cols IS NULL
-              ORDER BY rel_schema, rel_tblseq, rel_time_range
             ) AS t;
         IF v_tableWithoutPkList IS NOT NULL THEN
           RAISE EXCEPTION '_gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an '
@@ -12259,33 +12258,30 @@ $emaj_snap_group$
         WHEN 'r' THEN
 -- It is a table.
 --   Build the order by columns list, using the PK, if it exists.
-          SELECT string_agg(quote_ident(attname), ',') INTO v_colList
-            FROM
-              (SELECT attname
-                 FROM pg_catalog.pg_attribute
-                      JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
-                 WHERE attnum = ANY (indkey)
-                   AND indrelid = (r_tblsq.full_relation_name)::regclass
-                   AND indisprimary
-                   AND attnum > 0
-                   AND attisdropped = FALSE
-              ) AS t;
+          SELECT string_agg(quote_ident(attname), ',')
+            INTO v_colList
+            FROM pg_catalog.pg_attribute
+                 JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
+            WHERE attnum = ANY (indkey)
+              AND indrelid = (r_tblsq.full_relation_name)::regclass
+              AND indisprimary
+              AND attnum > 0
+              AND attisdropped = FALSE;
           IF v_colList IS NULL THEN
 --   The table has no pkey, so get all columns, except generated ones.
-            SELECT string_agg(quote_ident(attname), ',') INTO v_colList
-              FROM
-                (SELECT attname
-                   FROM pg_catalog.pg_attribute
-                   WHERE attrelid = (r_tblsq.full_relation_name)::regclass
-                     AND attnum > 0
-                     AND attisdropped = FALSE
-                     AND attgenerated = ''
-                ) AS t;
+            SELECT string_agg(quote_ident(attname), ',' ORDER BY attnum)
+              INTO v_colList
+              FROM pg_catalog.pg_attribute
+              WHERE attrelid = (r_tblsq.full_relation_name)::regclass
+                AND attnum > 0
+                AND attisdropped = FALSE
+                AND attgenerated = '';
           END IF;
 --   Dump the table
-          v_stmt = format('(SELECT * FROM %I.%I ORDER BY %s)', r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_colList);
-          EXECUTE format ('COPY %s TO %L %s',
-                          v_stmt, r_tblsq.path_name, coalesce(p_copyOptions, ''));
+          v_stmt = format('(SELECT * FROM %I.%I ORDER BY %s)',
+                          r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_colList);
+          EXECUTE format('COPY %s TO %L %s',
+                         v_stmt, r_tblsq.path_name, coalesce(p_copyOptions, ''));
         WHEN 'S' THEN
 -- It is a sequence.
           v_stmt = format('(SELECT relname, rel.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, rel.is_called'
