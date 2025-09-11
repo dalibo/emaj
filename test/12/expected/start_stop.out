@@ -203,8 +203,8 @@ begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   alter table myschema1.mytbl4 add primary key (col41, col42);
   select emaj.emaj_start_group('myGroup1','M1');
-ERROR:  _verify_groups (9): In the rollbackable tables group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41,col43 => col41,col42). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 258 at RAISE
+ERROR:  _verify_groups (9): In the rollbackable tables group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col43,col41 => col41,col42). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 256 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
@@ -224,7 +224,7 @@ begin;
   alter table myschema1.mytbl2b drop column col24, add column col24 BOOLEAN GENERATED ALWAYS AS (col21 > 3) STORED;
   select emaj.emaj_start_group('myGroup1','M1');
 ERROR:  _verify_groups (10): In tables group "myGroup1", the "GENERATED AS expression" columns list of the table "myschema1"."mytbl2b" has changed (col22,col23 => col22,col23,col24). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 287 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 285 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
@@ -236,7 +236,7 @@ begin;
     where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   select emaj.emaj_start_group('myGroup1','M1');
 ERROR:  _verify_groups (11): Error: In group "myGroup1", the trigger "dummy1" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 314 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 312 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
@@ -247,7 +247,7 @@ begin;
   alter table emaj_myschema1.mytbl1_log drop column emaj_verb;
   select emaj.emaj_start_group('myGroup1','M1');
 ERROR:  _verify_groups (12): In tables group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" miss some technical columns (emaj_verb). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 353 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 351 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM

@@ -491,7 +491,7 @@ begin;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                                                    msg                                                                    
 ------------------------------------------------------------------------------------------------------------------------------------------
- Error: In the rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41,col43 => col41,col42).
+ Error: In the rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col43,col41 => col41,col42).
 (1 row)
 
 rollback;

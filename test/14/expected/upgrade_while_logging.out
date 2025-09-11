@@ -46,6 +46,7 @@ select relname from pg_catalog.pg_class,
  emaj_version_hist
 (23 rows)
 
+-- check the emaj integrity before upgrading
 select * from emaj.emaj_verify_all();
                                                                                  emaj_verify_all                                                                                  
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1373,50 +1374,29 @@ select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
 (1 row)
 
 -----------------------------
--- Check the tables and sequences after upgrade
+-- Check the changes specific to this version upgrade
 -----------------------------
--- emaj tables and sequences
--- technical tables
-select * from emaj.emaj_schema order by sch_name;
-       sch_name       | sch_time_id 
-----------------------+-------------
- emaj                 |            
- emaj_myschema1       |           5
- emaj_myschema2       |          10
- emaj_myschema6       |          14
- emaj_phil's schema"3 |          12
-(5 rows)
-
-select rel_schema, rel_tblseq, rel_time_range, rel_gen_expr_cols from emaj.emaj_relation order by 1,2,3;
-   rel_schema    |                       rel_tblseq                        | rel_time_range | rel_gen_expr_cols 
------------------+---------------------------------------------------------+----------------+-------------------
- myschema1       | myTbl3                                                  | [5,28)         | 
+select rel_schema, rel_tblseq, rel_time_range, rel_pk_cols from emaj.emaj_relation order by 1,2,3;
+   rel_schema    |                       rel_tblseq                        | rel_time_range |           rel_pk_cols           
+-----------------+---------------------------------------------------------+----------------+---------------------------------
+ myschema1       | myTbl3                                                  | [5,28)         | {col31}
  myschema1       | myTbl3_col31_seq                                        | [9,)           | 
- myschema1       | mytbl1                                                  | [5,)           | 
- myschema1       | mytbl2                                                  | [5,)           | 
- myschema1       | mytbl2b                                                 | [5,)           | {col22,col23}
- myschema1       | mytbl4                                                  | [5,)           | 
- myschema2       | myTbl3                                                  | [10,)          | 
+ myschema1       | mytbl1                                                  | [5,)           | {col11,col12}
+ myschema1       | mytbl2                                                  | [5,)           | {col21}
+ myschema1       | mytbl2b                                                 | [5,)           | {col20}
+ myschema1       | mytbl4                                                  | [5,)           | {col43,col41}
+ myschema2       | myTbl3                                                  | [10,)          | {col31}
  myschema2       | myTbl3_col31_seq                                        | [11,)          | 
  myschema2       | myseq1                                                  | [11,)          | 
- myschema2       | mytbl1                                                  | [10,)          | 
- myschema2       | mytbl2                                                  | [10,)          | 
- myschema2       | mytbl4                                                  | [10,)          | 
- myschema6       | table_with_50_characters_long_name_____0_________0      | [14,)          | 
- myschema6       | table_with_51_characters_long_name_____0_________0a     | [14,)          | 
- myschema6       | table_with_55_characters_long_name_____0_________0abcde | [14,30)        | 
- myschema6       | table_with_55_characters_long_name_____0_________0fghij | [14,)          | 
- phil's schema"3 | myTbl2\                                                 | [12,)          | {col24}
- phil's schema"3 | phil's tbl1                                             | [12,)          | 
+ myschema2       | mytbl1                                                  | [10,)          | {col11,col12}
+ myschema2       | mytbl2                                                  | [10,)          | {col21}
+ myschema2       | mytbl4                                                  | [10,)          | {col41}
+ myschema6       | table_with_50_characters_long_name_____0_________0      | [14,)          | {col1}
+ myschema6       | table_with_51_characters_long_name_____0_________0a     | [14,)          | {col1}
+ myschema6       | table_with_55_characters_long_name_____0_________0abcde | [14,30)        | {col1}
+ myschema6       | table_with_55_characters_long_name_____0_________0fghij | [14,)          | {col1}
+ phil's schema"3 | myTbl2\                                                 | [12,)          | 
+ phil's schema"3 | phil's tbl1                                             | [12,)          | {"phil's col11","phil's col12"}
  phil's schema"3 | phil's"seq\1                                            | [13,)          | 
 (19 rows)
-
--- check the environment integrity
-select * from emaj.emaj_verify_all();
-                                                                                 emaj_verify_all                                                                                  
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
- Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
- No error detected
-(3 rows)
 

@@ -17,6 +17,7 @@ select relname from pg_catalog.pg_class,
   where t.oid = pg_class.oid
   order by 1;
 
+-- check the emaj integrity before upgrading
 select * from emaj.emaj_verify_all();
 
 -- process the extension upgrade
@@ -58,13 +59,7 @@ select * from "emaj_phil's schema""3"."phil's tbl1_log_seq";
 select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
 
 -----------------------------
--- Check the tables and sequences after upgrade
+-- Check the changes specific to this version upgrade
 -----------------------------
--- emaj tables and sequences
 
--- technical tables
-select * from emaj.emaj_schema order by sch_name;
-select rel_schema, rel_tblseq, rel_time_range, rel_gen_expr_cols from emaj.emaj_relation order by 1,2,3;
-
--- check the environment integrity
-select * from emaj.emaj_verify_all();
+select rel_schema, rel_tblseq, rel_time_range, rel_pk_cols from emaj.emaj_relation order by 1,2,3;

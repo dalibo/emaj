@@ -3318,13 +3318,11 @@ $_build_sql_tbl$
       FROM
         (SELECT attname, regexp_replace(format_type(atttypid,atttypmod),E'\\(.*$','') AS format_type
            FROM pg_catalog.pg_attribute
-                JOIN  pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
-           WHERE attnum = ANY (indkey)
-             AND indrelid = p_fullTableName::regclass
-             AND indisprimary
-             AND attnum > 0
-             AND attisdropped = FALSE
-           ORDER BY attnum
+                JOIN pg_catalog.pg_constraint ON (conrelid = attrelid)
+           WHERE attnum = ANY (conkey)
+             AND conrelid = p_fullTableName::regclass
+             AND contype = 'p'
+           ORDER BY array_position(conkey, attnum)
         ) AS t;
 -- Build the generated columns array.
     SELECT array_agg(attname ORDER BY attnum)
@@ -5329,21 +5327,19 @@ $_verify_groups$
         FROM
           (SELECT rel_schema, rel_tblseq, rel_group,
                   array_to_string(rel_pk_cols, ',') AS registered_pk_columns,
-                  string_agg(attname, ',' ORDER BY attnum) AS current_pk_columns
+                  string_agg(attname, ',' ORDER BY array_position(conkey, attnum)) AS current_pk_columns
              FROM emaj.emaj_relation
                   JOIN emaj.emaj_group ON (group_name = rel_group)
                   JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
-                  JOIN pg_catalog.pg_index ON (indrelid = pg_class.oid)
-                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_index.indrelid)
+                  JOIN pg_catalog.pg_constraint ON (conrelid = pg_class.oid)
+                  JOIN pg_catalog.pg_attribute ON (attrelid = conrelid)
              WHERE rel_group = ANY (p_groups)
                AND rel_kind = 'r'
                AND upper_inf(rel_time_range)
                AND group_is_rollbackable
-               AND attnum = ANY (indkey)
-               AND indisprimary
-               AND attnum > 0
-               AND NOT attisdropped
+               AND contype = 'p'
+               AND attnum = ANY (conkey)
              GROUP BY 1,2,3,4
           ) AS t
         WHERE registered_pk_columns <> current_pk_columns
@@ -12239,7 +12235,7 @@ $emaj_snap_group$
     END IF;
 -- For each table/sequence of the emaj_relation table.
     FOR r_tblsq IN
-      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind,
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_pk_cols,
              quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name,
              emaj._build_path_name(p_dir, rel_schema || '_' || rel_tblseq || '.snap') AS path_name
         FROM emaj.emaj_relation
@@ -12251,16 +12247,11 @@ $emaj_snap_group$
         WHEN 'r' THEN
 -- It is a table.
 --   Build the order by columns list, using the PK, if it exists.
-          SELECT string_agg(quote_ident(attname), ',')
-            INTO v_colList
-            FROM pg_catalog.pg_attribute
-                 JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
-            WHERE attnum = ANY (indkey)
-              AND indrelid = (r_tblsq.full_relation_name)::regclass
-              AND indisprimary
-              AND attnum > 0
-              AND attisdropped = FALSE;
-          IF v_colList IS NULL THEN
+          IF r_tblsq.rel_pk_cols IS NOT NULL THEN
+            SELECT string_agg(quote_ident(attname), ',')
+              INTO v_colList
+              FROM unnest(r_tblsq.rel_pk_cols) AS attname;
+          ELSE
 --   The table has no pkey, so get all columns, except generated ones.
             SELECT string_agg(quote_ident(attname), ',' ORDER BY attnum)
               INTO v_colList
@@ -13187,20 +13178,18 @@ $_verify_all_groups$
         FROM
           (SELECT rel_schema, rel_tblseq, rel_group,
                   array_to_string(rel_pk_cols, ',') AS registered_pk_columns,
-                  string_agg(attname, ',' ORDER BY attnum) AS current_pk_columns
+                  string_agg(attname, ',' ORDER BY array_position(conkey, attnum)) AS current_pk_columns
              FROM emaj.emaj_relation
                   JOIN emaj.emaj_group ON (group_name = rel_group)
                   JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
-                  JOIN pg_catalog.pg_index ON (indrelid = pg_class.oid)
-                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_index.indrelid)
+                  JOIN pg_catalog.pg_constraint ON (conrelid = pg_class.oid)
+                  JOIN pg_catalog.pg_attribute ON (attrelid = conrelid)
              WHERE rel_kind = 'r'
                AND upper_inf(rel_time_range)
                AND group_is_rollbackable
-               AND attnum = ANY (indkey)
-               AND indisprimary
-               AND attnum > 0
-               AND attisdropped = FALSE
+               AND attnum = ANY (conkey)
+               AND contype = 'p'
              GROUP BY 1,2,3,4
           ) AS t
         WHERE registered_pk_columns <> current_pk_columns

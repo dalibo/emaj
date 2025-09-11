@@ -39,10 +39,10 @@ DROP TABLE IF EXISTS myTbl4 ;
 CREATE TABLE myTbl4 (
   col41       INT              NOT NULL,
   col42       TEXT             ,
-  col43       INT              ,
+  col43       INT              NOT NULL,
   col44       DECIMAL(7)       ,
   col45       CHAR(10)         ,
-  PRIMARY KEY (col41,col43),
+  PRIMARY KEY (col43,col41),
   FOREIGN KEY (col43) REFERENCES myTbl2 (col21) DEFERRABLE INITIALLY IMMEDIATE,
   CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL DEFERRABLE INITIALLY DEFERRED
 );
