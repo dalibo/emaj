@@ -2324,12 +2324,7 @@ $_assign_tables$
       ELSE
         RAISE WARNING '_assign_tables: Some partitionned tables (%) are not selected.', v_list;
         -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-            (  SELECT unnest(p_tables)
-             EXCEPT
-               SELECT unnest(v_array)
-            ) AS t(remaining_table);
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check or discard TEMP tables.
@@ -2347,12 +2342,7 @@ $_assign_tables$
       ELSE
         RAISE WARNING '_assign_tables: Some TEMP tables (%) are not selected.', v_list;
         -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-           (  SELECT unnest(p_tables)
-            EXCEPT
-              SELECT unnest(v_array)
-           ) AS t(remaining_table);
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- If the group is ROLLBACKABLE, perform additional checks or filters (a PK, not UNLOGGED).
@@ -2372,12 +2362,7 @@ $_assign_tables$
       ELSE
         RAISE WARNING '_assign_tables: Some tables already belonging to a group (%) are not selected.', v_list;
         -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-            (  SELECT unnest(p_tables)
-             EXCEPT
-               SELECT unnest(v_array)
-            ) AS t(remaining_table);
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check and extract the tables JSON properties.
@@ -4065,12 +4050,7 @@ $_assign_sequences$
       ELSE
         RAISE WARNING '_assign_sequences: Some sequences already belonging to a group (%) are not selected.', v_list;
         -- remove these sequences from the sequences to process
-        SELECT array_agg(remaining_sequence) INTO p_sequences
-          FROM
-            (  SELECT unnest(p_sequences)
-             EXCEPT
-               SELECT unnest(v_array)
-            ) AS t(remaining_sequence);
+        p_sequences = array(SELECT unnest(p_sequences) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check the supplied mark.
