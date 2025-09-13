@@ -31,7 +31,6 @@ select * from emaj.emaj_relation_change order by 1,2,3,4;
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group
 -----------------------------
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',false) order by 1,2;
 select emaj.emaj_unprotect_group('myGroup1');
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',true) order by 1,2;
