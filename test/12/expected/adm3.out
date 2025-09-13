@@ -2924,12 +2924,12 @@ select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
 -----------------------------
 select emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
 PL/pgSQL function emaj_get_previous_mark_group(text,text) line 9 at PERFORM
 select emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 18 at SQL statement
 PL/pgSQL function emaj_estimate_rollback_groups(text[],text,boolean) line 7 at RETURN

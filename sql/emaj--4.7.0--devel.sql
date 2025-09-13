@@ -122,6 +122,126 @@ DROP FUNCTION IF EXISTS emaj._check_tables_for_rollbackable_group(P_SCHEMA TEXT,
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._clean_array(p_array TEXT[])
+RETURNS TEXT[] LANGUAGE SQL AS
+$$
+-- This function cleans up a text array by removing duplicates, NULL and empty strings.
+  SELECT array_agg(DISTINCT element)
+    FROM unnest(p_array) AS element
+    WHERE element IS NOT NULL AND element <> '';
+$$;
+
+CREATE OR REPLACE FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN,
+                                                   p_checkIdle BOOLEAN DEFAULT FALSE, p_checkLogging BOOLEAN DEFAULT FALSE,
+                                                   p_checkRollbackable BOOLEAN DEFAULT FALSE, p_checkUnprotected BOOLEAN DEFAULT FALSE)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_check_group_names$
+-- This function performs various checks on a group names array.
+-- The NULL, empty strings and duplicate values are removed from the array. If the array is empty raise either an exception or a warning.
+-- Checks are then perform to verify:
+-- - that all groups exist,
+-- - if requested are ROLLBACKABLE,
+-- - if requested are in LOGGING or IDLE state,
+-- - if requested are not PROTECTED against rollback operations.
+-- A SELECT FOR UPDATE is executed if requested, to avoid other sensitive actions in parallel on the same groups.
+-- Input: group names array,
+--        a boolean that tells whether a NULL array only raise a WARNING,
+--        a boolean that tells whether the groups have to be locked,
+--        a string that lists the checks to perform, with the following possible values: IDLE, LOGGING, ROLLBACKABLE and UNPROTECTED.
+-- Output: validated group names array
+  DECLARE
+    v_groupList              TEXT;
+    v_count                  INT;
+  BEGIN
+-- Remove duplicates values, NULL and empty strings from the supplied group names array.
+    p_groupNames = emaj._clean_array(p_groupNames);
+-- Process empty array.
+    IF p_groupNames IS NULL THEN
+      IF p_mayBeNull THEN
+        RAISE WARNING '_check_group_names: No group to process.';
+        RETURN NULL;
+      ELSE
+        RAISE EXCEPTION '_check_group_names: No group to process.';
+      END IF;
+    END IF;
+-- Check that all groups exist.
+    SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
+      FROM (  SELECT unnest(p_groupNames)
+            EXCEPT
+              SELECT group_name
+                FROM emaj.emaj_group
+           ) AS t(group_name);
+    IF v_count > 0 THEN
+      IF v_count = 1 THEN
+        RAISE EXCEPTION '_check_group_names: The group "%" does not exist.', v_groupList;
+      ELSE
+        RAISE EXCEPTION '_check_group_names: The groups "%" do not exist.', v_groupList;
+      END IF;
+    END IF;
+-- Lock the groups if requested.
+    IF p_lockGroups THEN
+      PERFORM 0
+        FROM emaj.emaj_group
+        WHERE group_name = ANY(p_groupNames)
+        FOR UPDATE;
+    END IF;
+-- Checks ROLLBACKABLE type, if requested.
+    IF p_checkRollbackable THEN
+      SELECT string_agg(group_name,', '  ORDER BY group_name), count(*) INTO v_groupList, v_count
+        FROM emaj.emaj_group
+        WHERE group_name = ANY(p_groupNames)
+          AND NOT group_is_rollbackable;
+      IF v_count = 1 THEN
+        RAISE EXCEPTION '_check_group_names: The group "%" has been created as AUDIT_ONLY.', v_groupList;
+      END IF;
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_group_names: The groups "%" have been created as AUDIT_ONLY.', v_groupList;
+      END IF;
+    END IF;
+-- Checks IDLE state, if requested
+    IF p_checkIdle THEN
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
+        FROM emaj.emaj_group
+        WHERE group_name = ANY(p_groupNames)
+          AND group_is_logging;
+      IF v_count = 1 THEN
+        RAISE EXCEPTION '_check_group_names: The group "%" is not in IDLE state.', v_groupList;
+      END IF;
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_group_names: The groups "%" are not in IDLE state.', v_groupList;
+      END IF;
+    END IF;
+-- Checks LOGGING state, if requested.
+    IF p_checkLogging THEN
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
+        FROM emaj.emaj_group
+        WHERE group_name = ANY(p_groupNames)
+          AND NOT group_is_logging;
+      IF v_count = 1 THEN
+        RAISE EXCEPTION '_check_group_names: The group "%" is not in LOGGING state.', v_groupList;
+      END IF;
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_group_names: The groups "%" are not in LOGGING state.', v_groupList;
+      END IF;
+    END IF;
+-- Checks UNPROTECTED type, if requested.
+    IF p_checkUnprotected THEN
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
+        FROM emaj.emaj_group
+        WHERE group_name = ANY(p_groupNames)
+          AND group_is_rlbk_protected;
+      IF v_count = 1 THEN
+        RAISE EXCEPTION '_check_group_names: The group "%" is currently protected against rollback operations.', v_groupList;
+      END IF;
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_group_names: The groups "%" are currently protected against rollback operations.', v_groupList;
+      END IF;
+    END IF;
+--
+    RETURN p_groupNames;
+  END;
+$_check_group_names$;
+
 CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN)
 RETURNS TEXT[] LANGUAGE plpgsql AS
 $_check_tables_for_rollbackable_group$
@@ -211,10 +331,7 @@ $_check_tblseqs_array$
 -- Check that the schema exists.
     v_schemaExists = emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
 -- Clean up the relation names array: remove duplicates values, NULL and empty strings.
-    SELECT array_agg(DISTINCT tblseq)
-      INTO v_tblseqs
-      FROM unnest(p_tblseqs) AS tblseq
-      WHERE tblseq IS NOT NULL AND tblseq <> '';
+    v_tblseqs = emaj._clean_array(p_tblseqs);
 -- If the schema exists, check that all relations exist.
     IF v_schemaExists THEN
       SELECT string_agg(quote_ident(tblseq), ', ' ORDER BY tblseq)
@@ -258,6 +375,62 @@ $_check_tblseqs_array$
     RETURN v_tblseqs;
   END;
 $_check_tblseqs_array$;
+
+CREATE OR REPLACE FUNCTION emaj._check_tblseqs_filter(INOUT p_tblseqs TEXT[], p_groupNames TEXT[], p_firstMarkTimeId BIGINT,
+                                                      p_lastMarkTimeId BIGINT, p_checkInGroupAtStartMark BOOLEAN DEFAULT FALSE)
+LANGUAGE plpgsql AS
+$_check_tblseqs_filter$
+-- This function verifies that a schema qualified table/sequence names array is valid for one or several groups and in a marks range.
+-- Input: array of table/sequence names, array of group names, time id of the first and last marks,
+--        and a boolean indicating whether the tables and sequences must be owned by one group at start mark time
+-- Output: the array of table/sequence names, without empty or duplicates (the array is empty if it does not contain any relation
+  DECLARE
+    v_tblseqErr              TEXT;
+    v_count                  INT;
+  BEGIN
+-- Remove duplicates values, NULL and empty strings from the supplied tables/sequences names array.
+    p_tblseqs = coalesce(emaj._clean_array(p_tblseqs), ARRAY[]::TEXT[]);
+    IF p_tblseqs = ARRAY[]::TEXT[] THEN
+      RAISE WARNING '_check_tblseqs_filter: The table/sequence names array is empty.';
+      RETURN;
+    END IF;
+    IF p_checkInGroupAtStartMark THEN
+-- Each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups.
+      SELECT string_agg(t,', ' ORDER BY t), count(*) INTO v_tblseqErr, v_count
+        FROM
+          (  SELECT t
+               FROM unnest(p_tblseqs) AS t
+           EXCEPT
+             SELECT rel_schema || '.' || rel_tblseq
+               FROM emaj.emaj_relation
+               WHERE rel_time_range @> p_firstMarkTimeId              -- tables/sequences that belong to their group
+                 AND rel_group = ANY (p_groupNames)                   -- at the start mark time
+          ) AS t2;
+      IF v_tblseqErr IS NOT NULL THEN
+        RAISE EXCEPTION '_check_tblseqs_filter: % tables/sequences (%) did not belong to any of the selected tables groups '
+                        'at start mark time.', v_count, v_tblseqErr;
+      END IF;
+    ELSE
+-- Each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups.
+      SELECT string_agg(t,', ' ORDER BY t), count(*) INTO v_tblseqErr, v_count
+        FROM
+          (  SELECT t
+               FROM unnest(p_tblseqs) AS t
+           EXCEPT
+             SELECT rel_schema || '.' || rel_tblseq
+               FROM emaj.emaj_relation
+               WHERE rel_time_range && int8range(p_firstMarkTimeId, p_lastMarkTimeId,'[)')
+                 AND rel_group = ANY (p_groupNames)
+          ) AS t2;
+      IF v_tblseqErr IS NOT NULL THEN
+        RAISE EXCEPTION '_check_tblseqs_filter: % tables/sequences (%) never belonged to any of the selected tables groups '
+                        'during the requested marks range.', v_count, v_tblseqErr;
+      END IF;
+    END IF;
+--
+    RETURN;
+  END;
+$_check_tblseqs_filter$;
 
 CREATE OR REPLACE FUNCTION emaj._assign_tables(p_schema TEXT, p_tables TEXT[], p_group TEXT, p_properties JSONB, p_mark TEXT,
                                                p_multiTable BOOLEAN, p_arrayFromRegex BOOLEAN)
@@ -308,9 +481,7 @@ $_assign_tables$
 -- Check tables.
     IF NOT p_arrayFromRegex THEN
 -- From the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array.
-      SELECT array_agg(DISTINCT table_name) INTO p_tables
-        FROM unnest(p_tables) AS table_name
-        WHERE table_name IS NOT NULL AND table_name <> '';
+      p_tables = emaj._clean_array(p_tables);
 -- Check that application tables exist.
       SELECT string_agg(quote_ident(table_name), ', ' ORDER BY table_name)
         INTO v_list
@@ -941,9 +1112,7 @@ $_assign_sequences$
 -- Check sequences.
     IF NOT p_arrayFromRegex THEN
 -- Remove duplicates values, NULL and empty strings from the sequence names array supplied by the user.
-      SELECT array_agg(DISTINCT sequence_name) INTO p_sequences
-        FROM unnest(p_sequences) AS sequence_name
-        WHERE sequence_name IS NOT NULL AND sequence_name <> '';
+      p_sequences = emaj._clean_array(p_sequences);
 -- Check that application sequences exist.
       SELECT string_agg(quote_ident(sequence_name), ', ' ORDER BY sequence_name)
         INTO v_list
@@ -3449,6 +3618,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
+GRANT EXECUTE ON FUNCTION emaj._clean_array(p_array TEXT[]) TO emaj_viewer;
 
 ----------------------------------------------------------------
 --                                                            --

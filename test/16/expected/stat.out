@@ -83,7 +83,7 @@ alter sequence myschema2.myseq1 MAXVALUE 2000;
 -- group is unknown
 select * from emaj.emaj_log_stat_group(null,null,null);
 ERROR:  _check_group_names: No group to process.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 27 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 19 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
@@ -92,7 +92,7 @@ SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['unknownGroup'],null,null);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 19 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
@@ -101,7 +101,7 @@ SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group(null,null,null);
 ERROR:  _check_group_names: No group to process.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 27 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
@@ -110,7 +110,7 @@ SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],null,null);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
@@ -523,7 +523,7 @@ WARNING:  Since mark "myGroup4_start", the tables group "myGroup4" has not been 
 -- group is unknown
 select * from emaj.emaj_sequence_stat_group('dummy', null, null);
 ERROR:  _check_group_names: The group "dummy" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._sequence_stat_groups(text[],boolean,text,text) line 18 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
@@ -690,7 +690,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text
 -- bad group or mark names
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'dummy_group', 'M1', 'myGroup2', 'M3');
 ERROR:  _check_group_names: The group "dummy_group" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_startGroup], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
 PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 24 at PERFORM
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'dummy_mark', 'myGroup2', 'M3');
@@ -715,7 +715,7 @@ SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup],
 PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 25 at SQL statement
 select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'dummy_group', 'M1', 'myGroup2', 'M3');
 ERROR:  _check_group_names: The group "dummy_group" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_startGroup], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
 PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text,text) line 25 at PERFORM
 select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'dummy_mark', 'myGroup2', 'M3');
