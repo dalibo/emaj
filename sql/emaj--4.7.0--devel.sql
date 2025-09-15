@@ -2152,7 +2152,7 @@ $_rlbk_planning$
             AND rlbp_step = 'ADD_FK'
       LOOP
         SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
-          FROM emaj._estimate_rlbk_step_duration('ADD_FK', r_tbl.rlbp_schema, r_tbl.rlbp_table, r_fk.rlbp_object,
+          FROM emaj._estimate_rlbk_step_duration('ADD_FK', r_fk.rlbp_schema, r_fk.rlbp_table, r_fk.rlbp_object,
                                                  r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_fkey_check);
         UPDATE emaj.emaj_rlbk_plan
           SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
@@ -2169,7 +2169,7 @@ $_rlbk_planning$
             AND rlbp_step = 'SET_FK_IMM'
       LOOP
         SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
-          FROM emaj._estimate_rlbk_step_duration('SET_FK_IMM', r_tbl.rlbp_schema, r_tbl.rlbp_table, r_fk.rlbp_object,
+          FROM emaj._estimate_rlbk_step_duration('SET_FK_IMM', r_fk.rlbp_schema, r_fk.rlbp_table, r_fk.rlbp_object,
                                                  r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_fkey_check);
         UPDATE emaj.emaj_rlbk_plan
           SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
@@ -2258,6 +2258,137 @@ $_rlbk_planning$
     RETURN v_effNbTable;
   END;
 $_rlbk_planning$;
+
+CREATE OR REPLACE FUNCTION emaj._estimate_rlbk_step_duration(p_step emaj._rlbk_step_enum, p_schema TEXT, p_table TEXT,
+                                                             p_object TEXT, p_estimatedQuantity BIGINT,
+                                                             p_defaultFixedCost INTERVAL, p_defaultVariableCost INTERVAL,
+                                                             OUT p_estimateMethod INT, OUT p_estimatedDuration INTERVAL)
+LANGUAGE plpgsql AS
+$_estimate_rlbk_step_duration$
+-- This function reads the rollback statistics in order to compute the duration estimate for elementary steps.
+-- The function is called by _rlbk_planning().
+-- The cost model depends on the step.
+-- Input: step name, the schema, table and object names when it is relevant, the expected volume for the step,
+--        the default fixed cost and the default variable cost from the emaj parameters
+-- Output: the estimate method (1, 2 or 3), the duration estimate
+  BEGIN
+-- Initialize the output data.
+    p_estimatedDuration = NULL;
+-- Compute the duration estimate depending on the step.
+    CASE
+      WHEN p_step IN ('RLBK_TABLE', 'DELETE_LOG') THEN
+-- For RLBK_TBL and DELETE_LOG, the estimate takes into account the estimated number of log rows to revert.
+-- First look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude).
+        SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 1
+          INTO p_estimatedDuration, p_estimateMethod
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = p_step
+            AND rlbt_quantity > 0
+            AND rlbt_schema = p_schema
+            AND rlbt_table = p_table
+            AND rlbt_quantity / p_estimatedQuantity < 10
+            AND p_estimatedQuantity / rlbt_quantity < 10;
+        IF p_estimatedDuration IS NULL THEN
+-- If there is no previous rollback operation with similar volume, take statistics for the table with all available volumes.
+          SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 2
+            INTO p_estimatedDuration, p_estimateMethod
+            FROM emaj.emaj_rlbk_stat
+            WHERE rlbt_step = p_step
+              AND rlbt_quantity > 0
+              AND rlbt_schema = p_schema
+              AND rlbt_table = p_table;
+          IF p_estimatedDuration IS NULL THEN
+-- No statistics found for the step, so use supplied E-Maj parameters.
+            p_estimatedDuration = p_defaultVariableCost * p_estimatedQuantity + p_defaultFixedCost;
+            p_estimateMethod = 3;
+          END IF;
+        END IF;
+--
+      WHEN p_step = 'ADD_FK' THEN
+        IF p_estimatedQuantity <= 0 THEN
+-- Empty table (or table not yet analyzed).
+          p_estimatedDuration = p_defaultFixedCost;
+          p_estimateMethod = 3;
+        ELSE
+-- Non empty table and statistics (with at least one row) are available.
+          SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 1
+            INTO p_estimatedDuration, p_estimateMethod
+            FROM emaj.emaj_rlbk_stat
+            WHERE rlbt_step = p_step
+              AND rlbt_quantity > 0
+              AND rlbt_schema = p_schema
+              AND rlbt_table = p_table
+              AND rlbt_object = p_object;
+          IF p_estimatedDuration IS NULL THEN
+-- Non empty table, but no statistic with at least one row is available => take the last duration for this fkey, if any.
+            SELECT rlbt_duration, 2
+              INTO p_estimatedDuration, p_estimateMethod
+              FROM emaj.emaj_rlbk_stat
+              WHERE rlbt_step = p_step
+                AND rlbt_schema = p_schema
+                AND rlbt_table = p_table
+                AND rlbt_object = p_object
+                AND rlbt_rlbk_id =
+                      (SELECT max(rlbt_rlbk_id)
+                         FROM emaj.emaj_rlbk_stat
+                         WHERE rlbt_step = p_step
+                           AND rlbt_schema = p_schema
+                           AND rlbt_table = p_table
+                           AND rlbt_object = p_object
+                      );
+            IF p_estimatedDuration IS NULL THEN
+-- Definitely no statistics available, compute with the supplied default parameters.
+              p_estimatedDuration = p_estimatedQuantity * p_defaultVariableCost + p_defaultFixedCost;
+              p_estimateMethod = 3;
+            END IF;
+          END IF;
+        END IF;
+--
+      WHEN p_step = 'SET_FK_IMM' THEN
+-- If fkey checks statistics are available for this fkey, compute an average cost.
+        SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 2
+          INTO p_estimatedDuration, p_estimateMethod
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = p_step
+            AND rlbt_quantity > 0
+            AND rlbt_schema = p_schema
+            AND rlbt_table = p_table
+            AND rlbt_object = p_object;
+        IF p_estimatedDuration IS NULL THEN
+-- No statistics are available for this fkey, so use the supplied E-Maj parameters.
+          p_estimatedDuration = p_estimatedQuantity * p_defaultVariableCost + p_defaultFixedCost;
+          p_estimateMethod = 3;
+        END IF;
+--
+      WHEN p_step = 'RLBK_SEQUENCES' THEN
+-- If sequences rollback statistics are available, compute an average cost.
+        SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 2
+          INTO p_estimatedDuration, p_estimateMethod
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = p_step;
+        IF p_estimatedDuration IS NULL THEN
+-- No statistics are available for sequences rollbacks, so use the supplied E-Maj parameters.
+          p_estimatedDuration = p_estimatedQuantity * p_defaultVariableCost + p_defaultFixedCost;
+          p_estimateMethod = 3;
+        END IF;
+--
+      ELSE
+-- For other steps, there is no volume to consider.
+-- Read statistics, if any, and compute an average cost.
+        SELECT sum(rlbt_duration) / sum(rlbt_quantity), 2
+          INTO p_estimatedDuration, p_estimateMethod
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = p_step;
+        IF p_estimatedDuration IS NULL THEN
+-- No statistics found for the step, so use the supplied E-Maj parameters.
+          p_estimatedDuration = p_defaultFixedCost;
+          p_estimateMethod = 3;
+        END IF;
+    END CASE;
+--
+    RETURN;
+  END;
+$_estimate_rlbk_step_duration$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, INOUT p_lastMark TEXT,
                                                             p_optionsList TEXT, p_tblseqs TEXT[], p_genSqlOnly BOOLEAN,

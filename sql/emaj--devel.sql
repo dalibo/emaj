@@ -8954,7 +8954,7 @@ $_rlbk_planning$
             AND rlbp_step = 'ADD_FK'
       LOOP
         SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
-          FROM emaj._estimate_rlbk_step_duration('ADD_FK', r_tbl.rlbp_schema, r_tbl.rlbp_table, r_fk.rlbp_object,
+          FROM emaj._estimate_rlbk_step_duration('ADD_FK', r_fk.rlbp_schema, r_fk.rlbp_table, r_fk.rlbp_object,
                                                  r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_fkey_check);
         UPDATE emaj.emaj_rlbk_plan
           SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
@@ -8971,7 +8971,7 @@ $_rlbk_planning$
             AND rlbp_step = 'SET_FK_IMM'
       LOOP
         SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
-          FROM emaj._estimate_rlbk_step_duration('SET_FK_IMM', r_tbl.rlbp_schema, r_tbl.rlbp_table, r_fk.rlbp_object,
+          FROM emaj._estimate_rlbk_step_duration('SET_FK_IMM', r_fk.rlbp_schema, r_fk.rlbp_table, r_fk.rlbp_object,
                                                  r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_fkey_check);
         UPDATE emaj.emaj_rlbk_plan
           SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
@@ -9163,7 +9163,7 @@ $_estimate_rlbk_step_duration$
         END IF;
 --
       WHEN p_step = 'ADD_FK' THEN
-        IF p_estimatedQuantity = 0 THEN
+        IF p_estimatedQuantity <= 0 THEN
 -- Empty table (or table not yet analyzed).
           p_estimatedDuration = p_defaultFixedCost;
           p_estimateMethod = 3;

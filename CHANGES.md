@@ -8,6 +8,8 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
+  * Fix the duration estimates of E-Maj rollback steps that rebuild a FK or
+    recheck FK entries changes.
   * Fix the records order for emaj_snap_group(), emaj_dump_changes_group()
     and emaj_gen_sql_dump_changes_group() outputs for some tables having a
     multi-column PK.
