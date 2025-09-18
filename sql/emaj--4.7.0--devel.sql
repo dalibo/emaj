@@ -2390,6 +2390,324 @@ $_estimate_rlbk_step_duration$
   END;
 $_estimate_rlbk_step_duration$;
 
+CREATE OR REPLACE FUNCTION emaj._detailed_log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
+RETURNS SETOF emaj.emaj_detailed_log_stat_group_type LANGUAGE plpgsql AS
+$_detailed_log_stat_groups$
+-- This function effectively returns statistics on logged data changes executed between 2 marks as viewed through the log tables for one
+-- or several groups.
+-- It provides much precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- So the response time may be much longer.
+-- Input: groups name array, a boolean indicating whether the calling function is a multi_groups function,
+--        the 2 mark names defining a range
+--   a NULL value or an empty string as last_mark indicates the current state
+--   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
+-- Output: set of stat rows by table, user and SQL type
+  DECLARE
+    v_firstMarkTimeId        BIGINT;
+    v_lastMarkTimeId         BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
+    v_firstEmajGid           BIGINT;
+    v_lastEmajGid            BIGINT;
+    v_lowerBoundMark         TEXT;
+    v_lowerBoundTimeId       BIGINT;
+    v_lowerBoundMarkTs       TIMESTAMPTZ;
+    v_lowerBoundGid          BIGINT;
+    v_upperBoundMark         TEXT;
+    v_upperBoundTimeId       BIGINT;
+    v_upperBoundMarkTs       TIMESTAMPTZ;
+    v_upperBoundGid          BIGINT;
+    v_stmt                   TEXT;
+    r_tblsq                  RECORD;
+    r_stat                   RECORD;
+  BEGIN
+-- Check the group name.
+    PERFORM emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE);
+    IF p_groupNames IS NOT NULL THEN
+-- Check the marks range and get some data about both marks.
+      SELECT *
+        INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
+        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark);
+-- For each table currently belonging to the group, count the number of operations per type (INSERT, UPDATE and DELETE) and role.
+      FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_group, rel_time_range, rel_log_schema, rel_log_table
+          FROM emaj.emaj_relation
+          WHERE rel_group = ANY(p_groupNames)
+            AND rel_kind = 'r'                                                                         -- tables belonging to the groups
+            AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_firstMarkTimeId)               --   at the requested time frame
+            AND (v_lastMarkTimeId IS NULL OR lower(rel_time_range) < v_lastMarkTimeId)
+          ORDER BY rel_schema, rel_tblseq, rel_time_range
+      LOOP
+-- Compute the lower bound for this table.
+        IF v_firstMarkTimeId >= lower(r_tblsq.rel_time_range) THEN
+-- Usual case: the table belonged to the group at statistics start mark.
+          v_lowerBoundMark = p_firstMark;
+          v_lowerBoundMarkTs = v_firstMarkTs;
+          v_lowerBoundTimeId = v_firstMarkTimeId;
+          v_lowerBoundGid = v_firstEmajGid;
+        ELSE
+-- Special case: the table has been added to the group after the statistics start mark.
+          SELECT mark_name INTO v_lowerBoundMark
+            FROM emaj.emaj_mark
+            WHERE mark_time_id = lower(r_tblsq.rel_time_range)
+              AND mark_group = r_tblsq.rel_group;
+          IF v_lowerBoundMark IS NULL THEN
+-- The mark set at alter_group time may have been deleted.
+            v_lowerBoundMark = '[deleted mark]';
+          END IF;
+          SELECT time_id, time_clock_timestamp, time_last_emaj_gid INTO v_lowerBoundTimeId, v_lowerBoundMarkTs, v_lowerBoundGid
+            FROM emaj.emaj_time_stamp
+            WHERE time_id = lower(r_tblsq.rel_time_range);
+        END IF;
+-- Compute the upper bound for this table.
+        IF v_lastMarkTimeId IS NULL AND upper_inf(r_tblsq.rel_time_range) THEN
+-- No supplied end mark and the table has not been removed from its group => the current state.
+          v_upperBoundMark = NULL;
+          v_upperBoundMarkTs = NULL;
+          v_upperBoundTimeId = NULL;
+          v_upperBoundGid = NULL;
+        ELSIF NOT upper_inf(r_tblsq.rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(r_tblsq.rel_time_range) < v_lastMarkTimeId) THEN
+-- Special case: the table has been removed from its group before the statistics end mark.
+          SELECT mark_name INTO v_upperBoundMark
+            FROM emaj.emaj_mark
+            WHERE mark_time_id = upper(r_tblsq.rel_time_range)
+              AND mark_group = r_tblsq.rel_group;
+          IF v_upperBoundMark IS NULL THEN
+-- The mark set at alter_group time may have been deleted.
+            v_upperBoundMark = '[deleted mark]';
+          END IF;
+          SELECT time_id, time_clock_timestamp, time_last_emaj_gid INTO v_upperBoundTimeId, v_upperBoundMarkTs, v_upperBoundGid
+            FROM emaj.emaj_time_stamp
+            WHERE time_id = upper(r_tblsq.rel_time_range);
+        ELSE
+-- Usual case: the table belonged to the group at statistics end mark.
+          v_upperBoundMark = p_lastMark;
+          v_upperBoundMarkTs = v_lastMarkTs;
+          v_upperBoundTimeId = v_lastMarkTimeId;
+          v_upperBoundGid = v_lastEmajGid;
+        END IF;
+-- Build the statement.
+        v_stmt= 'SELECT ' || quote_literal(r_tblsq.rel_group) || '::TEXT AS stat_group, '
+             || quote_literal(r_tblsq.rel_schema) || '::TEXT AS stat_schema, '
+             || quote_literal(r_tblsq.rel_tblseq) || '::TEXT AS stat_table, '
+             || quote_literal(v_lowerBoundMark) || '::TEXT AS stat_first_mark, '
+             || quote_literal(v_lowerBoundMarkTs) || '::TIMESTAMPTZ AS stat_first_mark_datetime, '
+             || quote_literal(v_lowerBoundTimeId) || '::BIGINT AS stat_first_time_id, '
+             || coalesce(quote_literal(v_upperBoundMark), 'NULL') || '::TEXT AS stat_last_mark, '
+             || coalesce(quote_literal(v_upperBoundMarkTs), 'NULL') || '::TIMESTAMPTZ AS stat_last_mark_datetime, '
+             || coalesce(quote_literal(v_upperBoundTimeId), 'NULL') || '::BIGINT AS stat_last_time_id, '
+             || ' emaj_user::TEXT AS stat_role,'
+             || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
+             ||                ' WHEN ''UPD'' THEN ''UPDATE'''
+             ||                ' WHEN ''DEL'' THEN ''DELETE'''
+             ||                ' WHEN ''TRU'' THEN ''TRUNCATE'''
+             ||                             ' ELSE ''?'' END AS stat_verb,'
+             || ' count(*) AS stat_rows'
+             || ' FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table)
+             || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'') AND NOT (emaj_verb = ''TRU'' AND emaj_tuple = '''')'
+             || ' AND emaj_gid > '|| v_lowerBoundGid
+             || coalesce(' AND emaj_gid <= '|| v_upperBoundGid, '')
+             || ' GROUP BY stat_role, stat_verb'
+             || ' ORDER BY stat_role, stat_verb';
+-- Execute the statement.
+        FOR r_stat IN EXECUTE v_stmt LOOP
+          RETURN NEXT r_stat;
+        END LOOP;
+      END LOOP;
+    END IF;
+-- Final return.
+    RETURN;
+  END;
+$_detailed_log_stat_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._log_stat_table(p_schema TEXT, p_table TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
+RETURNS SETOF emaj.emaj_log_stat_table_type LANGUAGE plpgsql AS
+$_log_stat_table$
+-- This function returns statistics about a single table, for the time period framed by a supplied time_id slice.
+-- It is called by the various emaj_log_stat_table() functions.
+-- For each mark interval, possibly for different tables groups, it returns the number of recorded changes.
+-- Input: schema and table names
+--        start and end time_id.
+-- Output: set of stats by time slice.
+  DECLARE
+    v_needCurrentState       BOOLEAN;
+  BEGIN
+-- Determine whether the table current state if needed, i.e. if it still belongs to an active group.
+    v_needCurrentState = EXISTS(
+      SELECT 0
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range)
+          AND group_is_logging
+          AND p_endTimeId IS NULL
+      );
+-- Compute and return the statistics by scanning the table history in the emaj_table table.
+    RETURN QUERY
+      WITH event AS (
+        SELECT tbl_time_id, lower(rel_time_range), tbl_log_seq_last_val,
+               rel_group, rel_time_range, time_clock_timestamp, time_event,
+               coalesce(mark_name, '[deleted mark]') AS mark_name,
+               (time_event = 'S' OR tbl_time_id = lower(rel_time_range)) AS log_start,
+               (time_event = 'X' OR (NOT upper_inf(rel_time_range) AND tbl_time_id = upper(rel_time_range))) AS log_stop
+          FROM emaj.emaj_table
+               JOIN emaj.emaj_relation ON (rel_schema = tbl_schema AND rel_tblseq = tbl_name)
+               JOIN emaj.emaj_time_stamp ON (time_id = tbl_time_id)
+               LEFT OUTER JOIN emaj.emaj_mark ON (mark_group = rel_group AND mark_time_id = tbl_time_id)
+          WHERE tbl_schema = p_schema
+            AND tbl_name = p_table
+            AND (tbl_time_id <@ rel_time_range OR tbl_time_id = upper(rel_time_range))
+            AND (p_startTimeId IS NULL OR tbl_time_id >= p_startTimeId)
+            AND (p_endTimeId IS NULL OR tbl_time_id <= p_endTimeId)
+        UNION
+-- ... and add the table current state, if the upper bound is not fixed and if the table belongs to an active group yet.
+        SELECT NULL, NULL, emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence),
+               rel_group, rel_time_range, clock_timestamp(), '', '[current state]', FALSE, FALSE
+          FROM emaj.emaj_relation
+          WHERE v_needCurrentState
+            AND rel_schema = p_schema
+            AND rel_tblseq = p_table
+            AND upper_inf(rel_time_range)
+        ORDER BY 1, 2
+        ), time_slice AS (
+-- Transform elementary time events into time slices
+        SELECT tbl_time_id AS start_time_id, lead(tbl_time_id) OVER () AS end_time_id,
+               tbl_log_seq_last_val AS start_last_val, lead(tbl_log_seq_last_val) OVER () AS end_last_val,
+               rel_group,
+               rel_time_range AS start_rel_time_range, lead(rel_time_range) OVER () AS end_rel_time_range,
+               time_clock_timestamp AS start_timestamp, lead(time_clock_timestamp) OVER () AS end_timestamp,
+               time_event AS start_time_event, lead(time_event) OVER () AS end_time_event,
+               mark_name AS start_mark_name, lead(mark_name) OVER () AS end_mark_name,
+               log_start AS start_log_start, lead(log_start) OVER () AS end_log_start,
+               log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
+          FROM event
+        )
+-- Filter time slices and compute statistics aggregates
+-- (take into account log sequence holes generated by unlogged rollbacks)
+      SELECT rel_group AS stat_group, start_mark_name AS stat_first_mark, start_timestamp AS stat_first_mark_datetime,
+             start_time_id AS stat_first_time_id, start_log_start AS stat_is_log_start, end_mark_name AS stat_last_mark,
+             end_timestamp AS stat_last_mark_datetime, end_time_id AS stat_last_time_id, end_log_stop AS stat_is_log_stop,
+             end_last_val - start_last_val -
+               (SELECT coalesce(sum(sqhl_hole_size),0)
+                   FROM emaj.emaj_seq_hole
+                   WHERE sqhl_schema = p_schema
+                     AND sqhl_table = p_table
+                     AND sqhl_begin_time_id >= start_time_id
+                     AND (end_time_id IS NULL OR sqhl_end_time_id <= end_time_id))::BIGINT
+               AS stat_changes,
+             count(rlbk_id)::INT AS stat_rollbacks
+        FROM time_slice
+             LEFT OUTER JOIN emaj.emaj_rlbk ON (rel_group = ANY (rlbk_groups) AND
+                                                rlbk_time_id >= start_time_id AND (end_time_id IS NULL OR rlbk_time_id < end_time_id))
+        WHERE end_timestamp IS NOT NULL                    -- time slice not starting with the very last event
+          AND start_rel_time_range = end_rel_time_range    -- same rel_time_range on the slice
+          AND NOT (start_log_stop AND end_log_start)       -- not a logging hole
+        GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+        ORDER BY start_time_id;
+  END;
+$_log_stat_table$;
+
+CREATE OR REPLACE FUNCTION emaj._log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
+RETURNS SETOF emaj.emaj_log_stat_sequence_type LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_log_stat_sequence$
+-- This function returns statistics about a single sequence, for the time period framed by a supplied time_id slice.
+-- It is called by the various emaj_log_stat_sequence() function.
+-- For each mark interval, possibly for different tables groups, it returns the number of increments and a flag to show any sequence
+--   properties changes.
+-- Input: schema and sequence names
+--        start and end time_id.
+-- Output: set of stats by time slice.
+-- The function is defined as SECURITY DEFINER so that emaj_adm roles can use it even without SELECT right on the sequence.
+  DECLARE
+    v_needCurrentState       BOOLEAN;
+    r_endSeq                 emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+-- Get the sequence current state, if it still belongs to an active group.
+    v_needCurrentState = EXISTS(
+      SELECT 0
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_sequence
+          AND upper_inf(rel_time_range)
+          AND group_is_logging
+          AND p_endTimeId IS NULL
+      );
+    IF v_needCurrentState THEN
+      r_endSeq = emaj._get_current_seq(p_schema, p_sequence, 0);
+    END IF;
+-- Compute and return the statistics by scanning the sequence history in the emaj_sequence table.
+    RETURN QUERY
+      WITH event AS (
+        SELECT sequ_time_id, lower(rel_time_range), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val,
+               sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called,
+               rel_group, rel_time_range, time_clock_timestamp, time_event,
+               coalesce(mark_name, '[deleted mark]') AS mark_name,
+               (time_event = 'S' OR sequ_time_id = lower(rel_time_range)) AS log_start,
+               (time_event = 'X' OR (NOT upper_inf(rel_time_range) AND sequ_time_id = upper(rel_time_range))) AS log_stop
+          FROM emaj.emaj_sequence
+               JOIN emaj.emaj_relation ON (rel_schema = sequ_schema AND rel_tblseq = sequ_name)
+               JOIN emaj.emaj_time_stamp ON (time_id = sequ_time_id)
+               LEFT OUTER JOIN emaj.emaj_mark ON (mark_group = rel_group AND mark_time_id = sequ_time_id)
+          WHERE sequ_schema = p_schema
+            AND sequ_name = p_sequence
+            AND (sequ_time_id <@ rel_time_range OR sequ_time_id = upper(rel_time_range))
+            AND (p_startTimeId IS NULL OR sequ_time_id >= p_startTimeId)
+            AND (p_endTimeId IS NULL OR sequ_time_id <= p_endTimeId)
+        UNION
+-- ... and add the sequence current state, if the upper bound is not fixed and if the sequence belongs to an active group yet.
+        SELECT NULL, NULL, r_endSeq.sequ_last_val, r_endSeq.sequ_start_val, r_endSeq.sequ_increment, r_endSeq.sequ_max_val,
+               r_endSeq.sequ_min_val, r_endSeq.sequ_cache_val, r_endSeq.sequ_is_cycled, r_endSeq.sequ_is_called,
+               rel_group, rel_time_range, clock_timestamp(), '', '[current state]', false, false
+          FROM emaj.emaj_relation
+          WHERE v_needCurrentState
+            AND rel_schema = p_schema
+            AND rel_tblseq = p_sequence
+            AND upper_inf(rel_time_range)
+        ORDER BY 1, 2
+        ), time_slice AS (
+-- Transform elementary time events into time slices
+         SELECT sequ_time_id AS start_time_id, lead(sequ_time_id) OVER () AS end_time_id,
+                sequ_last_val AS start_last_val, lead(sequ_last_val) OVER () AS end_last_val,
+                sequ_start_val AS start_start_val, lead(sequ_start_val) OVER () AS end_start_val,
+                sequ_increment AS start_increment, lead(sequ_increment) OVER () AS end_increment,
+                sequ_max_val AS start_max_val, lead(sequ_max_val) OVER () AS end_max_val,
+                sequ_min_val AS start_min_val, lead(sequ_min_val) OVER () AS end_min_val,
+                sequ_cache_val AS start_cache_val, lead(sequ_cache_val) OVER () AS end_cache_val,
+                sequ_is_cycled AS start_is_cycled, lead(sequ_is_cycled) OVER () AS end_is_cycled,
+                sequ_is_called AS start_is_called, lead(sequ_is_called) OVER () AS end_is_called,
+                rel_group,
+                rel_time_range AS start_rel_time_range, lead(rel_time_range) OVER () AS end_rel_time_range,
+                time_clock_timestamp AS start_timestamp, lead(time_clock_timestamp) OVER () AS end_timestamp,
+                time_event AS start_time_event, lead(time_event) OVER () AS end_time_event,
+                mark_name AS start_mark_name, lead(mark_name) OVER () AS end_mark_name,
+                log_start AS start_log_start, lead(log_start) OVER () AS end_log_start,
+                log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
+           FROM event
+        )
+-- Filter time slices and compute statistics aggregates
+      SELECT rel_group AS stat_group, start_mark_name AS stat_first_mark, start_timestamp AS stat_first_mark_datetime,
+             start_time_id AS stat_first_time_id, start_log_start AS stat_is_log_start, end_mark_name AS stat_last_mark,
+             end_timestamp AS stat_last_mark_datetime, end_time_id AS stat_last_time_id, end_log_stop AS stat_is_log_stop,
+             (end_last_val - start_last_val) / start_increment
+               + CASE WHEN start_is_called THEN 0 ELSE 1 END
+               - CASE WHEN end_is_called THEN 0 ELSE 1 END AS stat_increments,
+             (start_start_val <> end_start_val OR start_increment <> end_increment OR start_max_val <> end_max_val
+                OR start_min_val <> end_min_val OR start_is_cycled <> end_is_cycled) AS stat_has_structure_changed,
+             count(rlbk_id)::INT AS stat_rollbacks
+        FROM time_slice
+             LEFT OUTER JOIN emaj.emaj_rlbk ON (rel_group = ANY (rlbk_groups) AND
+                                                rlbk_time_id >= start_time_id AND (end_time_id IS NULL OR rlbk_time_id < end_time_id))
+        WHERE end_timestamp IS NOT NULL                    -- time slice not starting with the very last event
+          AND start_rel_time_range = end_rel_time_range    -- same rel_time_range on the slice
+          AND NOT (start_log_stop AND end_log_start)       -- not a logging hole
+        GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+        ORDER BY start_time_id;
+  END;
+$_log_stat_sequence$;
+
 CREATE OR REPLACE FUNCTION emaj._gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, INOUT p_lastMark TEXT,
                                                             p_optionsList TEXT, p_tblseqs TEXT[], p_genSqlOnly BOOLEAN,
                                                             OUT p_nbStmt INT, OUT p_copyOptions TEXT, OUT p_noEmptyFiles BOOLEAN,

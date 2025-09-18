@@ -10502,7 +10502,7 @@ RETURNS SETOF emaj.emaj_detailed_log_stat_group_type LANGUAGE plpgsql AS
 $_detailed_log_stat_groups$
 -- This function effectively returns statistics on logged data changes executed between 2 marks as viewed through the log tables for one
 -- or several groups.
--- It provides muche precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- It provides much precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
 -- So the response time may be much longer.
 -- Input: groups name array, a boolean indicating whether the calling function is a multi_groups function,
 --        the 2 mark names defining a range
@@ -10603,7 +10603,7 @@ $_detailed_log_stat_groups$
              || coalesce(quote_literal(v_upperBoundMark), 'NULL') || '::TEXT AS stat_last_mark, '
              || coalesce(quote_literal(v_upperBoundMarkTs), 'NULL') || '::TIMESTAMPTZ AS stat_last_mark_datetime, '
              || coalesce(quote_literal(v_upperBoundTimeId), 'NULL') || '::BIGINT AS stat_last_time_id, '
-             || ' emaj_user::TEXT AS stat_user,'
+             || ' emaj_user::TEXT AS stat_role,'
              || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
              ||                ' WHEN ''UPD'' THEN ''UPDATE'''
              ||                ' WHEN ''DEL'' THEN ''DELETE'''
@@ -10614,8 +10614,8 @@ $_detailed_log_stat_groups$
              || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'') AND NOT (emaj_verb = ''TRU'' AND emaj_tuple = '''')'
              || ' AND emaj_gid > '|| v_lowerBoundGid
              || coalesce(' AND emaj_gid <= '|| v_upperBoundGid, '')
-             || ' GROUP BY stat_user, stat_verb'
-             || ' ORDER BY stat_user, stat_verb';
+             || ' GROUP BY stat_role, stat_verb'
+             || ' ORDER BY stat_role, stat_verb';
 -- Execute the statement.
         FOR r_stat IN EXECUTE v_stmt LOOP
           RETURN NEXT r_stat;
@@ -10896,7 +10896,7 @@ CREATE OR REPLACE FUNCTION emaj._log_stat_table(p_schema TEXT, p_table TEXT, p_s
 RETURNS SETOF emaj.emaj_log_stat_table_type LANGUAGE plpgsql AS
 $_log_stat_table$
 -- This function returns statistics about a single table, for the time period framed by a supplied time_id slice.
--- It is called by the various emaj_log_stat_table() function.
+-- It is called by the various emaj_log_stat_table() functions.
 -- For each mark interval, possibly for different tables groups, it returns the number of recorded changes.
 -- Input: schema and table names
 --        start and end time_id.
@@ -10915,7 +10915,7 @@ $_log_stat_table$
           AND group_is_logging
           AND p_endTimeId IS NULL
       );
--- OK, compute and return the statistics by scanning the table history in the emaj_table table.
+-- Compute and return the statistics by scanning the table history in the emaj_table table.
     RETURN QUERY
       WITH event AS (
         SELECT tbl_time_id, lower(rel_time_range), tbl_log_seq_last_val,
@@ -10935,7 +10935,7 @@ $_log_stat_table$
         UNION
 -- ... and add the table current state, if the upper bound is not fixed and if the table belongs to an active group yet.
         SELECT NULL, NULL, emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence),
-               rel_group, rel_time_range, clock_timestamp(), '', '[current state]', false, false
+               rel_group, rel_time_range, clock_timestamp(), '', '[current state]', FALSE, FALSE
           FROM emaj.emaj_relation
           WHERE v_needCurrentState
             AND rel_schema = p_schema
@@ -10943,19 +10943,19 @@ $_log_stat_table$
             AND upper_inf(rel_time_range)
         ORDER BY 1, 2
         ), time_slice AS (
--- transform elementary time events into time slices
-         SELECT tbl_time_id AS start_time_id, lead(tbl_time_id) OVER () AS end_time_id,
-                tbl_log_seq_last_val AS start_last_val, lead(tbl_log_seq_last_val) OVER () AS end_last_val,
-                rel_group,
-                rel_time_range AS start_rel_time_range, lead(rel_time_range) OVER () AS end_rel_time_range,
-                time_clock_timestamp AS start_timestamp, lead(time_clock_timestamp) OVER () AS end_timestamp,
-                time_event AS start_time_event, lead(time_event) OVER () AS end_time_event,
-                mark_name AS start_mark_name, lead(mark_name) OVER () AS end_mark_name,
-                log_start AS start_log_start, lead(log_start) OVER () AS end_log_start,
-                log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
-           FROM event
+-- Transform elementary time events into time slices
+        SELECT tbl_time_id AS start_time_id, lead(tbl_time_id) OVER () AS end_time_id,
+               tbl_log_seq_last_val AS start_last_val, lead(tbl_log_seq_last_val) OVER () AS end_last_val,
+               rel_group,
+               rel_time_range AS start_rel_time_range, lead(rel_time_range) OVER () AS end_rel_time_range,
+               time_clock_timestamp AS start_timestamp, lead(time_clock_timestamp) OVER () AS end_timestamp,
+               time_event AS start_time_event, lead(time_event) OVER () AS end_time_event,
+               mark_name AS start_mark_name, lead(mark_name) OVER () AS end_mark_name,
+               log_start AS start_log_start, lead(log_start) OVER () AS end_log_start,
+               log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
+          FROM event
         )
--- filter time slices and compute statistics aggregates
+-- Filter time slices and compute statistics aggregates
 -- (take into account log sequence holes generated by unlogged rollbacks)
       SELECT rel_group AS stat_group, start_mark_name AS stat_first_mark, start_timestamp AS stat_first_mark_datetime,
              start_time_id AS stat_first_time_id, start_log_start AS stat_is_log_start, end_mark_name AS stat_last_mark,
@@ -11160,7 +11160,7 @@ $_log_stat_sequence$
     IF v_needCurrentState THEN
       r_endSeq = emaj._get_current_seq(p_schema, p_sequence, 0);
     END IF;
--- OK, compute and return the statistics by scanning the sequence history in the emaj_sequence table.
+-- Compute and return the statistics by scanning the sequence history in the emaj_sequence table.
     RETURN QUERY
       WITH event AS (
         SELECT sequ_time_id, lower(rel_time_range), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val,
@@ -11190,7 +11190,7 @@ $_log_stat_sequence$
             AND upper_inf(rel_time_range)
         ORDER BY 1, 2
         ), time_slice AS (
--- transform elementary time events into time slices
+-- Transform elementary time events into time slices
          SELECT sequ_time_id AS start_time_id, lead(sequ_time_id) OVER () AS end_time_id,
                 sequ_last_val AS start_last_val, lead(sequ_last_val) OVER () AS end_last_val,
                 sequ_start_val AS start_start_val, lead(sequ_start_val) OVER () AS end_start_val,
@@ -11209,7 +11209,7 @@ $_log_stat_sequence$
                 log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
            FROM event
         )
--- filter time slices and compute statistics aggregates
+-- Filter time slices and compute statistics aggregates
       SELECT rel_group AS stat_group, start_mark_name AS stat_first_mark, start_timestamp AS stat_first_mark_datetime,
              start_time_id AS stat_first_time_id, start_log_start AS stat_is_log_start, end_mark_name AS stat_last_mark,
              end_timestamp AS stat_last_mark_datetime, end_time_id AS stat_last_time_id, end_log_stop AS stat_is_log_stop,
