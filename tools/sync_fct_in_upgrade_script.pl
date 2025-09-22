@@ -48,7 +48,7 @@ use warnings; use strict;
   my $procedure;                 # procedural code of the current function
   my $comment;                   # code of the current comment
 
-# function cleanUpSignature(): in function signature, remove IN clauses, DEFAULT clauses and useless spaces
+# Function cleanUpSignature(): in function signature, remove IN clauses, DEFAULT clauses and useless spaces.
   sub cleanUpSignature {
     my ($signatureIn) = @_;
     my $signatureOt;
@@ -57,12 +57,12 @@ use warnings; use strict;
     my $param;
     my $otParamList = '';
 
-    # extract the function name (before parenthesis) and the parameters list (between parenthesis)
+    # Extract the function name (before parenthesis) and the parameters list (between parenthesis).
     $signatureIn =~ /(\S*)\s*\(\s*(.*)\)/ || die "Internal error 1 in cleanUpSignature\n";
     $fullFnctName = $1;
     $RemainingParamList = $2;
 
-    # process each parameter
+    # Process each parameter.
     while ($RemainingParamList ne ''){
       if ($RemainingParamList =~ /\s*(.*?),(.*)/) {
         $param = $1; $RemainingParamList = $2;
@@ -71,27 +71,27 @@ use warnings; use strict;
         $param = $1; $RemainingParamList = '';
       }
 
-      # convert into upper case and remove the default clause if exists
+      # Convert into upper case and remove the default clause if exists.
       $param = uc $param;
       $param =~ s/DEFAULT.*//;
-      # remove the word IN (which is the default argument mode)
+      # Remove the word IN (which is the default argument mode).
       $param =~ s/IN\s//;
-      # remove the redundant spaces
+      # Remove the redundant spaces
       $param =~ s/^\s+//;
       $param =~ s/\s+$//;
       $param =~ s/\s+/ /g;
-      # build the return value
+      # Build the return value.
       $otParamList .= $param . ',';
     }
 
-    # remove the last comma
+    # Remove the last comma.
     $otParamList =~ s/,$//;
-    # return the normalized function signature
+    # Return the normalized function signature.
     $signatureOt = $fullFnctName . '(' . $otParamList . ')';
     return $signatureOt;
   }
 
-# function getReturnType(): extract and return the function's return type of a CREATE FUNCTION STATEMENT
+# Function getReturnType(): extract and return the function's return type of a CREATE FUNCTION STATEMENT.
   sub getReturnType {
     my ($code) = @_;
     my $returnType = '';
@@ -100,15 +100,15 @@ use warnings; use strict;
     my $parameter;
 
     $code = uc $code;
-# detect common function format
+# Detect common function format.
     if ($code =~ /RETURNS\s+(.*?)\s+(LANGUAGE|AS|WINDOW|IMMUTABLE|STABLE|VOLATILE|CALLED|SECURITY|NULL|COST|ROWS|SET|WITH)\s/) {
       $returnType = $1;
     } else {
-# detect function format with INOUT or OUT parameters
+# Detect function format with INOUT or OUT parameters.
       if ($code =~ /\((.*?)\)/s) {
         $parameters = $1;
         @parameters = split(/,/, $parameters);
-# analyze each parameter in the function parenthesis
+# Analyze each parameter in the function parenthesis.
         foreach $parameter (@parameters) {
           if ($parameter =~ /\s*(INOUT|OUT)\s+.*?\s+(.*?)\s*$/) {
             $returnType .= $2 . ',';
@@ -126,14 +126,14 @@ use warnings; use strict;
   }
 
 #
-# initialisation
+# Initialisation.
 #
   print ("---------------------------------------------------\n");
   print ("Synchronize functions into the E-Maj upgrade script\n");
   print ("---------------------------------------------------\n");
 
 #
-# read the existing upgrade script and keep in memory all what is before and after the functions definition
+# Read the existing upgrade script and keep in memory all what is before and after the functions definition.
 #
   print ("Reading the existing upgrade script ($upgradeScriptFile).\n");
   open (UPGSCR,$upgradeScriptFile) || die ("Error in opening $upgradeScriptFile file\n");
@@ -141,18 +141,18 @@ use warnings; use strict;
   while (<UPGSCR>){
     $line = $_;
     if ($status == 0) {
-      # detect existing tables that are dropped (if functions use their type as parameter, these functions will need to be recreated later)
+      # Detect existing tables that are dropped (if functions use their type as parameter, these functions will need to be recreated later).
       if ($line =~ /DROP TABLE (emaj.emaj_.*?)(\s|;)/) {
         if ($droppedTablesList eq '') { $droppedTablesList = $1 } else { $droppedTablesList .= '|' . $1 };
       }
-      # aggregate the code for the header part of the script (including the begin_functions pattern)
+      # Aggregate the code for the header part of the script (including the begin_functions pattern).
       $upgradeScriptHeader .= $line;
     }
-    # detect the beginning of the function definition part
+    # Detect the beginning of the function definition part.
     $status = 1 if ($line =~ /^--<begin_functions>/);
-    # detect the end of the function definition part
+    # Detect the end of the function definition part.
     $status = 2 if ($line =~ /^--<end_functions>/);
-    # aggregate the code for the footer part of the script (including the end_functions pattern)
+    # Aggregate the code for the footer part of the script (including the end_functions pattern).
     $upgradeScriptFooter .= $line if ($status == 2);
   }
   if ($status != 2) {
@@ -161,19 +161,19 @@ use warnings; use strict;
   close (UPGSCR);
 
 #
-# read the source of the previous version and keep in memory the functions definition
+# Read the source of the previous version and keep in memory the functions definition.
 #
   print ("Reading the source of the previous version ($previousSourceFile)\n");
   open (PREVSRC,$previousSourceFile) || die ("Error in opening $previousSourceFile file\n");
   $status = 0;
   while (<PREVSRC>){
     $line = $_;
-    # Stop the analysis of the source at event trigger creation
+    # Stop the analysis of the source at event trigger creation.
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
     # TODO: remove the next line once event triggers will be supported by all postgres version compatible with E-Maj
     last if ($line =~ /^-- event triggers                       --/);
 
-    # Beginning of a CREATE FUNCTION sql verb
+    # Beginning of a CREATE FUNCTION sql verb.
     if ($status == 0 && $line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\()/) {
       $status = 1;
       $nbFctPrevSrc++;
@@ -183,17 +183,17 @@ use warnings; use strict;
     if ($status == 1) {
       $fnctSignature .= $line;
     }
-    # aggregate the whole function code
+    # Aggregate the whole function code.
     if (($status == 1) || ($status == 2)) {
       $procedure .= $line;
     }
-    # Pattern $...$ that ends the function body definition
+    # Pattern $...$ that ends the function body definition.
     if ($status >= 2 && $line =~ /^\$$startFnctMark\$/) {
       $status = 0;
       push @prevSignatures, $cleanSignature;
       $prevFunctions{$cleanSignature} = $procedure;
     }
-    # Pattern $...$ that starts the function
+    # Pattern $...$ that starts the function.
     if ($status == 1 && $line =~ /^\$(.*)\$/) {
       $startFnctMark = $1;
       $fnctSignature =~ s/\n/ /sg;
@@ -206,7 +206,7 @@ use warnings; use strict;
   print "  -> $nbFctPrevSrc functions loaded.\n";
 
 #
-# read the source of the current version and keep in memory the functions definition and the function comments
+# Read the source of the current version and keep in memory the functions definition and the function comments.
 #
   print ("Reading the source of the current version ($currentSourceFile)\n");
   open (CURRSRC,$currentSourceFile) || die ("Error in opening $currentSourceFile file\n");
@@ -214,12 +214,12 @@ use warnings; use strict;
 
   while (<CURRSRC>){
     $line = $_;
-    # Stop the analysis of the source at event trigger creation
+    # Stop the analysis of the source at event trigger creation.
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
     # TODO: remove the next line once event triggers will be supported by all postgres version compatible with E-Maj
     last if ($line =~ /^-- event triggers and related functions --/);
 
-    # Beginning of a CREATE FUNCTION sql verb
+    # Beginning of a CREATE FUNCTION sql verb.
     if ($status == 0 && $line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\()/) {
       $status = 1;
       $nbFctCurrSrc++;
@@ -229,17 +229,17 @@ use warnings; use strict;
     if ($status == 1) {
       $fnctSignature .= $line;
     }
-    # aggregate the whole function code
+    # Aggregate the whole function code.
     if (($status == 1) || ($status == 2)) {
       $procedure .= $line;
     }
-    # Pattern $...$ that ends the function body definition
+    # Pattern $...$ that ends the function body definition.
     if ($status == 2 && $line =~ /^\$$startFnctMark\$/) {
       $status = 0;
       push @currSignatures, $cleanSignature;
       $currFunctions{$cleanSignature} = $procedure;
     }
-    # Pattern $...$ that starts the function
+    # Pattern $...$ that starts the function.
     if ($status == 1 && $line =~ /^\$(.*)\$/) {
       $startFnctMark = $1;
       $status = 2;
@@ -247,7 +247,7 @@ use warnings; use strict;
       $fnctSignature =~ s/^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/$1/;
       $cleanSignature = cleanUpSignature($fnctSignature);
     }
-    # Beginning of a COMMENT ON FUNCTION sql verb
+    # Beginning of a COMMENT ON FUNCTION sql verb.
     if ($line =~ /^COMMENT\s+ON\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {
       $fnctSignature = $1;
       if ($status != 0) {
@@ -258,16 +258,16 @@ use warnings; use strict;
       $comment = '';
       $cleanSignature = cleanUpSignature($fnctSignature);
     }
-    # aggregate the whole comment code
+    # Aggregate the whole comment code.
     if ($status == 3) {
       $comment .= $line;
     }
-    # Pattern $$; that ends the comment
+    # Pattern $$; that ends the comment.
     if ($status == 3 && $line =~ /\$\$;\s*$/) {
       $status = 0;
       $shortSignature = $fnctSignature;
-      $shortSignature =~ s/(V|R)_\S*\s//g;       # Suppression des noms de variable
-      $shortSignature =~ s/ //g;                 # Suppression des espaces
+      $shortSignature =~ s/(p|v|r)_\S*\s//gi;    # remove variable names
+      $shortSignature =~ s/ //g;                 # remove spaces
       $currComments{$shortSignature} = $comment;
     }
   }
@@ -275,51 +275,51 @@ use warnings; use strict;
   print "  -> $nbFctCurrSrc functions and $nbCommentCurrSrc comments loaded.\n";
 
 #
-# build the new upgrade script by reading the new source script and comparing the functions with what was read from the previous version
+# Build the new upgrade script by reading the new source script and comparing the functions with what was read from the previous version.
 #
 
   print ("Writing the upgrade script ($upgradeScriptFile)\n");
   open (UPGSCR,">$upgradeScriptFile") || die ("Error in opening $upgradeScriptFile file\n");
 
-  # write the upgrade script header
+  # Write the upgrade script header.
   print UPGSCR $upgradeScriptHeader;
 
-  # write the drop of deleted functions or functions with a changed return type
+  # Write the drop of deleted functions or functions with a changed return type.
   print UPGSCR "------------------------------------------------------------------\n";
   print UPGSCR "-- drop obsolete functions or functions with modified interface --\n";
   print UPGSCR "------------------------------------------------------------------\n";
   foreach $fnctSignature (@prevSignatures) {
     if (!exists($currFunctions{$fnctSignature}) || 
         getReturnType($prevFunctions{$fnctSignature}) ne getReturnType($currFunctions{$fnctSignature})) {
-      # the function is either deleted or has a changed return type
+      # The function is either deleted or has a changed return type.
       print UPGSCR "DROP FUNCTION IF EXISTS $fnctSignature;\n";
       $nbDropUpgrade++;
     }
   }
   print UPGSCR "\n";
 
-  # write the new or modified functions
+  # Write the new or modified functions.
   print UPGSCR "------------------------------------------------------------------\n";
   print UPGSCR "-- create new or modified functions                             --\n";
   print UPGSCR "------------------------------------------------------------------\n";
-
   foreach $fnctSignature (@currSignatures) {
 
     if (!exists($prevFunctions{$fnctSignature}) ||                               # the function is new or
         $prevFunctions{$fnctSignature} ne $currFunctions{$fnctSignature} ||      # the function has changed or
         ($droppedTablesList ne '' && $fnctSignature =~ /$droppedTablesList/i)) { # the function has a parameter whose type is a recreated table
 
-      # specific case of the _emaj_protection_event_trigger_fnct() function that must be temporarily re-added to the emaj extension
+      # Specific case of the _emaj_protection_event_trigger_fnct() function that must be temporarily re-added to the emaj extension.
       if ($fnctSignature eq 'public._emaj_protection_event_trigger_fnct()') {
         print UPGSCR "ALTER EXTENSION emaj ADD FUNCTION public._emaj_protection_event_trigger_fnct();\n"
       }
-      # write the function in the upgrade script
+      # Write the function in the upgrade script.
       print UPGSCR $currFunctions{$fnctSignature};
       $nbFctUpgrade++;
-      # if a comment also exists, write it
-      # remove variable names from the function signature
+
+      # if a comment also exists, write it.
+      # Remove variable names from the function signature.
       $shortSignature = $fnctSignature; $shortSignature =~ s/(P|V|R)_\S*\s//g;
-      # remove also the output variables (the intermediate ones and then the last of the function signature)
+      # Remove also the output variables (the intermediate ones and then the last of the function signature).
       $shortSignature =~ s/,\s*OUT\s+(.*?),/,/g; $shortSignature =~ s/,\s*OUT\s+(.*)\)/\)/;
 
       if (exists($currComments{$shortSignature})) {
@@ -329,14 +329,14 @@ use warnings; use strict;
       if ($fnctSignature eq 'public._emaj_protection_event_trigger_fnct()') {
         print UPGSCR "ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();\n"
       }
-      # add a blank line
+      # Add a blank line.
       print UPGSCR "\n";
     }
   }
 
-  # write the upgrade script footer before closing
+  # Write the upgrade script footer before closing.
   print UPGSCR $upgradeScriptFooter;
   close (UPGSCR);
 
-# complete the processing
+# Complete the processing.
   print ("  -> $nbDropUpgrade functions dropped, $nbFctUpgrade functions and $nbCommentUpgrade comments copied.\n\n");
