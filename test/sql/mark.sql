@@ -1,6 +1,6 @@
--- mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_comment_mark_group(),
--- emaj_rename_mark_group(), emaj_get_previous_mark_group(), emaj_delete_mark_group(),
--- emaj_protect_mark_group() and emaj_unprotect_mark_group() functions
+-- mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_does_exist_mark_group(),
+-- emaj_comment_mark_group(), emaj_rename_mark_group(), emaj_get_previous_mark_group(),
+-- emaj_delete_mark_group(), emaj_protect_mark_group() and emaj_unprotect_mark_group() functions
 --
 
 -- set sequence restart value
@@ -26,8 +26,14 @@ select emaj.emaj_set_mark_group('myGroup2','SM1','comment recorded at mark''s se
 select emaj.emaj_set_mark_group('myGroup2','phil''s mark #1');
 select emaj.emaj_set_mark_group('emptyGroup','SM1');
 
+-- check mark existence
+select emaj.emaj_does_exist_mark_group('unknownGroup', 'unknownMark');
+select emaj.emaj_does_exist_mark_group('myGroup1', 'unknownMark');
+select emaj.emaj_does_exist_mark_group('myGroup1', 'SM1');
+
 -- duplicate mark name
 select emaj.emaj_set_mark_group('myGroup1','SM1');
+select emaj.emaj_set_mark_group('myGroup1','SM1') where not emaj.emaj_does_exist_mark_group('myGroup1', 'SM1');
 
 -- mark with generated name and in a single transaction
 begin transaction;

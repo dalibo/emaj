@@ -277,7 +277,7 @@ select hist_function, hist_event, hist_wording
 -- set the parameter to drop the emaj_user_port column and add an 'extra_col_appname' column
 insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_table',
   'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
-select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_create_group('myGroup1') where not emaj.emaj_does_exist_group('myGroup1');
  emaj_create_group 
 -------------------
                  1
@@ -364,7 +364,7 @@ select pg_sleep(0.2);
  
 (1 row)
 
-select emaj.emaj_start_group('myGroup1','M1');
+select emaj.emaj_start_group('myGroup1','M1') where not emaj.emaj_is_logging_group('myGroup1') and not emaj.emaj_does_exist_mark_group('myGroup1', 'M1');
  emaj_start_group 
 ------------------
                 7

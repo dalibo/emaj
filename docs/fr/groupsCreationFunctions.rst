@@ -78,6 +78,8 @@ Le troisième paramètre représente un commentaire à associer au groupe à cr�
 
 La fonction retourne le nombre de groupes créés, c’est à dire 1.
 
+Pour insérer la création d’un groupe de tables dans un script idempotent, il est possible de conditionner cette création à sa non existence préalable, en utilisant la fonction :ref:`emaj_does_exist_group()<emaj_exist_state_mark_group>` dans une clause *WHERE*.
+
 .. _assign_table_sequence:
 
 Assigner des tables et séquences à un groupe de tables
@@ -189,3 +191,4 @@ Les éventuels schémas de log qui deviennent inutilisés sont également suppri
 
 La pose de verrous qu’entraîne cette opération peut se traduire par la survenue d'une étreinte fatale (*deadlock*). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le *deadlock* est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives.
 
+Pour insérer la suppression d’un groupe de tables dans un script idempotent, il est possible de conditionner l’opération à l’existence préalable du groupe, en utilisant la fonction :ref:`emaj_does_exist_group()<emaj_exist_state_mark_group>` dans une clause *WHERE*.

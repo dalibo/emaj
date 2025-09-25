@@ -1,4 +1,4 @@
--- create_drop.sql : test emaj_create_group(), emaj_comment_group(),
+-- create_drop.sql : test emaj_create_group(), emaj_does_exist_group(), emaj_comment_group(),
 -- emaj_assign_table(), emaj_assign_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
 -- emaj_export_groups_configuration(), emaj_import_groups_configuration(),
 -- emaj_drop_group() and emaj_force_drop_group() functions
@@ -15,7 +15,7 @@ select public.handle_emaj_sequences(1000);
 (1 row)
 
 -----------------------------
--- emaj_create_group() tests
+-- emaj_create_group() and emaj_does_exist_group() tests
 -----------------------------
 -- invalid group names
 select emaj.emaj_create_group(NULL);
@@ -67,10 +67,28 @@ select emaj.emaj_create_group('myGroup6');
                  1
 (1 row)
 
+-- check group existence
+select emaj.emaj_does_exist_group('emptyGroup');
+ emaj_does_exist_group 
+-----------------------
+ t
+(1 row)
+
+select emaj.emaj_does_exist_group('unknownGroup');
+ emaj_does_exist_group 
+-----------------------
+ f
+(1 row)
+
 -- already created
 select emaj.emaj_create_group('myGroup1');
 ERROR:  emaj_create_group: The group "myGroup1" already exists.
 CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,text) line 24 at RAISE
+select emaj.emaj_create_group('myGroup1') where not emaj.emaj_does_exist_group('myGroup1');
+ emaj_create_group 
+-------------------
+(0 rows)
+
 -----------------------------
 -- emaj_comment_group() tests
 -----------------------------

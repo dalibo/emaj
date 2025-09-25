@@ -38,6 +38,8 @@ The function also performs a purge of the oldest events in the :ref:`emaj_hist <
 
 When a group is started, its state becomes "*LOGGING*".
 
+To insert a tables group start into an idempotent script, it is possible to condition the operation to the group state, by using the :ref:`emaj_is_logging_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
+
 Using the *emaj_start_groups()* function, several groups can be started at once::
 
    SELECT emaj.emaj_start_groups('<group.names.array>'[, '<mark.name>'[,<delete.old.logs?>]]);
@@ -71,6 +73,8 @@ The *emaj_set_mark_group()* function records the identity of the new mark, with 
 It is possible to set two consecutive marks without any update on any table between these marks.
 
 The *emaj_set_mark_group()* function sets *ROW EXCLUSIVE* locks on each table of the group in order to be sure that no transaction having already performed updates on any table of the group is running. However, this does not guarantee that a transaction having already read one or several tables before the mark set, updates tables after the mark set. In such a case, these updates would be candidate for a potential rollback to this mark.
+
+To set a mark into an idempotent script, it is possible to condition the operation to the mark non-existence, by using the :ref:`emaj_does_exist_mark_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
 
 Using the *emaj_set_mark_groups()* function, a mark can be set on several groups at once::
 
@@ -202,6 +206,8 @@ However the content of log tables and E-Maj technical tables can be examined.
 When a group is stopped, its state becomes "*IDLE*" again.
 
 Executing the *emaj_stop_group()* function for a tables group already stopped does not generate an error. Only a warning message is returned.
+
+To insert a tables group stop into an idempotent script, it is possible to condition the operation to the group state, by using the :ref:`emaj_is_logging_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
 
 Using the *emaj_stop_groups()* function, several groups can be stopped at once::
 

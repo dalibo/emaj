@@ -1547,6 +1547,15 @@ $_verify_groups$
   END;
 $_verify_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_group(p_groupName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a tables group already exists, otherwise FALSE.
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_group WHERE group_name = p_groupName);
+$$;
+COMMENT ON FUNCTION emaj.emaj_does_exist_group(TEXT) IS
+$$Returns a boolean indicating whether a tables group exists.$$;
+
 CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_groups_conf$
@@ -1662,6 +1671,24 @@ $_export_groups_conf$
     RETURN v_groupsJson;
   END;
 $_export_groups_conf$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_is_logging_group(p_groupName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a tables group is in LOGGING state, otherwise FALSE (including when the tables group doesn't exist).
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_group WHERE group_name = p_groupName AND group_is_logging);
+$$;
+COMMENT ON FUNCTION emaj.emaj_is_logging_group(TEXT) IS
+$$Returns a boolean indicating whether a tables group is in LOGGING state.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a mark already exists for a tables group, otherwise FALSE.
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_mark WHERE mark_group = p_groupName AND mark_name = p_markName);
+$$;
+COMMENT ON FUNCTION emaj.emaj_does_exist_mark_group(TEXT, TEXT) IS
+$$Returns a boolean indicating whether a mark exists for a tables group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_planning(p_rlbkId INT)
 RETURNS INT LANGUAGE plpgsql
@@ -4068,6 +4095,9 @@ GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
 GRANT EXECUTE ON FUNCTION emaj._clean_array(p_array TEXT[]) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_group(p_groupName TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_is_logging_group(p_groupName TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT) TO emaj_viewer;
 
 ----------------------------------------------------------------
 --                                                            --

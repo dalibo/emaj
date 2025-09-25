@@ -3,6 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Add 3 new functions to help building idempotent tables groups
+    administration scripts.
   * Add a check into emaj_verify_all() to warn of unknown parameter keys in
     the emaj_param table.
   * Minor code changes.

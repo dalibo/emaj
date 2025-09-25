@@ -201,6 +201,12 @@ Groups level functions
 | <multiGroupsFunctions>` (V)                      | | start.mark TEXT,            |                                       |
 |                                                  | | end.mark TEXT               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_does_exist_group                      | | group  TEXT                 | BOOLEAN                               |
+| <emaj_exist_state_mark_group>` (V)               |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_does_exist_mark_group                 | | group TEXT,                 | BOOLEAN                               |
+| <emaj_exist_state_mark_group>` (V)               | | mark TEXT                   |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_drop_group                            | | group TEXT                  | #.tables.and.seq INT                  |
 | <emaj_drop_group>`                               |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
@@ -258,6 +264,9 @@ Groups level functions
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_previous_mark_group               | | group TEXT,                 | mark TEXT                             |
 | <emaj_get_previous_mark_group>` (V)              | | mark TEXT                   |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_is_logging_group                      | | group TEXT                  | BOOLEAN                               |
+| <emaj_exist_state_mark_group>` (V)               |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_log_stat_group                        | | group TEXT,                 | SETOF emaj_log_stat_type              |
 | <emaj_log_stat_group>` (V)                       | | start.mark TEXT,            |                                       |

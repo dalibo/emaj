@@ -38,6 +38,8 @@ La fonction procède également à la purge des événements les plus anciens de
 
 A l'issue du démarrage d'un groupe, celui-ci devient actif ("*LOGGING*").
 
+Pour insérer le démarrage d’un groupe de tables dans un script idempotent, il est possible de conditionner l’opération à l’état préalable du groupe, en utilisant la fonction :ref:`emaj_is_logging_group()<emaj_exist_state_mark_group>` dans une clause *WHERE*.
+
 Plusieurs groupes de tables peuvent être démarrés en même temps, en utilisant la fonction *emaj_start_groups()* ::
 
    SELECT emaj.emaj_start_groups('<tableau.des.groupes>'[, '<nom.de.marque>' [, <effacer.anciens.logs?>]]);
@@ -71,6 +73,8 @@ La fonction *emaj_set_mark_group()* enregistre l'identité de la nouvelle marque
 Il est possible d'enregistrer deux marques consécutives sans que des mises à jour de tables aient été enregistrées entre ces deux marques.
 
 La fonction *emaj_set_mark_group()* pose des verrous de type « *ROW EXCLUSIVE* » sur chaque table du groupe. Ceci permet de s'assurer qu'aucune transaction ayant déjà fait des mises à jour sur une table du groupe n'est en cours. Néanmoins, ceci ne garantit pas qu'une transaction ayant lu une ou plusieurs tables avant la pose de la marque, fasse des mises à jours après la pose de la marque. Dans ce cas, ces mises à jours effectuées après la pose de la marque seraient candidates à un éventuel rollback sur cette marque.
+
+Pour insérer la pose d’une marque dans un script idempotent, il est possible de conditionner l’opération à sa non existence préalable, en utilisant la fonction :ref:`emaj_does_exist_mark_group()<emaj_exist_state_mark_group>` dans une clause *WHERE*.
 
 Une marque peut être posée sur plusieurs groupes de tables même temps, en utilisant la fonction *emaj_set_mark_groups()* ::
 
@@ -204,6 +208,8 @@ Pour autant, le contenu des tables de log et des tables internes d'E-Maj peut en
 A l'issue de l'arrêt d'un groupe, celui-ci redevient inactif.
 
 Exécuter la fonction *emaj_stop_group()* sur un groupe de tables déjà arrêté ne génère pas d'erreur. Seul un message d'avertissement est retourné.
+
+Pour insérer l’arrêt d’un groupe de tables dans un script idempotent, il est possible de conditionner l’opération à l’état préalable du groupe, en utilisant la fonction :ref:`emaj_is_logging_group()<emaj_exist_state_mark_group>` dans une clause *WHERE*.
 
 Plusieurs groupes de tables peuvent être arrêtés en même temps, en utilisant la fonction *emaj_stop_groups()* ::
 

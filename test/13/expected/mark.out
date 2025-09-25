@@ -1,6 +1,6 @@
--- mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_comment_mark_group(),
--- emaj_rename_mark_group(), emaj_get_previous_mark_group(), emaj_delete_mark_group(),
--- emaj_protect_mark_group() and emaj_unprotect_mark_group() functions
+-- mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_does_exist_mark_group(),
+-- emaj_comment_mark_group(), emaj_rename_mark_group(), emaj_get_previous_mark_group(),
+-- emaj_delete_mark_group(), emaj_protect_mark_group() and emaj_unprotect_mark_group() functions
 --
 -- set sequence restart value
 select public.handle_emaj_sequences(3000);
@@ -74,12 +74,36 @@ select emaj.emaj_set_mark_group('emptyGroup','SM1');
                    0
 (1 row)
 
+-- check mark existence
+select emaj.emaj_does_exist_mark_group('unknownGroup', 'unknownMark');
+ emaj_does_exist_mark_group 
+----------------------------
+ f
+(1 row)
+
+select emaj.emaj_does_exist_mark_group('myGroup1', 'unknownMark');
+ emaj_does_exist_mark_group 
+----------------------------
+ f
+(1 row)
+
+select emaj.emaj_does_exist_mark_group('myGroup1', 'SM1');
+ emaj_does_exist_mark_group 
+----------------------------
+ t
+(1 row)
+
 -- duplicate mark name
 select emaj.emaj_set_mark_group('myGroup1','SM1');
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "SM1".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[p_groupName], p_mark)"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text,text) line 21 at SQL statement
+select emaj.emaj_set_mark_group('myGroup1','SM1') where not emaj.emaj_does_exist_mark_group('myGroup1', 'SM1');
+ emaj_set_mark_group 
+---------------------
+(0 rows)
+
 -- mark with generated name and in a single transaction
 begin transaction;
   select emaj.emaj_set_mark_group('myGroup1',NULL);

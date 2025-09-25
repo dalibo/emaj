@@ -189,6 +189,31 @@ In a variation of the function, the first input parameter directly contains the 
 
    SELECT emaj_import_groups_configuration(<JSON.structure> [,<groups.names.array> [,<alter_started_groups> [,<mark>]]]);
 
+.. _emaj_exist_state_mark_group:
+
+Knowing the existence or state of a tables group or a mark
+----------------------------------------------------------
+
+The E-Maj administrator who wishes to write idempotent SQL scripts to manage its tables groups can take benefit from a few useful functions: *emaj_does_exist_group()*, *emaj_is_logging_group()* and *emaj_does_exist_mark_group()*. ::
+
+   SELECT emaj.emaj_does_exist_group('<nom.du.groupe>');
+
+   SELECT emaj.emaj_is_logging_group('<nom.du.groupe>');
+
+   SELECT emaj.emaj_does_exist_mark_group('<nom.du.groupe>', ‘<nom.de.marque>’);
+
+They all return a boolean set to *TRUE* when respectively :
+
+* a given tables group exists,
+* a given tables group is in *LOGGING* state,
+* a given mark exists.
+
+By using these functions in a *WHERE* clause, it is possible for instance to only create a tables group if it does not exist yet. ::
+
+   SELECT emaj.emaj_create_group('<nom.du.groupe>')
+      WHERE NOT emaj.emaj_does_exist_group('<nom.du.groupe>');
+
+
 .. _emaj_forget_group:
 
 Erase traces from a dropped tables group

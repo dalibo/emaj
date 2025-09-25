@@ -99,8 +99,8 @@ Cette fonction *emaj_force_drop_group()* effectue le même traitement que la fon
 .. note::
    Depuis la création de la fonction :ref:`emaj_force_stop_group()<emaj_force_stop_group>`, cette fonction *emaj_force_drop_group()* devient en principe inutile. Elle est susceptible de disparaître dans une future version d'E-Maj.
 
-Export et import des configurations de groupes de tables
---------------------------------------------------------
+Exportation et importation des configurations de groupes de tables
+------------------------------------------------------------------
 
 Un jeu de fonctions permet d’exporter et d’importer des configurations de groupes de tables. Elles peuvent être utiles pour déployer un jeu standardisé de configuration de groupes de tables sur plusieurs bases de données ou lors de changements de version E-Maj par :ref:`désinstallation et réinstallation complète de l’extension<uninstall_reinstall>`.
 
@@ -187,6 +187,31 @@ La fonction retourne le nombre de groupes de tables importés.
 Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
 
    SELECT emaj_import_groups_configuration('<structure.JSON>'[,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> ]]]);
+
+.. _emaj_exist_state_mark_group:
+
+Connaitre l’existence ou l’état de groupe de tables ou de marques
+-----------------------------------------------------------------
+
+L’administrateur E-Maj souhaitant écrire des scripts SQL idempotents pour administrer ses groupes de tables dispose de quelques fonctions utiles : *emaj_does_exist_group()*, *emaj_is_logging_group()* et *emaj_does_exist_mark_group()*. ::
+
+   SELECT emaj.emaj_does_exist_group('<nom.du.groupe>');
+
+   SELECT emaj.emaj_is_logging_group('<nom.du.groupe>');
+
+   SELECT emaj.emaj_does_exist_mark_group('<nom.du.groupe>', ‘<nom.de.marque>’);
+
+
+Toutes retournent un booléen qui prend la valeur *TRUE* lorsque respectivement :
+
+* un groupe de tables donné existe,
+* un groupe de tables existe et est actif,
+* une marque donnée existe.
+
+En utilisant ces fonctions dans une clause *WHERE*, on peut, par exemple, ne créer le groupe de tables que s’il n’existe pas déjà. ::
+
+   SELECT emaj.emaj_create_group('<nom.du.groupe>')
+      WHERE NOT emaj.emaj_does_exist_group('<nom.du.groupe>');
 
 .. _emaj_forget_group:
 

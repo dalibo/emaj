@@ -1,4 +1,4 @@
--- start_stop.sql : test emaj_start_group(), emaj_start_groups(), 
+-- start_stop.sql : test emaj_start_group(), emaj_start_groups(), emaj_is_logging_group(),
 --                      emaj_stop_group(), emaj_stop_groups(), emaj_force_stop_group(),
 --                      emaj_protect_group() and emaj_unprotect_group() functions
 --
@@ -19,7 +19,7 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_group
 select emaj.emaj_disable_protection_by_event_triggers();
 
 -----------------------------
--- emaj_start_group() tests
+-- emaj_start_group() and emaj_is_logging_group() tests
 -----------------------------
 -- group is unknown in emaj_group
 select emaj.emaj_start_group(NULL,NULL);
@@ -146,6 +146,11 @@ select emaj.emaj_start_group('emptyGroup','Mark1');
 select emaj.emaj_stop_group('myGroup1');
 select emaj.emaj_stop_group('myGroup2');
 
+-- check group state
+select emaj.emaj_is_logging_group('unknownGroup');
+select emaj.emaj_is_logging_group('emptyGroup');
+select emaj.emaj_is_logging_group('myGroup1');
+
 -- Warnings on FK
 
 -- warning on fkey between tables from different groups
@@ -174,6 +179,7 @@ select emaj.emaj_start_group('myGroup2','',false);
 
 -- group already started
 select emaj.emaj_start_group('myGroup2','Mark3');
+select emaj.emaj_start_group('myGroup2','Mark3') where not emaj.emaj_is_logging_group('myGroup2');
 
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
@@ -229,6 +235,7 @@ select emaj.emaj_stop_group('myGroup2','Stop mark');
 -- warning, already stopped
 select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_stop_group('myGroup2','Stop mark 2');
+select emaj.emaj_stop_group('myGroup2') where emaj.emaj_is_logging_group('myGroup2');
 
 -- start with auto-mark in a single transaction
 begin transaction;

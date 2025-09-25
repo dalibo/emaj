@@ -92,7 +92,7 @@ select hist_function, hist_event, hist_wording
 insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_table',
   'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
 
-select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_create_group('myGroup1') where not emaj.emaj_does_exist_group('myGroup1');
 select emaj.emaj_comment_group('myGroup1','This is group #1');
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
 select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
@@ -113,7 +113,7 @@ select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','new_mark_name');
 -- force a purge of the history, the alter and the rollback tables
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
 select pg_sleep(0.2);
-select emaj.emaj_start_group('myGroup1','M1');
+select emaj.emaj_start_group('myGroup1','M1') where not emaj.emaj_is_logging_group('myGroup1') and not emaj.emaj_does_exist_mark_group('myGroup1', 'M1');
 delete from emaj.emaj_param where param_key = 'history_retention';
 
 select emaj.emaj_start_group('myGroup2','M1');

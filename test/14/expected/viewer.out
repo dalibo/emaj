@@ -199,6 +199,24 @@ select emaj.emaj_get_version();
  <devel>
 (1 row)
 
+select emaj.emaj_does_exist_group('myGroup1');
+ emaj_does_exist_group 
+-----------------------
+ t
+(1 row)
+
+select emaj.emaj_is_logging_group('myGroup1');
+ emaj_is_logging_group 
+-----------------------
+ t
+(1 row)
+
+select emaj.emaj_does_exist_mark_group('myGroup1', 'Mark');
+ emaj_does_exist_mark_group 
+----------------------------
+ f
+(1 row)
+
 select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
    log_schema   | log_table  
 ----------------+------------

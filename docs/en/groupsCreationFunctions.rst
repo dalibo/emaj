@@ -78,6 +78,8 @@ The third parameter is an optional comment to describe the group. If it is not p
 
 The function returns the number of created groups, i.e. 1.
 
+To insert a tables group creation into an idempotent script, it is possible to condition the creation to its non-existence, by using the :ref:`emaj_does_exist_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
+
 .. _assign_table_sequence:
 
 Assign tables and sequences into a tables group
@@ -188,3 +190,5 @@ For this tables group, the *emaj_drop_group()* function drops all the objects th
 The function also drops all log schemas that are now useless.
 
 The locks set by this operation can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
+
+To insert a tables group drop into an idempotent script, it is possible to condition the operation to the group existence, by using the :ref:`emaj_does_exist_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
