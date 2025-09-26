@@ -1,6 +1,7 @@
 E-Maj - Change log
 ==================
-<devel>
+
+4.7.1 (2025-Sept-27)
 ------
 ###Enhancements:###
   * Add 3 new functions to help building idempotent tables groups
