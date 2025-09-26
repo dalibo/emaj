@@ -18,7 +18,7 @@ use Data::Dumper;
 
 use vars qw($VERSION $PROGRAM $APPNAME);
 
-$VERSION = '4.7.1';
+$VERSION = '<devel>';
 $PROGRAM = 'emajStat.pl';
 $APPNAME = 'emajStat';
 

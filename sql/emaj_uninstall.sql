@@ -1,6 +1,6 @@
 -- emaj_uninstall.sql
 --
--- E-MAJ uninstall script : Version 4.7.1
+-- E-MAJ uninstall script : Version <devel>
 -- 
 -- This software is distributed under the GNU General Public License.
 --

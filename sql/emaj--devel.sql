@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table changes : Version 4.7.0
+-- E-Maj : logs and rollbacks table changes : Version <devel>
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -14,6 +14,12 @@
 
 -- Complain if this script is executed in psql, rather than via a CREATE EXTENSION statement.
 \echo Use "CREATE EXTENSION emaj CASCADE" to install the E-Maj extension. \quit
+
+----------------------------------------------------------------
+--                                                            --
+--                   Checks and E-Maj roles                   --
+--                                                            --
+----------------------------------------------------------------
 
 -- Perform some checks and create emaj roles.
 DO LANGUAGE plpgsql
@@ -69,7 +75,7 @@ CREATE TABLE emaj.emaj_version_hist (
   PRIMARY KEY (verh_version),
   EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
   );
-INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range) VALUES ('4.7.0', TSTZRANGE(clock_timestamp(), null, '[]'));
+INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range) VALUES ('<devel>', TSTZRANGE(clock_timestamp(), null, '[]'));
 COMMENT ON TABLE emaj.emaj_version_hist IS
 $$Contains E-Maj versions history.$$;
 
@@ -817,6 +823,15 @@ WITH inserted_time_stamp AS (
   SELECT time_id FROM inserted_time_stamp;
 $$;
 
+CREATE OR REPLACE FUNCTION emaj._clean_array(p_array TEXT[])
+RETURNS TEXT[] LANGUAGE SQL AS
+$$
+-- This function cleans up a text array by removing duplicates, NULL and empty strings.
+  SELECT array_agg(DISTINCT element)
+    FROM unnest(p_array) AS element
+    WHERE element IS NOT NULL AND element <> '';
+$$;
+
 CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, p_callerRole TEXT, OUT p_status INT, OUT p_schema TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
@@ -1029,10 +1044,7 @@ $_check_group_names$
     v_count                  INT;
   BEGIN
 -- Remove duplicates values, NULL and empty strings from the supplied group names array.
-    SELECT array_agg(DISTINCT group_name) INTO p_groupNames
-      FROM unnest(p_groupNames) AS group_name
-      WHERE group_name IS NOT NULL
-        AND group_name <> '';
+    p_groupNames = emaj._clean_array(p_groupNames);
 -- Process empty array.
     IF p_groupNames IS NULL THEN
       IF p_mayBeNull THEN
@@ -1527,8 +1539,7 @@ $_check_schema$
   END;
 $_check_schema$;
 
-CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN,
-                                                                     p_callingFunction TEXT)
+CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN)
 RETURNS TEXT[] LANGUAGE plpgsql AS
 $_check_tables_for_rollbackable_group$
 -- This function filters or verifies that tables are compatible with ROLLBACKABLE groups.
@@ -1540,7 +1551,8 @@ $_check_tables_for_rollbackable_group$
     v_array                  TEXT[];
   BEGIN
 -- Check or discard tables without primary key.
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class t
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema AND t.relname = ANY(p_tables)
@@ -1556,15 +1568,17 @@ $_check_tables_for_rollbackable_group$
               );
     IF v_list IS NOT NULL THEN
       IF NOT p_arrayFromRegex THEN
-        RAISE EXCEPTION '%: In schema %, some tables (%) have no PRIMARY KEY.', p_callingFunction, quote_ident(p_schema), v_list;
+        RAISE EXCEPTION '_check_tables_for_rollbackable_group: In schema %, some tables (%) have no PRIMARY KEY.',
+                        quote_ident(p_schema), v_list;
       ELSE
-        RAISE WARNING '%: Some tables without PRIMARY KEY (%) are not selected.', p_callingFunction, v_list;
+        RAISE WARNING '_check_tables_for_rollbackable_group: Some tables without PRIMARY KEY (%) are not selected.', v_list;
         -- remove these tables from the tables to process
         p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check or discard UNLOGGED tables.
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema
@@ -1573,9 +1587,10 @@ $_check_tables_for_rollbackable_group$
         AND relpersistence = 'u';
     IF v_list IS NOT NULL THEN
       IF NOT p_arrayFromRegex THEN
-        RAISE EXCEPTION '%: In schema %, some tables (%) are UNLOGGED tables.', p_callingFunction, quote_ident(p_schema), v_list;
+        RAISE EXCEPTION '_check_tables_for_rollbackable_group: In schema %, some tables (%) are UNLOGGED tables.',
+                        quote_ident(p_schema), v_list;
       ELSE
-        RAISE WARNING '%: Some UNLOGGED tables (%) are not selected.', p_callingFunction, v_list;
+        RAISE WARNING '_check_tables_for_rollbackable_group: Some UNLOGGED tables (%) are not selected.', v_list;
         -- remove these tables from the tables to process
         p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
@@ -1647,27 +1662,20 @@ $_check_tblseqs_array$
 -- Check that the schema exists.
     v_schemaExists = emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
 -- Clean up the relation names array: remove duplicates values, NULL and empty strings.
-    SELECT array_agg(DISTINCT tblseq) INTO v_tblseqs
-      FROM unnest(p_tblseqs) AS tblseq
-      WHERE tblseq IS NOT NULL AND tblseq <> '';
+    v_tblseqs = emaj._clean_array(p_tblseqs);
 -- If the schema exists, check that all relations exist.
     IF v_schemaExists THEN
-      WITH tblseqs AS (
-        SELECT unnest(v_tblseqs) AS tblseq
-        )
-      SELECT string_agg(quote_ident(tblseq), ', ') INTO v_list
-        FROM
-          (SELECT tblseq
-             FROM tblseqs
-             WHERE NOT EXISTS
-                     (SELECT 0
-                        FROM pg_catalog.pg_class
-                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                        WHERE nspname = p_schema
-                          AND relname = tblseq
-                          AND relkind = p_relkind
-                     )
-          ) AS t;
+      SELECT string_agg(quote_ident(tblseq), ', ' ORDER BY tblseq)
+        INTO v_list
+        FROM unnest(v_tblseqs) AS tblseq
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = p_schema
+                     AND relname = tblseq
+                     AND relkind = p_relkind
+                );
       IF v_list IS NOT NULL THEN
         IF p_exceptionIfMissing THEN
           RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not exist!', p_schema, v_relationKind, v_list;
@@ -1677,23 +1685,18 @@ $_check_tblseqs_array$
       END IF;
     END IF;
 -- Check that the relations currently belong to a tables group (not necessarily the same for all relations).
-    WITH all_supplied_tblseqs AS (
-      SELECT unnest(v_tblseqs) AS tblseq
-      ),
-         tblseqs_in_groups AS (
-      SELECT rel_tblseq
-        FROM emaj.emaj_relation
-        WHERE rel_schema = p_schema
-          AND rel_tblseq = ANY(v_tblseqs)
-          AND rel_kind = p_relkind
-          AND upper_inf(rel_time_range)
-      )
-    SELECT string_agg(quote_ident(tblseq), ', ') INTO v_list
+    SELECT string_agg(quote_ident(tblseq), ', ' ORDER BY tblseq)
+      INTO v_list
       FROM
         (  SELECT tblseq
-             FROM all_supplied_tblseqs
+             FROM unnest(v_tblseqs) AS tblseq
          EXCEPT
-           SELECT rel_tblseq FROM tblseqs_in_groups
+           SELECT rel_tblseq
+             FROM emaj.emaj_relation
+             WHERE rel_schema = p_schema
+               AND rel_tblseq = ANY(v_tblseqs)
+               AND rel_kind = p_relkind
+               AND upper_inf(rel_time_range)
         ) AS t;
     IF v_list IS NOT NULL THEN
       RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not currently belong to any tables group.',
@@ -1974,10 +1977,7 @@ $_check_tblseqs_filter$
     v_count                  INT;
   BEGIN
 -- Remove duplicates values, NULL and empty strings from the supplied tables/sequences names array.
-    SELECT coalesce(array_agg(DISTINCT table_seq_name), ARRAY[]::TEXT[]) INTO p_tblseqs
-      FROM unnest(p_tblseqs) AS table_seq_name
-      WHERE table_seq_name IS NOT NULL
-        AND table_seq_name <> '';
+    p_tblseqs = coalesce(emaj._clean_array(p_tblseqs), ARRAY[]::TEXT[]);
     IF p_tblseqs = ARRAY[]::TEXT[] THEN
       RAISE WARNING '_check_tblseqs_filter: The table/sequence names array is empty.';
       RETURN;
@@ -2290,32 +2290,26 @@ $_assign_tables$
 -- Check tables.
     IF NOT p_arrayFromRegex THEN
 -- From the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array.
-      SELECT array_agg(DISTINCT table_name) INTO p_tables
-        FROM unnest(p_tables) AS table_name
-        WHERE table_name IS NOT NULL AND table_name <> '';
+      p_tables = emaj._clean_array(p_tables);
 -- Check that application tables exist.
-      WITH tables AS (
-        SELECT unnest(p_tables) AS table_name
-      )
-      SELECT string_agg(quote_ident(table_name), ', ') INTO v_list
-        FROM
-          (SELECT table_name
-             FROM tables
-             WHERE NOT EXISTS
-                     (SELECT 0
-                        FROM pg_catalog.pg_class
-                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                        WHERE nspname = p_schema
-                          AND relname = table_name
-                          AND relkind IN ('r','p')
-                     )
-          ) AS t;
+      SELECT string_agg(quote_ident(table_name), ', ' ORDER BY table_name)
+        INTO v_list
+        FROM unnest(p_tables) AS table_name
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = p_schema
+                     AND relname = table_name
+                     AND relkind IN ('r','p')
+                );
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) do not exist.', quote_ident(p_schema), v_list;
       END IF;
     END IF;
 -- Check or discard partitioned application tables (only elementary partitions can be managed by E-Maj).
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema
@@ -2328,16 +2322,12 @@ $_assign_tables$
       ELSE
         RAISE WARNING '_assign_tables: Some partitionned tables (%) are not selected.', v_list;
         -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-            (  SELECT unnest(p_tables)
-             EXCEPT
-               SELECT unnest(v_array)
-            ) AS t(remaining_table);
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check or discard TEMP tables.
-    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
       FROM pg_catalog.pg_class
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
       WHERE nspname = p_schema
@@ -2350,20 +2340,16 @@ $_assign_tables$
       ELSE
         RAISE WARNING '_assign_tables: Some TEMP tables (%) are not selected.', v_list;
         -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-           (  SELECT unnest(p_tables)
-            EXCEPT
-              SELECT unnest(v_array)
-           ) AS t(remaining_table);
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- If the group is ROLLBACKABLE, perform additional checks or filters (a PK, not UNLOGGED).
     IF v_groupIsRollbackable THEN
-      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex, '_assign_tables');
+      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex);
     END IF;
 -- Check or discard tables already assigned to a group.
-    SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
+    SELECT string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_array
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
         AND rel_tblseq = ANY(p_tables)
@@ -2374,12 +2360,7 @@ $_assign_tables$
       ELSE
         RAISE WARNING '_assign_tables: Some tables already belonging to a group (%) are not selected.', v_list;
         -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-            (  SELECT unnest(p_tables)
-             EXCEPT
-               SELECT unnest(v_array)
-            ) AS t(remaining_table);
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check and extract the tables JSON properties.
@@ -2454,7 +2435,8 @@ $_assign_tables$
       FOREACH v_oneTable IN ARRAY p_tables
       LOOP
 -- Check that the triggers listed in ignored_triggers property exists for the table.
-        SELECT string_agg(quote_ident(trigger_name), ', ') INTO v_list
+        SELECT string_agg(quote_ident(trigger_name), ', ' ORDER BY trigger_name)
+          INTO v_list
           FROM
             (  SELECT trigger_name
                  FROM unnest(v_ignoredTriggers) AS trigger_name
@@ -2474,17 +2456,16 @@ $_assign_tables$
         END IF;
 -- Build the array of "triggers to ignore at rollback time".
         IF v_selectConditions IS NOT NULL THEN
-          EXECUTE format(
-            $$SELECT array_agg(tgname ORDER BY tgname)
-                FROM pg_catalog.pg_trigger
-                     JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
-                     JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
-                WHERE nspname = %L
-                  AND relname = %L
-                  AND tgconstraint = 0
-                  AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
-                  AND (%s)
-            $$, p_schema, v_oneTable, v_selectConditions)
+          EXECUTE format('SELECT array_agg(tgname ORDER BY tgname)'
+                         '  FROM pg_catalog.pg_trigger'
+                         '       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)'
+                         '       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)'
+                         '  WHERE nspname = %L'
+                         '    AND relname = %L'
+                         '    AND tgconstraint = 0'
+                         '    AND tgname NOT IN (''emaj_log_trg'',''emaj_trunc_trg'')'
+                         '    AND (%s)',
+                         p_schema, v_oneTable, v_selectConditions)
             INTO v_selectedIgnoredTrgs;
         END IF;
 -- Create the table.
@@ -2767,7 +2748,7 @@ $_move_tables$
 -- If at least 1 source tables group is of type AUDIT_ONLY and the target tables group is ROLLBACKABLE, add some checks on tables.
 -- They may be incompatible with ROLLBACKABLE groups.
     IF v_nbAuditOnlyGroups > 0 AND v_newGroupIsRollbackable THEN
-      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex, '_move_tables');
+      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex);
     END IF;
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
@@ -2996,17 +2977,16 @@ $_modify_tables$
         IF v_ignoredTrgChanged THEN
 --   Compute the new list of "triggers to ignore at rollback time".
           IF v_selectConditions IS NOT NULL THEN
-            EXECUTE format(
-              $$SELECT array_agg(tgname ORDER BY tgname)
-                  FROM pg_catalog.pg_trigger
-                       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
-                       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
-                  WHERE nspname = %L
-                    AND relname = %L
-                    AND tgconstraint = 0
-                    AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
-                    AND (%s)
-              $$, p_schema, r_rel.rel_tblseq, v_selectConditions)
+            EXECUTE format('SELECT array_agg(tgname ORDER BY tgname)'
+                           '  FROM pg_catalog.pg_trigger'
+                           '       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)'
+                           '       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)'
+                           '  WHERE nspname = %L'
+                           '    AND relname = %L'
+                           '    AND tgconstraint = 0'
+                           '    AND tgname NOT IN (''emaj_log_trg'',''emaj_trunc_trg'')'
+                           '    AND (%s)',
+                           p_schema, r_rel.rel_tblseq, v_selectConditions)
               INTO v_newIgnoredTriggers;
           END IF;
           IF (r_rel.rel_ignored_triggers <> v_newIgnoredTriggers
@@ -3321,13 +3301,11 @@ $_build_sql_tbl$
       FROM
         (SELECT attname, regexp_replace(format_type(atttypid,atttypmod),E'\\(.*$','') AS format_type
            FROM pg_catalog.pg_attribute
-                JOIN  pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
-           WHERE attnum = ANY (indkey)
-             AND indrelid = p_fullTableName::regclass
-             AND indisprimary
-             AND attnum > 0
-             AND attisdropped = FALSE
-           ORDER BY attnum
+                JOIN pg_catalog.pg_constraint ON (conrelid = attrelid)
+           WHERE attnum = ANY (conkey)
+             AND conrelid = p_fullTableName::regclass
+             AND contype = 'p'
+           ORDER BY array_position(conkey, attnum)
         ) AS t;
 -- Build the generated columns array.
     SELECT array_agg(attname ORDER BY attnum)
@@ -4039,30 +4017,25 @@ $_assign_sequences$
 -- Check sequences.
     IF NOT p_arrayFromRegex THEN
 -- Remove duplicates values, NULL and empty strings from the sequence names array supplied by the user.
-      SELECT array_agg(DISTINCT sequence_name) INTO p_sequences
-        FROM unnest(p_sequences) AS sequence_name
-        WHERE sequence_name IS NOT NULL AND sequence_name <> '';
+      p_sequences = emaj._clean_array(p_sequences);
 -- Check that application sequences exist.
-      WITH sequences AS (
-        SELECT unnest(p_sequences) AS sequence_name)
-      SELECT string_agg(quote_ident(sequence_name), ', ') INTO v_list
-        FROM
-          (SELECT sequence_name
-             FROM sequences
-             WHERE NOT EXISTS
-                    (SELECT 0
-                       FROM pg_catalog.pg_class
-                            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                       WHERE nspname = p_schema
-                         AND relname = sequence_name
-                         AND relkind = 'S')
-          ) AS t;
+      SELECT string_agg(quote_ident(sequence_name), ', ' ORDER BY sequence_name)
+        INTO v_list
+        FROM unnest(p_sequences) AS sequence_name
+        WHERE NOT EXISTS
+               (SELECT 0
+                  FROM pg_catalog.pg_class
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                  WHERE nspname = p_schema
+                    AND relname = sequence_name
+                    AND relkind = 'S');
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) do not exist.', quote_ident(p_schema), v_list;
       END IF;
     END IF;
 -- Check or discard sequences already assigned to a group.
-    SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
+    SELECT string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_array
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
         AND rel_tblseq = ANY(p_sequences)
@@ -4073,12 +4046,7 @@ $_assign_sequences$
       ELSE
         RAISE WARNING '_assign_sequences: Some sequences already belonging to a group (%) are not selected.', v_list;
         -- remove these sequences from the sequences to process
-        SELECT array_agg(remaining_sequence) INTO p_sequences
-          FROM
-            (  SELECT unnest(p_sequences)
-             EXCEPT
-               SELECT unnest(v_array)
-            ) AS t(remaining_sequence);
+        p_sequences = array(SELECT unnest(p_sequences) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check the supplied mark.
@@ -5335,21 +5303,19 @@ $_verify_groups$
         FROM
           (SELECT rel_schema, rel_tblseq, rel_group,
                   array_to_string(rel_pk_cols, ',') AS registered_pk_columns,
-                  string_agg(attname, ',' ORDER BY attnum) AS current_pk_columns
+                  string_agg(attname, ',' ORDER BY array_position(conkey, attnum)) AS current_pk_columns
              FROM emaj.emaj_relation
                   JOIN emaj.emaj_group ON (group_name = rel_group)
                   JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
-                  JOIN pg_catalog.pg_index ON (indrelid = pg_class.oid)
-                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_index.indrelid)
+                  JOIN pg_catalog.pg_constraint ON (conrelid = pg_class.oid)
+                  JOIN pg_catalog.pg_attribute ON (attrelid = conrelid)
              WHERE rel_group = ANY (p_groups)
                AND rel_kind = 'r'
                AND upper_inf(rel_time_range)
                AND group_is_rollbackable
-               AND attnum = ANY (indkey)
-               AND indisprimary
-               AND attnum > 0
-               AND NOT attisdropped
+               AND contype = 'p'
+               AND attnum = ANY (conkey)
              GROUP BY 1,2,3,4
           ) AS t
         WHERE registered_pk_columns <> current_pk_columns
@@ -5382,7 +5348,7 @@ $_verify_groups$
              GROUP BY 1,2,3,4
           ) AS t
         WHERE registered_gen_columns <> current_gen_columns
-        ORDER BY 1,2,3
+        ORDER BY 1,2,3,4
     LOOP
       IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
@@ -5409,7 +5375,7 @@ $_verify_groups$
                       AND relname = rel_tblseq
                       AND tgname = trg_name
                  )
-        ORDER BY 1,2,3
+        ORDER BY 1,2,3,4
     LOOP
       IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (11): % %', r_object.msg, v_hint; END IF;
       RETURN NEXT r_object;
@@ -5822,6 +5788,15 @@ $_drop_group$
   END;
 $_drop_group$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_group(p_groupName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a tables group already exists, otherwise FALSE.
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_group WHERE group_name = p_groupName);
+$$;
+COMMENT ON FUNCTION emaj.emaj_does_exist_group(TEXT) IS
+$$Returns a boolean indicating whether a tables group exists.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_forget_group(p_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_forget_group$
@@ -5931,16 +5906,14 @@ $_export_groups_conf$
                            emaj.emaj_get_version() || ', at ' || statement_timestamp() || E'",\n';
 -- Check the group names array, if supplied. All the listed groups must exist.
     IF p_groups IS NOT NULL THEN
-      SELECT string_agg(group_name, ', ') INTO v_unknownGroupsList
-        FROM
-          (SELECT *
-             FROM unnest(p_groups) AS grp(group_name)
-             WHERE NOT EXISTS
-                    (SELECT group_name
-                       FROM emaj.emaj_group
-                       WHERE emaj_group.group_name = grp.group_name
-                    )
-          ) AS t;
+      SELECT string_agg(group_name, ', ' ORDER BY group_name)
+        INTO v_unknownGroupsList
+        FROM unnest(p_groups) AS grp(group_name)
+        WHERE NOT EXISTS
+               (SELECT group_name
+                  FROM emaj.emaj_group
+                  WHERE emaj_group.group_name = grp.group_name
+               );
       IF v_unknownGroupsList IS NOT NULL THEN
         RAISE EXCEPTION '_export_groups_conf: The tables groups % are unknown.', v_unknownGroupsList;
       END IF;
@@ -7177,6 +7150,15 @@ $_stop_groups$
   END;
 $_stop_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_is_logging_group(p_groupName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a tables group is in LOGGING state, otherwise FALSE (including when the tables group doesn't exist).
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_group WHERE group_name = p_groupName AND group_is_logging);
+$$;
+COMMENT ON FUNCTION emaj.emaj_is_logging_group(TEXT) IS
+$$Returns a boolean indicating whether a tables group is in LOGGING state.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_protect_group(p_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_protect_group$
@@ -7444,6 +7426,15 @@ $_set_mark_groups$
     RETURN v_nbSeq + v_nbTbl;
   END;
 $_set_mark_groups$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a mark already exists for a tables group, otherwise FALSE.
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_mark WHERE mark_group = p_groupName AND mark_name = p_markName);
+$$;
+COMMENT ON FUNCTION emaj.emaj_does_exist_mark_group(TEXT, TEXT) IS
+$$Returns a boolean indicating whether a mark exists for a tables group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_comment_mark_group(p_groupName TEXT, p_mark TEXT, p_comment TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -8932,7 +8923,7 @@ $_rlbk_planning$
         END IF;
       END LOOP;
 -- Raise an exception if DROP_FK steps concerns inherited FK (i.e. FK set on a partitionned table)
-      SELECT string_agg(rlbp_schema || '.' || rlbp_table || '.' || rlbp_object, ', ')
+      SELECT string_agg(rlbp_schema || '.' || rlbp_table || '.' || rlbp_object, ', ' ORDER BY rlbp_schema, rlbp_table, rlbp_object)
         INTO v_fkList
         FROM emaj.emaj_rlbk_plan r
              JOIN pg_catalog.pg_class t ON (t.relname = r.rlbp_table)
@@ -8990,7 +8981,7 @@ $_rlbk_planning$
             AND rlbp_step = 'ADD_FK'
       LOOP
         SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
-          FROM emaj._estimate_rlbk_step_duration('ADD_FK', r_tbl.rlbp_schema, r_tbl.rlbp_table, r_fk.rlbp_object,
+          FROM emaj._estimate_rlbk_step_duration('ADD_FK', r_fk.rlbp_schema, r_fk.rlbp_table, r_fk.rlbp_object,
                                                  r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_fkey_check);
         UPDATE emaj.emaj_rlbk_plan
           SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
@@ -9007,7 +8998,7 @@ $_rlbk_planning$
             AND rlbp_step = 'SET_FK_IMM'
       LOOP
         SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
-          FROM emaj._estimate_rlbk_step_duration('SET_FK_IMM', r_tbl.rlbp_schema, r_tbl.rlbp_table, r_fk.rlbp_object,
+          FROM emaj._estimate_rlbk_step_duration('SET_FK_IMM', r_fk.rlbp_schema, r_fk.rlbp_table, r_fk.rlbp_object,
                                                  r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_fkey_check);
         UPDATE emaj.emaj_rlbk_plan
           SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
@@ -9199,7 +9190,7 @@ $_estimate_rlbk_step_duration$
         END IF;
 --
       WHEN p_step = 'ADD_FK' THEN
-        IF p_estimatedQuantity = 0 THEN
+        IF p_estimatedQuantity <= 0 THEN
 -- Empty table (or table not yet analyzed).
           p_estimatedDuration = p_defaultFixedCost;
           p_estimateMethod = 3;
@@ -10531,7 +10522,7 @@ RETURNS SETOF emaj.emaj_detailed_log_stat_group_type LANGUAGE plpgsql AS
 $_detailed_log_stat_groups$
 -- This function effectively returns statistics on logged data changes executed between 2 marks as viewed through the log tables for one
 -- or several groups.
--- It provides muche precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- It provides much precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
 -- So the response time may be much longer.
 -- Input: groups name array, a boolean indicating whether the calling function is a multi_groups function,
 --        the 2 mark names defining a range
@@ -10632,7 +10623,7 @@ $_detailed_log_stat_groups$
              || coalesce(quote_literal(v_upperBoundMark), 'NULL') || '::TEXT AS stat_last_mark, '
              || coalesce(quote_literal(v_upperBoundMarkTs), 'NULL') || '::TIMESTAMPTZ AS stat_last_mark_datetime, '
              || coalesce(quote_literal(v_upperBoundTimeId), 'NULL') || '::BIGINT AS stat_last_time_id, '
-             || ' emaj_user::TEXT AS stat_user,'
+             || ' emaj_user::TEXT AS stat_role,'
              || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
              ||                ' WHEN ''UPD'' THEN ''UPDATE'''
              ||                ' WHEN ''DEL'' THEN ''DELETE'''
@@ -10643,8 +10634,8 @@ $_detailed_log_stat_groups$
              || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'') AND NOT (emaj_verb = ''TRU'' AND emaj_tuple = '''')'
              || ' AND emaj_gid > '|| v_lowerBoundGid
              || coalesce(' AND emaj_gid <= '|| v_upperBoundGid, '')
-             || ' GROUP BY stat_user, stat_verb'
-             || ' ORDER BY stat_user, stat_verb';
+             || ' GROUP BY stat_role, stat_verb'
+             || ' ORDER BY stat_role, stat_verb';
 -- Execute the statement.
         FOR r_stat IN EXECUTE v_stmt LOOP
           RETURN NEXT r_stat;
@@ -10925,7 +10916,7 @@ CREATE OR REPLACE FUNCTION emaj._log_stat_table(p_schema TEXT, p_table TEXT, p_s
 RETURNS SETOF emaj.emaj_log_stat_table_type LANGUAGE plpgsql AS
 $_log_stat_table$
 -- This function returns statistics about a single table, for the time period framed by a supplied time_id slice.
--- It is called by the various emaj_log_stat_table() function.
+-- It is called by the various emaj_log_stat_table() functions.
 -- For each mark interval, possibly for different tables groups, it returns the number of recorded changes.
 -- Input: schema and table names
 --        start and end time_id.
@@ -10944,7 +10935,7 @@ $_log_stat_table$
           AND group_is_logging
           AND p_endTimeId IS NULL
       );
--- OK, compute and return the statistics by scanning the table history in the emaj_table table.
+-- Compute and return the statistics by scanning the table history in the emaj_table table.
     RETURN QUERY
       WITH event AS (
         SELECT tbl_time_id, lower(rel_time_range), tbl_log_seq_last_val,
@@ -10964,7 +10955,7 @@ $_log_stat_table$
         UNION
 -- ... and add the table current state, if the upper bound is not fixed and if the table belongs to an active group yet.
         SELECT NULL, NULL, emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence),
-               rel_group, rel_time_range, clock_timestamp(), '', '[current state]', false, false
+               rel_group, rel_time_range, clock_timestamp(), '', '[current state]', FALSE, FALSE
           FROM emaj.emaj_relation
           WHERE v_needCurrentState
             AND rel_schema = p_schema
@@ -10972,19 +10963,19 @@ $_log_stat_table$
             AND upper_inf(rel_time_range)
         ORDER BY 1, 2
         ), time_slice AS (
--- transform elementary time events into time slices
-         SELECT tbl_time_id AS start_time_id, lead(tbl_time_id) OVER () AS end_time_id,
-                tbl_log_seq_last_val AS start_last_val, lead(tbl_log_seq_last_val) OVER () AS end_last_val,
-                rel_group,
-                rel_time_range AS start_rel_time_range, lead(rel_time_range) OVER () AS end_rel_time_range,
-                time_clock_timestamp AS start_timestamp, lead(time_clock_timestamp) OVER () AS end_timestamp,
-                time_event AS start_time_event, lead(time_event) OVER () AS end_time_event,
-                mark_name AS start_mark_name, lead(mark_name) OVER () AS end_mark_name,
-                log_start AS start_log_start, lead(log_start) OVER () AS end_log_start,
-                log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
-           FROM event
+-- Transform elementary time events into time slices
+        SELECT tbl_time_id AS start_time_id, lead(tbl_time_id) OVER () AS end_time_id,
+               tbl_log_seq_last_val AS start_last_val, lead(tbl_log_seq_last_val) OVER () AS end_last_val,
+               rel_group,
+               rel_time_range AS start_rel_time_range, lead(rel_time_range) OVER () AS end_rel_time_range,
+               time_clock_timestamp AS start_timestamp, lead(time_clock_timestamp) OVER () AS end_timestamp,
+               time_event AS start_time_event, lead(time_event) OVER () AS end_time_event,
+               mark_name AS start_mark_name, lead(mark_name) OVER () AS end_mark_name,
+               log_start AS start_log_start, lead(log_start) OVER () AS end_log_start,
+               log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
+          FROM event
         )
--- filter time slices and compute statistics aggregates
+-- Filter time slices and compute statistics aggregates
 -- (take into account log sequence holes generated by unlogged rollbacks)
       SELECT rel_group AS stat_group, start_mark_name AS stat_first_mark, start_timestamp AS stat_first_mark_datetime,
              start_time_id AS stat_first_time_id, start_log_start AS stat_is_log_start, end_mark_name AS stat_last_mark,
@@ -11189,7 +11180,7 @@ $_log_stat_sequence$
     IF v_needCurrentState THEN
       r_endSeq = emaj._get_current_seq(p_schema, p_sequence, 0);
     END IF;
--- OK, compute and return the statistics by scanning the sequence history in the emaj_sequence table.
+-- Compute and return the statistics by scanning the sequence history in the emaj_sequence table.
     RETURN QUERY
       WITH event AS (
         SELECT sequ_time_id, lower(rel_time_range), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val,
@@ -11219,7 +11210,7 @@ $_log_stat_sequence$
             AND upper_inf(rel_time_range)
         ORDER BY 1, 2
         ), time_slice AS (
--- transform elementary time events into time slices
+-- Transform elementary time events into time slices
          SELECT sequ_time_id AS start_time_id, lead(sequ_time_id) OVER () AS end_time_id,
                 sequ_last_val AS start_last_val, lead(sequ_last_val) OVER () AS end_last_val,
                 sequ_start_val AS start_start_val, lead(sequ_start_val) OVER () AS end_start_val,
@@ -11238,7 +11229,7 @@ $_log_stat_sequence$
                 log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
            FROM event
         )
--- filter time slices and compute statistics aggregates
+-- Filter time slices and compute statistics aggregates
       SELECT rel_group AS stat_group, start_mark_name AS stat_first_mark, start_timestamp AS stat_first_mark_datetime,
              start_time_id AS stat_first_time_id, start_log_start AS stat_is_log_start, end_mark_name AS stat_last_mark,
              end_timestamp AS stat_last_mark_datetime, end_time_id AS stat_last_time_id, end_log_stop AS stat_is_log_stop,
@@ -11767,9 +11758,9 @@ $_gen_sql_dump_changes_group$
       IF v_isPsqlCopy AND v_sqlFormat = 'PRETTY' THEN
         RAISE EXCEPTION '_gen_sql_dump_changes_group: PSQL_COPY_DIR and FORMAT=PRETTY options are mutually exclusive.';
       END IF;
--- When one or several options need PRIMARY KEYS, check that all selected tables have a PK.
+-- When one or several options need PRIMARY KEYS, check that all selected tables have a PK during the selected time frame.
       IF v_consolidation IN ('PARTIAL', 'FULL') OR v_colsOrder = 'PK' OR v_orderBy = 'PK' THEN
-        SELECT string_agg(table_name, ', ')
+        SELECT string_agg(DISTINCT table_name, ', ' ORDER BY table_name)
           INTO v_tableWithoutPkList
           FROM (
             SELECT rel_schema || '.' || rel_tblseq AS table_name
@@ -11779,7 +11770,6 @@ $_gen_sql_dump_changes_group$
                 AND (p_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (p_tblseqs))
                 AND rel_time_range && int8range(v_firstMarkTimeId, v_lastMarkTimeId,'[)')
                 AND rel_pk_cols IS NULL
-              ORDER BY rel_schema, rel_tblseq, rel_time_range
             ) AS t;
         IF v_tableWithoutPkList IS NOT NULL THEN
           RAISE EXCEPTION '_gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an '
@@ -12248,7 +12238,7 @@ $emaj_snap_group$
     END IF;
 -- For each table/sequence of the emaj_relation table.
     FOR r_tblsq IN
-      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind,
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_pk_cols,
              quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name,
              emaj._build_path_name(p_dir, rel_schema || '_' || rel_tblseq || '.snap') AS path_name
         FROM emaj.emaj_relation
@@ -12260,33 +12250,25 @@ $emaj_snap_group$
         WHEN 'r' THEN
 -- It is a table.
 --   Build the order by columns list, using the PK, if it exists.
-          SELECT string_agg(quote_ident(attname), ',') INTO v_colList
-            FROM
-              (SELECT attname
-                 FROM pg_catalog.pg_attribute
-                      JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
-                 WHERE attnum = ANY (indkey)
-                   AND indrelid = (r_tblsq.full_relation_name)::regclass
-                   AND indisprimary
-                   AND attnum > 0
-                   AND attisdropped = FALSE
-              ) AS t;
-          IF v_colList IS NULL THEN
+          IF r_tblsq.rel_pk_cols IS NOT NULL THEN
+            SELECT string_agg(quote_ident(attname), ',')
+              INTO v_colList
+              FROM unnest(r_tblsq.rel_pk_cols) AS attname;
+          ELSE
 --   The table has no pkey, so get all columns, except generated ones.
-            SELECT string_agg(quote_ident(attname), ',') INTO v_colList
-              FROM
-                (SELECT attname
-                   FROM pg_catalog.pg_attribute
-                   WHERE attrelid = (r_tblsq.full_relation_name)::regclass
-                     AND attnum > 0
-                     AND attisdropped = FALSE
-                     AND attgenerated = ''
-                ) AS t;
+            SELECT string_agg(quote_ident(attname), ',' ORDER BY attnum)
+              INTO v_colList
+              FROM pg_catalog.pg_attribute
+              WHERE attrelid = (r_tblsq.full_relation_name)::regclass
+                AND attnum > 0
+                AND attisdropped = FALSE
+                AND attgenerated = '';
           END IF;
 --   Dump the table
-          v_stmt = format('(SELECT * FROM %I.%I ORDER BY %s)', r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_colList);
-          EXECUTE format ('COPY %s TO %L %s',
-                          v_stmt, r_tblsq.path_name, coalesce(p_copyOptions, ''));
+          v_stmt = format('(SELECT * FROM %I.%I ORDER BY %s)',
+                          r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_colList);
+          EXECUTE format('COPY %s TO %L %s',
+                         v_stmt, r_tblsq.path_name, coalesce(p_copyOptions, ''));
         WHEN 'S' THEN
 -- It is a sequence.
           v_stmt = format('(SELECT relname, rel.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, rel.is_called'
@@ -13199,20 +13181,18 @@ $_verify_all_groups$
         FROM
           (SELECT rel_schema, rel_tblseq, rel_group,
                   array_to_string(rel_pk_cols, ',') AS registered_pk_columns,
-                  string_agg(attname, ',' ORDER BY attnum) AS current_pk_columns
+                  string_agg(attname, ',' ORDER BY array_position(conkey, attnum)) AS current_pk_columns
              FROM emaj.emaj_relation
                   JOIN emaj.emaj_group ON (group_name = rel_group)
                   JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
-                  JOIN pg_catalog.pg_index ON (indrelid = pg_class.oid)
-                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_index.indrelid)
+                  JOIN pg_catalog.pg_constraint ON (conrelid = pg_class.oid)
+                  JOIN pg_catalog.pg_attribute ON (attrelid = conrelid)
              WHERE rel_kind = 'r'
                AND upper_inf(rel_time_range)
                AND group_is_rollbackable
-               AND attnum = ANY (indkey)
-               AND indisprimary
-               AND attnum > 0
-               AND attisdropped = FALSE
+               AND attnum = ANY (conkey)
+               AND contype = 'p'
              GROUP BY 1,2,3,4
           ) AS t
         WHERE registered_pk_columns <> current_pk_columns
@@ -13560,10 +13540,10 @@ $emaj_verify_all$
     v_errorFound             BOOLEAN = FALSE;
     v_status                 INT;
     v_schema                 TEXT;
+    v_paramList              TEXT;
     r_object                 RECORD;
   BEGIN
--- Global checks.
--- Detect if the current postgres version is at least 11.
+-- Check the postgres version compatibility.
     IF emaj._pg_version_num() < 120000 THEN
       RETURN NEXT 'Error: The current postgres version (' || version()
                || ') is not compatible with this E-Maj version. It should be at least 12';
@@ -13589,7 +13569,18 @@ $emaj_verify_all$
         v_errorFound = TRUE;
       END IF;
     END LOOP;
--- Report a warning if dblink connections are not operational
+-- Report a warning if emaj_param contains an unknown parameter.
+    SELECT string_agg(param_key, ', ' ORDER BY param_key)
+      INTO v_paramList
+      FROM emaj.emaj_visible_param
+      WHERE param_key NOT IN
+        ('dblink_user_password', 'history_retention', 'alter_log_table', 'avg_row_rollback_duration', 'avg_row_delete_log_duration',
+         'avg_fkey_check_duration', 'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration');
+    IF v_paramList IS NOT NULL THEN
+      RETURN NEXT format('Warning: the emaj_param table contains unknown parameters (%s).',
+                         v_paramList);
+    END IF;
+-- Report a warning if dblink connections are not operational.
     IF has_function_privilege('emaj._dblink_open_cnx(text,text)', 'execute') THEN
       SELECT p_status, p_schema INTO v_status, v_schema
         FROM emaj._dblink_open_cnx('emaj_verify_all', current_role);
@@ -13615,7 +13606,7 @@ $emaj_verify_all$
     ELSE
       RETURN NEXT 'Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).';
     END If;
--- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks
+-- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks.
     IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
       RETURN NEXT format('Warning: The max_prepared_transactions parameter value (%s) on this cluster is too low to launch parallel '
                          'rollback.',
@@ -13835,7 +13826,7 @@ $_rollback_activity$;
 ----------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
- RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
 $_emaj_protection_event_trigger_fnct$
 -- This function is called by the emaj_protection_trg event trigger.
 -- The function only blocks any attempt to drop the emaj schema or the emaj extension.
@@ -14198,16 +14189,16 @@ $emaj_drop_extension$
 -- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
 -- - or with the alternate psql script.
   DECLARE
-    v_nbObject              INTEGER;
-    v_roleToDrop            BOOLEAN;
-    v_dbList                TEXT;
-    v_granteeRoleList       TEXT;
-    v_granteeClassList      TEXT;
-    v_granteeFunctionList   TEXT;
-    v_tspList               TEXT;
-    r_object                RECORD;
+    v_nbObject               INTEGER;
+    v_roleToDrop             BOOLEAN;
+    v_dbList                 TEXT;
+    v_granteeRoleList        TEXT;
+    v_granteeClassList       TEXT;
+    v_granteeFunctionList    TEXT;
+    v_tspList                TEXT;
+    r_object                 RECORD;
   BEGIN
--- First perform some checks to verify that the conditions to execute the function are met.
+-- Perform some checks to verify that the conditions to execute the function are met.
 --
 -- Check emaj schema is present.
     PERFORM 1 FROM pg_catalog.pg_namespace WHERE nspname = 'emaj';
@@ -14217,10 +14208,10 @@ $emaj_drop_extension$
 --
 -- For extensions, check the current role is superuser.
     IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
-       PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
-       IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
-       END IF;
+      PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
+      END IF;
     ELSE
 -- Otherwise, check the current role is the owner of the emaj schema, i.e. the role who installed emaj.
       PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
@@ -14230,7 +14221,7 @@ $emaj_drop_extension$
       END IF;
     END IF;
 --
--- Check that no E-Maj schema contain any non E-Maj object.
+-- Check that no E-Maj schema contains any non E-Maj object.
     v_nbObject = 0;
     FOR r_object IN
       SELECT msg FROM emaj._verify_all_schemas() msg
@@ -14275,7 +14266,7 @@ $emaj_drop_extension$
 -- Drop the event trigger that protects the extension against unattempted drop and its function (they are external to the extension).
     DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
 --
--- Revoke also the grant given to emaj_adm on the dblink_connect_u function at install time.
+-- Revoke also the grants given to emaj_adm on the dblink_connect_u function at install time.
     FOR r_object IN
       SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
         WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
@@ -14289,108 +14280,129 @@ $emaj_drop_extension$
     END LOOP;
 --
 -- Check if emaj roles can be dropped.
-    v_roleToDrop = true;
+    v_roleToDrop = TRUE;
 --
--- Are emaj_roles also used in other databases of the cluster ?
+-- Are emaj roles also used in other databases of the cluster ?
     v_dbList = NULL;
-    SELECT string_agg(datname,', ') INTO v_dbList FROM (
-      SELECT DISTINCT datname FROM pg_catalog.pg_shdepend shd, pg_catalog.pg_database db, pg_catalog.pg_roles r
-        WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_viewer' AND datname <> current_database()
-      ) AS t;
+    SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+      INTO v_dbList
+      FROM pg_database db
+           JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+      WHERE rolname = 'emaj_viewer'
+        AND datname <> current_database();
     IF v_dbList IS NOT NULL THEN
-      RAISE WARNING 'emaj_drop_extension: emaj_viewer role is also referenced in some other databases (%)',v_dbList;
-      v_roleToDrop = false;
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (%)', v_dbList;
+      v_roleToDrop = FALSE;
     END IF;
 --
     v_dbList = NULL;
-    SELECT string_agg(datname,', ') INTO v_dbList FROM (
-      SELECT DISTINCT datname FROM pg_catalog.pg_shdepend shd, pg_catalog.pg_database db, pg_catalog.pg_roles r
-        WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_adm' AND datname <> current_database()
-      ) AS t;
+    SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+      INTO v_dbList
+      FROM pg_database db
+           JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+      WHERE rolname = 'emaj_adm'
+        AND datname <> current_database();
     IF v_dbList IS NOT NULL THEN
-      RAISE WARNING 'emaj_drop_extension: emaj_adm role is also referenced in some other databases (%)',v_dbList;
-      v_roleToDrop = false;
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role is also referenced in some other databases (%)', v_dbList;
+      v_roleToDrop = FALSE;
     END IF;
 --
 -- Are emaj roles granted to other roles ?
     v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList
-      FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
-      WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_viewer';
+    SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+      INTO v_granteeRoleList
+      FROM pg_catalog.pg_roles q
+           JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+      WHERE r.rolname = 'emaj_viewer';
     IF v_granteeRoleList IS NOT NULL THEN
       RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_viewer role.',
                     v_granteeRoleList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
     v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList
-      FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
-      WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_adm';
+    SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+      INTO v_granteeRoleList
+      FROM pg_catalog.pg_roles q
+           JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+      WHERE r.rolname = 'emaj_adm';
     IF v_granteeRoleList IS NOT NULL THEN
       RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_adm role.',
             v_granteeRoleList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
 -- Are emaj roles granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
     v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList
-      FROM pg_catalog.pg_namespace, pg_catalog.pg_class
-      WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_viewer=%';
+    SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+      INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+      WHERE array_to_string (relacl,';') LIKE '%emaj_viewer=%';
     IF v_granteeClassList IS NOT NULL THEN
       IF length(v_granteeClassList) > 200 THEN
         v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
       END IF;
-      RAISE WARNING 'emaj_drop_extension: emaj_viewer role has some remaining grants on tables, views or sequences (%).',
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on tables, views or sequences (%).',
                     v_granteeClassList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
     v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList
-      FROM pg_catalog.pg_namespace, pg_catalog.pg_class
-      WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_adm=%';
+    SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+      INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+      WHERE array_to_string (relacl,';') LIKE '%emaj_adm=%';
     IF v_granteeClassList IS NOT NULL THEN
       IF length(v_granteeClassList) > 200 THEN
         v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
       END IF;
-      RAISE WARNING 'emaj_drop_extension: emaj_adm role has some remaining grants on tables, views or sequences (%).',
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on tables, views or sequences (%).',
                     v_granteeClassList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
 -- Are emaj roles granted to functions (other than just dropped emaj ones) ?
     v_granteeFunctionList = NULL;
-    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList
-      FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
-      WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_viewer=%';
+    SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+      INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+      WHERE array_to_string (proacl,';') LIKE '%emaj_viewer=%';
     IF v_granteeFunctionList IS NOT NULL THEN
       IF length(v_granteeFunctionList) > 200 THEN
         v_granteeFunctionList = substr(v_granteeFunctionList,1,200) || '...';
       END IF;
-      RAISE WARNING 'emaj_drop_extension: emaj_viewer role has some remaining grants on functions (%).',
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on functions (%).',
                     v_granteeFunctionList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
     v_granteeFunctionList = NULL;
-    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList
-      FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
-      WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_adm=%';
+    SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+      INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+      WHERE array_to_string (proacl,';') LIKE '%emaj_adm=%';
     IF v_granteeFunctionList IS NOT NULL THEN
       IF length(v_granteeFunctionList) > 200 THEN
         v_granteeClassList = substr(v_granteeFunctionList,1,200) || '...';
       END IF;
-      RAISE WARNING 'emaj_drop_extension: emaj_adm role has some remaining grants on functions (%).',
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on functions (%).',
                     v_granteeFunctionList;
-      v_roleToDrop = false;
+      v_roleToDrop = FALSE;
     END IF;
 --
 -- If emaj roles can be dropped, drop them.
     IF v_roleToDrop THEN
 -- Revoke the remaining grants set on tablespaces
-      SELECT string_agg(spcname, ', ') INTO v_tspList
+      SELECT string_agg(spcname, ', ')
+        INTO v_tspList
         FROM pg_catalog.pg_tablespace
         WHERE array_to_string (spcacl,';') LIKE '%emaj_viewer=%' OR array_to_string (spcacl,';') LIKE '%emaj_adm=%';
       IF v_tspList IS NOT NULL THEN
@@ -14485,6 +14497,7 @@ REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
 -- ... and execute a subset of emaj functions for which rights are explicitely granted.
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._clean_array(p_array TEXT[]) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN,
                                                   p_checkIdle BOOLEAN, p_checkLogging BOOLEAN,
                                                   p_checkRollbackable BOOLEAN, p_checkUnprotected BOOLEAN)
@@ -14543,7 +14556,9 @@ GRANT EXECUTE ON FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter T
                                                          p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
                                                          p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
                                                          OUT p_key TEXT, OUT p_value TEXT) TO emaj_viewer;
-
+GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_group(p_groupName TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_is_logging_group(p_groupName TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(p_groupName TEXT, p_mark TEXT, p_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
@@ -14625,7 +14640,7 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 -- Insert the emaj schema into the emaj_schema table.
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 -- Insert the INIT event into the operations history.
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 4.7.0', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
 -- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
 WITH start_time_data AS (
   SELECT clock_timestamp() - lower(verh_time_range) AS duration

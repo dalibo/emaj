@@ -21,7 +21,7 @@ select relname from pg_catalog.pg_class,
 select * from emaj.emaj_verify_all();
 
 -- process the extension upgrade
-ALTER EXTENSION emaj UPDATE TO '4.7.1';
+ALTER EXTENSION emaj UPDATE TO 'devel';
 
 -----------------------------
 -- check installation
