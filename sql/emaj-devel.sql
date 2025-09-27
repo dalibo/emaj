@@ -831,7 +831,7 @@ WITH inserted_time_stamp AS (
 $$;
 
 CREATE OR REPLACE FUNCTION emaj._clean_array(p_array TEXT[])
-RETURNS TEXT[] LANGUAGE SQL AS
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS
 $$
 -- This function cleans up a text array by removing duplicates, NULL and empty strings.
   SELECT array_agg(DISTINCT element)

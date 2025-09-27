@@ -107,6 +107,21 @@ SELECT emaj._disable_event_triggers();
 
 
 --<begin_functions>                              pattern used by the tool that extracts and inserts the functions definition
+------------------------------------------------------------------
+-- drop obsolete functions or functions with modified interface --
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+-- create new or modified functions                             --
+------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._clean_array(p_array TEXT[])
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS
+$$
+-- This function cleans up a text array by removing duplicates, NULL and empty strings.
+  SELECT array_agg(DISTINCT element)
+    FROM unnest(p_array) AS element
+    WHERE element IS NOT NULL AND element <> '';
+$$;
 
 --<end_functions>                                pattern used by the tool that extracts and inserts the functions definition
 
