@@ -5908,9 +5908,14 @@ $_export_groups_conf$
     r_table                  RECORD;
     r_sequence               RECORD;
   BEGIN
--- Build the header of the JSON structure.
+-- Build the comment heading the JSON structure.
     v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
-                           emaj.emaj_get_version() || ', at ' || statement_timestamp() || E'",\n';
+                           emaj.emaj_get_version() || ', at ' || statement_timestamp();
+    IF p_groups IS NULL THEN
+      v_groupsText = v_groupsText || E', including all tables groups",\n';
+    ELSE
+      v_groupsText = v_groupsText || E', including a tables groups subset",\n';
+    END IF;
 -- Check the group names array, if supplied. All the listed groups must exist.
     IF p_groups IS NOT NULL THEN
       SELECT string_agg(group_name, ', ' ORDER BY group_name)

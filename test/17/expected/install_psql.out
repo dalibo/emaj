@@ -778,7 +778,7 @@ WITH inserted_time_stamp AS (
   SELECT time_id FROM inserted_time_stamp;
 $$;
 CREATE OR REPLACE FUNCTION emaj._clean_array(p_array TEXT[])
-RETURNS TEXT[] LANGUAGE SQL AS
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS
 $$
 -- This function cleans up a text array by removing duplicates, NULL and empty strings.
   SELECT array_agg(DISTINCT element)
@@ -5763,9 +5763,14 @@ $_export_groups_conf$
     r_table                  RECORD;
     r_sequence               RECORD;
   BEGIN
--- Build the header of the JSON structure.
+-- Build the comment heading the JSON structure.
     v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
-                           emaj.emaj_get_version() || ', at ' || statement_timestamp() || E'",\n';
+                           emaj.emaj_get_version() || ', at ' || statement_timestamp();
+    IF p_groups IS NULL THEN
+      v_groupsText = v_groupsText || E', including all tables groups",\n';
+    ELSE
+      v_groupsText = v_groupsText || E', including a tables groups subset",\n';
+    END IF;
 -- Check the group names array, if supplied. All the listed groups must exist.
     IF p_groups IS NOT NULL THEN
       SELECT string_agg(group_name, ', ' ORDER BY group_name)
@@ -14380,7 +14385,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:14656: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:14661: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;

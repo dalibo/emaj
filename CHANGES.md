@@ -3,6 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Improve the initial comment of the JSON output produced by
+    emaj_export_groups_configuration().
   * Minor code changes.
 
 ###Bug fixes:###

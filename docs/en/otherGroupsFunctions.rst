@@ -125,7 +125,7 @@ The function returns the number of exported tables groups.
 If the file path is not supplied (i.e. is set to NULL), the function directly returns the JSON structure containing the configuration. This structure looks like this::
 
    {
-   	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>",
+   	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>, including all tables groups",
    	"tables_groups": [
    		{
    		"group": "ggg",

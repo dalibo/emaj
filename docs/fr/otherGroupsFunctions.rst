@@ -124,7 +124,7 @@ La fonction retourne le nombre de groupes de tables exportés.
 Si le chemin du fichier n’est pas renseigné (i.e. est valorisé à NULL), la fonction retourne directement la structure JSON contenant la configuration des groupes de tables. Cette structure ressemble à ceci ::
 
    {
-   	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>",
+   	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>, including all tables groups",
    	"tables_groups": [
    		{
    		"group": "ggg",

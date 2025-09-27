@@ -935,7 +935,7 @@ select nspname, proname, rolname from pg_proc, pg_namespace, pg_authid
 --   bad selected groups array
 select emaj.emaj_export_groups_configuration(array['myGroup1','unknown1','unknown2']);
 ERROR:  _export_groups_conf: The tables groups unknown1, unknown2 are unknown.
-CONTEXT:  PL/pgSQL function emaj._export_groups_conf(text[]) line 27 at RAISE
+CONTEXT:  PL/pgSQL function emaj._export_groups_conf(text[]) line 32 at RAISE
 PL/pgSQL function emaj.emaj_export_groups_configuration(text[]) line 8 at RETURN
 -- ok
 select json_array_length(emaj.emaj_export_groups_configuration()->'tables_groups');
