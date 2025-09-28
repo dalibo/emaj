@@ -130,13 +130,13 @@ select funcname, calls from pg_stat_user_functions
  _delete_intermediate_mark_group           |    31
  _delete_log_tbl                           |    71
  _detailed_log_stat_groups                 |    27
- _disable_event_triggers                   |   319
+ _disable_event_triggers                   |   299
  _drop_group                               |    34
  _drop_log_schemas                         |   132
- _drop_seq                                 |    69
- _drop_tbl                                 |   222
+ _drop_seq                                 |    71
+ _drop_tbl                                 |   224
  _emaj_param_change_fnct                   |    48
- _enable_event_triggers                    |   314
+ _enable_event_triggers                    |   294
  _estimate_rlbk_step_duration              |   820
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   208
@@ -171,13 +171,13 @@ select funcname, calls from pg_stat_user_functions
  _move_tables                              |    24
  _move_tbl                                 |    50
  _pg_version_num                           |    22
- _purge_histories                          |   101
+ _purge_histories                          |    81
  _remove_seq                               |    15
  _remove_sequences                         |    20
  _remove_tables                            |    35
  _remove_tbl                               |    40
  _repair_tbl                               |     2
- _reset_groups                             |    74
+ _reset_groups                             |    54
  _rlbk_async                               |     2
  _rlbk_check                               |   106
  _rlbk_end                                 |    82

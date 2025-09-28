@@ -6561,7 +6561,7 @@ $_import_groups_conf_exec$
     PERFORM emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId);
 -- Check foreign keys with tables outside the groups in logging state.
     PERFORM emaj._check_fk_groups(v_loggingGroups);
--- The temporary tables are not needed anymore. So drop them.
+-- Drop the now useless temporary tables.
     DROP TABLE tmp_app_table;
     DROP TABLE tmp_app_sequence;
 -- Insert a END event into the history.
@@ -6652,11 +6652,6 @@ $_import_groups_conf_alter$
                   (rel_priority <> tmp_priority) )
           ORDER BY rel_priority, rel_schema, rel_tblseq
            ) AS t;
--- Reset the concerned groups in IDLE state, before changing tablespaces.
-    PERFORM emaj._reset_groups(array_agg(group_name ORDER BY group_name))
-      FROM emaj.emaj_group
-      WHERE group_name = ANY (p_groupNames)
-        AND NOT group_is_logging;
 -- Change the log data tablespaces.
     PERFORM emaj._change_log_data_tsp_tbl(rel_schema, rel_tblseq, rel_log_schema, rel_log_table, rel_log_dat_tsp, tmp_log_dat_tsp,
                                           p_timeId, rel_group, 'IMPORT_GROUPS')

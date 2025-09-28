@@ -2923,9 +2923,9 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
   order by rel_schema, rel_tblseq, rel_time_range;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
- myschema2  | myTbl3     | [10005,10015)  | myGroup1  | r        | emaj_myschema2 | myTbl3_log_1  |                       
- myschema2  | myTbl3     | [10015,10017)  | myGroup2  | r        | emaj_myschema2 | myTbl3_log_2  |                     10
- myschema2  | myTbl3     | [10019,10021)  | myGroup2  | r        | emaj_myschema2 | myTbl3_log_3  |                     10
+ myschema2  | myTbl3     | [10005,10015)  | myGroup1  | r        | emaj_myschema2 | myTbl3_log_2  |                       
+ myschema2  | myTbl3     | [10015,10017)  | myGroup2  | r        | emaj_myschema2 | myTbl3_log_3  |                     10
+ myschema2  | myTbl3     | [10019,10021)  | myGroup2  | r        | emaj_myschema2 | myTbl3_log_4  |                     10
  myschema2  | myTbl3     | [10023,)       | myGroup2  | r        | emaj_myschema2 | myTbl3_log    |                       
  myschema2  | myseq1     | [8206,8207)    | myGroup4  | S        |                |               |                       
  myschema2  | myseq1     | [8207,10018)   | myGroup2  | S        |                |               |                       
