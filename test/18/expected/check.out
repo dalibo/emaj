@@ -107,7 +107,7 @@ select funcname, calls from pg_stat_user_functions
  _change_priority_tbl                      |    16
  _check_fk_groups                          |    94
  _check_group_names                        |  1238
- _check_json_groups_conf                   |    43
+ _check_json_groups_conf                   |    48
  _check_json_param_conf                    |    15
  _check_json_table_properties              |    45
  _check_mark_name                          |   618
@@ -157,9 +157,9 @@ select funcname, calls from pg_stat_user_functions
  _get_sequences_last_value                 |     7
  _import_groups_conf                       |    20
  _import_groups_conf_alter                 |    20
- _import_groups_conf_check                 |    26
+ _import_groups_conf_check                 |    31
  _import_groups_conf_exec                  |    20
- _import_groups_conf_prepare               |    29
+ _import_groups_conf_prepare               |    34
  _import_param_conf                        |     7
  _lock_groups                              |   322
  _log_stat_groups                          |    31

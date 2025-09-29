@@ -244,6 +244,182 @@ $_export_groups_conf$
   END;
 $_export_groups_conf$;
 
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(p_groupNames TEXT[])
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
+$_import_groups_conf_check$
+-- This function verifies that the content of tables group as defined into the tmp_app_table table is correct.
+-- Any detected issue is reported as a message row. The caller defines what to do with them, depending on the tables group type.
+-- It is called by the _import_groups_conf_prepare() function.
+-- This function checks that the referenced application tables and sequences:
+--  - exist,
+--  - are not located into an E-Maj schema (to protect against an E-Maj recursive use),
+--  - do not already belong to another tables group,
+-- It also checks that:
+--  - tables are not TEMPORARY
+--  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
+--  - for rollbackable groups, all tables have a PRIMARY KEY
+--  - for tables, configured tablespaces exist
+-- Input: name array of the tables groups to check
+-- Output: _report_message_type records representing diagnostic messages
+--         the rpt_severity is set to 1 if the error blocks any type group creation or alter,
+--                                 or 2 if the error only blocks ROLLBACKABLE groups creation
+  BEGIN
+-- Check that all application tables listed for the group really exist.
+    RETURN QUERY
+      SELECT 1, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the table %s.%s does not exist.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE tmp_schema = nspname AND tmp_tbl_name = relname
+                     AND relkind IN ('r','p')
+                );
+-- Check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj).
+    RETURN QUERY
+      SELECT 2, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the table %s.%s is a partitionned table (only elementary partitions are supported by E-Maj).',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table
+             JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+        WHERE relkind = 'p';
+-- Check no application schema listed for the group in the tmp_app_table table is an E-Maj schema.
+    RETURN QUERY
+      SELECT 3, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the table or sequence %s.%s belongs to an E-Maj schema.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table
+             JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
+-- Check that no table of the checked groups already belongs to other created groups.
+    RETURN QUERY
+      SELECT 4, 1, tmp_group, tmp_schema, tmp_tbl_name, rel_group, NULL::INT,
+             format('In tables group "%s", the table %s.%s is already assigned to the group "%s".',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(rel_group))
+        FROM tmp_app_table
+             JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range))
+        WHERE NOT rel_group = ANY (p_groupNames);
+-- Check no table is a TEMP table.
+    RETURN QUERY
+      SELECT 5, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the table %s.%s is a TEMPORARY table.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table
+             JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+        WHERE relkind = 'r' AND relpersistence = 't';
+-- Check that the log data tablespaces for tables exist.
+    RETURN QUERY
+      SELECT 12, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_dat_tsp, NULL::INT,
+             format('In tables group "%s" and for the table %s.%s, the data log tablespace %s does not exist.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_dat_tsp))
+        FROM tmp_app_table
+        WHERE tmp_log_dat_tsp IS NOT NULL
+          AND NOT EXISTS
+                (SELECT 1
+                   FROM pg_catalog.pg_tablespace
+                   WHERE spcname = tmp_log_dat_tsp
+                );
+-- Check that the log index tablespaces for tables exist.
+    RETURN QUERY
+      SELECT 13, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_idx_tsp, NULL::INT,
+             format('In tables group "%s" and for the table %s.%s, the index log tablespace %s does not exist.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_idx_tsp))
+        FROM tmp_app_table
+        WHERE tmp_log_idx_tsp IS NOT NULL
+          AND NOT EXISTS
+                (SELECT 1
+                   FROM pg_catalog.pg_tablespace
+                   WHERE spcname = tmp_log_idx_tsp
+                );
+-- Check that all listed triggers exist,
+    RETURN QUERY
+      SELECT 15, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_trigger, NULL::INT,
+             format('In tables group "%s" and for the table %I.%I, the trigger %s does not exist.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_trigger))
+        FROM
+          (SELECT tmp_group, tmp_schema, tmp_tbl_name, unnest(tmp_ignored_triggers) AS tmp_trigger
+             FROM tmp_app_table
+                  JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+             WHERE relkind = 'r'
+          ) AS t
+        WHERE NOT EXISTS
+                (SELECT 1
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        JOIN pg_catalog.pg_trigger ON (tgrelid = pg_class.oid)
+                   WHERE nspname = tmp_schema AND relname = tmp_tbl_name AND tgname = tmp_trigger
+                     AND NOT tgisinternal
+                );
+-- ... and are not emaj triggers.
+    RETURN QUERY
+      SELECT 16, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_trigger, NULL::INT,
+             format('In tables group "%s" and for the table %I.%I, the trigger %I is an E-Maj trigger.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_trigger))
+        FROM
+          (SELECT tmp_group, tmp_schema, tmp_tbl_name, unnest(tmp_ignored_triggers) AS tmp_trigger
+             FROM tmp_app_table
+                  JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+             WHERE relkind = 'r'
+          ) AS t
+        WHERE tmp_trigger IN ('emaj_trunc_trg', 'emaj_log_trg');
+-- Check that no table is an unlogged table (blocking rollbackable groups only).
+    RETURN QUERY
+      SELECT 20, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the table %s.%s is an UNLOGGED table.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table
+             JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+        WHERE relkind = 'r'
+          AND relpersistence = 'u';
+-- Check every table has a primary key (blocking rollbackable groups only).
+    RETURN QUERY
+      SELECT 22, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the table %s.%s has no PRIMARY KEY.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table
+             JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+        WHERE relkind = 'r'
+          AND NOT EXISTS
+                (SELECT 1
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = pg_class.oid)
+                   WHERE contype = 'p' AND nspname = tmp_schema AND relname = tmp_tbl_name
+                );
+-- Check that all application sequences listed for the group really exist.
+    RETURN QUERY
+      SELECT 31, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the sequence %s.%s does not exist.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
+        FROM tmp_app_sequence
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE tmp_schema = nspname
+                     AND tmp_seq_name = relname
+                     AND relkind = 'S'
+                );
+-- Check that no sequence of the checked groups already belongs to other created groups.
+    RETURN QUERY
+      SELECT 32, 1, tmp_group, tmp_schema, tmp_seq_name, rel_group, NULL::INT,
+             format('In tables group "%s", the sequence %s.%s is already assigned to the group %s.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name), quote_ident(rel_group))
+        FROM tmp_app_sequence
+             JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_seq_name AND upper_inf(rel_time_range))
+        WHERE NOT rel_group = ANY (p_groupNames);
+--
+    RETURN;
+  END;
+$_import_groups_conf_check$;
+
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(p_json JSON, p_groups TEXT[], p_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $_import_groups_conf_exec$

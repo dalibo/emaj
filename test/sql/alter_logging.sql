@@ -706,7 +706,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
 -- revert the changes and apply with a destination group in idle state
 
 select emaj.emaj_stop_group('myGroup2');
--- This first import try fails because a myGroup1 is missing
+-- This first import try fails because myGroup1 is missing in the groups to process list
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 

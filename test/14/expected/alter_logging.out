@@ -2755,10 +2755,10 @@ select emaj.emaj_stop_group('myGroup2');
                6
 (1 row)
 
--- This first import try fails because a myGroup1 is missing
+-- This first import try fails because myGroup1 is missing in the groups to process list
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
-WARNING:  _import_groups_conf (2): in the group myGroup2, the table myschema2."myTbl3" already belongs to the group "myGroup1".
-WARNING:  _import_groups_conf (2): in the group myGroup2, the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
+WARNING:  _import_groups_conf (2): In tables group "myGroup2", the table myschema2."myTbl3" is already assigned to the group ""myGroup1"".
+WARNING:  _import_groups_conf (2): In tables group "myGroup2", the sequence myschema2."myTbl3_col31_seq" is already assigned to the group "myGroup1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 30 at RETURN

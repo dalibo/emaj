@@ -928,7 +928,9 @@ select nspname, proname, rolname from pg_proc, pg_namespace, pg_authid
 -----------------------------
 -- emaj_export_groups_configuration() and emaj_import_groups_configuration() tests
 -----------------------------
--- direct export
+--
+-- Direct export
+--
 --   bad selected groups array
 select emaj.emaj_export_groups_configuration(array['myGroup1','unknown1','unknown2']);
 ERROR:  _export_groups_conf: The tables groups unknown1, unknown2 are unknown.
@@ -947,7 +949,9 @@ select json_array_length(emaj.emaj_export_groups_configuration(array['myGroup1',
                  2
 (1 row)
 
--- export in file
+--
+-- Export to a file
+--
 --   error
 select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
@@ -1164,89 +1168,91 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
   ]
 }
 
--- direct import
+--
+-- Direct import
+--
 --   bad content
-select * from emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
+select emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
 WARNING:  _import_groups_conf (1): The JSON structure does not contain any "tables_groups" array.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   missing "group" attribute
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
 WARNING:  _import_groups_conf (1): The tables group #1 has no "group" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   unknown group level attributes
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
 WARNING:  _import_groups_conf (1): For the tables group "grp1", the keyword "unknown_attr1" is unknown.
 WARNING:  _import_groups_conf (1): For the tables group "grp1", the keyword "unknown_attr2" is unknown.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   is_rollbackable not boolean
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
 WARNING:  _import_groups_conf (1): For the tables group "grp1", the "is_rollbackable" attribute is not a boolean.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   missing "schema" attribute in tables array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1", the table #1 has no "schema" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   missing "table" attribute in tables array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1" }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1", the table #1 has no "table" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   unknown table level attributes
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "unknown_attr": null }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "unknown_attr": null }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the keyword "unknown_attr" is unknown.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   priority not numeric
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table a_schema.a_table, the "priority" attribute is not a number.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   ignored_triggers not an array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": "dummy" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": "dummy" }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the "ignored_triggers" attribute is not an array.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --     not strings
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ "trg1", 1234, null] }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ "trg1", 1234, null] }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the trigger #2 is not a string. This is required since E-Maj 4.0.
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the trigger #3 is not a string. This is required since E-Maj 4.0.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   missing "schema" attribute in sequences array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1", the sequence #1 has no "schema" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   missing "sequence" attribute in sequences array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1" }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1", the sequence #1 has no "sequence" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   unknown sequence level attributes
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "s1",  "unknown_attr": null }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "s1",  "unknown_attr": null }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the sequence s1.s1, the keyword "unknown_attr" is unknown.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   duplicate group in json
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
 WARNING:  _import_groups_conf (1): The JSON structure references several times the tables group "grp1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
@@ -1271,14 +1277,59 @@ WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGrou
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
---   unknown table and sequence
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1" }] } ]}'::json);
-WARNING:  _import_groups_conf (2): in the group grp1, the table s1.t1 does not exist.
+--   unknown table, bad data and index log tablespaces and missing ignored triggers (that shouldn't generate a warning)
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "log_data_tablespace": "dummytsp", "log_index_tablespace": "dummytsp", "ignored_triggers": ["emaj_trunc_trg", "dummy"]}] } ]}'::json);
+WARNING:  _import_groups_conf (2): In tables group "grp1", the table s1.t1 does not exist.
+WARNING:  _import_groups_conf (2): In tables group "grp1" and for the table s1.t1, the data log tablespace dummytsp does not exist.
+WARNING:  _import_groups_conf (2): In tables group "grp1" and for the table s1.t1, the index log tablespace dummytsp does not exist.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "sq1" }] } ]}'::json);
-WARNING:  _import_groups_conf (2): in the group grp1, the sequence s1.sq1 does not exist.
+--   unknown sequence
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "sq1" }] } ]}'::json);
+WARNING:  _import_groups_conf (2): In tables group "grp1", the sequence s1.sq1 does not exist.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+--   partitionned table
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "myschema4", "table": "mytblp" }] } ]}'::json);
+WARNING:  _import_groups_conf (2): In tables group "grp1", the table myschema4.mytblp is a partitionned table (only elementary partitions are supported by E-Maj).
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+--   emaj schema
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "emaj", "table": "emaj_hist" }] } ]}'::json);
+WARNING:  _import_groups_conf (2): In tables group "grp1", the table or sequence emaj.emaj_hist belongs to an E-Maj schema.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+--   temporary table
+--     this test is commented as the warning message is not stable (the schema name is varying)
+--CREATE TEMPORARY TABLE myTempTbl (col1 INT NOT NULL, PRIMARY KEY (col1));
+--select emaj.emaj_import_groups_configuration(('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "' || nspname || '", "table": "mytemptbl" }] } ]}')::json)
+--  from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+--DROP TABLE myTempTbl;
+--   bad data or index log tablespace and missing ignored triggers
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "myschema1", "table": "mytbl1", "log_data_tablespace":"dummydatatsp", "log_index_tablespace":"dummyidxtsp", "ignored_triggers": ["emaj_trunc_trg", "dummy"] }] } ]}'::json);
+WARNING:  _import_groups_conf (2): In tables group "grp1", the table myschema1.mytbl1 is already assigned to the group ""myGroup1"".
+WARNING:  _import_groups_conf (2): In tables group "grp1" and for the table myschema1.mytbl1, the data log tablespace dummydatatsp does not exist.
+WARNING:  _import_groups_conf (2): In tables group "grp1" and for the table myschema1.mytbl1, the index log tablespace dummyidxtsp does not exist.
+WARNING:  _import_groups_conf (2): In tables group "grp1" and for the table myschema1.mytbl1, the trigger dummy does not exist.
+WARNING:  _import_groups_conf (2): In tables group "grp1" and for the table myschema1.mytbl1, the trigger emaj_trunc_trg is an E-Maj trigger.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+--   unlogged table in a rollbackable group
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "myschema5", "table": "myunloggedtbl" }] } ]}'::json, null, true);
+WARNING:  _import_groups_conf (2): In tables group "myGroup1", the table myschema5.myunloggedtbl is already assigned to the group ""myGroup5"".
+WARNING:  _import_groups_conf (2): In tables group "myGroup1", the table myschema5.myunloggedtbl is an UNLOGGED table.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+--   missing PK on a table in a rollbackable group
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "phil''s schema\"3", "table": "myTbl2\\" }] } ]}'::json, null, true);
+WARNING:  _import_groups_conf (2): In tables group "myGroup1", the table "phil's schema""3"."myTbl2\" is already assigned to the group ""phil's group#3"","".
+WARNING:  _import_groups_conf (2): In tables group "myGroup1", the table "phil's schema""3"."myTbl2\" has no PRIMARY KEY.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
@@ -1333,7 +1384,9 @@ select emaj.emaj_drop_group('new_grp');
                0
 (1 row)
 
--- import from file
+--
+-- Import from a file
+--
 --   error
 select emaj.emaj_import_groups_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for reading: No such file or directory

@@ -300,8 +300,9 @@ select nspname, proname, rolname from pg_proc, pg_namespace, pg_authid
 -----------------------------
 -- emaj_export_groups_configuration() and emaj_import_groups_configuration() tests
 -----------------------------
-
--- direct export
+--
+-- Direct export
+--
 --   bad selected groups array
 select emaj.emaj_export_groups_configuration(array['myGroup1','unknown1','unknown2']);
 
@@ -309,7 +310,9 @@ select emaj.emaj_export_groups_configuration(array['myGroup1','unknown1','unknow
 select json_array_length(emaj.emaj_export_groups_configuration()->'tables_groups');
 select json_array_length(emaj.emaj_export_groups_configuration(array['myGroup1','myGroup2'])->'tables_groups');
 
--- export in file
+--
+-- Export to a file
+--
 --   error
 select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
 
@@ -319,35 +322,37 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
 \! wc -l $EMAJTESTTMPDIR/*.json
 \! grep -v ', at ' $EMAJTESTTMPDIR/orig_groups_config_all.json
 
--- direct import
+--
+-- Direct import
+--
 --   bad content
-select * from emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
+select emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
 --   missing "group" attribute
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
 --   unknown group level attributes
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
 --   is_rollbackable not boolean
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
 --   missing "schema" attribute in tables array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { }] } ]}'::json);
 --   missing "table" attribute in tables array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1" }] } ]}'::json);
 --   unknown table level attributes
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "unknown_attr": null }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "unknown_attr": null }] } ]}'::json);
 --   priority not numeric
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
 --   ignored_triggers not an array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": "dummy" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": "dummy" }] } ]}'::json);
 --     not strings
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ "trg1", 1234, null] }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ "trg1", 1234, null] }] } ]}'::json);
 --   missing "schema" attribute in sequences array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { }] } ]}'::json);
 --   missing "sequence" attribute in sequences array
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1" }] } ]}'::json);
 --   unknown sequence level attributes
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "s1",  "unknown_attr": null }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "s1",  "unknown_attr": null }] } ]}'::json);
 --   duplicate group in json
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
 
 --   unknown group in array
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', array['myGroup1','myGroup2','unknownGroup']);
@@ -356,9 +361,33 @@ select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "m
 --   bad type for existing groups
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "is_rollbackable": false }, { "group": "myGroup2", "is_rollbackable": false } ] }'::json, null, true);
 
---   unknown table and sequence
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1" }] } ]}'::json);
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "sq1" }] } ]}'::json);
+--   unknown table, bad data and index log tablespaces and missing ignored triggers (that shouldn't generate a warning)
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "log_data_tablespace": "dummytsp", "log_index_tablespace": "dummytsp", "ignored_triggers": ["emaj_trunc_trg", "dummy"]}] } ]}'::json);
+
+--   unknown sequence
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "sq1" }] } ]}'::json);
+
+--   partitionned table
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "myschema4", "table": "mytblp" }] } ]}'::json);
+
+--   emaj schema
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "emaj", "table": "emaj_hist" }] } ]}'::json);
+
+--   temporary table
+--     this test is commented as the warning message is not stable (the schema name is varying)
+--CREATE TEMPORARY TABLE myTempTbl (col1 INT NOT NULL, PRIMARY KEY (col1));
+--select emaj.emaj_import_groups_configuration(('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "' || nspname || '", "table": "mytemptbl" }] } ]}')::json)
+--  from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+--DROP TABLE myTempTbl;
+
+--   bad data or index log tablespace and missing ignored triggers
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "myschema1", "table": "mytbl1", "log_data_tablespace":"dummydatatsp", "log_index_tablespace":"dummyidxtsp", "ignored_triggers": ["emaj_trunc_trg", "dummy"] }] } ]}'::json);
+
+--   unlogged table in a rollbackable group
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "myschema5", "table": "myunloggedtbl" }] } ]}'::json, null, true);
+
+--   missing PK on a table in a rollbackable group
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "phil''s schema\"3", "table": "myTbl2\\" }] } ]}'::json, null, true);
 
 --   ok
 -- a new group with a comment, then changed and finaly deleted
@@ -380,7 +409,9 @@ select coalesce(group_comment,'NULL') from emaj.emaj_group where group_name = 'n
 
 select emaj.emaj_drop_group('new_grp');
 
--- import from file
+--
+-- Import from a file
+--
 --   error
 select emaj.emaj_import_groups_configuration('/tmp/dummy/location/file');
 \! echo 'not a json content' >/tmp/bad_groups_config.json
