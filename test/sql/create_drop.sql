@@ -361,11 +361,27 @@ select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "m
 --   bad type for existing groups
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "is_rollbackable": false }, { "group": "myGroup2", "is_rollbackable": false } ] }'::json, null, true);
 
+--   table / sequence referenced for several different groups
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "public", "table": "t1" } ] },
+																   { "group": "myGroup2", "tables": [ { "schema": "public", "table": "t1" } ] } ]}'::json,
+											 '{"myGroup1","myGroup2"}', true);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "sequences": [ { "schema": "public", "sequence": "s1" } ] },
+																   { "group": "myGroup2", "sequences": [ { "schema": "public", "sequence": "s1" } ] } ]}'::json,
+											 '{"myGroup1","myGroup2"}', true);
+
 --   unknown table, bad data and index log tablespaces and missing ignored triggers (that shouldn't generate a warning)
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "log_data_tablespace": "dummytsp", "log_index_tablespace": "dummytsp", "ignored_triggers": ["emaj_trunc_trg", "dummy"]}] } ]}'::json);
 
 --   unknown sequence
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "sq1" }] } ]}'::json);
+
+--   table or sequence referenced twice in the group
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "myschema1", "table": "mytbl1" },
+																									  { "schema": "myschema1", "table": "mytbl1" }] } ]}'::json,
+											 null, true);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "sequences": [ { "schema": "myschema2", "sequence": "myseq1" },
+																									     { "schema": "myschema2", "sequence": "myseq1" }] } ]}'::json,
+											 null, true);
 
 --   partitionned table
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "myschema4", "table": "mytblp" }] } ]}'::json);

@@ -5,6 +5,8 @@ E-Maj - Change log
 ###Enhancements:###
   * Improve the initial comment of the JSON output produced by
     emaj_export_groups_configuration().
+  * Improve checks of the input JSON structure when importing a tables group
+    configuration.
   * Minor code changes.
 
 ###Bug fixes:###

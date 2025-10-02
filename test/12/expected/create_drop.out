@@ -1277,6 +1277,21 @@ WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGrou
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+--   table / sequence referenced for several different groups
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "public", "table": "t1" } ] },
+																   { "group": "myGroup2", "tables": [ { "schema": "public", "table": "t1" } ] } ]}'::json,
+											 '{"myGroup1","myGroup2"}', true);
+WARNING:  _import_groups_conf (2): The table public.t1 is referenced in 2 different tables groups.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "sequences": [ { "schema": "public", "sequence": "s1" } ] },
+																   { "group": "myGroup2", "sequences": [ { "schema": "public", "sequence": "s1" } ] } ]}'::json,
+											 '{"myGroup1","myGroup2"}', true);
+WARNING:  _import_groups_conf (2): The sequence public.s1 is referenced in 2 different tables groups.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   unknown table, bad data and index log tablespaces and missing ignored triggers (that shouldn't generate a warning)
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "log_data_tablespace": "dummytsp", "log_index_tablespace": "dummytsp", "ignored_triggers": ["emaj_trunc_trg", "dummy"]}] } ]}'::json);
 WARNING:  _import_groups_conf (2): In tables group "grp1", the table s1.t1 does not exist.
@@ -1288,6 +1303,21 @@ PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text
 --   unknown sequence
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "sq1" }] } ]}'::json);
 WARNING:  _import_groups_conf (2): In tables group "grp1", the sequence s1.sq1 does not exist.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+--   table or sequence referenced twice in the group
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "myschema1", "table": "mytbl1" },
+																									  { "schema": "myschema1", "table": "mytbl1" }] } ]}'::json,
+											 null, true);
+WARNING:  _import_groups_conf (2): In tables group "myGroup1", the table myschema1.mytbl1 is referenced several times.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "sequences": [ { "schema": "myschema2", "sequence": "myseq1" },
+																									     { "schema": "myschema2", "sequence": "myseq1" }] } ]}'::json,
+											 null, true);
+WARNING:  _import_groups_conf (2): In tables group "myGroup1", the sequence myschema2.myseq1 is referenced several times.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN

@@ -244,14 +244,196 @@ $_export_groups_conf$
   END;
 $_export_groups_conf$;
 
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_prepare(p_groupsJson JSON, p_groups TEXT[],
+                                                    p_allowGroupsUpdate BOOLEAN, p_location TEXT)
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
+$_import_groups_conf_prepare$
+-- This function prepares the effective tables groups configuration import.
+-- It is called by _import_groups_conf() and by Emaj_web
+-- At the end of the function, the tmp_app_table table is updated with the new configuration of groups
+--   and a temporary table is created to prepare the application triggers management
+-- Input: - the tables groups configuration structure in JSON format
+--        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
+--        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
+--            (if TRUE, existing groups are altered, even if they are in logging state)
+--        - the input file name, if any, to record in the emaj_hist table
+-- Output: diagnostic records
+  DECLARE
+    v_prevCMM                TEXT;
+    v_rollbackableGroups     TEXT[];
+    v_ignoredTriggers        TEXT[];
+    r_group                  RECORD;
+    r_table                  RECORD;
+    r_sequence               RECORD;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('IMPORT_GROUPS', 'BEGIN', array_to_string(p_groups, ', '), 'Input file: ' || quote_literal(p_location));
+-- Extract the "tables_groups" json path.
+    p_groupsJson = p_groupsJson #> '{"tables_groups"}';
+-- Check that all tables groups listed in the p_groups array exist in the JSON structure.
+    RETURN QUERY
+      SELECT 250, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                   format('The tables group "%s" to import is not referenced in the JSON structure.',
+                          group_name)
+        FROM
+          (  SELECT group_name
+               FROM unnest(p_groups) AS g(group_name)
+           EXCEPT
+             SELECT "group"
+               FROM json_to_recordset(p_groupsJson) AS x("group" TEXT)
+          ) AS t;
+    IF FOUND THEN
+      RETURN;
+    END IF;
+-- If the p_allowGroupsUpdate flag is FALSE, check that no tables group already exists.
+    IF NOT p_allowGroupsUpdate THEN
+      RETURN QUERY
+        SELECT 251, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                     format('The tables group "%s" already exists.',
+                            group_name)
+          FROM
+            (SELECT "group" AS group_name
+               FROM json_to_recordset(p_groupsJson) AS x("group" TEXT), emaj.emaj_group
+               WHERE group_name = "group"
+                 AND "group" = ANY (p_groups)
+            ) AS t;
+      IF FOUND THEN
+        RETURN;
+      END IF;
+    ELSE
+-- If the p_allowGroupsUpdate flag is TRUE, check that existing tables groups have the same type than in the JSON structure.
+      RETURN QUERY
+        SELECT 252, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                     format('Changing the type of the tables group "%s" is not allowed. '
+                            'You may drop this tables group before importing the configuration.',
+                            group_name)
+          FROM
+            (SELECT "group" AS group_name
+               FROM json_to_recordset(p_groupsJson) AS x("group" TEXT, "is_rollbackable" BOOLEAN)
+                    JOIN emaj.emaj_group ON (group_name = "group")
+               WHERE "group" = ANY (p_groups)
+                 AND group_is_rollbackable <> coalesce(is_rollbackable, true)
+            ) AS t;
+      IF FOUND THEN
+        RETURN;
+      END IF;
+    END IF;
+-- Drop temporary tables in case of...
+    v_prevCMM = pg_catalog.current_setting('client_min_messages');
+    SET client_min_messages TO WARNING;
+    DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence;
+    PERFORM pg_catalog.set_config ('client_min_messages', v_prevCMM, FALSE);
+-- Create the temporary table that will hold the application tables configured in imported groups.
+    CREATE TEMP TABLE tmp_app_table (
+      tmp_group            TEXT NOT NULL,
+      tmp_schema           TEXT NOT NULL,
+      tmp_tbl_name         TEXT NOT NULL,
+      tmp_priority         INTEGER,
+      tmp_log_dat_tsp      TEXT,
+      tmp_log_idx_tsp      TEXT,
+      tmp_ignored_triggers TEXT[]
+      );
+-- Create the temporary table that will hold the application sequences configured in imported groups.
+    CREATE TEMP TABLE tmp_app_sequence (
+      tmp_schema           TEXT NOT NULL,
+      tmp_seq_name         TEXT NOT NULL,
+      tmp_group            TEXT
+      );
+-- In a second pass over the JSON structure, populate the tmp_app_table and tmp_app_sequence temporary tables.
+    v_rollbackableGroups = '{}';
+    FOR r_group IN
+      SELECT value AS groupJson
+        FROM json_array_elements(p_groupsJson)
+        WHERE value ->> 'group' = ANY (p_groups)
+    LOOP
+-- Build the rollbackable groups array.
+      IF coalesce((r_group.groupJson ->> 'is_rollbackable')::BOOLEAN, TRUE) THEN
+        v_rollbackableGroups = array_append(v_rollbackableGroups, r_group.groupJson ->> 'group');
+      END IF;
+-- Insert tables into tmp_app_table.
+      FOR r_table IN
+        SELECT value AS tableJson
+          FROM json_array_elements(r_group.groupJson -> 'tables')
+      LOOP
+--   Prepare the trigger names array for the table,
+        SELECT array_agg("value" ORDER BY "value") INTO v_ignoredTriggers
+          FROM json_array_elements_text(r_table.tableJson -> 'ignored_triggers') AS t;
+--   ... and insert
+        INSERT INTO tmp_app_table(tmp_group, tmp_schema, tmp_tbl_name,
+                                  tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp, tmp_ignored_triggers)
+          VALUES (r_group.groupJson ->> 'group', r_table.tableJson ->> 'schema', r_table.tableJson ->> 'table',
+                  (r_table.tableJson ->> 'priority')::INT, r_table.tableJson ->> 'log_data_tablespace',
+                  r_table.tableJson ->> 'log_index_tablespace', v_ignoredTriggers);
+      END LOOP;
+-- Insert sequences into tmp_app_sequence.
+      FOR r_sequence IN
+        SELECT value AS sequenceJson
+          FROM json_array_elements(r_group.groupJson -> 'sequences')
+      LOOP
+        INSERT INTO tmp_app_sequence(tmp_schema, tmp_seq_name, tmp_group)
+          VALUES (r_sequence.sequenceJson ->> 'schema', r_sequence.sequenceJson ->> 'sequence', r_group.groupJson ->> 'group');
+      END LOOP;
+    END LOOP;
+-- Add an index on each temporary table.
+    CREATE INDEX ON tmp_app_table (tmp_schema, tmp_tbl_name);
+    CREATE INDEX ON tmp_app_sequence (tmp_schema, tmp_seq_name);
+-- Check that no table or sequence is referenced in several different groups or in its group.
+    RETURN QUERY
+      SELECT 270, 1, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::TEXT, nb_group::INT,
+             format('The table %s.%s is referenced in %s different tables groups.',
+                    quote_ident(tmp_schema), quote_ident(tmp_tbl_name), nb_group)
+        FROM (SELECT tmp_schema, tmp_tbl_name, count(DISTINCT tmp_group) AS nb_group
+                FROM tmp_app_table
+                GROUP BY tmp_schema, tmp_tbl_name
+                HAVING count(DISTINCT tmp_group) > 1) AS t1
+      UNION
+      SELECT 271, 1, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::TEXT, nb_group::INT,
+             format('The sequence %s.%s is referenced in %s different tables groups.',
+                    quote_ident(tmp_schema), quote_ident(tmp_seq_name), nb_group)
+        FROM (SELECT tmp_schema, tmp_seq_name, count(DISTINCT tmp_group) AS nb_group
+                FROM tmp_app_sequence
+                GROUP BY tmp_schema, tmp_seq_name
+                HAVING count(DISTINCT tmp_group) > 1) AS t2
+      UNION
+      SELECT 272, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the table %s.%s is referenced several times.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM (SELECT tmp_group, tmp_schema, tmp_tbl_name, count(*)
+                FROM tmp_app_table
+                GROUP BY tmp_group, tmp_schema, tmp_tbl_name
+                HAVING count(*) > 1) AS t3
+      UNION
+      SELECT 273, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the sequence %s.%s is referenced several times.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
+        FROM (SELECT tmp_group, tmp_schema, tmp_seq_name, count(*)
+                FROM tmp_app_sequence
+                GROUP BY tmp_group, tmp_schema, tmp_seq_name
+                HAVING count(*) > 1) AS t4;
+    IF FOUND THEN
+      RETURN;
+    END IF;
+-- Check that the tmp_app_table and tmp_app_sequence tables content is ok for the imported groups.
+    RETURN QUERY
+      SELECT *
+        FROM emaj._import_groups_conf_check(p_groups)
+        WHERE ((rpt_text_var_1 = ANY (p_groups) AND rpt_severity = 1)
+            OR (rpt_text_var_1 = ANY (v_rollbackableGroups) AND rpt_severity = 2))
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3;
+--
+    RETURN;
+  END;
+$_import_groups_conf_prepare$;
+
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(p_groupNames TEXT[])
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_check$
--- This function verifies that the content of tables group as defined into the tmp_app_table table is correct.
+-- This function verifies that the content of tables group as defined into the tmp_app_table and tmp_app_sequence tables is correct.
 -- Any detected issue is reported as a message row. The caller defines what to do with them, depending on the tables group type.
 -- It is called by the _import_groups_conf_prepare() function.
 -- This function checks that the referenced application tables and sequences:
---  - exist,
+--  - exist, and only once
 --  - are not located into an E-Maj schema (to protect against an E-Maj recursive use),
 --  - do not already belong to another tables group,
 -- It also checks that:
@@ -301,7 +483,7 @@ $_import_groups_conf_check$
         FROM tmp_app_table
              JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range))
         WHERE NOT rel_group = ANY (p_groupNames);
--- Check no table is a TEMP table.
+-- Check that no table is a TEMP table.
     RETURN QUERY
       SELECT 5, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('In tables group "%s", the table %s.%s is a TEMPORARY table.',
