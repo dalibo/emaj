@@ -1332,7 +1332,12 @@ CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,te
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   emaj schema
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "emaj", "table": "emaj_hist" }] } ]}'::json);
-WARNING:  _import_groups_conf (2): In tables group "grp1", the table or sequence emaj.emaj_hist belongs to an E-Maj schema.
+WARNING:  _import_groups_conf (2): In tables group "grp1", the table emaj.emaj_hist belongs to an E-Maj schema.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "emaj", "sequence": "emaj_global_seq" }] } ]}'::json);
+WARNING:  _import_groups_conf (2): In tables group "grp1", the sequence emaj.emaj_global_seq belongs to an E-Maj schema.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN

@@ -6381,7 +6381,7 @@ $_import_groups_conf_check$
 -- Check no application schema listed for the group in the tmp_app_table table is an E-Maj schema.
     RETURN QUERY
       SELECT 3, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the table or sequence %s.%s belongs to an E-Maj schema.',
+             format('In tables group "%s", the table %s.%s belongs to an E-Maj schema.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
@@ -6507,6 +6507,13 @@ $_import_groups_conf_check$
         FROM tmp_app_sequence
              JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_seq_name AND upper_inf(rel_time_range))
         WHERE NOT rel_group = ANY (p_groupNames);
+-- Check no application schema listed for the group in the tmp_app_sequence table is an E-Maj schema.
+    RETURN QUERY
+      SELECT 33, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
+             format('In tables group "%s", the sequence %s.%s belongs to an E-Maj schema.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
+        FROM tmp_app_sequence
+             JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
 --
     RETURN;
   END;

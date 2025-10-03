@@ -388,6 +388,7 @@ select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "g
 
 --   emaj schema
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "emaj", "table": "emaj_hist" }] } ]}'::json);
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "emaj", "sequence": "emaj_global_seq" }] } ]}'::json);
 
 --   temporary table
 --     this test is commented as the warning message is not stable (the schema name is varying)
