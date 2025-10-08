@@ -396,13 +396,15 @@ General purpose functions
 | <import_groups_conf>`                            | | [groups.array TEXT[]],      |                                       |
 |                                                  | | [alter.logging.groups       |                                       |
 |                                                  | |  BOOLEAN],                  |                                       |
-|                                                  | | [mark TEXT]                 |                                       |
+|                                                  | | [mark TEXT],                |                                       |
+|                                                  | | [drop.other.groups BOOLEAN] |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_groups_configuration           | | file.path TEXT,             | #.groups INT                          |
 | <import_groups_conf>`                            | | [groups.array TEXT[]],      |                                       |
 |                                                  | | [alter.logging.groups       |                                       |
 |                                                  | |  BOOLEAN],                  |                                       |
-|                                                  | | [mark TEXT]                 |                                       |
+|                                                  | | [mark TEXT],                |                                       |
+|                                                  | | [drop.other.groups BOOLEAN] |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_parameters_configuration       | | parameters JSON,            | #.parameters INT                      |
 | <import_param_conf>`                             | | [delete.conf BOOLEAN)]      |                                       |

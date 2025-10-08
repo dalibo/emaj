@@ -483,8 +483,12 @@ begin;
   select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 rollback;
 
+-- import a groups subset and drop the others, one being in logging state
+select emaj.emaj_start_group('myGroup5', 'Start_before_import');
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', array['myGroup1','myGroup2','myGroup4'], true, 'IMPORT_%', true);
+
 -- rebuild all original groups
--- this will assign the just removed table and sequence
+-- this will recreate missing groups and assign the removed table and sequence
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 
 -- test a table repair with the groups configuration import, with a table having triggers to ignored_triggers

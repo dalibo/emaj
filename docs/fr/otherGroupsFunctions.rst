@@ -166,7 +166,7 @@ Deux versions de la fonction *emaj_import_groups_configuration()* importent des 
 
 On peut charger une configuration de groupes de tables à partir d'un fichier par ::
 
-   SELECT emaj_import_groups_configuration('<chemin.fichier>' [,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> ]]]);
+   SELECT emaj_import_groups_configuration('<chemin.fichier>' [,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> [, <supprimer.autres.groupes> ]]]]);
 
 Le fichier doit être accessible par l’instance PostgreSQL.
 
@@ -174,11 +174,13 @@ Le fichier doit contenir une structure JSON ayant un attribut nommé "tables-gro
 
 La fonction peut directement charger un fichier généré par la fonction *emaj_export_groups_configuration()*.
 
-Le second paramètre est de type tableau et est optionnel. Il indique la liste des groupes de tables que l’on veut importer. Par défaut, tous les groupes de tables décrits dans le fichier sont importés.
+Le deuxième paramètre est de type tableau et est optionnel. Il indique la liste des groupes de tables que l’on veut importer. Par défaut, tous les groupes de tables décrits dans le fichier sont importés.
 
 Si un groupe de tables à importer n’existe pas, il est créé et ses tables et séquences lui sont assignées.
 
-Si un groupe de tables à importer existe déjà, sa configuration est ajustée pour refléter la configuration cible. Des tables et séquences peuvent être ajoutées ou retirées, et des attributs peuvent être modifiés. Dans le cas où le groupe de tables est démarré, l’ajustement de sa configuration n’est possible que si le troisième paramètre, de type booléen, est explicitement positionné à TRUE.
+Si un groupe de tables à importer existe déjà, sa configuration est ajustée pour refléter la configuration cible. Des tables et séquences peuvent être ajoutées ou retirées, et des attributs peuvent être modifiés. Dans le cas où le groupe de tables est démarré, l’ajustement de sa configuration n’est possible que si le troisième paramètre, de type booléen, est explicitement positionné à *TRUE*.
+
+Si un groupe de tables existant n’est pas listé explicitement ou implicitement (deuxième paramètre *NULL*) comme groupe à importer, par défaut, il est conservé en l’état. Mais si le cinquième paramètre est positionné à *TRUE*, le groupe est supprimé, qu’il soit actif ou non.
 
 Le quatrième paramètre définit la marque à poser sur les groupes de tables actifs. Par défaut la marque générée est "IMPORT_%", où le caractère '%' représente l'heure courante, au format "hh.mn.ss.mmmm".
 
@@ -186,7 +188,7 @@ La fonction retourne le nombre de groupes de tables importés.
 
 Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
 
-   SELECT emaj_import_groups_configuration('<structure.JSON>'[,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> ]]]);
+   SELECT emaj_import_groups_configuration('<structure.JSON>'[,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> [, <supprimer.autres.groupes> ]]]]);
 
 .. _emaj_exist_state_mark_group:
 

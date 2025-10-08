@@ -7,6 +7,8 @@ E-Maj - Change log
     emaj_export_groups_configuration().
   * Improve checks of the input JSON structure when importing a tables group
     configuration.
+  * Add a parameter in import_groups_configuration() functions to automatically
+    drop the existing groups that are not imported.
   * Minor code changes.
 
 ###Bug fixes:###

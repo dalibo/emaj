@@ -110,6 +110,13 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj.emaj_import_groups_configuration(P_JSON JSON,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_MARK TEXT);
+DROP FUNCTION IF EXISTS emaj.emaj_import_groups_configuration(P_LOCATION TEXT,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_MARK TEXT);
+DROP FUNCTION IF EXISTS emaj._import_groups_conf(P_JSON JSON,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_LOCATION TEXT,P_MARK TEXT);
+DROP FUNCTION IF EXISTS emaj._import_groups_conf_prepare(P_GROUPSJSON JSON,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_LOCATION TEXT);
+DROP FUNCTION IF EXISTS emaj._import_groups_conf_check(P_GROUPNAMES TEXT[]);
+DROP FUNCTION IF EXISTS emaj._import_groups_conf_exec(P_JSON JSON,P_GROUPS TEXT[],P_MARK TEXT);
+DROP FUNCTION IF EXISTS emaj._import_groups_conf_alter(P_GROUPNAMES TEXT[],P_MARK TEXT,P_TIMEID BIGINT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
@@ -122,6 +129,93 @@ $$
     FROM unnest(p_array) AS element
     WHERE element IS NOT NULL AND element <> '';
 $$;
+
+CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_drop_group$
+-- This function effectively processes a tables group deletion.
+-- It also drops log schemas that are not useful anymore.
+-- Input: group name, and a boolean indicating whether the group's state has to be checked
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_function               TEXT;
+    v_eventTriggers          TEXT[];
+    v_timeId                 BIGINT;
+    v_nbRel                  INT;
+  BEGIN
+    v_function = CASE WHEN p_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END;
+-- Get the time stamp of the operation.
+    SELECT emaj._set_time_stamp(v_function, 'D') INTO v_timeId;
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Effectively drop the tables group.
+    SELECT emaj._drop_groups(ARRAY[p_groupName], v_timeId) INTO v_nbRel;
+-- Drop the E-Maj log schemas that are now useless (i.e. not used by any other created group).
+    PERFORM emaj._drop_log_schemas(v_function, p_isForced);
+-- Enable previously disabled event triggers.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+--
+    RETURN v_nbRel;
+  END;
+$_drop_group$;
+
+CREATE OR REPLACE FUNCTION emaj._drop_groups(p_groups TEXT[], p_timeId BIGINT)
+RETURNS INT LANGUAGE plpgsql AS
+$_drop_groups$
+-- This function effectively deletes several groups and their content.
+-- It is called by emaj_drop_group() and emaj_import_groups_configuration() functions.
+-- Input: group names array, time id of the operation
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_nbRel                  INT;
+    r_rel                    emaj.emaj_relation%ROWTYPE;
+  BEGIN
+-- Register into emaj_relation_change the tables and sequences removal from their group, for completeness.
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      SELECT p_timeId, rel_schema, rel_tblseq,
+             CASE WHEN rel_kind = 'r' THEN 'REMOVE_TABLE'::emaj._relation_change_kind_enum
+                                      ELSE 'REMOVE_SEQUENCE'::emaj._relation_change_kind_enum END,
+             rel_group
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND upper_inf(rel_time_range)
+        ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range;
+-- Delete the emaj objects and references for each table and sequences of the groups.
+    FOR r_rel IN
+      SELECT *
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+        ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range
+    LOOP
+      PERFORM CASE r_rel.rel_kind
+                WHEN 'r' THEN emaj._drop_tbl(r_rel, p_timeId)
+                WHEN 'S' THEN emaj._drop_seq(r_rel, p_timeId)
+              END;
+      v_nbRel = v_nbRel + 1;
+    END LOOP;
+-- Count the number of tables annd sequences owned by the groups.
+    SELECT sum(group_nb_table + group_nb_sequence)
+      INTO v_nbRel
+      FROM emaj.emaj_group
+      WHERE group_name = ANY (p_groups);
+-- Delete groups row from the emaj_group table.
+-- By cascade, it also deletes rows from emaj_mark.
+    DELETE FROM emaj.emaj_group
+      WHERE group_name = ANY (p_groups);
+-- Update the last log session for the groups to set the time range upper bound
+    UPDATE emaj.emaj_log_session
+      SET lses_time_range = int8range(lower(lses_time_range), p_timeId, '[]')
+      WHERE lses_group = ANY (p_groups)
+        AND upper_inf(lses_time_range);
+-- Update the last group history rows to set the time range upper bound
+    UPDATE emaj.emaj_group_hist
+      SET grph_time_range = int8range(lower(grph_time_range), p_timeId, '[]')
+      WHERE grph_group = ANY (p_groups)
+        AND upper_inf(grph_time_range);
+--
+    RETURN v_nbRel;
+  END;
+$_drop_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql AS
@@ -244,8 +338,159 @@ $_export_groups_conf$
   END;
 $_export_groups_conf$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(p_json JSON, p_groups TEXT[] DEFAULT NULL,
+                                                                 p_allowGroupsUpdate BOOLEAN DEFAULT FALSE, p_mark TEXT DEFAULT 'IMPORT_%',
+                                                                 p_dropOtherGroups BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_import_groups_configuration$
+-- This function import a supplied JSON formatted structure representing tables groups to create or update.
+-- This structure can have been generated by the emaj_export_groups_configuration() functions and may have been adapted by the user.
+-- It calls the _import_groups_conf() function to process the tables groups.
+-- Input: - the tables groups configuration structure in JSON format
+--        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
+--        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
+--        - an optional mark name to set for tables groups in logging state (IMPORT_% by default)
+--        - an optional boolean to ask for the drop of all existing groups that are not in the imported configuration (FALSE by default)
+-- Output: the number of created or altered tables groups
+  BEGIN
+-- Just process the tables groups.
+    RETURN emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark, p_dropOtherGroups);
+  END;
+$emaj_import_groups_configuration$;
+COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(JSON,TEXT[],BOOLEAN, TEXT, BOOLEAN) IS
+$$Import a json structure describing tables groups to create or alter.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(p_location TEXT, p_groups TEXT[] DEFAULT NULL,
+                                                                 p_allowGroupsUpdate BOOLEAN DEFAULT FALSE, p_mark TEXT DEFAULT 'IMPORT_%',
+                                                                 p_dropOtherGroups BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_import_groups_configuration$
+-- This function imports a file containing a JSON formatted structure representing tables groups to create or update.
+-- This structure can have been generated by the emaj_export_groups_configuration() functions and may have been adapted by the user.
+-- It calls the _import_groups_conf() function to process the tables groups.
+-- Input: - input file location
+--        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
+--        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
+--        - an optional mark name to set for tables groups in logging state (IMPORT_% by default)
+--        - an optional boolean to ask for the drop of all existing groups that are not in the imported configuration (FALSE by default)
+-- Output: the number of created or altered tables groups
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_groupsText             TEXT;
+    v_json                   JSON;
+  BEGIN
+-- Read the input file and put its content into a temporary table.
+    CREATE TEMP TABLE t (groups TEXT);
+    EXECUTE format ('COPY t FROM %L',
+                    p_location);
+-- Aggregate the lines into a single text variable.
+    SELECT string_agg(groups, E'\n') INTO v_groupsText
+      FROM t;
+    DROP TABLE t;
+-- Verify that the file content is a valid json structure.
+    BEGIN
+      v_json = v_groupsText::JSON;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'emaj_import_groups_configuration: The file content is not a valid JSON content.';
+    END;
+-- Proccess the tables groups and return the result.
+    RETURN emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark, p_dropOtherGroups);
+  END;
+$emaj_import_groups_configuration$;
+COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(TEXT,TEXT[],BOOLEAN, TEXT, BOOLEAN) IS
+$$Create or alter tables groups configuration from a JSON formatted file.$$;
+
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf(p_json JSON, p_groups TEXT[], p_allowGroupsUpdate BOOLEAN,
+                                                    p_location TEXT, p_mark TEXT, p_dropOtherGroups BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_import_groups_conf$
+-- This function processes a JSON formatted structure representing the tables groups to create or update.
+-- This structure can have been generated by the emaj_export_groups_configuration() functions and may have been adapted by the user.
+-- The expected JSON structure must contain an array like:
+-- { "tables_groups": [
+--   {
+--     "group": "myGroup1", "is_rollbackable": true, "comment": "This is group #1",
+--     "tables": [
+--       {
+--       "schema": "myschema1", "table": "mytbl1",
+--       "priority": 1, "log_data_tablespace": "tblspc1", "log_index_tablespace": "tblspc2",
+--       "ignored_triggers": [
+--         { "trigger": "xxx" },
+--         ...
+--         ]
+--       },
+--       {
+--       ...
+--       }
+--     ],
+--     "sequences": [
+--       {
+--       "schema": "myschema1", "sequence": "mytbl1",
+--       },
+--       {
+--       ...
+--       }
+--     ],
+--   },
+--   ...
+--   ]
+-- }
+-- For tables groups, "group_is_rollbackable" and "group_comment" attributes are optional.
+-- For tables, "priority", "log_data_tablespace" and "log_index_tablespace" attributes are optional.
+-- A tables group may have no "tables" or "sequences" arrays.
+-- A table may have no "ignored_triggers" array.
+-- The function replaces the content of the tmp_app_table table for the imported tables groups by the content of the JSON configuration.
+-- Non existing groups are created empty.
+-- The _alter_groups() function is used to process the assignement, the move, the removal or the attributes change for tables and
+-- sequences.
+-- Input: - the tables groups configuration structure in JSON format
+--        - the array of group names to process (a NULL value process all tables groups described in the JSON structure)
+--        - a boolean indicating whether tables groups to import may already exist
+--        - the input file name, if any, to record in the emaj_hist table (NULL if direct import)
+--        - the mark name to set for tables groups in logging state
+--        - the request for the drop of all existing groups that are not in the imported configuration
+-- Output: the number of created or altered tables groups
+  DECLARE
+    v_groupsJson             JSON;
+    r_msg                    RECORD;
+  BEGIN
+-- Performs various checks on the groups content described in the supplied JSON structure.
+    FOR r_msg IN
+      SELECT rpt_message
+        FROM emaj._check_json_groups_conf(p_json)
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3, rpt_int_var_1
+    LOOP
+      RAISE WARNING '_import_groups_conf (1): %', r_msg.rpt_message;
+    END LOOP;
+    IF FOUND THEN
+      RAISE EXCEPTION '_import_groups_conf: One or several errors have been detected in the supplied JSON structure.';
+    END IF;
+-- Extract the "tables_groups" json path.
+    v_groupsJson = p_json #> '{"tables_groups"}';
+-- If not supplied by the caller, materialize the groups array, by aggregating all groups of the JSON structure.
+    IF p_groups IS NULL THEN
+      SELECT array_agg("group") INTO p_groups
+        FROM json_to_recordset(v_groupsJson) AS x("group" TEXT);
+    END IF;
+-- Prepare the groups configuration import. This may report some other issues with the groups content.
+    FOR r_msg IN
+      SELECT rpt_message
+        FROM emaj._import_groups_conf_prepare(p_json, p_groups, p_allowGroupsUpdate, p_location, p_dropOtherGroups)
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3
+    LOOP
+      RAISE WARNING '_import_groups_conf (2): %', r_msg.rpt_message;
+    END LOOP;
+    IF FOUND THEN
+      RAISE EXCEPTION '_import_groups_conf: One or several errors have been detected in the JSON groups configuration.';
+    END IF;
+-- OK
+    RETURN emaj._import_groups_conf_exec(p_json, p_groups, p_mark, p_dropOtherGroups);
+ END;
+$_import_groups_conf$;
+
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_prepare(p_groupsJson JSON, p_groups TEXT[],
-                                                    p_allowGroupsUpdate BOOLEAN, p_location TEXT)
+                                                    p_allowGroupsUpdate BOOLEAN, p_location TEXT, p_dropOtherGroups BOOLEAN DEFAULT FALSE)
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_prepare$
 -- This function prepares the effective tables groups configuration import.
@@ -257,6 +502,7 @@ $_import_groups_conf_prepare$
 --        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
 --            (if TRUE, existing groups are altered, even if they are in logging state)
 --        - the input file name, if any, to record in the emaj_hist table
+--        - an optional boolean to ask for the drop of all existing groups that are not in the imported configuration (FALSE by default)
 -- Output: diagnostic records
   DECLARE
     v_prevCMM                TEXT;
@@ -417,7 +663,7 @@ $_import_groups_conf_prepare$
 -- Check that the tmp_app_table and tmp_app_sequence tables content is ok for the imported groups.
     RETURN QUERY
       SELECT *
-        FROM emaj._import_groups_conf_check(p_groups)
+        FROM emaj._import_groups_conf_check(p_groups, p_dropOtherGroups)
         WHERE ((rpt_text_var_1 = ANY (p_groups) AND rpt_severity = 1)
             OR (rpt_text_var_1 = ANY (v_rollbackableGroups) AND rpt_severity = 2))
         ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3;
@@ -426,7 +672,7 @@ $_import_groups_conf_prepare$
   END;
 $_import_groups_conf_prepare$;
 
-CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(p_groupNames TEXT[])
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(p_groupNames TEXT[], p_dropOtherGroups BOOLEAN)
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_check$
 -- This function verifies that the content of tables group as defined into the tmp_app_table and tmp_app_sequence tables is correct.
@@ -442,6 +688,7 @@ $_import_groups_conf_check$
 --  - for rollbackable groups, all tables have a PRIMARY KEY
 --  - for tables, configured tablespaces exist
 -- Input: name array of the tables groups to check
+--        flag to request for extra groups drop
 -- Output: _report_message_type records representing diagnostic messages
 --         the rpt_severity is set to 1 if the error blocks any type group creation or alter,
 --                                 or 2 if the error only blocks ROLLBACKABLE groups creation
@@ -476,13 +723,15 @@ $_import_groups_conf_check$
         FROM tmp_app_table
              JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
 -- Check that no table of the checked groups already belongs to other created groups.
-    RETURN QUERY
-      SELECT 4, 1, tmp_group, tmp_schema, tmp_tbl_name, rel_group, NULL::INT,
-             format('In tables group "%s", the table %s.%s is already assigned to the group "%s".',
-                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(rel_group))
-        FROM tmp_app_table
-             JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range))
-        WHERE NOT rel_group = ANY (p_groupNames);
+    IF NOT p_dropOtherGroups THEN
+      RETURN QUERY
+        SELECT 4, 1, tmp_group, tmp_schema, tmp_tbl_name, rel_group, NULL::INT,
+               format('In tables group "%s", the table %s.%s is already assigned to the group "%s".',
+                      tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(rel_group))
+          FROM tmp_app_table
+               JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range))
+          WHERE NOT rel_group = ANY (p_groupNames);
+    END IF;
 -- Check that no table is a TEMP table.
     RETURN QUERY
       SELECT 5, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
@@ -590,13 +839,15 @@ $_import_groups_conf_check$
                      AND relkind = 'S'
                 );
 -- Check that no sequence of the checked groups already belongs to other created groups.
-    RETURN QUERY
-      SELECT 32, 1, tmp_group, tmp_schema, tmp_seq_name, rel_group, NULL::INT,
-             format('In tables group "%s", the sequence %s.%s is already assigned to the group %s.',
-                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name), quote_ident(rel_group))
-        FROM tmp_app_sequence
-             JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_seq_name AND upper_inf(rel_time_range))
-        WHERE NOT rel_group = ANY (p_groupNames);
+    IF NOT p_dropOtherGroups THEN
+      RETURN QUERY
+        SELECT 32, 1, tmp_group, tmp_schema, tmp_seq_name, rel_group, NULL::INT,
+               format('In tables group "%s", the sequence %s.%s is already assigned to the group %s.',
+                      tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name), quote_ident(rel_group))
+          FROM tmp_app_sequence
+               JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_seq_name AND upper_inf(rel_time_range))
+          WHERE NOT rel_group = ANY (p_groupNames);
+    END IF;
 -- Check no application schema listed for the group in the tmp_app_sequence table is an E-Maj schema.
     RETURN QUERY
       SELECT 33, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
@@ -609,18 +860,20 @@ $_import_groups_conf_check$
   END;
 $_import_groups_conf_check$;
 
-CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(p_json JSON, p_groups TEXT[], p_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(p_json JSON, p_groups TEXT[], p_mark TEXT,
+                                                         p_dropOtherGroups BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $_import_groups_conf_exec$
 -- This function completes a tables groups configuration import.
 -- It is called by _import_groups_conf() and by Emaj_web
 -- Non existing groups are created empty.
 -- The _import_groups_conf_alter() function is used to process the assignement, the move, the removal or the attributes change for tables
--- and sequences.
+-- and sequences and the extra groups drop.
 -- Input: - the tables groups configuration structure in JSON format
 --        - the array of group names to process
 --        - a boolean indicating whether tables groups to import may already exist
 --        - the mark name to set for tables groups in logging state
+--        - an optional boolean to ask for the drop of all existing groups that are not in the imported configuration (FALSE by default)
 -- Output: the number of created or altered tables groups
   DECLARE
     v_function               TEXT = 'IMPORT_GROUPS';
@@ -630,6 +883,7 @@ $_import_groups_conf_exec$
     v_comment                TEXT;
     v_isRollbackable         BOOLEAN;
     v_loggingGroups          TEXT[];
+    v_groupsToDrop           TEXT[];
     v_markName               TEXT;
     r_group                  RECORD;
   BEGIN
@@ -671,15 +925,21 @@ $_import_groups_conf_exec$
         END IF;
       END IF;
     END LOOP;
--- Lock the group names to avoid concurrent operation on these groups.
+-- Lock the concerned groups to avoid concurrent operation on these groups.
     PERFORM 0
       FROM emaj.emaj_group
-      WHERE group_name = ANY(p_groups)
+      WHERE p_dropOtherGroups OR group_name = ANY (p_groups)
       FOR UPDATE;
--- Build the list of groups that are in logging state.
+-- Build the groups to drop array, if requested.
+    IF p_dropOtherGroups THEN
+      SELECT array_agg(group_name ORDER BY group_name) INTO v_groupsToDrop
+        FROM emaj.emaj_group
+        WHERE NOT group_name = ANY (p_groups);
+    END IF;
+-- Build the in logging state groups array.
     SELECT array_agg(group_name ORDER BY group_name) INTO v_loggingGroups
       FROM emaj.emaj_group
-      WHERE group_name = ANY(p_groups)
+      WHERE (p_dropOtherGroups OR group_name = ANY (p_groups))
         AND group_is_logging;
 -- If some groups are in logging state, check and set the supplied mark name and lock the groups.
     IF v_loggingGroups IS NOT NULL THEN
@@ -692,7 +952,7 @@ $_import_groups_conf_exec$
       PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, TRUE, TRUE, NULL, v_timeId);
     END IF;
 -- Process the tmp_app_table and tmp_app_sequence content change.
-    PERFORM emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId);
+    PERFORM emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId, v_groupsToDrop);
 -- Check foreign keys with tables outside the groups in logging state.
     PERFORM emaj._check_fk_groups(v_loggingGroups);
 -- Drop the now useless temporary tables.
@@ -706,7 +966,7 @@ $_import_groups_conf_exec$
   END;
 $_import_groups_conf_exec$;
 
-CREATE OR REPLACE FUNCTION emaj._import_groups_conf_alter(p_groupNames TEXT[], p_mark TEXT, p_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_alter(p_groupNames TEXT[], p_mark TEXT, p_timeId BIGINT, p_groupsToDrop TEXT[])
 RETURNS VOID LANGUAGE plpgsql AS
 $_import_groups_conf_alter$
 -- This function effectively alters the tables groups to import.
@@ -715,8 +975,10 @@ $_import_groups_conf_alter$
 -- Input: group names array,
 --        the mark name to set on groups in logging state
 --        the timestamp id
+--        the groups to drop array
   DECLARE
     v_eventTriggers          TEXT[];
+    v_function               TEXT = 'IMPORT_GROUPS';
   BEGIN
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
@@ -897,6 +1159,13 @@ $_import_groups_conf_alter$
                   )
           ORDER BY tmp_schema, tmp_seq_name
            ) AS t;
+-- Drop the not imported tables groups, if requested.
+    IF p_groupsToDrop IS NOT NULL THEN
+      PERFORM emaj._drop_groups(p_groupsToDrop, p_timeId);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        SELECT v_function, 'GROUP DROPPED', group_name
+          FROM unnest(p_groupsToDrop) AS group_name;
+    END IF;
 -- Drop the E-Maj log schemas that are now useless (i.e. not used by any created group).
     PERFORM emaj._drop_log_schemas('IMPORT_GROUPS', FALSE);
 -- Re-enable previously disabled event triggers.

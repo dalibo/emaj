@@ -694,11 +694,11 @@ SQL statement "SELECT emaj._repair_tbl(rel_schema, rel_tblseq, rel_group, group_
           WHERE rel_group = ANY (p_groupNames)
           ORDER BY rel_priority, rel_schema, rel_tblseq
            ) AS t"
-PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 50 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 82 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint,text[]) line 52 at PERFORM
+SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId, v_groupsToDrop)"
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 82 at RETURN
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text,boolean) line 13 at RETURN
   rollback to savepoint sp1;
 -- removing and re-assigning the table solves the issue 
   select emaj.emaj_remove_table('myschema2','mytbl4');
@@ -926,7 +926,7 @@ begin;
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 35 at RAISE
 SQL statement "SELECT emaj._drop_log_schemas(v_function, p_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 41 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 20 at PERFORM
 SQL statement "SELECT emaj._drop_group(p_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 15 at SQL statement
   rollback to savepoint sp1;

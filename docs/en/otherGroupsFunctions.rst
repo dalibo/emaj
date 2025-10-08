@@ -167,7 +167,7 @@ Two versions of the *emaj_import_groups_configuration()* function import a descr
 
 A tables groups configuration can be read from a file with::
 
-   SELECT emaj_import_groups_configuration(<file.path> [,<groups.names.array> [,<alter_started_groups> [,<mark>]]]);
+   SELECT emaj_import_groups_configuration(<file.path> [,<groups.names.array> [,<alter_started_groups> [,<mark> [,<drop_other_groups> ]]]]);
 
 The file must be accessible by the PostgreSQL instance.
 
@@ -181,13 +181,15 @@ If a tables group to import does not exist, it is created and its tables and seq
 
 If a tables group to import already exists, its configuration is adjusted to reflect the target configuration: some tables and sequences may be added or removed, and some attributes may be modified. When the tables group is in *LOGGING* state, its configuration adjustment is only possible if the third parameter is explicitly set to *TRUE*.
 
+If an existing tables group is not implicitly or explicitly (second parameter *NULL*) listed as to be imported, it is left unchanged by default. But if the fifth parameter is set to *TRUE*, this group is dropped, whatever its state.
+
 The fourth parameter defines the mark to set on tables groups in *LOGGING* state. By default, the generated mark is "IMPORT_%", where the % character represents the current time, formatted as "hh.min.ss.mmmm".
 
 The function returns the number of imported tables groups.
 
 In a variation of the function, the first input parameter directly contains the JSON description of the groups to load::
 
-   SELECT emaj_import_groups_configuration(<JSON.structure> [,<groups.names.array> [,<alter_started_groups> [,<mark>]]]);
+   SELECT emaj_import_groups_configuration(<JSON.structure> [,<groups.names.array> [,<alter_started_groups> [,<mark> [,<drop_other_groups> ]]]]);
 
 .. _emaj_exist_state_mark_group:
 
