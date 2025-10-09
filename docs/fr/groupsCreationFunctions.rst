@@ -120,7 +120,7 @@ Un tableau de *TEXT* est typiquement exprimé avec une syntaxe du type ::
 
 	ARRAY['élément1', 'élément2', ...]
 
-Les deux expressions rationnelles suivent la syntaxe *POSIX* (se référer à la documentation PostgreSQL pour plus de détails). La première définit un filtre de sélection des tables dans le schéma, La seconde définit un filtre d’exclusion appliqué sur les tables sélectionnées. Quelques exemples de filtres.
+Les deux expressions rationnelles suivent la syntaxe *POSIX* (se référer à la documentation PostgreSQL pour plus de détails). La première définit un filtre de sélection des tables ou séquences dans le schéma, La seconde définit un filtre d’exclusion appliqué sur les tables ou séquences sélectionnées. Un filtre d'inclusion valorisé à *NULL* ou à une chaîne vide ne sélectionne aucun élément. Un filtre d'exclusion valorisé à *NULL* ou à une chaîne vide n'exclut aucun élément. Quelques exemples de filtres.
 
 Pour sélectionner toutes les tables ou séquences du schéma *mon_schema*::
 

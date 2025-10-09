@@ -1622,18 +1622,15 @@ $_build_tblseqs_array_from_regexp$
   BEGIN
 -- Check that the schema exists.
     PERFORM emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
--- Process empty filters as NULL.
-    SELECT CASE WHEN p_includeFilter = '' THEN NULL ELSE p_includeFilter END,
-           CASE WHEN p_excludeFilter = '' THEN NULL ELSE p_excludeFilter END
-      INTO p_includeFilter, p_excludeFilter;
 -- Build and return the list of relations names satisfying the pattern.
+-- Empty strings as inclusion or exclusion pattern are processed as NULL
     RETURN array_agg(rel_tblseq)
       FROM (
         SELECT rel_tblseq
           FROM emaj.emaj_relation
           WHERE rel_schema = p_schema
-            AND rel_tblseq ~ p_includeFilter
-            AND (p_excludeFilter IS NULL OR rel_tblseq !~ p_excludeFilter)
+            AND (p_includeFilter IS NOT NULL AND p_includeFilter <> '' AND rel_tblseq ~ p_includeFilter)
+            AND (p_excludeFilter IS NULL OR p_excludeFilter = '' OR rel_tblseq !~ p_excludeFilter)
             AND rel_kind = p_relkind
             AND upper_inf(rel_time_range)
           ORDER BY rel_tblseq
@@ -2225,19 +2222,16 @@ $emaj_assign_tables$
   DECLARE
     v_tables                 TEXT[];
   BEGIN
--- Process empty filters as NULL
-    SELECT CASE WHEN p_tablesIncludeFilter = '' THEN NULL ELSE p_tablesIncludeFilter END,
-           CASE WHEN p_tablesExcludeFilter = '' THEN NULL ELSE p_tablesExcludeFilter END
-      INTO p_tablesIncludeFilter, p_tablesExcludeFilter;
 -- Build the list of tables names satisfying the pattern.
+-- Empty strings as inclusion or exclusion pattern are processed as NULL
     SELECT array_agg(relname) INTO v_tables
       FROM
         (SELECT relname
            FROM pg_catalog.pg_class
                 JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
            WHERE nspname = p_schema
-             AND relname ~ p_tablesIncludeFilter
-             AND (p_tablesExcludeFilter IS NULL OR relname !~ p_tablesExcludeFilter)
+             AND (p_tablesIncludeFilter IS NOT NULL AND p_tablesIncludeFilter <> '' AND relname ~ p_tablesIncludeFilter)
+             AND (p_tablesExcludeFilter IS NULL OR p_tablesExcludeFilter = '' OR relname !~ p_tablesExcludeFilter)
              AND relkind IN ('r', 'p')
            ORDER BY relname
         ) AS t;
@@ -3966,19 +3960,16 @@ $emaj_assign_sequences$
   DECLARE
     v_sequences              TEXT[];
   BEGIN
--- Process empty filters as NULL.
-    SELECT CASE WHEN p_sequencesIncludeFilter = '' THEN NULL ELSE p_sequencesIncludeFilter END,
-           CASE WHEN p_sequencesExcludeFilter = '' THEN NULL ELSE p_sequencesExcludeFilter END
-      INTO p_sequencesIncludeFilter, p_sequencesExcludeFilter;
 -- Build the list of sequences names satisfying the pattern.
+-- Empty strings as inclusion or exclusion pattern are processed as NULL
     SELECT array_agg(relname) INTO v_sequences
       FROM
         (SELECT relname
            FROM pg_catalog.pg_class
                 JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
            WHERE nspname = p_schema
-             AND relname ~ p_sequencesIncludeFilter
-             AND (p_sequencesExcludeFilter IS NULL OR relname !~ p_sequencesExcludeFilter)
+             AND (p_sequencesIncludeFilter IS NOT NULL AND p_sequencesIncludeFilter <> '' AND relname ~ p_sequencesIncludeFilter)
+             AND (p_sequencesExcludeFilter IS NULL OR p_sequencesExcludeFilter = '' OR relname !~ p_sequencesExcludeFilter)
              AND relkind = 'S'
            ORDER BY relname
         ) AS t;

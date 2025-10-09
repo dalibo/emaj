@@ -120,7 +120,7 @@ A TEXT array is typically expressed with a syntax like::
 
    ARRAY[‘element_1’,’ element_2’, ...]
 
-Both regular expressions follow the POSIX rules. Refer to the PostgreSQL documentation for more details. The first one defines a filter that selects the tables of the schema. The second one defines an exclusion filter applied on the selected tables. For instance:
+Both regular expressions follow the POSIX rules. Refer to the PostgreSQL documentation for more details. The first one defines a filter that selects the tables or sequences of the schema. The second one defines an exclusion filter applied on the selected tables or sequences. An inclusion filter set as *NULL* or empty string doesn’t select any element. An exclusion filter set as *NULL* or empty string doesn’t exclude any element. For instance:
 
 To select all tables or sequences of the schema my_schema::
 

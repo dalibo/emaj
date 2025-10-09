@@ -130,6 +130,99 @@ $$
     WHERE element IS NOT NULL AND element <> '';
 $$;
 
+CREATE OR REPLACE FUNCTION emaj._build_tblseqs_array_from_regexp(p_schema TEXT, p_relkind TEXT, p_includeFilter TEXT, p_excludeFilter TEXT,
+                                                                 p_exceptionIfMissing BOOLEAN)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_build_tblseqs_array_from_regexp$
+-- The function builds the names array of tables or sequences belonging to any tables groups, based on include and exclude regexp filters.
+-- Depending on the p_exceptionIfMissing parameter, it warns or raises an error if the schema doesn't exist.
+-- (WARNING only is used by removal functions so that it is possible to remove from its group relations of a dropped or renamed schema)
+-- Inputs: schema,
+--         relation kind ('r' or 'S'),
+--         2 patterns to filter table names (one to include and another to exclude),
+--         boolean indicating whether a missing schema must raise an exception or just a warning.
+-- Outputs: tables or sequences names array
+  BEGIN
+-- Check that the schema exists.
+    PERFORM emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
+-- Build and return the list of relations names satisfying the pattern.
+-- Empty strings as inclusion or exclusion pattern are processed as NULL
+    RETURN array_agg(rel_tblseq)
+      FROM (
+        SELECT rel_tblseq
+          FROM emaj.emaj_relation
+          WHERE rel_schema = p_schema
+            AND (p_includeFilter IS NOT NULL AND p_includeFilter <> '' AND rel_tblseq ~ p_includeFilter)
+            AND (p_excludeFilter IS NULL OR p_excludeFilter = '' OR rel_tblseq !~ p_excludeFilter)
+            AND rel_kind = p_relkind
+            AND upper_inf(rel_time_range)
+          ORDER BY rel_tblseq
+           ) AS t;
+  END;
+$_build_tblseqs_array_from_regexp$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                    p_group TEXT, p_properties JSONB DEFAULT NULL, p_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_tables$
+-- The function assigns tables on name regexp pattern into a tables group.
+-- Inputs: schema name, 2 patterns to filter table names (one to include and another to exclude) , assignment group name,
+--         assignment properties (optional), mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively assigned to the tables group
+  DECLARE
+    v_tables                 TEXT[];
+  BEGIN
+-- Build the list of tables names satisfying the pattern.
+-- Empty strings as inclusion or exclusion pattern are processed as NULL
+    SELECT array_agg(relname) INTO v_tables
+      FROM
+        (SELECT relname
+           FROM pg_catalog.pg_class
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+           WHERE nspname = p_schema
+             AND (p_tablesIncludeFilter IS NOT NULL AND p_tablesIncludeFilter <> '' AND relname ~ p_tablesIncludeFilter)
+             AND (p_tablesExcludeFilter IS NULL OR p_tablesExcludeFilter = '' OR relname !~ p_tablesExcludeFilter)
+             AND relkind IN ('r', 'p')
+           ORDER BY relname
+        ) AS t;
+-- Call the _assign_tables() function for execution.
+    RETURN emaj._assign_tables(p_schema, v_tables, p_group, p_properties, p_mark, TRUE, TRUE);
+  END;
+$emaj_assign_tables$;
+COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT,TEXT,TEXT,JSONB,TEXT) IS
+$$Assign tables on name patterns into a tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                      p_group TEXT, p_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_sequences$
+-- The function assigns sequences on name regexp pattern into a tables group.
+-- Inputs: schema name, 2 patterns to filter sequence names (one to include and another to exclude), assignment group name,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively assigned to the tables group
+  DECLARE
+    v_sequences              TEXT[];
+  BEGIN
+-- Build the list of sequences names satisfying the pattern.
+-- Empty strings as inclusion or exclusion pattern are processed as NULL
+    SELECT array_agg(relname) INTO v_sequences
+      FROM
+        (SELECT relname
+           FROM pg_catalog.pg_class
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+           WHERE nspname = p_schema
+             AND (p_sequencesIncludeFilter IS NOT NULL AND p_sequencesIncludeFilter <> '' AND relname ~ p_sequencesIncludeFilter)
+             AND (p_sequencesExcludeFilter IS NULL OR p_sequencesExcludeFilter = '' OR relname !~ p_sequencesExcludeFilter)
+             AND relkind = 'S'
+           ORDER BY relname
+        ) AS t;
+-- OK, call the _assign_sequences() function for execution.
+    RETURN emaj._assign_sequences(p_schema, v_sequences, p_group, p_mark, TRUE, TRUE);
+  END;
+$emaj_assign_sequences$;
+COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT,TEXT,TEXT,TEXT) IS
+$$Assign sequences on name patterns into a tables group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_drop_group$

@@ -472,20 +472,20 @@ ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 37 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 -- bad schema
 select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup2');
 ERROR:  _check_schema: The schema "dummySchema" does not exist!
 CONTEXT:  PL/pgSQL function emaj._check_schema(text,boolean,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._check_schema(p_schema, TRUE, TRUE)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 42 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 select emaj.emaj_assign_tables('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup2');
 ERROR:  _check_schema: The schema "emaj" is an E-Maj schema.
 CONTEXT:  PL/pgSQL function emaj._check_schema(text,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_schema(p_schema, TRUE, TRUE)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 42 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 -- empty tables array
 select emaj.emaj_assign_tables('myschema2',null,null,'myGroup2');
 WARNING:  _assign_tables: No table to process.
@@ -715,20 +715,20 @@ ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE)"
 PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 24 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup1');
 ERROR:  _check_schema: The schema "dummySchema" does not exist!
 CONTEXT:  PL/pgSQL function emaj._check_schema(text,boolean,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._check_schema(p_schema, TRUE, TRUE)"
 PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 29 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
 select emaj.emaj_assign_sequences('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup1');
 ERROR:  _check_schema: The schema "emaj" is an E-Maj schema.
 CONTEXT:  PL/pgSQL function emaj._check_schema(text,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_schema(p_schema, TRUE, TRUE)"
 PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 29 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
 -- empty sequences array
 select emaj.emaj_assign_sequences('myschema1',null,null,'myGroup1');
 WARNING:  _assign_sequences: No sequence to process.
