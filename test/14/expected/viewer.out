@@ -205,10 +205,28 @@ select emaj.emaj_does_exist_group('myGroup1');
  t
 (1 row)
 
+select emaj.emaj_get_groups();
+        emaj_get_groups         
+--------------------------------
+ {emptyGroup,myGroup1,myGroup2}
+(1 row)
+
 select emaj.emaj_is_logging_group('myGroup1');
  emaj_is_logging_group 
 -----------------------
  t
+(1 row)
+
+select emaj.emaj_get_logging_groups();
+ emaj_get_logging_groups 
+-------------------------
+ {emptyGroup,myGroup1}
+(1 row)
+
+select emaj.emaj_get_idle_groups();
+ emaj_get_idle_groups 
+----------------------
+ {myGroup2}
 (1 row)
 
 select emaj.emaj_does_exist_mark_group('myGroup1', 'Mark');

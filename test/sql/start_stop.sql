@@ -1,4 +1,5 @@
--- start_stop.sql : test emaj_start_group(), emaj_start_groups(), emaj_is_logging_group(),
+-- start_stop.sql : test emaj_start_group(), emaj_start_groups(),
+--                      emaj_is_logging_group(), emaj_get_logging_groups(), emaj_get_idle_groups(),
 --                      emaj_stop_group(), emaj_stop_groups(), emaj_force_stop_group(),
 --                      emaj_protect_group() and emaj_unprotect_group() functions
 --
@@ -19,7 +20,7 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_group
 select emaj.emaj_disable_protection_by_event_triggers();
 
 -----------------------------
--- emaj_start_group() and emaj_is_logging_group() tests
+-- emaj_start_group(), emaj_is_logging_group(), emaj_get_logging_groups() and emaj_get_idle_groups() tests
 -----------------------------
 -- group is unknown in emaj_group
 select emaj.emaj_start_group(NULL,NULL);
@@ -150,6 +151,17 @@ select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_is_logging_group('unknownGroup');
 select emaj.emaj_is_logging_group('emptyGroup');
 select emaj.emaj_is_logging_group('myGroup1');
+
+-- get group names array
+select emaj.emaj_get_logging_groups();
+select emaj.emaj_get_logging_groups('Group');
+select emaj.emaj_get_logging_groups(null, 'empty');
+select emaj.emaj_get_logging_groups('\d', 'my');
+
+select emaj.emaj_get_idle_groups();
+select emaj.emaj_get_idle_groups('Group');
+select emaj.emaj_get_idle_groups(null, 'my');
+select emaj.emaj_get_idle_groups('\d', '2');
 
 -- Warnings on FK
 

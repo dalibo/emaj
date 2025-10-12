@@ -147,6 +147,19 @@ select emaj.emaj_stop_group('myGroup1','Simple stop mark');
                7
 (1 row)
 
+select emaj.emaj_force_stop_group('emptyGroup');
+ emaj_force_stop_group 
+-----------------------
+                     0
+(1 row)
+
+select emaj.emaj_stop_groups(emaj.emaj_get_logging_groups());
+WARNING:  _check_group_names: No group to process.
+ emaj_stop_groups 
+------------------
+                0
+(1 row)
+
 select emaj.emaj_reset_group('myGroup1');
  emaj_reset_group 
 ------------------
@@ -165,13 +178,7 @@ select emaj.emaj_force_drop_group('myGroup2');
                      8
 (1 row)
 
-select emaj.emaj_force_stop_group('emptyGroup');
- emaj_force_stop_group 
------------------------
-                     0
-(1 row)
-
-select emaj.emaj_drop_group('emptyGroup');
+select emaj.emaj_drop_group(grp) from unnest(emaj.emaj_get_groups()) as grp;
  emaj_drop_group 
 -----------------
                0
@@ -267,7 +274,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                                                      hist_wording                                                                                      
 -----------------+------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 25 emaj_hist rows deleted ; 16 log session rows deleted ; 13 group history rows deleted ; 143 relation history rows deleted ; 95 relation changes deleted ; 43 rollback events deleted
+ PURGE_HISTORIES |            | 27 emaj_hist rows deleted ; 16 log session rows deleted ; 13 group history rows deleted ; 143 relation history rows deleted ; 95 relation changes deleted ; 43 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 
@@ -503,9 +510,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    12000 |           12000000 | X
-   12001 |           12000000 | D
+   12001 |           12000000 | X
    12002 |           12000000 | D
-   12003 |           12000000 | X
+   12003 |           12000000 | D
    12004 |           12000000 | D
    12005 |           12000000 | C
    12006 |           12000000 | A

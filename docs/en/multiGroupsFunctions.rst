@@ -8,7 +8,7 @@ To be able to synchronize current operations like group start or stop, set mark 
 
 The resulting advantages are:
 
-* to process all tables group in a single transaction,
+* to easily process all tables group in a single transaction,
 * to lock tables belonging to all groups at the beginning of the operation to minimize the risk of deadlock.
 
 .. _multi_groups_functions_list:
@@ -66,13 +66,36 @@ Both syntax are equivalent.
 Other considerations
 --------------------
 
-The order of the groups in the groups list is not meaningful. During the E-Maj operation, the processing order of tables only depends on the priority level defined for each table, and, for tables having the same priority level, from the alphabetic order of their schema and table names.
-
-It is possible to call a multi-groups function to process a list of … one group, or even an empty list. This may allows a set oriented build of this list, using for instance the *array_agg()* function.
-
 A tables groups list may contain duplicate values, *NULL* values or empty strings. These *NULL* values or empty strings are simply ignored. If a tables group name is listed several times, only one occurrence is kept.
+
+The order of the groups in the groups list is not meaningful. During the E-Maj operation, the processing order of tables only depends on the priority level defined for each table, and, for tables having the same priority level, from the alphabetic order of their schema and table names.
 
 Format and usage of these functions are strictly equivalent to those of their twin-functions.
 
 However, an additional condition exists for rollback functions: the supplied mark must correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_group() <emaj_set_mark_group>` function call.
 
+.. _groups_array_building_functions:
+
+Functions to ease tables groups array building
+----------------------------------------------
+
+Three functions help building tables groups arrays. ::
+
+   SELECT emaj.emaj_get_groups('<include.filter>', '<exclude.filter>');
+
+returns the array of existing tables groups. ::
+
+   SELECT emaj.emaj_get_logging_groups('<include.filter>', '<exclude.filter>');
+
+returns the array of tables groups in *LOGGING* state. ::
+
+   SELECT emaj.emaj_get_idle_groups('<include.filter>', '<exclude.filter>');
+
+returns the array of tables groups in *IDLE* state.
+
+Both parameters are regular expressions that allow to respectively select and exclude tables group names. By default, no filtering is performed.
+
+Examples:
+
+* *emaj_get_groups('^APP1')* selects tables groups whose name starts with APP1
+* *emaj_get_logging_groups(NULL, 'excluded')* returns all tables groups already started, except those having a name with the 'excluded' characters string.

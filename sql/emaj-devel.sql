@@ -5817,6 +5817,19 @@ $$;
 COMMENT ON FUNCTION emaj.emaj_does_exist_group(TEXT) IS
 $$Returns a boolean indicating whether a tables group exists.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_get_groups(p_includeFilter TEXT DEFAULT NULL, p_excludeFilter TEXT DEFAULT NULL)
+RETURNS TEXT[] LANGUAGE SQL STABLE AS
+$$
+-- This function returns the array of existing group names, with optional regexp to select or exclude some of them.
+-- Groups are sorted in alphabetic order.
+SELECT array_agg(group_name ORDER BY group_name)
+  FROM emaj.emaj_group
+  WHERE (p_includeFilter IS NULL OR group_name ~ p_includeFilter)
+    AND (p_excludeFilter IS NULL OR group_name !~ p_excludeFilter);
+$$;
+COMMENT ON FUNCTION emaj.emaj_get_groups(TEXT, TEXT) IS
+$$Builds a groups array, filtered on their names.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_forget_group(p_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_forget_group$
@@ -7251,6 +7264,34 @@ SELECT EXISTS(SELECT 1 FROM emaj.emaj_group WHERE group_name = p_groupName AND g
 $$;
 COMMENT ON FUNCTION emaj.emaj_is_logging_group(TEXT) IS
 $$Returns a boolean indicating whether a tables group is in LOGGING state.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT DEFAULT NULL, p_excludeFilter TEXT DEFAULT NULL)
+RETURNS TEXT[] LANGUAGE SQL STABLE AS
+$$
+-- This function returns the array of logging group names, with optional regexp to select or exclude some of them.
+-- Groups are sorted in alphabetic order.
+SELECT array_agg(group_name ORDER BY group_name)
+  FROM emaj.emaj_group
+  WHERE group_is_logging
+    AND (p_includeFilter IS NULL OR group_name ~ p_includeFilter)
+    AND (p_excludeFilter IS NULL OR group_name !~ p_excludeFilter);
+$$;
+COMMENT ON FUNCTION emaj.emaj_get_logging_groups(TEXT, TEXT) IS
+$$Builds a logging groups array, filtered on their names.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_get_idle_groups(p_includeFilter TEXT DEFAULT NULL, p_excludeFilter TEXT DEFAULT NULL)
+RETURNS TEXT[] LANGUAGE SQL STABLE AS
+$$
+-- This function returns the array of idle group names, with optional regexp to select or exclude some of them.
+-- Groups are sorted in alphabetic order.
+SELECT array_agg(group_name ORDER BY group_name)
+  FROM emaj.emaj_group
+  WHERE NOT group_is_logging
+    AND (p_includeFilter IS NULL OR group_name ~ p_includeFilter)
+    AND (p_excludeFilter IS NULL OR group_name !~ p_excludeFilter);
+$$;
+COMMENT ON FUNCTION emaj.emaj_get_idle_groups(TEXT, TEXT) IS
+$$Builds a idle groups array, filtered on their names.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_protect_group(p_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -14650,7 +14691,10 @@ GRANT EXECUTE ON FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter T
                                                          p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
                                                          OUT p_key TEXT, OUT p_value TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_group(p_groupName TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_is_logging_group(p_groupName TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_idle_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(p_groupName TEXT, p_mark TEXT, p_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN) TO emaj_viewer;

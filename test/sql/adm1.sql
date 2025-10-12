@@ -42,11 +42,12 @@ select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_lo
 -- stop, reset and drop existing groups
 -----------------------------
 select emaj.emaj_stop_group('myGroup1','Simple stop mark');
+select emaj.emaj_force_stop_group('emptyGroup');
+select emaj.emaj_stop_groups(emaj.emaj_get_logging_groups());
 select emaj.emaj_reset_group('myGroup1');
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
-select emaj.emaj_force_stop_group('emptyGroup');
-select emaj.emaj_drop_group('emptyGroup');
+select emaj.emaj_drop_group(grp) from unnest(emaj.emaj_get_groups()) as grp;
 
 -- emaj tables
 select * from emaj.emaj_group;

@@ -1,4 +1,4 @@
--- create_drop.sql : test emaj_create_group(), emaj_does_exist_group(), emaj_comment_group(),
+-- create_drop.sql : test emaj_create_group(), emaj_does_exist_group(), emaj_get_groups(), emaj_comment_group(),
 -- emaj_assign_table(), emaj_assign_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
 -- emaj_export_groups_configuration(), emaj_import_groups_configuration(),
 -- emaj_drop_group() and emaj_force_drop_group() functions
@@ -13,7 +13,7 @@
 select public.handle_emaj_sequences(1000);
 
 -----------------------------
--- emaj_create_group() and emaj_does_exist_group() tests
+-- emaj_create_group(), emaj_does_exist_group() and emaj_get_groups() tests
 -----------------------------
 
 -- invalid group names
@@ -36,6 +36,12 @@ select emaj.emaj_does_exist_group('unknownGroup');
 -- already created
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup1') where not emaj.emaj_does_exist_group('myGroup1');
+
+-- build groups array
+select emaj.emaj_get_groups();
+select emaj.emaj_get_groups('Group');
+select emaj.emaj_get_groups(null, 'my');
+select emaj.emaj_get_groups('\d', 'my');
 
 -----------------------------
 -- emaj_comment_group() tests

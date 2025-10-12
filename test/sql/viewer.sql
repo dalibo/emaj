@@ -56,7 +56,10 @@ select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_lo
 -----------------------------
 select emaj.emaj_get_version();
 select emaj.emaj_does_exist_group('myGroup1');
+select emaj.emaj_get_groups();
 select emaj.emaj_is_logging_group('myGroup1');
+select emaj.emaj_get_logging_groups();
+select emaj.emaj_get_idle_groups();
 select emaj.emaj_does_exist_mark_group('myGroup1', 'Mark');
 select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
 select * from emaj.emaj_verify_all();

@@ -8,7 +8,7 @@ Pour pouvoir synchroniser les opérations courantes de démarrage, arrêt, pose 
 
 Les avantages qui en résultent sont :
 
-* de pouvoir traiter tous les groupes de tables dans une seule transaction,
+* de pouvoir facilement traiter tous les groupes de tables dans une seule transaction,
 * d'assurer un verrouillage de toutes les tables à traiter en début d'opération, et ainsi minimiser les risques d'étreintes fatales.
 
 .. _multi_groups_functions_list:
@@ -66,13 +66,36 @@ Ces deux syntaxes sont équivalentes, et le choix de l'une ou de l'autre est à 
 Autres considérations
 ---------------------
 
-L'ordre dans lequel les groupes sont listés n'a pas d'importance. L'ordre de traitement des tables dans les opérations E-Maj dépend du niveau de priorité associé à chaque table, et pour les tables de même priorité de l'ordre alphabétique de nom de schéma et nom de table, tous groupes confondus.
-
-Il est possible d'appeler une fonction multi-groupes pour traiter une liste … d'un seul groupe, voire une liste vide. Ceci peut permettre une construction ensembliste de la liste, en utilisant par exemple la fonction *array_agg()*.
-
 Les listes de groupes de tables peuvent contenir des doublons, des valeurs *NULL* ou des chaînes vides. Ces valeurs *NULL* et ces chaînes vides sont simplement ignorées. Si un nom de groupe de tables est présent plusieurs fois, une seule occurrence du nom est retenue.
+
+L'ordre dans lequel les groupes sont listés n'a pas d'importance. L'ordre de traitement des tables dans les opérations E-Maj dépend du niveau de priorité associé à chaque table, et pour les tables de même priorité de l'ordre alphabétique de nom de schéma et nom de table, tous groupes confondus.
 
 Le formalisme et l'usage des autres paramètres éventuels des fonctions est strictement le même que pour les fonctions jumelles mono-groupes.
 
 Néanmoins, une condition supplémentaire existe pour les fonctions de rollbacks, La marque indiquée doit strictement correspondre à un même moment dans le temps pour chacun des groupes. En d'autres termes, cette marque doit avoir été posée par l'appel d'une même fonction :ref:`emaj_set_mark_group() <emaj_set_mark_group>`.
 
+.. _groups_array_building_functions:
+
+Fonctions d’aide à la construction de tableau de groupes de tables
+------------------------------------------------------------------
+
+Trois fonctions facilitent la constitution des tableaux de groupes de tables. ::
+
+   SELECT emaj.emaj_get_groups('<filtre.inclusion>', '<filtre.exclusion>');
+
+retourne un tableau des groupes de tables existants. ::
+
+   SELECT emaj.emaj_get_logging_groups('<filtre.inclusion>', '<filtre.exclusion>');
+
+retourne un tableau des groupes de tables démarrés. ::
+
+   SELECT emaj.emaj_get_idle_groups('<filtre.inclusion>', '<filtre.exclusion>');
+
+retourne un tableau des groupes de tables arrêtés.
+
+Les deux paramètres sont des expressions rationnelles permettant respectivement de sélectionner et d’exclure des groupes de tables sur leur nom. Par défaut, aucun filtrage n’est effectué.
+
+Exemples :
+
+* *emaj_get_groups('^APP1')* sélectionne les groupes de tables dont le nom commence par APP1
+* *emaj_get_logging_groups(NULL, 'exclu')* retourne tous les groupes de tables démarrés, à l’exception de ceux dont le nom contient la chaîne 'exclu'.

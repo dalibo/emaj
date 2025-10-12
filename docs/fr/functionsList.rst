@@ -258,6 +258,15 @@ Fonctions de niveau groupe de tables
 |                                                  | | fichier.sortie TEXT,        |                                       |
 |                                                  | | [tableau.tables.seq TEXT[]] |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_groups                            | | [filtre.inclusion TEXT],    | tableau.groupes TEXT[]                |
+| <groups_array_building_functions>` (V)           | | [filtre.exclusion TEXT]     |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_idle_groups                       | | [filtre.inclusion TEXT],    | tableau.groupes TEXT[]                |
+| <groups_array_building_functions>` (V)           | | [filtre.exclusion TEXT]     |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_logging_groups                    | | [filtre.inclusion TEXT],    | tableau.groupes TEXT[]                |
+| <groups_array_building_functions>` (V)           | | [filtre.exclusion TEXT]     |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_previous_mark_group               | | groupe TEXT,                | marque TEXT                           |
 | <emaj_get_previous_mark_group>` (V)              | | date.heure TIMESTAMPTZ      |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

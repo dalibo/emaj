@@ -310,6 +310,19 @@ $_drop_groups$
   END;
 $_drop_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_get_groups(p_includeFilter TEXT DEFAULT NULL, p_excludeFilter TEXT DEFAULT NULL)
+RETURNS TEXT[] LANGUAGE SQL STABLE AS
+$$
+-- This function returns the array of existing group names, with optional regexp to select or exclude some of them.
+-- Groups are sorted in alphabetic order.
+SELECT array_agg(group_name ORDER BY group_name)
+  FROM emaj.emaj_group
+  WHERE (p_includeFilter IS NULL OR group_name ~ p_includeFilter)
+    AND (p_excludeFilter IS NULL OR group_name !~ p_excludeFilter);
+$$;
+COMMENT ON FUNCTION emaj.emaj_get_groups(TEXT, TEXT) IS
+$$Builds a groups array, filtered on their names.$$;
+
 CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_groups_conf$
@@ -1286,6 +1299,34 @@ $_import_groups_conf_alter$
   END;
 $_import_groups_conf_alter$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT DEFAULT NULL, p_excludeFilter TEXT DEFAULT NULL)
+RETURNS TEXT[] LANGUAGE SQL STABLE AS
+$$
+-- This function returns the array of logging group names, with optional regexp to select or exclude some of them.
+-- Groups are sorted in alphabetic order.
+SELECT array_agg(group_name ORDER BY group_name)
+  FROM emaj.emaj_group
+  WHERE group_is_logging
+    AND (p_includeFilter IS NULL OR group_name ~ p_includeFilter)
+    AND (p_excludeFilter IS NULL OR group_name !~ p_excludeFilter);
+$$;
+COMMENT ON FUNCTION emaj.emaj_get_logging_groups(TEXT, TEXT) IS
+$$Builds a logging groups array, filtered on their names.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_get_idle_groups(p_includeFilter TEXT DEFAULT NULL, p_excludeFilter TEXT DEFAULT NULL)
+RETURNS TEXT[] LANGUAGE SQL STABLE AS
+$$
+-- This function returns the array of idle group names, with optional regexp to select or exclude some of them.
+-- Groups are sorted in alphabetic order.
+SELECT array_agg(group_name ORDER BY group_name)
+  FROM emaj.emaj_group
+  WHERE NOT group_is_logging
+    AND (p_includeFilter IS NULL OR group_name ~ p_includeFilter)
+    AND (p_excludeFilter IS NULL OR group_name !~ p_excludeFilter);
+$$;
+COMMENT ON FUNCTION emaj.emaj_get_idle_groups(TEXT, TEXT) IS
+$$Builds a idle groups array, filtered on their names.$$;
+
 --<end_functions>                                pattern used by the tool that extracts and inserts the functions definition
 
 ----------------------------------------------------------------
@@ -1309,6 +1350,10 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
 GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
+
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_idle_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
 
 ----------------------------------------------------------------
 --                                                            --

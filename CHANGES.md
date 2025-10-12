@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Add 3 helper functions to build group names arrays.
   * Improve the initial comment of the JSON output produced by
     emaj_export_groups_configuration().
   * Improve checks of the input JSON structure when importing a tables group

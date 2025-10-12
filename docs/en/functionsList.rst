@@ -259,6 +259,15 @@ Groups level functions
 |                                                  | | output.file.path TEXT,      |                                       |
 |                                                  | | [tables.seq.array TEXT[]]   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_groups                            | | [include.filter TEXT],      | groups.array TEXT[]                   |
+| <groups_array_building_functions>` (V)           | | [exclude.filter TEXT]       |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_idle_groups                       | | [include.filter TEXT],      | groups.array TEXT[]                   |
+| <groups_array_building_functions>` (V)           | | [exclude.filter TEXT]       |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_logging_groups                    | | [include.filter TEXT],      | groups.array TEXT[]                   |
+| <groups_array_building_functions>` (V)           | | [exclude.filter TEXT]       |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_previous_mark_group               | | group TEXT,                 | mark TEXT                             |
 | <emaj_get_previous_mark_group>` (V)              | | date.time TIMESTAMPTZ       |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
