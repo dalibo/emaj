@@ -1,5 +1,6 @@
 -- create_drop.sql : test emaj_create_group(), emaj_does_exist_group(), emaj_get_groups(), emaj_comment_group(),
 -- emaj_assign_table(), emaj_assign_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
+-- emaj_get_assigned_group_table(), emaj_get_assigned_group_sequence(),
 -- emaj_export_groups_configuration(), emaj_import_groups_configuration(),
 -- emaj_drop_group() and emaj_force_drop_group() functions
 --
@@ -789,6 +790,59 @@ select emaj.emaj_assign_sequences('myschema1','my.*_seq','myseq1$','myGroup1');
                      2
 (1 row)
 
+-----------------------------------
+-- emaj_get_assigned_group_table() and emaj_get_assigned_group_sequence()
+-----------------------------------
+-- error cases
+-- bad schema
+select emaj.emaj_get_assigned_group_table('dummySchema','mytbl1');
+ERROR:  _check_schema: The schema "dummySchema" does not exist!
+CONTEXT:  PL/pgSQL function emaj._check_schema(text,boolean,boolean) line 17 at RAISE
+SQL statement "SELECT emaj._check_schema(p_schema, TRUE, TRUE)"
+PL/pgSQL function emaj.emaj_get_assigned_group_table(text,text) line 10 at PERFORM
+select emaj.emaj_get_assigned_group_sequence('dummySchema','myseq1');
+ERROR:  _check_schema: The schema "dummySchema" does not exist!
+CONTEXT:  PL/pgSQL function emaj._check_schema(text,boolean,boolean) line 17 at RAISE
+SQL statement "SELECT emaj._check_schema(p_schema, TRUE, TRUE)"
+PL/pgSQL function emaj.emaj_get_assigned_group_sequence(text,text) line 10 at PERFORM
+-- bad table and sequence
+select emaj.emaj_get_assigned_group_table('myschema2','dummyTable');
+ERROR:  emaj_get_assigned_group_table: In schema myschema2, the table "dummyTable" does not exist.
+CONTEXT:  PL/pgSQL function emaj.emaj_get_assigned_group_table(text,text) line 19 at RAISE
+select emaj.emaj_get_assigned_group_sequence('myschema2','dummySequence');
+ERROR:  emaj_get_assigned_group_sequence: In schema myschema2, the sequence "dummySequence" does not exist.
+CONTEXT:  PL/pgSQL function emaj.emaj_get_assigned_group_sequence(text,text) line 19 at RAISE
+-- OK
+-- assigned table and sequence
+select emaj.emaj_get_assigned_group_table('myschema2','mytbl1');
+ emaj_get_assigned_group_table 
+-------------------------------
+ myGroup2
+(1 row)
+
+select emaj.emaj_get_assigned_group_sequence('myschema2','myseq1');
+ emaj_get_assigned_group_sequence 
+----------------------------------
+ myGroup2
+(1 row)
+
+-- not yet assigned table and sequence
+begin;
+  create table myschema1.another_table (c1 text);
+  create sequence myschema1.another_sequence; 
+  select emaj.emaj_get_assigned_group_table('myschema1','another_table');
+ emaj_get_assigned_group_table 
+-------------------------------
+ 
+(1 row)
+
+  select emaj.emaj_get_assigned_group_sequence('myschema1','another_sequence');
+ emaj_get_assigned_group_sequence 
+----------------------------------
+ 
+(1 row)
+
+rollback;
 -----------------------------------
 -- check populated groups
 -----------------------------------

@@ -95,7 +95,8 @@ insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_tab
 
 select emaj.emaj_create_group('myGroup1') where not emaj.emaj_does_exist_group('myGroup1');
 select emaj.emaj_comment_group('myGroup1','This is group #1');
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb)
+  where emaj.emaj_get_assigned_group_table('myschema1','mytbl1') is null;
 select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
 select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2","log_index_tablespace":"tsp log''2"}'::jsonb);
 select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"log_data_tablespace":"tsplog1"}'::jsonb);
@@ -105,6 +106,8 @@ select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
 select emaj.emaj_create_group('myGroup2',true,'This is group #2');
 select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
 select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2')
+  where emaj.emaj_get_assigned_group_sequence('myschema2','myseq1') is null;
 
 select emaj.emaj_create_group('emptyGroup');
 

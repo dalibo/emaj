@@ -229,6 +229,18 @@ select emaj.emaj_get_idle_groups();
  {myGroup2}
 (1 row)
 
+select emaj.emaj_get_assigned_group_table('myschema2', 'mytbl1');
+ emaj_get_assigned_group_table 
+-------------------------------
+ myGroup2
+(1 row)
+
+select emaj.emaj_get_assigned_group_sequence('myschema2', 'myseq1');
+ emaj_get_assigned_group_sequence 
+----------------------------------
+ myGroup2
+(1 row)
+
 select emaj.emaj_does_exist_mark_group('myGroup1', 'Mark');
  emaj_does_exist_mark_group 
 ----------------------------

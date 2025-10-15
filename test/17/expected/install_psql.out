@@ -2420,6 +2420,42 @@ $_assign_tables$
     RETURN v_nbAssignedTbl;
   END;
 $_assign_tables$;
+CREATE OR REPLACE FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$emaj_get_assigned_group_table$
+-- The function reports the tables group a table is assigned to.
+-- It returns NULL if the table is not currently assigned to a group.
+-- Inputs: schema name, table name.
+-- Outputs: tables group currently owning the table.
+  DECLARE
+    v_group                  TEXT;
+  BEGIN
+-- Check the supplied schema exists and is not an E-Maj schema.
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
+-- Check that application table exist.
+    PERFORM 0
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = p_table
+        AND relkind IN ('r','p');
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_get_assigned_group_table: In schema %, the table % does not exist.',
+                      quote_ident(p_schema), quote_ident(p_table);
+    END IF;
+-- Get the tables group the table is assignned to.
+    SELECT rel_group INTO v_group
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
+        AND rel_kind = 'r'
+        AND upper_inf(rel_time_range);
+--
+    RETURN v_group;
+  END;
+$emaj_get_assigned_group_table$;
+COMMENT ON FUNCTION emaj.emaj_get_assigned_group_table(TEXT,TEXT) IS
+$$Returns the tables group a table is assigned to.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_remove_table(p_schema TEXT, p_table TEXT, p_mark TEXT DEFAULT 'REMOVE_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_remove_table$
@@ -3982,6 +4018,42 @@ $_assign_sequences$
     RETURN v_nbAssignedSeq;
   END;
 $_assign_sequences$;
+CREATE OR REPLACE FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p_sequence TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$emaj_get_assigned_group_sequence$
+-- The function reports the tables group a sequence is assigned to.
+-- It returns NULL if the sequence is not currently assigned to a group.
+-- Inputs: schema name, sequence name.
+-- Outputs: tables group currently owning the sequence.
+  DECLARE
+    v_group                  TEXT;
+  BEGIN
+-- Check the supplied schema exists and is not an E-Maj schema.
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
+-- Check that application sequence exist.
+    PERFORM 0
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = p_sequence
+        AND relkind = 'S';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_get_assigned_group_sequence: In schema %, the sequence % does not exist.',
+                      quote_ident(p_schema), quote_ident(p_sequence);
+    END IF;
+-- Get the tables group the sequence is assignned to.
+    SELECT rel_group INTO v_group
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_sequence
+        AND rel_kind = 'S'
+        AND upper_inf(rel_time_range);
+--
+    RETURN v_group;
+  END;
+$emaj_get_assigned_group_sequence$;
+COMMENT ON FUNCTION emaj.emaj_get_assigned_group_sequence(TEXT,TEXT) IS
+$$Returns the tables group a sequence is assigned to.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_remove_sequence(p_schema TEXT, p_sequence TEXT, p_mark TEXT DEFAULT 'REMOVE_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_remove_sequence$
@@ -14362,6 +14434,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNu
                                                   p_checkIdle BOOLEAN, p_checkLogging BOOLEAN,
                                                   p_checkRollbackable BOOLEAN, p_checkUnprotected BOOLEAN)
                           TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._check_schema(p_schema TEXT, p_exceptionIfMissing BOOLEAN, p_checkNotEmaj BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
                           p_finiteUpperBound BOOLEAN, p_checkLogSession BOOLEAN,
@@ -14376,6 +14449,8 @@ GRANT EXECUTE ON FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_be
 GRANT EXECUTE ON FUNCTION emaj._get_log_sequence_last_value(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_app_sequence_last_value(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(p_groupNames TEXT[], p_onErrorStop boolean) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(p_groupName TEXT, p_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(p_groupName TEXT, p_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_previous_mark_group(p_groupName TEXT, p_mark TEXT) TO emaj_viewer;
@@ -14506,7 +14581,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:14786: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:14863: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;

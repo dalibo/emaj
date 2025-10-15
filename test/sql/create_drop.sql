@@ -1,5 +1,6 @@
 -- create_drop.sql : test emaj_create_group(), emaj_does_exist_group(), emaj_get_groups(), emaj_comment_group(),
 -- emaj_assign_table(), emaj_assign_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
+-- emaj_get_assigned_group_table(), emaj_get_assigned_group_sequence(),
 -- emaj_export_groups_configuration(), emaj_import_groups_configuration(),
 -- emaj_drop_group() and emaj_force_drop_group() functions
 --
@@ -288,6 +289,31 @@ select emaj.emaj_assign_sequences('myschema2','myseq1.*','','myGroup2');
 
 -- OK
 select emaj.emaj_assign_sequences('myschema1','my.*_seq','myseq1$','myGroup1');
+
+-----------------------------------
+-- emaj_get_assigned_group_table() and emaj_get_assigned_group_sequence()
+-----------------------------------
+
+-- error cases
+-- bad schema
+select emaj.emaj_get_assigned_group_table('dummySchema','mytbl1');
+select emaj.emaj_get_assigned_group_sequence('dummySchema','myseq1');
+-- bad table and sequence
+select emaj.emaj_get_assigned_group_table('myschema2','dummyTable');
+select emaj.emaj_get_assigned_group_sequence('myschema2','dummySequence');
+
+-- OK
+-- assigned table and sequence
+select emaj.emaj_get_assigned_group_table('myschema2','mytbl1');
+select emaj.emaj_get_assigned_group_sequence('myschema2','myseq1');
+
+-- not yet assigned table and sequence
+begin;
+  create table myschema1.another_table (c1 text);
+  create sequence myschema1.another_sequence; 
+  select emaj.emaj_get_assigned_group_table('myschema1','another_table');
+  select emaj.emaj_get_assigned_group_sequence('myschema1','another_sequence');
+rollback;
 
 -----------------------------------
 -- check populated groups

@@ -60,6 +60,8 @@ select emaj.emaj_get_groups();
 select emaj.emaj_is_logging_group('myGroup1');
 select emaj.emaj_get_logging_groups();
 select emaj.emaj_get_idle_groups();
+select emaj.emaj_get_assigned_group_table('myschema2', 'mytbl1');
+select emaj.emaj_get_assigned_group_sequence('myschema2', 'myseq1');
 select emaj.emaj_does_exist_mark_group('myGroup1', 'Mark');
 select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
 select * from emaj.emaj_verify_all();

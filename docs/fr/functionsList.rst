@@ -50,6 +50,12 @@ Fonctions de niveau tables et séquences
 |                                                  | | [ propriétés JSONB ]        |                                       |
 |                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_assigned_group_sequence           | | schéma TEXT,                | groupe TEXT                           |
+| <get_assigned_group>` (V)                        | | séquence TEXT               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_assigned_group_table              | | schéma TEXT,                | groupe TEXT                           |
+| <get_assigned_group>` (V)                        | | table TEXT                  |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_current_log_table                 | | schéma TEXT,                | (schéma.log TEXT, table.log TEXT)     |
 | <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

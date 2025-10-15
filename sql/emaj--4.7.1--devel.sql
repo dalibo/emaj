@@ -192,6 +192,43 @@ $emaj_assign_tables$;
 COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT,TEXT,TEXT,JSONB,TEXT) IS
 $$Assign tables on name patterns into a tables group.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$emaj_get_assigned_group_table$
+-- The function reports the tables group a table is assigned to.
+-- It returns NULL if the table is not currently assigned to a group.
+-- Inputs: schema name, table name.
+-- Outputs: tables group currently owning the table.
+  DECLARE
+    v_group                  TEXT;
+  BEGIN
+-- Check the supplied schema exists and is not an E-Maj schema.
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
+-- Check that application table exist.
+    PERFORM 0
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = p_table
+        AND relkind IN ('r','p');
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_get_assigned_group_table: In schema %, the table % does not exist.',
+                      quote_ident(p_schema), quote_ident(p_table);
+    END IF;
+-- Get the tables group the table is assignned to.
+    SELECT rel_group INTO v_group
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
+        AND rel_kind = 'r'
+        AND upper_inf(rel_time_range);
+--
+    RETURN v_group;
+  END;
+$emaj_get_assigned_group_table$;
+COMMENT ON FUNCTION emaj.emaj_get_assigned_group_table(TEXT,TEXT) IS
+$$Returns the tables group a table is assigned to.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
                                                       p_group TEXT, p_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -222,6 +259,43 @@ $emaj_assign_sequences$
 $emaj_assign_sequences$;
 COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Assign sequences on name patterns into a tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p_sequence TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$emaj_get_assigned_group_sequence$
+-- The function reports the tables group a sequence is assigned to.
+-- It returns NULL if the sequence is not currently assigned to a group.
+-- Inputs: schema name, sequence name.
+-- Outputs: tables group currently owning the sequence.
+  DECLARE
+    v_group                  TEXT;
+  BEGIN
+-- Check the supplied schema exists and is not an E-Maj schema.
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
+-- Check that application sequence exist.
+    PERFORM 0
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = p_sequence
+        AND relkind = 'S';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_get_assigned_group_sequence: In schema %, the sequence % does not exist.',
+                      quote_ident(p_schema), quote_ident(p_sequence);
+    END IF;
+-- Get the tables group the sequence is assignned to.
+    SELECT rel_group INTO v_group
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_sequence
+        AND rel_kind = 'S'
+        AND upper_inf(rel_time_range);
+--
+    RETURN v_group;
+  END;
+$emaj_get_assigned_group_sequence$;
+COMMENT ON FUNCTION emaj.emaj_get_assigned_group_sequence(TEXT,TEXT) IS
+$$Returns the tables group a sequence is assigned to.$$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
@@ -1351,6 +1425,9 @@ GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
+GRANT EXECUTE ON FUNCTION emaj._check_schema(p_schema TEXT, p_exceptionIfMissing BOOLEAN, p_checkNotEmaj BOOLEAN) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_idle_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;

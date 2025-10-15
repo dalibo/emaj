@@ -296,7 +296,8 @@ select emaj.emaj_comment_group('myGroup1','This is group #1');
  
 (1 row)
 
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb)
+  where emaj.emaj_get_assigned_group_table('myschema1','mytbl1') is null;
  emaj_assign_table 
 -------------------
                  1
@@ -350,6 +351,12 @@ select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
 -----------------------
                      2
 (1 row)
+
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2')
+  where emaj.emaj_get_assigned_group_sequence('myschema2','myseq1') is null;
+ emaj_assign_sequence 
+----------------------
+(0 rows)
 
 select emaj.emaj_create_group('emptyGroup');
  emaj_create_group 

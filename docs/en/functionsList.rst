@@ -50,6 +50,12 @@ Tables or sequences level functions
 |                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_assigned_group_sequence           | | schema TEXT,                | group TEXT                            |
+| <get_assigned_group>` (V)                        | | sequence TEXT               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_assigned_group_table              | | schema TEXT,                | group TEXT                            |
+| <get_assigned_group>` (V)                        | | table TEXT                  |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_current_log_table                 | | schema TEXT,                | (log.schema TEXT, log.table TEXT)     |
 | <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

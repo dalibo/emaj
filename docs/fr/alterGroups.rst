@@ -172,6 +172,23 @@ Les fonctions retournent le nombre de tables ayant subi au moins une modificatio
 
 Lorsque le groupe de tables est actif et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *MODIFY*.
 
+.. _get_assigned_group:
+
+Connaître le groupe assigné d'une table ou une séquence
+-------------------------------------------------------
+
+Deux fonctions permettent de connaître le groupe de tables actuellement assigné pour une table ou une séquence ::
+
+   SELECT emaj.emaj_get_assigned_group_table(‘<schéma>’,’<table>’);
+
+   SELECT emaj.emaj_get_assigned_group_sequence(‘<schéma>’,’<séquence>’);
+
+Si la table ou la séquence n’est pas actuellement assignée à un groupe de tables, les fonctions retournent une valeur *NULL*.
+
+Avec ces fonctions, il est aisé d’assigner à un groupe, de déplacer ou de laisser en l’état une table ou une séquence, en fonction de son état.
+
+Les fonctions sont appelables par les rôles *emaj_viewer*.
+
 Incidence des ajouts ou suppressions de tables et séquences dans un groupe en état *LOGGING*
 --------------------------------------------------------------------------------------------
 

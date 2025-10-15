@@ -166,6 +166,23 @@ The functions return the number of tables that have effectively changed at least
 
 When the tables group is in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *MODIFY* prefix,
 
+.. _get_assigned_group:
+
+Knowing the tables group a table or a sequence is assigned to
+-------------------------------------------------------------
+
+Two functions return the tables group name a table or a sequence is assigned to::
+
+   SELECT emaj.emaj_get_assigned_group_table(‘<schema>’,’<table>’);
+
+   SELECT emaj.emaj_get_assigned_group_sequence(‘<schema>’,’<sequence>’);
+
+If the table or sequence is not currently assigned to a group, both functions return a *NULL* value.
+
+Thanks to these functions, it’s easy to assign or move or leave as is a table or a sequence, depending on its state.
+
+The functions are callable by *emaj_viewer* roles.
+
 Incidence of tables or sequences addition or removal in a group in LOGGING state
 --------------------------------------------------------------------------------
 
