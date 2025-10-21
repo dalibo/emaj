@@ -196,7 +196,7 @@ In a variation of the function, the first input parameter directly contains the 
 Knowing the existence or state of a tables group or a mark
 ----------------------------------------------------------
 
-The E-Maj administrator who wishes to write idempotent SQL scripts to manage its tables groups can take benefit from a few useful functions: *emaj_does_exist_group()*, *emaj_is_logging_group()* and *emaj_does_exist_mark_group()*. ::
+The E-Maj administrator who wishes to :ref:`write idempotent SQL scripts<idempotent_groups_content>` to manage its tables groups can take benefit from a few useful functions: *emaj_does_exist_group()*, *emaj_is_logging_group()* and *emaj_does_exist_mark_group()*. ::
 
    SELECT emaj.emaj_does_exist_group('<nom.du.groupe>');
 
@@ -214,7 +214,6 @@ By using these functions in a *WHERE* clause, it is possible for instance to onl
 
    SELECT emaj.emaj_create_group('<nom.du.groupe>')
       WHERE NOT emaj.emaj_does_exist_group('<nom.du.groupe>');
-
 
 .. _emaj_forget_group:
 

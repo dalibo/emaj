@@ -195,14 +195,13 @@ Dans une variante de la fonction, le premier paramètre en entrée contient dire
 Connaitre l’existence ou l’état de groupe de tables ou de marques
 -----------------------------------------------------------------
 
-L’administrateur E-Maj souhaitant écrire des scripts SQL idempotents pour administrer ses groupes de tables dispose de quelques fonctions utiles : *emaj_does_exist_group()*, *emaj_is_logging_group()* et *emaj_does_exist_mark_group()*. ::
+L’administrateur E-Maj souhaitant :ref:`écrire des scripts SQL idempotents pour administrer ses groupes de tables<idempotent_groups_content>` dispose de quelques fonctions utiles : *emaj_does_exist_group()*, *emaj_is_logging_group()* et *emaj_does_exist_mark_group()*. ::
 
    SELECT emaj.emaj_does_exist_group('<nom.du.groupe>');
 
    SELECT emaj.emaj_is_logging_group('<nom.du.groupe>');
 
    SELECT emaj.emaj_does_exist_mark_group('<nom.du.groupe>', ‘<nom.de.marque>’);
-
 
 Toutes retournent un booléen qui prend la valeur *TRUE* lorsque respectivement :
 

@@ -90,7 +90,6 @@ Lorsque le ou les groupes de tables d’origine sont actifs et que la marque n�
 Retirer des séquences de leur groupe de tables
 ----------------------------------------------
 
-
 Les 3 fonctions suivantes permettent de retirer une ou plusieurs séquences de leur groupe de tables ::
 
 	SELECT emaj.emaj_remove_sequence('<schéma>', '<séquence>' [,'<marque>'] );

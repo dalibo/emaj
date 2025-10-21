@@ -55,6 +55,7 @@ Bienvenue dans la documentation E-Maj !
    :caption: Considérations diverses :
 
    parameters
+   idempotentScripts
    logTables
    reliability
    generatedColumns

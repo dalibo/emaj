@@ -79,7 +79,7 @@ Néanmoins, une condition supplémentaire existe pour les fonctions de rollbacks
 Fonctions d’aide à la construction de tableau de groupes de tables
 ------------------------------------------------------------------
 
-Trois fonctions facilitent la constitution des tableaux de groupes de tables. ::
+Trois fonctions facilitent la constitution des tableaux de groupes de tables et aident à :ref:`écrire des scripts idempotents<idempotent_groups_state>`. ::
 
    SELECT emaj.emaj_get_groups('<filtre.inclusion>', '<filtre.exclusion>');
 

@@ -55,6 +55,7 @@ Welcome to the E-Maj's documentation!
    :caption: Miscellaneous:
 
    parameters
+   idempotentScripts
    logTables
    generatedColumns
    reliability

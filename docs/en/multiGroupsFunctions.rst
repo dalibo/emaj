@@ -79,7 +79,7 @@ However, an additional condition exists for rollback functions: the supplied mar
 Functions to ease tables groups array building
 ----------------------------------------------
 
-Three functions help building tables groups arrays. ::
+Three functions help building tables groups arrays and ease :ref:`writing idempotent administration scripts<idempotent_groups_state>`. ::
 
    SELECT emaj.emaj_get_groups('<include.filter>', '<exclude.filter>');
 

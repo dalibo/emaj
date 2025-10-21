@@ -45,4 +45,4 @@ Seuls les super-utilisateurs et les utilisateurs ayant acquis les droits *emaj_a
 
 Les utilisateurs ayant acquis les droits *emaj_viewer* n'ont accès qu'à une partie de la table *emaj_param*. au travers de la vue *emaj.emaj_visible_param*. Cette vue masque simplement le contenu réel de la colonne *param_value_text* pour la clé *'dblink_user_password'*.
 
-Des fonctions :ref:`emaj_export_parameters_configuration()<export_param_conf>` et :ref:`emaj_import_parameters_configuration()<import_param_conf>` permettent de sauver les valeurs de paramètres et de les restaurer.
+Des fonctions :ref:`emaj_export_parameters_configuration()<export_param_conf>` et :ref:`emaj_import_parameters_configuration()<import_param_conf>` permettent de sauver les valeurs de paramètres et de les restaurer. Elles facilitent :ref:`l’écriture de scripts idempotents<idempotent_parameters>`.
