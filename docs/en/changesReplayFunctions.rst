@@ -9,7 +9,8 @@ So these changes can be replayed after the corresponding tables have been restor
 
 To generate this SQL script, just execute the following statement::
 
-   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', '<file>' [, <tables/sequences.array>);
+   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', '<file>'
+               [, <tables/sequences.array>);
 
 A *NULL* value or an empty string may be used as end mark, representing the current state.
 
@@ -21,7 +22,8 @@ If supplied, the output file name must be an absolute pathname. It must have the
 
 The output file name may be set to NULL. In this case, the SQL script is prepared in a temporary table that can then be accessed through a temporary view, *emaj_sql_script*. Using *psql*, the script can be exported with both commands::
 
-   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', NULL [, <tables/sequences.array>);
+   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', NULL
+               [, <tables/sequences.array>);
    \copy (SELECT * FROM emaj_sql_script) TO ‘file’
 
 This method allows to generate a script in a file located outside the file systems accessible by the PostgreSQL instance.
@@ -62,6 +64,7 @@ It is also the user's responsibility to deactivate application triggers, if any 
 
 Using the *emaj_gen_sql_groups()* function, it is possible to generate a sql script related to several groups::
 
-   SELECT emaj.emaj_gen_sql_groups('<group.names.array>', '<start.mark>', '<end.mark>', '<file>' [, <tables/sequences.array>);
+   SELECT emaj.emaj_gen_sql_groups('<group.names.array>', '<start.mark>', '<end.mark>', '<file>'
+               [, <tables/sequences.array>);
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.

@@ -57,5 +57,7 @@ Si les fonctions de rollback E-Maj sont directement appelées en SQL, ces param�
 
 Si les opérations de rollback E-Maj sont exécutées depuis un client web, il est également possible de valoriser ces paramètres au niveau des fonctions, en tant que *superuser* ::
 
-   ALTER FUNCTION emaj._rlbk_tbl(emaj.emaj_relation, BIGINT, BIGINT, INT, BOOLEAN) SET work_mem = <valeur>;
-   ALTER FUNCTION emaj._rlbk_session_exec(INT, INT) SET maintenance_work_mem = <valeur>;
+   ALTER FUNCTION emaj._rlbk_tbl(emaj.emaj_relation, BIGINT, BIGINT, INT, BOOLEAN)
+         SET work_mem = <valeur>;
+   ALTER FUNCTION emaj._rlbk_session_exec(INT, INT)
+         SET maintenance_work_mem = <valeur>;

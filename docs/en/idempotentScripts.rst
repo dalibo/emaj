@@ -108,7 +108,8 @@ By extension, to assign all tables from schema sch1 to the same group::
 If E-Maj properties of tables belonging to a group have non default values, it is important to check their target values, using :ref:`emaj_modify_table() and/or emaj_modify_tables()<modify_table>` functions. In the *JSONB* input parameter, properties keeping their default values must be explicitely set to *null*. ::
 
    SELECT emaj.emaj_modify_tables ('sch1', '.*', null,
-      '{ "priority" : null, "log_data_tablespace" : null, "log_index_tablespace" : null, "ignored_triggers" : null }'));
+      '{ "priority" : null, "log_data_tablespace" : null, "log_index_tablespace" : null,
+         "ignored_triggers" : null }'));
 
    SELECT emaj.emaj_modify_table ('sch1', 'tbl1',
       '{ "priority" : 1, "ignored_triggers" : ["trg1"] }'));

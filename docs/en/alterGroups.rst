@@ -76,7 +76,8 @@ or ::
 
 or ::
 
-	SELECT emaj.emaj_remove_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>' [,'<mark>'] );
+	SELECT emaj.emaj_remove_tables('<schema>', '<tables.to.include.filter>',
+               '<tables.to.exclude.filter>' [,'<mark>'] );
 
 They are very similar to the tables assignment functions.
 
@@ -97,7 +98,8 @@ or ::
 
 or ::
 
-	SELECT emaj.emaj_remove_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>' [,'<mark>'] );
+	SELECT emaj.emaj_remove_sequences('<schema>', '<sequences.to.include.filter>',
+               '<sequences.to.exclude.filter>' [,'<mark>'] );
 
 They are very similar to the sequences assignment functions.
 
@@ -118,7 +120,8 @@ or ::
 
 or ::
 
-	SELECT emaj.emaj_move_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<new.group' [,'<mark>'] );
+	SELECT emaj.emaj_move_tables('<schema>', '<tables.to.include.filter>',
+               '<tables.to.exclude.filter>', '<new.group' [,'<mark>'] );
 
 When serveral tables are moved to another tables group, they do not necessarily belong to the same source group.
 
@@ -137,7 +140,8 @@ or ::
 
 or ::
 
-	SELECT emaj.emaj_move_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>', '<new.group' [,'<mark>'] );
+	SELECT emaj.emaj_move_sequences('<schema>', '<sequences.to.include.filter>',
+               '<sequences.to.exclude.filter>', '<new.group' [,'<mark>'] );
 
 When serveral sequences are moved to another tables group, they do not necessarily belong to the same source group.
 
@@ -158,7 +162,8 @@ or ::
 
 or ::
 
-	SELECT emaj.emaj_modify_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<modified.properties>' [,'<mark>']]);
+	SELECT emaj.emaj_modify_tables('<schema>', '<tables.to.include.filter>',
+               '<tables.to.exclude.filter>', '<modified.properties>' [,'<mark>']]);
 
 The <modified.properties> parameter is of type JSONB. Its elementary fields are the same as the <properties> parameter of the :ref:`tables assignment functions<assign_table_sequence>`. But this <modified.properties> parameter only contains ... the properties to modify. The not listed properties remain unchanged. It is possible to reset a property to its default value by setting a *NULL* value (the json null).
 

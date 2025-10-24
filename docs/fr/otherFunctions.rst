@@ -90,7 +90,8 @@ Deux versions de la fonction *emaj_import_parameters_configuration()* importent 
 
 On peut lire dans un fichier des paramètres à charger par ::
 
-   SELECT emaj_import_parameters_configuration('<chemin.fichier>', <suppression.configuration.courante>);
+   SELECT emaj_import_parameters_configuration('<chemin.fichier>',
+               <suppression.configuration.courante?>);
 
 Le chemin du fichier doit être accessible par l’instance PostgreSQL.
 
@@ -116,7 +117,8 @@ La fonction retourne le nombre de paramètres importés.
 
 Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des valeurs à charger ::
 
-   SELECT emaj_import_parameters_configuration('<structure.JSON>', <suppression.configuration.courante>);
+   SELECT emaj_import_parameters_configuration('<structure.JSON>',
+               <suppression.configuration.courante?>);
 
 .. _emaj_get_current_log_table:
 

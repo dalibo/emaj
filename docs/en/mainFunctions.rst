@@ -42,7 +42,7 @@ To insert a tables group start into an idempotent script, it is possible to cond
 
 Using the *emaj_start_groups()* function, several groups can be started at once::
 
-   SELECT emaj.emaj_start_groups('<group.names.array>'[, '<mark.name>'[,<delete.old.logs?>]]);
+   SELECT emaj.emaj_start_groups('<group.names.array>'[, '<mark.name>'[, <delete.old.logs?>]]);
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
@@ -90,7 +90,8 @@ Rollback a tables group
 
 If it is necessary to reset tables and sequences of a group in the state they were when a mark was set, a rollback must be performed. To perform a simple (“*unlogged*”) rollback, the following SQL statement can be executed::
 
-   SELECT * FROM emaj.emaj_rollback_group('<group.name>', '<mark.name>' [, <is_alter_group_allowed> [, <comment>]]);
+   SELECT * FROM emaj.emaj_rollback_group('<group.name>', '<mark.name>'
+              [, <is_alter_group_allowed> [, '<comment'>]]);
 
 The tables group must be in *LOGGING* state and :ref:`not protected<emaj_protect_group>`. The target mark cannot be prior a :ref:`protected mark<emaj_protect_mark_group>`.
 
@@ -117,7 +118,8 @@ Then, it is possible to continue updating processes, to set other marks, and if 
 
 Using the *emaj_rollback_groups()* function, several groups can be rolled back at once::
 
-   SELECT * FROM emaj.emaj_rollback_groups('<group.names.array>', '<mark.name>' [, <is_alter_group_allowed> [, <comment>]]);
+   SELECT * FROM emaj.emaj_rollback_groups('<group.names.array>', '<mark.name>'
+               [, <is_alter_group_allowed> [, <'comment'>]]);
 
 The supplied mark must correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_group() <emaj_set_mark_group>` function call.
 
@@ -132,7 +134,8 @@ Another function executes a “*logged*” rollback. In this case, log triggers 
 
 To execute a “*logged*” rollback, the following SQL statement can be executed::
 
-   SELECT * FROM emaj.emaj_logged_rollback_group('<group.name>', '<mark.name>' [, <is_alter_group_allowed> [, <comment>]]);
+   SELECT * FROM emaj.emaj_logged_rollback_group('<group.name>', '<mark.name>'
+               [, <is_alter_group_allowed> [, <'comment'>]]);
 
 The usage rules are the same as with *emaj_rollback_group()* function.
 
@@ -178,7 +181,8 @@ A :ref:`"consolidation" function <emaj_consolidate_rollback_group>` for “logge
 
 Using the *emaj_rollback_groups()* function, several groups can be rolled back at once::
 
-   SELECT * FROM emaj.emaj_logged_rollback_groups('<group.names.array>', '<mark.name>' [, <is_alter_group_allowed> [, <comment>]]);
+   SELECT * FROM emaj.emaj_logged_rollback_groups('<group.names.array>', '<mark.name>'
+               [, <is_alter_group_allowed> [, <'comment'>]]);
 
 The supplied mark must correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_group() <emaj_set_mark_group>` function call.
 

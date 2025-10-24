@@ -167,7 +167,8 @@ Two versions of the *emaj_import_groups_configuration()* function import a descr
 
 A tables groups configuration can be read from a file with::
 
-   SELECT emaj_import_groups_configuration(<file.path> [,<groups.names.array> [,<alter_started_groups> [,<mark> [,<drop_other_groups> ]]]]);
+   SELECT emaj_import_groups_configuration(<file.path> [,<groups.names.array>
+               [,<alter_started_groups> [,<mark> [,<drop_other_groups> ]]]]);
 
 The file must be accessible by the PostgreSQL instance.
 
@@ -189,7 +190,8 @@ The function returns the number of imported tables groups.
 
 In a variation of the function, the first input parameter directly contains the JSON description of the groups to load::
 
-   SELECT emaj_import_groups_configuration(<JSON.structure> [,<groups.names.array> [,<alter_started_groups> [,<mark> [,<drop_other_groups> ]]]]);
+   SELECT emaj_import_groups_configuration(<JSON.structure> [,<groups.names.array>
+               [,<alter_started_groups> [,<mark> [,<drop_other_groups> ]]]]);
 
 .. _emaj_exist_state_mark_group:
 

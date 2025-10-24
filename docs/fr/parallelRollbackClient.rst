@@ -26,7 +26,7 @@ Syntaxe
 
 La syntaxe de la commande est la suivante : ::
 
-   emajParallelRollback.pl -g <nom.du.ou.des.groupes> -m <marque> -s <nombre.de.sessions> [OPTIONS]...
+   emajParallelRollback.pl -g <nom.du.ou.des.groupes> -m <marque> -s <nombre.sessions> [OPTIONS]...
 
 Options générales :
 

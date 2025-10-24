@@ -96,7 +96,8 @@ The emaj_dump_changes_group() function
 
 The *emaj_dump_changes_group()* function extracts changes from log tables and from the sequences states table and create files into the PostgreSQL instance disk space, using *COPY TO* statements. ::
 
-   SELECT emaj.emaj_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>', '<options.list>', <tables/sequences.array>, '<output.directory>');
+   SELECT emaj.emaj_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>',
+               '<options.list>', <tables/sequences.array>, '<output.directory>');
 
 The keyword 'EMAJ_LAST_MARK' can be used as end mark name, representing the last set mark.
 
@@ -160,11 +161,13 @@ The emaj_gen_sql_dump_changes_group() function
 
 The *emaj_gen_sql_dump_changes_group()* function generates SQL statements that extract changes from log tables and from the sequences states table. Two versions exist, depending whether the 6th parameter is present. ::
 
-   SELECT emaj.emaj_gen_sql_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>', '<options.list>', <tables/sequences.array>);
+   SELECT emaj.emaj_gen_sql_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>',
+               '<options.list>', <tables/sequences.array>);
 
 or ::
 
-   SELECT emaj.emaj_gen_sql_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>', '<options.list>', <tables/sequences.array>, '<script.location>');
+   SELECT emaj.emaj_gen_sql_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>',
+               '<options.list>', <tables/sequences.array>, '<script.location>');
 
 The keyword 'EMAJ_LAST_MARK' can be used as end mark name, representing the last set mark.
 

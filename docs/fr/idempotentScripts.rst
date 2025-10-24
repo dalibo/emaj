@@ -108,7 +108,8 @@ Par extension, pour assigner toutes les tables du schéma sch1 à un groupe de t
 Si les :ref:`propriétés E-Maj des tables<table_emaj_properties>` d’un groupe sont susceptibles d’avoir des valeurs différentes des valeurs par défaut, il faut aussi s’assurer de leur valeur cible, en utilisant  les fonctions :ref:`emaj_modify_table() et/ou emaj_modify_tables()<modify_table>`. Dans la structure *JSONB* fournie en paramètre, les propriétés qui doivent garder leur valeur par défaut doivent être explicitement positionnées à *null*. ::
 
    SELECT emaj.emaj_modify_tables ('sch1', '.*', null,
-   	   '{ "priority" : null, "log_data_tablespace" : null, "log_index_tablespace" : null, "ignored_triggers" : null }'));
+   	   '{ "priority" : null, "log_data_tablespace" : null, "log_index_tablespace" : null,
+            "ignored_triggers" : null }'));
    
    SELECT emaj.emaj_modify_table ('sch1', 'tbl1',
    	   '{ "priority" : 1, "ignored_triggers" : ["trg1"] }'));

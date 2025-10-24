@@ -166,7 +166,8 @@ Deux versions de la fonction *emaj_import_groups_configuration()* importent des 
 
 On peut charger une configuration de groupes de tables à partir d'un fichier par ::
 
-   SELECT emaj_import_groups_configuration('<chemin.fichier>' [,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> [, <supprimer.autres.groupes> ]]]]);
+   SELECT emaj_import_groups_configuration('<chemin.fichier>' [,<tableau.noms.groupes>
+               [,<modifier.groupes.démarrés> [,<marque> [, <supprimer.autres.groupes> ]]]]);
 
 Le fichier doit être accessible par l’instance PostgreSQL.
 
@@ -188,7 +189,8 @@ La fonction retourne le nombre de groupes de tables importés.
 
 Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
 
-   SELECT emaj_import_groups_configuration('<structure.JSON>'[,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> [, <supprimer.autres.groupes> ]]]]);
+   SELECT emaj_import_groups_configuration('<structure.JSON>'[,<tableau.noms.groupes>
+               [,<modifier.groupes.démarrés> [,<marque> [, <supprimer.autres.groupes> ]]]]);
 
 .. _emaj_exist_state_mark_group:
 

@@ -96,7 +96,8 @@ However, as the log rows deletion cannot use any *TRUNCATE* command (unlike with
 
 When associated, the functions *emaj_delete_before_mark_group()* and :ref:`emaj_get_previous_mark_group() <emaj_get_previous_mark_group>` allow to delete marks older than a retention delay. For example, to suppress all marks (and the associated log rows) set since more than 24 hours, the following statement can be executed::
 
-   SELECT emaj.emaj_delete_before_mark_group('<group>', emaj.emaj_get_previous_mark_group('<group>', current_timestamp - '1 DAY'::INTERVAL));
+   SELECT emaj.emaj_delete_before_mark_group('<group>',
+           emaj.emaj_get_previous_mark_group('<group>', current_timestamp - '1 DAY'::INTERVAL));
 
 .. _emaj_protect_mark_group:
 .. _emaj_unprotect_mark_group:

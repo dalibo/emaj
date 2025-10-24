@@ -30,7 +30,8 @@ Sans statistique sur les rollbacks précédents, si les résultats obtenus sont 
 
 La fonction *emaj_estimate_rollback_groups()* permet d’estimer la durée d’un rollback portant sur plusieurs groupes de tables ::
 
-   SELECT emaj.emaj_estimate_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>', <est tracé>);
+   SELECT emaj.emaj_estimate_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>',
+               <est tracé>);
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 
@@ -210,7 +211,8 @@ La fonction retourne un ensemble de lignes comprenant les colonnes :
 
 A l'aide de cette fonction, il est ainsi facile de consolider tous les rollbacks possibles de tous les groupes de tables d'une base de données pour récupérer le maximum d'espace disque possible ::
 
-   SELECT emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark_name) FROM emaj.emaj_get_consolidable_rollbacks();
+   SELECT emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark_name)
+          FROM emaj.emaj_get_consolidable_rollbacks();
 
 La fonction *emaj_get_consolidable_rollbacks()* est utilisable par les rôles *emaj_adm* et *emaj_viewer*.
 

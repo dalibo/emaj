@@ -8,7 +8,7 @@ A cette fin, l’utilisateur dispose de deux jeux de fonctions qui restituent de
 Toutes ces fonctions statistiques sont utilisables par tous les rôles E-Maj : emaj_adm et emaj_viewer.
 
 Statistiques de niveau groupe de tables
-=======================================
+---------------------------------------
 
 Six fonctions permettent d'obtenir des statistiques sur les changements enregistrés sur les tables et séquences d'un ou pusieurs **groupes de tables**, sur un **intervalle de marques** donné ou depuis une marque donnée :
 
@@ -23,7 +23,8 @@ Statistiques générales sur le contenu des tables de logs
 
 On peut obtenir les statistiques globales complètes pour un groupe de tables à l'aide de la requête SQL ::
 
-   SELECT * FROM emaj.emaj_log_stat_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>');
+   SELECT * FROM emaj.emaj_log_stat_group('<nom.du.groupe>', '<marque.début>',
+               '<marque.fin>');
 
 La fonction retourne un ensemble de lignes, de type *emaj.emaj_log_stat_type* et comportant les colonnes suivantes :
 
@@ -81,7 +82,8 @@ Mais, les valeurs retournées peuvent être approximatives (en fait surestimées
 
 Des statistiques peuvent être obtenues sur plusieurs groupes de tables en même temps, en utilisant la fonction *emaj_log_stat_groups()* ::
 
-   SELECT * FROM emaj.emaj_log_stat_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>');
+   SELECT * FROM emaj.emaj_log_stat_groups('<tableau.des.groupes>', '<marque.début>',
+               '<marque.fin>');
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 
@@ -92,7 +94,8 @@ Statistiques détaillées sur les logs d’un ou plusieurs groupes de tables
 
 Le parcours des tables de log permet d'obtenir des informations plus détaillées, au prix d'un temps de réponse plus long. Ainsi, on peut obtenir les statistiques détaillées complètes à l'aide de la requête SQL ::
 
-   SELECT * FROM emaj.emaj_detailed_log_stat_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>');
+   SELECT * FROM emaj.emaj_detailed_log_stat_group('<nom.du.groupe>', '<marque.début>',
+               '<marque.fin>');
 
 La fonction retourne un ensemble de lignes, de type *emaj.emaj_detailed_log_stat_type* et comportant les colonnes suivantes :
 
@@ -138,7 +141,8 @@ Si, sur l’intervalle de temps demandé, une table a été supprimée du groupe
 
 Des statistiques détaillées peuvent être obtenues sur plusieurs groupes de tables en même temps, en utilisant la fonction *emaj_detailed_log_stat_groups()* ::
 
-   SELECT * FROM emaj.emaj_detailed_log_stat_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>');
+   SELECT * FROM emaj.emaj_detailed_log_stat_groups('<tableau.des.groupes>', '<marque.début>',
+               '<marque.fin>');
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 
@@ -149,7 +153,8 @@ Statistiques sur l’évolution des séquences d’un ou plusieurs groupes de ta
 
 On peut obtenir les statistiques sur l’évolution des séquences d'un groupe de tables à l'aide de la requête SQL ::
 
-   SELECT * FROM emaj.emaj_sequence_stat_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>');
+   SELECT * FROM emaj.emaj_sequence_stat_group('<nom.du.groupe>', '<marque.début>',
+               '<marque.fin>');
 
 La fonction retourne un ensemble de lignes, de type *emaj.emaj_sequence_stat_type* et comportant les colonnes suivantes :
 
@@ -201,12 +206,13 @@ Pour une séquence donnée, le nombre d’incréments est calculé comme la diff
 
 Des statistiques peuvent être obtenues sur plusieurs groupes de tables en même temps, en utilisant la fonction emaj_sequence_stat_groups() ::
 
-   SELECT * FROM emaj.emaj_sequence_stat_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>');
+   SELECT * FROM emaj.emaj_sequence_stat_groups('<tableau.des.groupes>', '<marque.début>',
+               '<marque.fin>');
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 
 Statistiques de niveau table ou séquence
-========================================
+----------------------------------------
 
 Deux autres fonctions permettent d’obtenir des statistiques sur les changements enregistrés pour **une seule table ou séquence**, sur **chaque intervalle** élémentaire de **marques** d’un intervalle d’observation donné :
 
@@ -220,11 +226,13 @@ Statistiques sur l’évolution d’une table
 
 On peut obtenir les statistiques pour une seule table sur un intervalle de temps donné avec l’une des 2 requêtes SQL ::
 
-   SELECT * FROM emaj.emaj_log_stat_table('<nom.du.schéma>', '<nom.de.la.table>' [, '<date-heure.début>' [, '<date-heure.fin>']] );
+   SELECT * FROM emaj.emaj_log_stat_table('<nom.du.schéma>', '<nom.de.la.table>'
+               [, '<date-heure.début>' [, '<date-heure.fin>']] );
 
    ou
 
-   SELECT * FROM emaj.emaj_log_stat_table('<nom.du.schéma>', '<nom.de.la.table>', '<groupe.tables.début>', '<marque.début>' [, '<group.tables.fin>', '<marque.fin>'] );
+   SELECT * FROM emaj.emaj_log_stat_table('<nom.du.schéma>', '<nom.de.la.table>',
+            '<groupe.tables.début>', '<marque.début>' [, '<group.tables.fin>', '<marque.fin>'] );
 
 Les deux fonctions retournent un ensemble de lignes, de type *emaj.emaj_log_stat_table_type* et comportant les colonnes suivantes :
 
@@ -275,11 +283,13 @@ Statistiques sur l’évolution d’une séquence
 
 On peut obtenir les statistiques pour une seule table sur un intervalle de temps donné avec l’une des 2 requêtes SQL ::
 
-   SELECT * FROM emaj.emaj_log_stat_sequence('<nom.du.schéma>', '<nom.de.la.séquence>' [, '<date-heure.début>' [, '<date-heure.fin>']] );
+   SELECT * FROM emaj.emaj_log_stat_sequence('<nom.du.schéma>', '<nom.de.la.séquence>'
+               [, '<date-heure.début>' [, '<date-heure.fin>']] );
 
    ou
 
-   SELECT * FROM emaj.emaj_log_stat_sequence('<nom.du.schéma>', '<nom.de.la.séquence>', '<groupe.tables.début>', '<marque.début>' [, '<group.tables.fin>', '<marque.fin>'] );
+   SELECT * FROM emaj.emaj_log_stat_sequence('<nom.du.schéma>', '<nom.de.la.séquence>',
+            '<groupe.tables.début>', '<marque.début>' [, '<group.tables.fin>', '<marque.fin>'] );
 
 Les deux fonctions retournent un ensemble de lignes, de type *emaj.emaj_log_stat_sequence_type* et comportant les colonnes suivantes :
 

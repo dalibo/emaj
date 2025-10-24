@@ -8,7 +8,7 @@ For this purpose, two functions sets are available for users. They produce stati
 These functions can be used by *emaj_adm* and *emaj_viewer* E-Maj roles.
 
 Tables group level statistics
-=============================
+-----------------------------
 
 Six functions return statistics about recorded data content changes for **all tables or sequences** belonging to one or several **tables groups** on a **single marks interval** or since a mark:
 
@@ -92,7 +92,8 @@ Detailed statistics about logs for one or several tables groups
 
 Scanning log tables brings a more detailed information, at a higher response time cost. So can we get fully detailed statistics with the following SQL statement::
 
-   SELECT * FROM emaj.emaj_detailed_log_stat_group('<group.name>', '<start.mark>', '<end.mark>');
+   SELECT * FROM emaj.emaj_detailed_log_stat_group('<group.name>', '<start.mark>',
+               '<end.mark>');
 
 The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_stat_type*, and that contains the following columns:
 
@@ -138,7 +139,8 @@ If a table is removed from its group and later re-assigned to it during the resq
 
 Using the *emaj_detailed_log_stat_groups()* function, detailed log statistics can be obtained for several groups at once::
 
-   SELECT * FROM emaj.emaj_detailed_log_stat_groups('<group.names.array>', '<start.mark>', '<end.mark>');
+   SELECT * FROM emaj.emaj_detailed_log_stat_groups('<group.names.array>', '<start.mark>',
+               '<end.mark>');
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
@@ -201,12 +203,13 @@ For a given sequence, the number of increments is computed as the difference bet
 
 Using the *emaj_sequence_stat_groups()* function, log statistics can be obtained for several groups at once::
 
-   SELECT * FROM emaj.emaj_sequence_stat_groups('<group.names.array>', '<start.mark>', '<end.mark>');
+   SELECT * FROM emaj.emaj_sequence_stat_groups('<group.names.array>', '<start.mark>',
+               '<end.mark>');
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
 Table or sequence level statistics
-==================================
+----------------------------------
 
 Two functions return statistics about recorded data changes for a **single table or sequence** on **each elementary marks interval** of a given time frame:
 
@@ -220,11 +223,13 @@ Statistics about changes recorded for a table
 
 Statistics about changes recorded for a single table on a given time frame are available through one of these statements::
 
-   SELECT * FROM emaj.emaj_log_stat_table('<schema.name>', '<table.name>' [, '<start.date-time>' [, '<end.date-time>']] );
+   SELECT * FROM emaj.emaj_log_stat_table('<schema.name>', '<table.name>' [, '<start.date-time>'
+               [, '<end.date-time>']] );
 
    or
 
-   SELECT * FROM emaj.emaj_log_stat_table('<schema.name>', '<table.name>', '<start.tables.group>', '<start.mark>' [, '<end.tables.group>', '<end.mark>'] );
+   SELECT * FROM emaj.emaj_log_stat_table('<schema.name>', '<table.name>',
+               '<start.tables.group>', '<start.mark>' [, '<end.tables.group>', '<end.mark>'] );
 
 Both functions return a set of rows of type *emaj.emaj_log_stat_table_type* and containing the following columns:
 
@@ -275,11 +280,13 @@ Statistics about changes recorded for a sequence
 
 Statistics about changes recorded for a single sequence on a given time frame are available through one of these statements::
 
-   SELECT * FROM emaj.emaj_log_stat_sequence('<schema.name>', '<sequence.name>' [, '<start.date-time>' [, '<end.date-time>']] );
+   SELECT * FROM emaj.emaj_log_stat_sequence('<schema.name>', '<sequence.name>' [, '<start.date-time>'
+               [, '<end.date-time>']] );
 
    or
 
-   SELECT * FROM emaj.emaj_log_stat_sequence('<schema.name>', '<sequence.name>', '<start.tables.group>', '<start.mark>' [, '<end.tables.group>', '<end.mark>'] );
+   SELECT * FROM emaj.emaj_log_stat_sequence('<schema.name>', '<sequence.name>',
+               '<start.tables.group>', '<start.mark>' [, '<end.tables.group>', '<end.mark>'] );
 
 Both functions return a set of rows of type *emaj.emaj_log_stat_sequence_type* and containing the following columns:
 

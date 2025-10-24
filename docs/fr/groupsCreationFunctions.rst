@@ -89,15 +89,18 @@ Six fonctions permettent d’ajouter des tables ou des séquences dans un groupe
 
 Pour **ajouter une ou plusieurs tables** dans un groupe de tables ::
 
-	SELECT emaj.emaj_assign_table(‘<schéma>’, ’<table>’, '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]]);
+	SELECT emaj.emaj_assign_table(‘<schéma>’, ’<table>’, '<nom.du.groupe>'
+               [,’<propriétés>’ [,’<marque>’]]);
 
 ou ::
 
-	SELECT emaj.emaj_assign_tables(‘<schéma>’, ’<tableau.de.tables>’, '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]] );
+	SELECT emaj.emaj_assign_tables(‘<schéma>’, ’<tableau.de.tables>’, '<nom.du.groupe>'
+               [,’<propriétés>’ [,’<marque>’]] );
 
 ou ::
 
-	SELECT emaj.emaj_assign_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]] );
+	SELECT emaj.emaj_assign_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>',
+               '<filtre.de.tables.à.exclure>', '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]] );
 
 Pour **ajouter une ou plusieurs séquences** dans un groupe de tables ::
 
@@ -105,11 +108,13 @@ Pour **ajouter une ou plusieurs séquences** dans un groupe de tables ::
 
 ou ::
 
-	SELECT emaj.emaj_assign_sequences('<schéma>', '<tableau.de.séquences>', '<nom.du.groupe>' [,'<marque>'] );
+	SELECT emaj.emaj_assign_sequences('<schéma>', '<tableau.de.séquences>', '<nom.du.groupe>'
+               [,'<marque>'] );
 
 ou ::
 
-	SELECT emaj.emaj_assign_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>', '<nom.du.groupe>' [,’<marque>’] );
+	SELECT emaj.emaj_assign_sequences('<schéma>', '<filtre.de.séquences.à.inclure>',
+               '<filtre.de.séquences.à.exclure>', '<nom.du.groupe>' [,’<marque>’] );
 
 Pour les fonctions traitant plusieurs tables ou séquences en une seule opération, la liste des tables ou séquences à traiter est :
 

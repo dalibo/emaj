@@ -42,7 +42,8 @@ Pour insérer le démarrage d’un groupe de tables dans un script idempotent, i
 
 Plusieurs groupes de tables peuvent être démarrés en même temps, en utilisant la fonction *emaj_start_groups()* ::
 
-   SELECT emaj.emaj_start_groups('<tableau.des.groupes>'[, '<nom.de.marque>' [, <effacer.anciens.logs?>]]);
+   SELECT emaj.emaj_start_groups('<tableau.des.groupes>'[, '<nom.de.marque>'
+              [, <effacer.anciens.logs?>]]);
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 
@@ -90,7 +91,8 @@ Exécuter un rollback E-maj simple d'un groupe de tables
 
 S'il est nécessaire de remettre les tables et séquences d'un groupe dans l'état dans lequel elles se trouvaient lors de la prise d'une marque, il faut procéder à un rollback. Pour un rollback simple (« *unlogged* » ou « *non tracé* »), il suffit d'exécuter la requête SQL suivante ::
 
-   SELECT * FROM emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>' [, <est_altération_groupe_permise [, <commentaire>]]);
+   SELECT * FROM emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>'
+              [, <est_altération_groupe_permise [, '<commentaire>']]);
 
 Le groupe de tables doit être à l'état démarré (*LOGGING*) et :ref:`non protégé <emaj_protect_group>`. La marque ciblée ne doit pas être antérieure à une marque :ref:`protégée contre les rollbacks <emaj_protect_mark_group>`.
 
@@ -117,7 +119,8 @@ Il est alors possible de poursuivre les traitements de mises à jour, de poser e
 
 Plusieurs groupes de tables peuvent être « rollbackés » en même temps, en utilisant la fonction *emaj_rollback_groups()* ::
 
-   SELECT * FROM emaj.emaj_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>' [, <est_altération_groupe_permise [, <commentaire>]]);
+   SELECT * FROM emaj.emaj_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>'
+              [, <est_altération_groupe_permise [, '<commentaire>']]);
 
 La marque indiquée doit strictement correspondre à un même moment dans le temps pour chacun des groupes listés. En d'autres termes, cette marque doit avoir été posée par l'appel d'une même fonction :ref:`emaj_set_mark_groups() <emaj_set_mark_group>`.
 
@@ -132,7 +135,8 @@ Une autre fonction permet d'exécuter un rollback de type « *logged* », Dans
 
 Pour exécuter un « *logged rollback* » sur un groupe de tables, il suffit d'exécuter la requête SQL suivante::
 
-   SELECT * FROM emaj.emaj_logged_rollback_group('<nom.du.groupe>', '<nom.de.marque>' [, <est_altération_groupe_permise [, <commentaire>]]);
+   SELECT * FROM emaj.emaj_logged_rollback_group('<nom.du.groupe>', '<nom.de.marque>'
+             [, <est_altération_groupe_permise [, '<commentaire>']]);
 
 Les règles d'utilisation sont les mêmes que pour la fonction *emaj_rollback_group()*, 
 
@@ -163,7 +167,7 @@ Lorsque le volume de mises à jour à annuler est important et que l'opération 
 
 A l'issue du rollback, il est possible de poursuivre les traitements de mises à jour, de poser d'autres marques et éventuellement de procéder à un nouveau rollback sur une marque quelconque, y compris la marque automatiquement posée en début de rollback, pour annuler ce dernier, ou encore une ancienne marque postérieure à la marque utilisée pour le rollback.
 
-Des rollbacks de différents types (*logged* / *unlogged*) peuvent être exécutés en séquence. on peut ainsi procéder à l'enchaînement suivant::
+Des rollbacks de différents types (*logged* / *unlogged*) peuvent être exécutés en séquence. on peut ainsi procéder à l'enchaînement suivant:
 
 * Pose de la marque M1
 * …
@@ -179,7 +183,8 @@ Une :ref:`fonction de « consolidation »<emaj_consolidate_rollback_group>` de
 
 Plusieurs groupes de tables peuvent être « rollbackés » en même temps, en utilisant la fonction *emaj_logged_rollback_groups()* ::
 
-   SELECT * FROM emaj.emaj_logged_rollback_groups ('<tableau.des.groupes>', '<nom.de.marque>' [, <est_altération_groupe_permise [, <commentaire>]]);
+   SELECT * FROM emaj.emaj_logged_rollback_groups ('<tableau.des.groupes>', '<nom.de.marque>'
+              [, <est_altération_groupe_permise [, '<commentaire>']]);
 
 La marque indiquée doit strictement correspondre à un même moment dans le temps pour chacun des groupes listés. En d'autres termes, cette marque doit avoir été posée par l'appel d'une même fonction :ref:`emaj_set_mark_groups() <emaj_set_mark_group>`.
 

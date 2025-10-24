@@ -37,7 +37,8 @@ Presented in alphabetic order, the existing key values are:
 
 Below is an example of a SQL statement that defines a retention delay of history table's rows equal to 3 months::
 
-   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','3 months'::interval);
+   INSERT INTO emaj.emaj_param (param_key, param_value_interval)
+          VALUES ('history_retention','3 months'::interval);
 
 Any change in the *emaj-param* table’s content is logged into the :ref:`emaj_hist<emaj_hist>` table.
 

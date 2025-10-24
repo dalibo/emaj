@@ -79,7 +79,8 @@ ou ::
 
 ou ::
 
-	SELECT emaj.emaj_remove_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>' [,'<marque>'] );
+	SELECT emaj.emaj_remove_tables('<schéma>', '<filtre.de.tables.à.inclure>',
+               '<filtre.de.tables.à.exclure>' [,'<marque>'] );
 
 Leur fonctionnement est identique aux fonctions d’assignation de tables.
 
@@ -100,7 +101,8 @@ ou ::
 
 ou ::
 
-	SELECT emaj.emaj_remove_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>' [,'<marque>'] );
+	SELECT emaj.emaj_remove_sequences('<schéma>', '<filtre.de.séquences.à.inclure>',
+               '<filtre.de.séquences.à.exclure>' [,'<marque>'] );
 
 Leur fonctionnement est identique aux fonctions d’assignation de séquences.
 
@@ -123,7 +125,8 @@ ou ::
 
 ou ::
 
-	SELECT emaj.emaj_move_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', 'nouveau.groupe' [,'<marque>'] );
+	SELECT emaj.emaj_move_tables('<schéma>', '<filtre.de.tables.à.inclure>',
+               '<filtre.de.tables.à.exclure>', 'nouveau.groupe' [,'<marque>'] );
 
 Quand plusieurs tables sont déplacées, celles-ci ne proviennent pas nécessairement d’un même groupe de tables d’origine.
 
@@ -138,11 +141,13 @@ Déplacer des séquences vers un autre groupe de tables
 
 ou ::
 
-	SELECT emaj.emaj_move_sequences('<schéma>', '<tableau.de.séquences>', 'nouveau.groupe' [,'<marque>'] );
+	SELECT emaj.emaj_move_sequences('<schéma>', '<tableau.de.séquences>', 'nouveau.groupe'
+               [,'<marque>'] );
 
 ou ::
 
-	SELECT emaj.emaj_move_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>', 'nouveau.groupe' [,'<marque>'] );
+	SELECT emaj.emaj_move_sequences('<schéma>', '<filtre.de.séquences.à.inclure>',
+               '<filtre.de.séquences.à.exclure>', 'nouveau.groupe' [,'<marque>'] );
 
 Quand plusieurs séquences sont déplacées, celles-ci ne proviennent pas nécessairement d’un même groupe de tables d’origine.
 
@@ -159,11 +164,13 @@ Modifier les  propriétés de tables
 
 ou ::
 
-	SELECT emaj.emaj_modify_tables('<schéma>', '<tableau.de.tables>', '<propriétés.modifiées>' [,'<marque>']]);
+	SELECT emaj.emaj_modify_tables('<schéma>', '<tableau.de.tables>', '<propriétés.modifiées>'
+               [,'<marque>']]);
 
 ou ::
 
-	SELECT emaj.emaj_modify_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>','<propriétés.modifiées>' [,'<marque>']]);
+	SELECT emaj.emaj_modify_tables('<schéma>', '<filtre.de.tables.à.inclure>',
+               '<filtre.de.tables.à.exclure>','<propriétés.modifiées>' [,'<marque>']]);
 
 Le paramètre <propriétés.modifiées> est de type JSONB. Ses champs élémentaires sont les mêmes que pour le paramètre <propriétés> des :ref:`fonctions d'assignation de tables<assign_table_sequence>`. Mais ce paramètre <propriétés.modifiées> ne contient que les propriétés ... à modifier. Les propriétés non valorisées restent inchangées. On peut affecter la valeur par défaut d’une propriété en la valorisant avec un *NULL* (le null *JSON*).
 

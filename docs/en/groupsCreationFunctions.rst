@@ -89,15 +89,18 @@ Six functions allow to assign one or several tables or sequences to a group.
 
 To add one or several tables into a tables group::
 
-   SELECT emaj.emaj_assign_table('<schema>', '<table>', '<groupe.name>' [,'<properties>' [,'<mark>']]);
+   SELECT emaj.emaj_assign_table('<schema>', '<table>', '<group.name>' [,'<properties>'
+              [,'<mark>']]);
 
 or::
 
-   SELECT emaj.emaj_assign_tables('<schema>', '<tables.array>', '<group.name>' [,'<properties>' [,'<mark>']] );
+   SELECT emaj.emaj_assign_tables('<schema>', '<tables.array>', '<group.name>' [,'<properties>'
+              [,'<mark>']] );
 
 or::
 
-   SELECT emaj.emaj_assign_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<group.name>' [,'<properties>' [,'<mark>']] );
+   SELECT emaj.emaj_assign_tables('<schema>', '<tables.to.include.filter>',
+              '<tables.to.exclude.filter>', '<group.name>' [,'<properties>' [,'<mark>']] );
 
 To add one or several sequences into a tables group::
 
@@ -109,7 +112,8 @@ or::
 
 or::
 
-   SELECT emaj.emaj_assign_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>', '<group.name>' [,'<mark>'] );
+   SELECT emaj.emaj_assign_sequences('<schema>', '<sequences.to.include.filter>',
+              '<sequences.to.exclude.filter>', '<group.name>' [,'<mark>'] );
 
 For functions processing several tables or sequences in a single operation, the list of tables or sequences to process is:
 

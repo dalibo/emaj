@@ -9,7 +9,8 @@ Ceci peut permettre de ré-appliquer des mises à jour après avoir restauré le
 
 Pour générer ce script SQL, il suffit d'exécuter une requête ::
 
-   SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', '<fichier>'[,<liste.tables.séquences>]);
+   SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>',
+               '<fichier>' [,<liste.tables.séquences>]);
 
 Un *NULL* ou une chaîne vide peuvent être utilisés comme marque de fin. Ils représentent alors la situation courante.
 
@@ -21,7 +22,8 @@ S'il est fourni, le nom du fichier de sortie doit être exprimé sous forme de c
 
 Le nom du fichier de sortie peut prendre une valeur NULL. Dans ce cas, le script SQL est préparé dans une table temporaire, accessible ensuite au travers d’une vue temporaire *emaj_sql_script*. A partir du client *psql*, on peut donc enchaîner dans une même session ::
 
-   SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', NULL [,<liste.tables.séquences>]);
+   SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>',
+               NULL [,<liste.tables.séquences>]);
    \copy (SELECT * FROM emaj_sql_script) TO ‘fichier’
 
 Cette méthode permet de générer un fichier en dehors des systèmes de fichiers accessibles par l’instance PostgreSQL.
@@ -62,6 +64,7 @@ Il est aussi de la responsabilité de l'utilisateur de désactiver d'éventuels 
 
 La fonction *emaj_gen_sql_groups()* permet de générer des scripts SQL portant sur plusieurs groupes de tables ::
 
-   SELECT emaj.emaj_gen_sql_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>', '<fichier>'[,<liste.tables.séquences>]);
+   SELECT emaj.emaj_gen_sql_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>',
+               '<fichier>' [,<liste.tables.séquences>]);
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.

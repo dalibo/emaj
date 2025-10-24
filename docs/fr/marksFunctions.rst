@@ -44,7 +44,8 @@ Renommer une marque
 
 Une marque précédemment posée par l'une des fonctions :ref:`emaj_create_group() <emaj_create_group>` ou :ref:`emaj_set_mark_group() <emaj_set_mark_group>` peut être renommée avec la commande SQL ::
 
-   SELECT emaj.emaj_rename_mark_group('<nom.du.groupe>', '<nom.de.marque>', '<nouveau.nom.de.marque>');
+   SELECT emaj.emaj_rename_mark_group('<nom.du.groupe>', '<nom.de.marque>',
+               '<nouveau.nom.de.marque>');
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque à renommer pour indiquer la dernière marque posée.
 
@@ -95,7 +96,8 @@ Néanmoins, comme cette suppression de lignes dans les tables de log ne peut uti
 
 Associées, les fonctions *emaj_delete_before_mark_group()*, et :ref:`emaj_get_previous_mark_group() <emaj_get_previous_mark_group>` permettent d'effacer les marques antérieures à un délai de rétention. Ainsi par exemple, pour effacer toutes les marques (et supprimer les logs associés) posées depuis plus de 24 heures, on peut exécuter la requête ::
 
-   SELECT emaj.emaj_delete_before_mark_group('<groupe>', emaj.emaj_get_previous_mark_group('<groupe>', current_timestamp - '1 DAY'::INTERVAL));
+   SELECT emaj.emaj_delete_before_mark_group('<groupe>', 
+          emaj.emaj_get_previous_mark_group('<groupe>', current_timestamp - '1 DAY'::INTERVAL));
 
 .. _emaj_protect_mark_group:
 .. _emaj_unprotect_mark_group:

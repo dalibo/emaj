@@ -91,7 +91,7 @@ Two versions of the *emaj_import_parameters_configuration()* function import par
 
 A file containing parameters to load can be read with::
 
-   SELECT emaj_import_parameters_configuration('<file.path>', <delete.current.configuration>);
+   SELECT emaj_import_parameters_configuration('<file.path>', <delete.current.configuration?>);
 
 The file path must be accessible by the PostgreSQL instance.
 
@@ -117,7 +117,8 @@ The function returns the number of imported parameters.
 
 As an alternative, the first input parameter of the function directly contains the JSON structure of the parameters to load::
 
-   SELECT emaj_import_parameters_configuration('<JSON.structure>', <delete.current.configuration>);
+   SELECT emaj_import_parameters_configuration('<JSON.structure>',
+               <delete.current.configuration?>);
 
 .. _emaj_get_current_log_table:
 

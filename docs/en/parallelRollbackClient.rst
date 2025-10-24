@@ -26,7 +26,7 @@ Syntax
 
 The syntax is::
 
-   emajParallelRollback.pl -g <group(s).name> -m <mark> -s <number.of.sessions> [OPTIONS]...
+   emajParallelRollback.pl -g <group(s).name> -m <mark> -s <number.sessions> [OPTIONS]...
 
 The general options are:
 

@@ -96,7 +96,8 @@ La fonction emaj_dump_changes_group()
 
 La fonction *emaj_dump_changes_group()* extrait les changements des tables de log et de la table des états des séquences et crée des fichiers dans l’espace disque de l’instance PostgreSQL, au moyen de requêtes *COPY TO*. ::
 
-   SELECT emaj.emaj_dump_changes_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', '<liste.options>', '<tableau.tables.séquences>', '<répertoire.de.stockage>');
+   SELECT emaj.emaj_dump_changes_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>',
+               '<liste.options>', '<tableau.tables.séquences>', '<répertoire.de.stockage>');
 
 Le mot clé 'EMAJ_LAST_MARK' peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
 
@@ -160,11 +161,13 @@ La fonction emaj_gen_sql_dump_changes_group()
 
 La fonction *emaj_gen_sql_dump_changes_group()* génère des requêtes SQL permettant d’extraire les changements des tables de log et de la table des états des séquences. Elle existe en 2 versions, selon la présence ou non du 6ème paramètre. ::
 
-   SELECT emaj.emaj_gen_sql_dump_changes_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', '<liste.options>', '<tableau.tables.séquences>');
+   SELECT emaj.emaj_gen_sql_dump_changes_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>',
+               '<liste.options>', '<tableau.tables.séquences>');
 
 ou ::
 
-   SELECT emaj.emaj_gen_sql_dump_changes_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', '<liste.options>', '<tableau.tables.séquences>', '<localisation.du.script>');
+   SELECT emaj.emaj_gen_sql_dump_changes_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>',
+               '<liste.options>', '<tableau.tables.séquences>', '<localisation.du.script>');
 
 Le mot clé 'EMAJ_LAST_MARK' peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
 

@@ -209,7 +209,8 @@ The function returns a set of rows with the following columns:
 
 Using this function, it is easy to consolidate at once all “*consolidable*” rollbacks for all tables groups in order to recover as much as possible disk space::
 
-   SELECT emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark__name) FROM emaj.emaj_get_consolidable_rollbacks();
+   SELECT emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark__name)
+          FROM emaj.emaj_get_consolidable_rollbacks();
 
 The *emaj_get_consolidable_rollbacks()* function may be used by *emaj_adm* and *emaj_viewer* roles.
 

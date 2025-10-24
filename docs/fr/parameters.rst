@@ -37,7 +37,8 @@ Les valeurs de clé des paramètres sont, par ordre alphabétique :
 
 Exemple de requête SQL permettant de spécifier une durée de rétention des lignes dans l'historique de 3 mois ::
 
-   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','3 months'::interval);
+   INSERT INTO emaj.emaj_param (param_key, param_value_interval)
+          VALUES ('history_retention','3 months'::interval);
 
 Toute modification de la table *emaj_param* est tracée dans la table :ref:`emaj_hist<emaj_hist>`.
 
