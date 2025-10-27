@@ -66,7 +66,12 @@ The file path must be accessible in write mode by the PostgreSQL instance.
 
 The function returns the number of exported parameters.
 
-If the file path is not supplied, the function directly returns the JSON structure containing the parameters value. This structure looks like this::
+If the file path is not supplied or is set to *NULL*, the function directly returns the JSON structure containing the parameters value. This allows to vizualize or store it into a relational table. For instance::
+
+   INSERT INTO my_table (my_parameters_json)
+       VALUES ( emaj_export_parameters_configuration() );
+
+The exported JSON structure looks like::
 
    {
      "_comment": "E-Maj parameters, generated from the database <db> with E-Maj version <version> at <date_heure>",
@@ -119,6 +124,11 @@ As an alternative, the first input parameter of the function directly contains t
 
    SELECT emaj_import_parameters_configuration('<JSON.structure>',
                <delete.current.configuration?>);
+
+This structure may be read from a relational table::
+
+   SELECT emaj_import_parameters_configuration (my_parameters_json, TRUE)
+       FROM my_table;
 
 .. _emaj_get_current_log_table:
 

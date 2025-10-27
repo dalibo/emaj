@@ -65,7 +65,12 @@ Le chemin du fichier doit être accessible en écriture par l’instance Postgre
 
 La fonction retourne le nombre de paramètres exportés.
 
-Si le chemin du fichier n’est pas renseigné, la fonction retourne directement la structure JSON contenant les valeurs de paramètres. Cette structure ressemble à ceci ::
+Si le chemin du fichier n’est pas renseigné ou est valorisé à *NULL*, la fonction retourne directement la structure JSON contenant les valeurs de paramètres. Ceci permet de visualiser la structure ou de la stocker dans une colonne de table relationnelle. Par exemple : ::
+
+   INSERT INTO ma_table (mes_parametres_json)
+       VALUES ( emaj_export_parameters_configuration() );
+
+La structure JSON exportée ressemble à ::
 
    {
      "_comment": "E-Maj parameters, generated from the database <db> with E-Maj version <version> at <date_heure>",
@@ -88,7 +93,7 @@ Importer une configuration de paramètres
 
 Deux versions de la fonction *emaj_import_parameters_configuration()* importent des paramètres sous forme de structure JSON dans la table :ref:`emaj_param<emaj_param>`.
 
-On peut lire dans un fichier des paramètres à charger par ::
+On peut charger les paramètres depuis un fichier par ::
 
    SELECT emaj_import_parameters_configuration('<chemin.fichier>',
                <suppression.configuration.courante?>);
@@ -115,10 +120,15 @@ Le second paramètre, de type booléen, est optionnel. Il indique si l’ensembl
 
 La fonction retourne le nombre de paramètres importés.
 
-Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des valeurs à charger ::
+Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des valeurs à charger : ::
 
    SELECT emaj_import_parameters_configuration('<structure.JSON>',
                <suppression.configuration.courante?>);
+
+Cette structure peut provenir d’une colonne de table ralationnelle : ::
+
+   SELECT emaj_import_parameters_configuration (mes_parametres_json, TRUE)
+       FROM ma_table;
 
 .. _emaj_get_current_log_table:
 
@@ -134,7 +144,7 @@ La fonction retourne toujours 1 ligne. Si la table applicative n’appartient pa
 
 La fonction *emaj_get_current_log_table()* peut être exécutée par les rôles membres de *emaj_adm* et *emaj_viewer*.
 
-Il est ainsi possible de construire une requête accédant à une table de log. Par exemple ::
+Il est ainsi possible de construire une requête accédant à une table de log. Par exemple : ::
 
 	SELECT 'select count(*) from '
 		|| quote_ident(log_schema) || '.' || quote_ident(log_table)

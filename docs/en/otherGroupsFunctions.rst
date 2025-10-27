@@ -122,7 +122,12 @@ The second parameter is optional. It lists in an array the tables groups names t
 
 The function returns the number of exported tables groups.
 
-If the file path is not supplied (i.e. is set to NULL), the function directly returns the JSON structure containing the configuration. This structure looks like this::
+If the file path is not supplied or is set to NULL, the function directly returns the JSON structure containing the configuration. This allows to visualize the structure or store it into a relational table. For instance::
+
+   INSERT INTO my_table (my_groups_json)
+       VALUES ( emaj_export_groups_configuration() );
+
+The JSON structure looks like::
 
    {
    	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>, including all tables groups",
@@ -192,6 +197,11 @@ In a variation of the function, the first input parameter directly contains the 
 
    SELECT emaj_import_groups_configuration(<JSON.structure> [,<groups.names.array>
                [,<alter_started_groups> [,<mark> [,<drop_other_groups> ]]]]);
+
+This structure may be read from a relational table::
+
+   SELECT emaj_import_groups_configuration (my_groups_json, ...)
+       FROM my_table;
 
 .. _emaj_exist_state_mark_group:
 

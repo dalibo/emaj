@@ -121,7 +121,12 @@ Le seconde paramètre, optionnel, liste sous forme d’un tableau les groupes de
 
 La fonction retourne le nombre de groupes de tables exportés.
 
-Si le chemin du fichier n’est pas renseigné (i.e. est valorisé à NULL), la fonction retourne directement la structure JSON contenant la configuration des groupes de tables. Cette structure ressemble à ceci ::
+Si le chemin du fichier n’est pas renseigné ou est valorisé à *NULL*, la fonction retourne directement la structure JSON contenant la configuration des groupes de tables. Ceci permet de visualiser la structure ou de la stocker dans une colonne de table relationnelle. Par exemple ::
+
+   INSERT INTO ma_table (mes_groupes_json)
+       VALUES ( emaj_export_groups_configuration() );
+
+La structure JSON exportée ressemble à ::
 
    {
    	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>, including all tables groups",
@@ -187,10 +192,15 @@ Le quatrième paramètre définit la marque à poser sur les groupes de tables a
 
 La fonction retourne le nombre de groupes de tables importés.
 
-Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
+Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger : ::
 
    SELECT emaj_import_groups_configuration('<structure.JSON>'[,<tableau.noms.groupes>
                [,<modifier.groupes.démarrés> [,<marque> [, <supprimer.autres.groupes> ]]]]);
+
+Cette structure peut provenir d’une colonne de table ralationnelle : ::
+
+   SELECT emaj_import_groups_configuration (mes_groupes_json, ...)
+       FROM ma_table;
 
 .. _emaj_exist_state_mark_group:
 
