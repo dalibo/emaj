@@ -140,3 +140,5 @@ Similarly, a common :ref:`mark can be set<emaj_set_mark_group>` on all started g
       '<mark>');
 
 Let’s remind that :ref:`emaj_get_groups(), emaj_get_logging_groups() and emaj_get_idle_groups()<groups_array_building_functions>` functions have parameters that filter group names.
+
+Finaly, the :ref:`emaj_protect_group() and emaj_unprotect_group()<emaj_protect_group>` functions that respectively protect and unprotect a tables group against E-Maj rollbacks, are idempotent by nature. So they are safely callable without knowing the current group protection level.

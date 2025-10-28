@@ -1,5 +1,7 @@
-Fonctions de gestion des marques
-================================
+Gérer les marques
+=================
+
+En complément des :ref:`fonctions de pose de marques<emaj_set_mark_group>`, il existe plusieurs autres fonctions de gestion des marques.
 
 .. _emaj_comment_mark_group:
 

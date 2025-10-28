@@ -138,3 +138,5 @@ De la même manière, on peut :ref:`poser une marque<emaj_set_mark_group>` commu
    SELECT emaj.emaj_set_mark_groups (emaj.emaj_get_logging_groups(), '<marque>');
 
 Rappelons que les fonctions :ref:`emaj_get_groups(), emaj_get_logging_groups() et emaj_get_idle_groups()<groups_array_building_functions>` ont des paramètres qui permettent de filtrer les noms de groupe.
+
+Enfin, les fonctions :ref:`emaj_protect_group() et emaj_unprotect_group()<emaj_protect_group>`, qui respectivement active ou désactive la protection d’un groupe de tables contre les rollbacks E-Maj, sont idempotentes par nature. On peut donc les appeler sans connaître le niveau de protection actuel des groupes.

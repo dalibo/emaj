@@ -1,5 +1,7 @@
-Rollbacks Administration functions
-==================================
+Manage E-Maj rollbacks
+======================
+
+Aside the functions that :ref:`perform an E-Maj rollback<emaj_rollback_group>`, there are several other rollbacks management functions.
 
 .. _emaj_estimate_rollback_group:
 

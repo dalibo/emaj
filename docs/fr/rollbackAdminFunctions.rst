@@ -1,5 +1,7 @@
-Fonctions d'administration des rollbacks
-========================================
+Administrer les rollbacks E-Maj
+===============================
+
+En complément des :ref:`fonctions qui exécutent des rollbacks E-Maj<emaj_rollback_group>`, il existe plusieurs autres fonctions de gestion des rollbacks.
 
 .. _emaj_estimate_rollback_group:
 

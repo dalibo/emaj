@@ -1,5 +1,7 @@
-Marks management functions
-==========================
+Manage marks
+============
+
+Aside the :ref:`marks set functions<emaj_set_mark_group>`, there are several other marks management functions.
 
 .. _emaj_comment_mark_group:
 
