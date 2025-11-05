@@ -44,6 +44,7 @@ Bienvenue dans la documentation E-Maj !
    statFunctions
    changesDumpFunctions
    changesReplayFunctions
+   exportImportFunctions
    otherFunctions
    multiGroupsFunctions
    parallelRollbackClient
