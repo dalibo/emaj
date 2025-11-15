@@ -25,8 +25,7 @@ psql:sql/emaj_uninstall.sql:23: ERROR:  emaj_drop_extension: There are 1 unexpec
 CONTEXT:  PL/pgSQL function emaj.emaj_drop_extension() line 49 at RAISE
 WARNING:  emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (postgres)
 WARNING:  emaj_drop_extension: The emaj_adm role is also referenced in some other databases (postgres)
-WARNING:  emaj_drop_extension: There are remaining roles (emaj_regression_tests_viewer_user) who have been granted emaj_viewer role.
-WARNING:  emaj_drop_extension: There are remaining roles (emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2) who have been granted emaj_adm role.
+WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_adm1, _regress_emaj_adm2) who have been granted emaj_adm role.
 WARNING:  emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.
  emaj_drop_extension 
 ---------------------

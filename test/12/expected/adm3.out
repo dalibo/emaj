@@ -12,7 +12,7 @@ select public.handle_emaj_sequences(17000);
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/adm3'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 set search_path = public,myschema1,emaj;
 -----------------------------
 -- Step 15 : export / import configurations
@@ -234,7 +234,7 @@ select public.handle_emaj_sequences(17200);
 -- Step 17 : test partition attach and detach
 -----------------------------
 -- Needs postgres 10+
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj_start_group('myGroup4','Start');
  emaj_start_group 
 ------------------
@@ -263,8 +263,8 @@ NOTICE:  relation "mypartp3" already exists, skipping
 -- add a PK (will fail with PG12+ because of the global PK)
 ALTER TABLE mySchema4.myPartP3 ADD PRIMARY KEY (col1);
 ERROR:  multiple primary keys for table "mypartp3" are not allowed
-grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-set role emaj_regression_tests_adm_user1;
+grant all on mySchema4.myPartP3 to _regress_emaj_adm1, _regress_emaj_adm2;
+set role _regress_emaj_adm1;
 select emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
  emaj_assign_table 
 -------------------
@@ -280,7 +280,7 @@ select emaj_assign_sequence('myschema4','mytblp_col4_seq','myGroup4','Add partit
 reset role;
 insert into mySchema4.myTblP values (11, 'A', 'Stored in partition 3');
 -- remove obsolete partitions ; in passing also remove the sequence linked to the serial column of the mother table
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj_remove_tables('myschema4', ARRAY['mypartp1a', 'mypartp1b'], 'Remove partition 1a & 1b');
  emaj_remove_tables 
 --------------------
@@ -296,7 +296,7 @@ select emaj_remove_sequence('myschema4','mytblp_col4_seq','Remove partition 1_se
 reset role;
 drop table mySchema4.myPartP1a, mySchema4.myPartP1b cascade;
 NOTICE:  drop cascades to constraint mytblr2_col2_col3_fkey on table myschema4.mytblr2
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 -- verify that emaj_adm has the proper grants to delete old marks leading to an old log table drop
 begin transaction;
   select emaj_delete_before_mark_group('myGroup4','EMAJ_LAST_MARK');
@@ -347,7 +347,7 @@ select col1, col2, col3, col4, emaj_verb, emaj_tuple, emaj_gid from emaj_myschem
 (1 row)
 
 -- rollback to a mark set before the first changes
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj_rollback_group('myGroup4','Start');
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function _rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
@@ -538,7 +538,7 @@ reset role;
 insert into myschema5.myUnloggedTbl values (10),(11),(12);
 update myschema5.myUnloggedTbl set col1 = 13 where col1 = 12;
 delete from myschema5.myUnloggedTbl where col1 = 10;
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myUnloggedTbl_log order by emaj_gid;
  col1 | emaj_verb | emaj_tuple | emaj_gid | emaj_user 
 ------+-----------+------------+----------+-----------
@@ -562,7 +562,7 @@ select emaj_disable_protection_by_event_triggers();
 -----------------------------
 reset role;
 alter table "phil's schema""3"."my""tbl4" alter column col45 type char(11);
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select * from emaj_verify_all() as t(msg) where msg not like '%foreign key%';
                                                                                            msg                                                                                            
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -594,7 +594,7 @@ select * from emaj.emaj_relation where rel_schema = 'phil''s schema"3' and rel_t
 -----------------------------
 reset role;
 drop table "emaj_phil's schema""3"."my""tbl4_log";
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select * from emaj_verify_all() as t(msg) where msg not like '%foreign key%';
                                                                  msg                                                                 
 -------------------------------------------------------------------------------------------------------------------------------------
@@ -632,7 +632,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
 reset role;
 alter table "phil's schema""3"."my""tbl4" rename to mytbl4_sav;
 alter sequence "phil's schema""3"."phil's""seq\1" rename to "phil's""seq\1_sav";
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 -- try to set a mark
 begin;
   select emaj_set_mark_group('phil''s group#3",','should fails');
@@ -667,7 +667,7 @@ reset role;
 alter table "phil's schema""3".mytbl4_sav rename to "my""tbl4";
 alter table "phil's schema""3"."my""tbl4" alter column col45 type char(10);
 alter sequence "phil's schema""3"."phil's""seq\1_sav" rename to "phil's""seq\1";
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj_assign_table('phil''s schema"3','my"tbl4','phil''s group#3",',null,'revert_last_changes_tbl');
  emaj_assign_table 
 -------------------
@@ -937,7 +937,7 @@ insert into "phil's schema""3"."my""tbl4" (col41)
 delete from "phil's schema""3"."myTbl2\";
 insert into "phil's schema""3"."myTbl2\" (col22,col23)
   select 'After Mk1','12-31-2020' from generate_series(1,3);
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk2');
  emaj_set_mark_groups 
 ----------------------
@@ -956,7 +956,7 @@ select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 insert into myschema4.mytblm
   select '2006-06-30'::date + ('1 year'::interval) * i, i, 'After Mk2'
     from generate_series(0,9) i;
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
  emaj_set_mark_groups 
 ----------------------
@@ -969,7 +969,7 @@ delete from myschema4.mytblm
 update myschema4.mytblm set col3 = 'After Mk2 and updated after Mk3'
   where col1 > '2013-01-01';
 -- rollback to the previous mark
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select * from emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
@@ -1032,7 +1032,7 @@ delete from "phil's schema""3"."myTbl2\"
   where col21 = 4;
 delete from "phil's schema""3"."my""tbl4"
   where col41 = 4;
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5');
  emaj_set_mark_groups 
 ----------------------
@@ -1049,7 +1049,7 @@ select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
     1003
 (1 row)
 
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk6');
  emaj_set_mark_groups 
 ----------------------
@@ -1060,7 +1060,7 @@ reset role;
 update myschema4.mytblm set col3 = 'After Mk5 and updated after Mk6'
   where col1 > '2017-01-01';
 -- remove the table mytblm and the sequence phil's seq\1
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj_remove_table('myschema4','mytblc1','Remove_mytblc1');
  emaj_remove_table 
 -------------------
@@ -1098,7 +1098,7 @@ select emaj_rename_mark_group(group_name,'EMAJ_LAST_MARK','End_logged_rollback')
 reset role;
 delete from myschema4.mytblm
   where col1 = '2018-06-30';
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk7');
  emaj_set_mark_groups 
 ----------------------
@@ -1108,7 +1108,7 @@ select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk7');
 reset role;
 delete from mySchema4.mytblm;
 -- consolidate the logged rollback
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select * from emaj_get_consolidable_rollbacks() order by 1,2;
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
@@ -1300,7 +1300,7 @@ select emaj_enable_protection_by_event_triggers();
                                         3
 (1 row)
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 -- note that the warning about the mytblp_col3_seq sequence is normal
 select * from emaj_verify_all() as t(msg) where msg not like '%foreign key%';
                                                                                       msg                                                                                       
@@ -2041,7 +2041,7 @@ select count(*) from "phil's schema""3"."phil's tbl1";
      0
 (1 row)
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select count(*) from "emaj_phil's schema""3"."phil's tbl1_log";
  count 
 -------
@@ -2146,7 +2146,7 @@ RESET standard_conforming_strings;
 RESET escape_string_warning;
 RESET datestyle;
 \! rm $EMAJTESTTMPDIR/*
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj_stop_group('truncateTestGroup');
  emaj_stop_group 
 -----------------

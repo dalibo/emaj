@@ -8,7 +8,7 @@ export LANG='en_US.UTF-8'
 
 if [ ${#} -lt 1 ]; then
     echo "Usage: ${0} <major postgres version>"
-    echo "for instance: '${0} 10' for version 10.2"
+    echo "for instance: '${0} 18' for version PG18"
     exit 1
 fi
 
@@ -19,9 +19,9 @@ fi
 pg_getvars $1
 
 echo
-echo "**************************************************"
-echo "*     Create the cluster for version ${PGMAJORVERSION}     *"
-echo "**************************************************"
+echo "**********************************************"
+echo "*     Create the cluster for version ${PGVER}"
+echo "**********************************************"
 echo
 
 if [ -d "${PGDATA}" ]; then
@@ -35,6 +35,7 @@ mkdir ${PGDATA}
 
 # Initialize the cluster
 ${PGBIN}/initdb -U ${PGUSER} --data-checksums
+
 if [ -f "${PGDATA}/PG_VERSION" ]; then
   echo "Initdb OK"
 else
@@ -53,6 +54,18 @@ cat <<-EOF1 >${PGDATA}/specif.conf
 	wal_level = logical
 	EOF1
 echo "include 'specif.conf'" >> ${PGDATA}/postgresql.conf
+
+# pg_hba.conf changes (with PG16+ only - previous versions do not support the 'include' directive)
+if (( ${PGVER} >= 16 )); then
+	cat <<-EOF2 >${PGDATA}/specif_hba.conf
+local   all             ${PGUSER}                                trust
+local   all             all                                      scram-sha-256
+host    all             ${PGUSER}         127.0.0.1/32           trust
+host    all             all               127.0.0.1/32           scram-sha-256
+	EOF2
+	sed -i '/# TYPE  DATABASE/ a\
+include specif_hba.conf' ${PGDATA}/pg_hba.conf
+fi
 
 # Start the cluster
 ${PGBIN}/pg_ctl start
@@ -73,7 +86,7 @@ sudo cp ${EMAJ_DIR}/emaj.control ${PGSHARE}/extension/emaj.control
 sudo bash -c "echo \"directory = '${EMAJ_DIR}/sql'\" >>${PGSHARE}/extension/emaj.control"
 
 # Create all what is needed inside the cluster (tablespaces, roles, extensions,...)
-${PGBIN}/psql -a <<-EOF2
+${PGBIN}/psql -a <<-EOF3
 	\set ON_ERROR_STOP
 	create tablespace tspemaj location '${PGDATA}/emaj_tblsp';
 	create tablespace tsplog1 location '${PGDATA}/tsplog1';
@@ -81,7 +94,7 @@ ${PGBIN}/psql -a <<-EOF2
 	create role myUser login password '';
 	grant all on database postgres to myUser;
 	create extension emaj cascade;
-	EOF2
+	EOF3
 
 if [ $? != 0 ]; then
   echo "Error during the initial psql script execution..."

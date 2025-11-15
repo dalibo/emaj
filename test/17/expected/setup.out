@@ -331,27 +331,27 @@ CREATE TABLE table_with_55_characters_long_name_____0_________0fghij (
 -----------------------------
 -- create roles and give rights
 -----------------------------
-create role emaj_regression_tests_adm_user1 login password 'adm';
-create role emaj_regression_tests_adm_user2 login password 'adm';
-create role emaj_regression_tests_viewer_user login password 'viewer';
-create role emaj_regression_tests_anonym_user login password 'anonym';
+create role _regress_emaj_adm1 login password 'adm';
+create role _regress_emaj_adm2 login password 'adm';
+create role _regress_emaj_viewer login password 'viewer';
+create role _regress_emaj_anonym login password 'anonym';
 --
 grant create on tablespace tsplog1, "tsp log'2"
-  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+  to _regress_emaj_adm1, _regress_emaj_adm2;
 -- give the CREATE right to emaj_adm on either trpemaj or tspemaj_renamed tablespace
 DO LANGUAGE plpgsql
 $$
   BEGIN
     PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
     IF FOUND THEN
-      grant create on tablespace tspemaj to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+      grant create on tablespace tspemaj to _regress_emaj_adm1, _regress_emaj_adm2;
     ELSE
-      grant create on tablespace tspemaj_renamed to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+      grant create on tablespace tspemaj_renamed to _regress_emaj_adm1, _regress_emaj_adm2;
     END IF;
   END;
 $$;
 --
-grant all on database regression to emaj_regression_tests_anonym_user;
+grant all on database regression to _regress_emaj_anonym;
 -----------------------------
 -- create the function that will check and set the last_value of emaj technical sequences
 -----------------------------

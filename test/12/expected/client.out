@@ -32,7 +32,7 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
@@ -48,7 +48,7 @@ select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
                  1
 (1 row)
 
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
@@ -58,7 +58,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
 Calling the _rlbk_init() function failed.
 
 -- unlogged rollback for 2 groups in unstrict mode
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
@@ -70,7 +70,7 @@ Calling the _rlbk_init() function failed.
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 Warning: this php version of emajParallelRollback is deprecated. No functional improvement will be added in the future and it may be removed in a future version. It is strongly advisable to use emajParallelRollback.pl instead, which has the same features and parameters.
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
@@ -106,7 +106,7 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 Calling the _rlbk_init() function failed.
 ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
 CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 54 at RAISE
@@ -121,7 +121,7 @@ select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
                  1
 (1 row)
 
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 Calling the _rlbk_init() function failed.
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
@@ -130,7 +130,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 -- unlogged rollback for 2 groups in unstrict mode
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
@@ -142,7 +142,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
     Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
@@ -208,7 +208,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 --------------------------------------------
 -- call emajRollbackMonitor.php using an emaj_viewer role
 --------------------------------------------
-\! ${EMAJ_DIR}/client/emajRollbackMonitor.php -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -v -r
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.php -d regression -U _regress_emaj_viewer -W viewer -i 0.1 -n 2 -l 2 -a 12 -v -r
  E-Maj (version <devel>) - Monitoring rollbacks activity
 ---------------------------------------------------------------
 [current date and time]
@@ -257,7 +257,7 @@ Warning: this php version of emajRollbackMonitor is deprecated. No functional im
 --------------------------------------------
 -- call emajRollbackMonitor.pl using an emaj_viewer role
 --------------------------------------------
-\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -v -r
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_viewer -W viewer -i 0.1 -n 2 -l 2 -a 12 -v -r
  E-Maj (version <devel>) - Monitoring rollbacks activity
 -----------------------------------------------------------
 [current date and time]
@@ -315,7 +315,7 @@ select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','latest_mark');
 (1 row)
 
 -- 2 displays with an emaj_viewer role with various options
-\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U emaj_regression_tests_viewer_user --regression-test --no-cls --interval 0.1 --iter 2 --include-group '1|2' --max-table 5 --exclude-sequence 'col31' --max-relation-name-length 23
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_viewer -W viewer --regression-test --no-cls --interval 0.1 --iter 2 --include-group '1|2' --max-table 5 --exclude-sequence 'col31' --max-relation-name-length 23
  E-Maj (version <devel>) - Monitoring logged changes on database regression (@127.0.0.1:5412)
 ----------------------------------------------------------------------------------------------
 [current date and time] - Logging: groups=2/3 tables=11/11 sequences=4/4 -

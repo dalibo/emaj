@@ -10,7 +10,7 @@ select public.handle_emaj_sequences(14000);
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
 
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 
 -- before going on, save and reload parameters
 select emaj.emaj_import_parameters_configuration(emaj.emaj_export_parameters_configuration());
@@ -133,7 +133,7 @@ select public.handle_emaj_sequences(14200);
 --
 reset role;
 alter table "phil's schema""3"."myTbl2\" add primary key (col21);
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 
 select emaj.emaj_create_group('phil''s group#3",');
 select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
@@ -155,7 +155,7 @@ insert into "myTbl2\" values (2,'DEF',NULL);
 select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 --
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('phil''s group#3",','M2_rollbackable');
 select emaj.emaj_set_mark_group('phil''s group#3",','M2_again!');
 --
@@ -165,7 +165,7 @@ update "phil's tbl1" set "phil's col12" = 'DEF' where "phil's col11" <= 2;
 
 select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 --
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1','Third mark set');
 --
 select emaj.emaj_rename_mark_group('phil''s group#3",','phil''s mark #1','phil''s mark #3');
@@ -208,7 +208,7 @@ reset role;
 select * from "phil's schema""3"."phil's tbl1" order by "phil's col11","phil's col12";
 select * from "phil's schema""3"."myTbl2\" order by col21;
 -- log tables
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select "phil's col11", "phil's col12", "phil\s""col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
 
@@ -227,7 +227,7 @@ begin transaction;
 rollback;
 --
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order by 1,2;
 
 -----------------------------
@@ -281,7 +281,7 @@ alter sequence myschema2.myseq1 minvalue 1 maxvalue 100 increment 10 start 21 re
 -- create the directory for the first snaps set
 \! mkdir -p $EMAJTESTTMPDIR/snaps1
 -- ... and snap all groups
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
 select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
 select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
@@ -333,7 +333,7 @@ begin;
   \set FILE3 :EMAJTESTTMPDIR '/Group3.sql'
   \i :FILE3
 
-  set role emaj_regression_tests_adm_user1;
+  set role _regress_emaj_adm1;
   select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
   select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
   select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
@@ -351,7 +351,7 @@ rollback;
 reset role;
 alter sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 9223372036854775807 minvalue 1000 cache 1 no cycle;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 
 -----------------------------
 -- Checking step 11
@@ -379,7 +379,7 @@ select emaj.emaj_remove_table('phil''s schema"3','phil''s tbl1');
 reset role;
 alter table "phil's schema""3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_assign_table('phil''s schema"3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
 
 -- use the table and its group
@@ -388,13 +388,13 @@ select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
 reset role;
 update "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
 
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 
 reset role;
 delete from "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
 
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_table_rename',false) order by 1,2;
 select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
@@ -406,7 +406,7 @@ alter table "phil's schema""3".table_with_very_loooooooooooooooooooooooooooooooo
 -----------------------------
 -- Checking step 12
 -----------------------------
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14500 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -422,7 +422,7 @@ select public.handle_emaj_sequences(14600);
 -----------------------------
 -- Step 13 : test use of groups or marks protection
 -----------------------------
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 -- try to rollback a protected group
 select emaj.emaj_protect_group('myGroup2');
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
@@ -469,19 +469,19 @@ insert into myTbl1 select i, 'Test', 'Conso' from generate_series (2000,2012) as
 insert into myTbl2 values (2000,'TC1',NULL);
 delete from myTbl1 where col11 > 2010;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC2');
 
 reset role;
 update myTbl2 set col22 = 'TC2' WHERE col22 ='TC1';
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC1',false) order by 1,2;
 
 reset role;
 insert into myTbl2 values (2000,'TC3',NULL);
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC1_DONE');
 select emaj.emaj_set_mark_group('myGroup1','MC3');
 
@@ -490,7 +490,7 @@ insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
 update myTbl4 set col44 = NULL where col41 = 2000;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC4');
 select emaj.emaj_set_mark_group('myGroup1','MC5');
 
@@ -525,19 +525,19 @@ insert into myTbl1 select i, 'Test', 'Conso' from generate_series (2000,2012) as
 insert into myTbl2 values (3000,'TC6',NULL);
 delete from myTbl1 where col11 > 2010;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC7');
 
 reset role;
 update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC8');
 
 reset role;
 insert into myTbl2 values (3001,'TC8',NULL);
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC8',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
@@ -548,7 +548,7 @@ insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
 update myTbl4 set col44 = NULL where col41 = 2000;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
@@ -567,20 +567,20 @@ reset role;
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (3000,3010) as i;
 delete from myTbl1 where col11 > 3005;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 
 reset role;
 update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC11');
 
 reset role;
 insert into myTbl4 values (3000,'FK...',1,10,'ABC');
 update myTbl4 set col44 = NULL where col41 = 3000;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
@@ -600,13 +600,13 @@ insert into myTbl1 select i, 'Test', 'Conso' from generate_series (4000,4012) as
 insert into myTbl2 values (4000,'TC15',NULL);
 delete from myTbl1 where col11 > 4010;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC16');
 
 reset role;
 update myTbl2 set col22 = 'TC16' WHERE col22 ='TC15';
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC15',false) order by 1,2;
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC15_DONE');
 
@@ -615,7 +615,7 @@ select emaj.emaj_set_mark_group('myGroup1','MC17');
 reset role;
 insert into myTbl2 values (4001,'TC15',NULL);
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
 
@@ -629,7 +629,7 @@ select * from myTbl2 order by col21;
 -----------------------------
 -- Checking step 14
 -----------------------------
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table where tbl_schema = 'myschema1' order by tbl_time_id, tbl_schema, tbl_name;

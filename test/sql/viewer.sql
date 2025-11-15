@@ -7,7 +7,7 @@ select public.handle_emaj_sequences(11000);
 -----------------------------
 -- grant emaj_viewer role
 -----------------------------
-grant emaj_viewer to emaj_regression_tests_viewer_user;
+grant emaj_viewer to _regress_emaj_viewer;
 
 -----------------------------
 -- prepare groups for the test
@@ -26,7 +26,7 @@ select emaj.emaj_create_group('emptyGroup');
 select emaj.emaj_start_group('emptyGroup');
 
 --
-set role emaj_regression_tests_viewer_user;
+set role _regress_emaj_viewer;
 --
 -----------------------------
 -- authorized table or view accesses

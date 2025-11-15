@@ -6,19 +6,19 @@ SET datestyle TO ymd;
 -----------------------------
 -- grant emaj_adm role 
 -----------------------------
-grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+grant emaj_adm to _regress_emaj_adm1, _regress_emaj_adm2;
 -- Give rights while we are in an emaj version 4.5.0 or earlier.
 grant all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+  to _regress_emaj_adm1, _regress_emaj_adm2;
 grant all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+  to _regress_emaj_adm1, _regress_emaj_adm2;
 grant all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+  to _regress_emaj_adm1, _regress_emaj_adm2;
 
 -----------------------------
 -- create groups
 -----------------------------
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2',true);
 select emaj.emaj_create_group('phil''s group#3",',false);
@@ -69,7 +69,7 @@ delete from myTbl1 where col11 > 10;
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M2');
 --
 reset role;
@@ -80,7 +80,7 @@ insert into myTbl4 values (3,'FK...',1,10,'ABC');
 delete from myTbl1 where col11 = 10;
 update myTbl1 set col12='DEF' where col11 <= 2;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M3');
 select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 --
@@ -91,7 +91,7 @@ insert into myTbl2 values (3,'GHI',NULL);
 update myTbl4 set col43 = 3 where col41 = 2;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_protect_mark_group('myGroup1','M3');
 select emaj.emaj_protect_group('myGroup1');
 
@@ -108,7 +108,7 @@ select nextval('myschema2.myseq1');
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup2','M2');
 --
 reset role;
@@ -118,13 +118,13 @@ select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
 --
 alter sequence mySeq1 NO MAXVALUE NO CYCLE;
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 --
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup2','M3');
 
 -----------------------------

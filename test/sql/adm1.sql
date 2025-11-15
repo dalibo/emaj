@@ -10,9 +10,10 @@ truncate emaj.emaj_hist;
 -----------------------------
 -- grant emaj_adm role 
 -----------------------------
-grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+grant emaj_adm to _regress_emaj_adm1, _regress_emaj_adm2;
+
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 
 -----------------------------
 -- authorized table accesses
@@ -77,7 +78,7 @@ truncate mySchema4.myTblP, mySchema4.myPartP1a, mySchema4.myPartP1b, mySchema4.m
 -- analyze to get some statistics
 analyze;
 
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 
 -----------------------------
 -- explicitely purge the histories
@@ -138,7 +139,7 @@ delete from myTbl1 where col11 > 10;
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','M2');
 --
 reset role;
@@ -151,7 +152,7 @@ insert into myTbl4 values (3,'FK...',1,10,'ABC');
 delete from myTbl1 where col11 = 10;
 update myTbl1 set col12='DEF' where col11 <= 2;
 --
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','M3');
 select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 
@@ -213,7 +214,7 @@ update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c
 insert into myTbl6 select i, point(i,1.3), box(point(i,0),point(i+0.2,1)), circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27','EXECUTING',(i,point(i,1.3))::mycomposite from generate_series (1,8) as i;
 update myTbl6 set col64 = '<(5,6),3.5>', col65 = null, col67 = 'COMPLETED' where col61 between 1 and 3;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup2','M2');
 --
 reset role;
@@ -230,7 +231,7 @@ update myTbl4 set col43 = 2;
 delete from mytbl5 where 4 = any(col53);
 delete from myTbl6 where col65 is null and col61 <> 0;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup2','M3');
 -----------------------------
 -- Checking step 2
@@ -257,7 +258,7 @@ select * from mySchema2.myTbl4 order by col41;
 select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
 -- log tables
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -276,12 +277,12 @@ analyze mytbl4;
 -- rollback with dblink_connect_u not granted
 
 revoke execute on function dblink_connect_u(text,text) from emaj_adm;
-set role emaj_regression_tests_adm_user2;
+set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M3',false) order by 1,2;
 reset role;
 grant execute on function dblink_connect_u(text,text) to emaj_adm;
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 
 -----------------------------
 -- Checking step 3
@@ -308,7 +309,7 @@ select * from mySchema2.myTbl4 order by col41;
 select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
 -- log tables
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -330,19 +331,19 @@ insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,11
 insert into myTbl2 values (3,'GHI','2010-01-02');
 delete from myTbl1 where col11 = 1;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M4');
 --
 reset role;
 update "myTbl3" set col33 = col33 / 2;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M5');
 --
 reset role;
 update myTbl1 set col11 = 99 where col11 = 1;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M6');
 -----------------------------
 -- Checking step 4
@@ -368,7 +369,7 @@ select * from mySchema1.myTbl2b order by col20;
 select col31,col33 from mySchema1."myTbl3" order by col31;
 select * from mySchema1.myTbl4 order by col41;
 -- log tables
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
@@ -410,7 +411,7 @@ select * from mySchema2.myTbl4 order by col41;
 select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
 -- log tables
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -431,7 +432,7 @@ insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 --
 reset role;
@@ -440,7 +441,7 @@ insert into myTbl4 values (11,'',1,1,'Step 6');
 insert into myTbl4 values (12,'',1,1,'Step 6');
 --
 -- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true,'my comment');"
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true, 'my comment'), false);
 
 select emaj.emaj_comment_rollback(12601,'Updated comment');
@@ -486,7 +487,7 @@ select * from mySchema1.myTbl2b order by col20;
 select col31,col33 from mySchema1."myTbl3" order by col31;
 select * from mySchema1.myTbl4 order by col41;
 -- log tables
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
@@ -508,7 +509,7 @@ delete from "myTbl3" where col31 = 16;
 delete from "myTbl3" where col31 = 17;
 delete from "myTbl3" where col31 = 18;
 --
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_comment like '%to mark M4 start';
 -- 
 select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark where mark_comment like '%to mark M4 end';
@@ -540,7 +541,7 @@ select * from mySchema1.myTbl2b order by col20;
 select col31,col33 from mySchema1."myTbl3" order by col31;
 select * from mySchema1.myTbl4 order by col41;
 -- log tables
-set role emaj_regression_tests_adm_user1;
+set role _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;

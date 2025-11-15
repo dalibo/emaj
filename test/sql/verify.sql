@@ -52,7 +52,7 @@ rollback;
 
 -- Test a dblink_user_password without emaj_adm rights
 begin;
-  update emaj.emaj_param set param_value_text = 'user=emaj_regression_tests_viewer_user password=viewer' 
+  update emaj.emaj_param set param_value_text = 'user=_regress_emaj_viewer password=viewer' 
     where param_key = 'dblink_user_password';
   select * from emaj.emaj_verify_all();
 rollback;
@@ -504,7 +504,7 @@ begin;
 rollback;
 
 -- a non emaj user should be able to create, alter and drop a table without being disturbed by E-Maj event triggers
-set role emaj_regression_tests_anonym_user;
+set role _regress_emaj_anonym;
 
 create schema anonym_user_schema;
 create table anonym_user_schema.anonym_user_table (col1 int);
