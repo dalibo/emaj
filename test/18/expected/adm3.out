@@ -1337,13 +1337,13 @@ PL/pgSQL expression "(SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_sch
              WHERE sqhl_schema = r_rel.rel_schema
                AND sqhl_table = r_rel.rel_tblseq
                AND sqhl_begin_time_id >= p_beginTimeId)"
-PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 13 at RETURN
+PL/pgSQL function _log_stat_tbl(emaj_relation,bigint,bigint) line 13 at RETURN
 SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
                                      FROM emaj.emaj_relation
           WHERE rel_group = v_group
             AND rel_kind = 'r'
             AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 76 at SQL statement
+PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 75 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, FALSE, TRUE, NULL, v_timeId)"
 PL/pgSQL function _remove_tables(text,text[],text,boolean,boolean) line 47 at PERFORM
 PL/pgSQL function emaj_remove_table(text,text,text) line 6 at RETURN

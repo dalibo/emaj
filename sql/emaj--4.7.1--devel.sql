@@ -229,6 +229,118 @@ $emaj_get_assigned_group_table$;
 COMMENT ON FUNCTION emaj.emaj_get_assigned_group_table(TEXT,TEXT) IS
 $$Returns the tables group a table is assigned to.$$;
 
+CREATE OR REPLACE FUNCTION emaj._move_tbl(p_schema TEXT, p_table TEXT, p_oldGroup TEXT, p_oldGroupIsLogging BOOLEAN, p_newGroup TEXT,
+                                          p_newGroupIsLogging BOOLEAN, p_timeId BIGINT, p_function TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_move_tbl$
+-- The function changes the group ownership of a table. It is called during an alter group or a dynamic assignment operation.
+-- Required inputs: schema and table to move, old and new group names and their logging state,
+--                  time stamp id of the operation, main calling function.
+  DECLARE
+    v_logSchema              TEXT;
+    v_logSequence            TEXT;
+    v_currentLogTable        TEXT;
+    v_currentLogIndex        TEXT;
+    v_dataTblSpace           TEXT;
+    v_idxTblSpace            TEXT;
+    v_namesSuffix            TEXT;
+  BEGIN
+-- Get the current relation characteristics.
+    SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_sequence,
+           coalesce('TABLESPACE ' || quote_ident(rel_log_dat_tsp),''),
+           coalesce('USING INDEX TABLESPACE ' || quote_ident(rel_log_idx_tsp),'')
+      INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logSequence,
+           v_dataTblSpace,
+           v_idxTblSpace
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
+        AND upper_inf(rel_time_range);
+-- Compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names.
+    SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+      FROM
+          (SELECT (regexp_match(rel_log_table,'_(\d+)$'))[1]::INT AS suffix
+           FROM emaj.emaj_relation
+           WHERE rel_schema = p_schema
+             AND rel_tblseq = p_table
+        ) AS t;
+-- Rename the log table and its index (they may have been dropped).
+    EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
+                   v_logSchema, v_currentLogTable, v_currentLogTable || v_namesSuffix);
+    EXECUTE format('ALTER INDEX IF EXISTS %I.%I RENAME TO %I',
+                   v_logSchema, v_currentLogIndex, v_currentLogIndex || v_namesSuffix);
+-- Update emaj_relation to reflect the log table and index rename for all concerned rows.
+    UPDATE emaj.emaj_relation
+      SET rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
+        AND rel_log_table = v_currentLogTable;
+-- Create the new log table, by copying the just renamed table structure.
+    EXECUTE format('CREATE TABLE %I.%I (LIKE %I.%I INCLUDING DEFAULTS) %s',
+                    v_logSchema, v_currentLogTable, v_logSchema, v_currentLogTable || v_namesSuffix, v_dataTblSpace);
+-- Add the primary key.
+    EXECUTE format('ALTER TABLE %I.%I ADD CONSTRAiNT %I PRIMARY KEY (emaj_gid, emaj_tuple) %s',
+                    v_logSchema, v_currentLogTable, v_currentLogIndex, v_idxTblSpace);
+-- Set the index associated to the primary key as cluster index. It may be useful for CLUSTER command.
+    EXECUTE format('ALTER TABLE ONLY %I.%I CLUSTER ON %I',
+                   v_logSchema, v_currentLogTable, v_currentLogIndex);
+-- Grant appropriate rights to both emaj roles.
+    EXECUTE format('ALTER TABLE %I.%I OWNER TO emaj_adm',
+                   v_logSchema, v_currentLogTable);
+    EXECUTE format('GRANT SELECT ON TABLE %I.%I TO emaj_viewer',
+                   v_logSchema, v_currentLogTable);
+-- Register the end of the previous relation time frame and create a new relation time frame with the new group.
+    UPDATE emaj.emaj_relation
+      SET rel_time_range = int8range(lower(rel_time_range),p_timeId,'[)')
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
+        AND upper_inf(rel_time_range);
+    INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
+                                    rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+                                    rel_ignored_triggers, rel_pk_cols, rel_gen_expr_cols, rel_emaj_verb_attnum, rel_has_always_ident_col,
+                                    rel_sql_rlbk_columns,
+                                    rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
+                                    rel_log_seq_last_value)
+      SELECT rel_schema, rel_tblseq, int8range(p_timeId, NULL, '[)'), p_newGroup, rel_kind, rel_priority, rel_log_schema,
+             v_currentLogTable, rel_log_dat_tsp, v_currentLogIndex, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+             rel_ignored_triggers, rel_pk_cols, rel_gen_expr_cols, rel_emaj_verb_attnum, rel_has_always_ident_col,
+             rel_sql_rlbk_columns,
+             rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
+             rel_log_seq_last_value
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper(rel_time_range) = p_timeId;
+-- If the table is moved from an idle group to a group in logging state,
+    IF NOT p_oldGroupIsLogging AND p_newGroupIsLogging THEN
+-- ... get the log schema and sequence for the new relation,
+      SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+-- ... and record the new log sequence state in the emaj_table table for the current operation mark.
+      INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
+        SELECT p_schema, p_table, p_timeId, reltuples, relpages, last_value
+          FROM pg_catalog.pg_class
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace),
+               LATERAL emaj._get_log_sequence_last_value(v_logSchema, v_logSequence) AS last_value
+          WHERE nspname = p_schema
+            AND relname = p_table;
+    END IF;
+-- Insert an entry into the emaj_relation_change table.
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group, rlchg_new_group)
+      VALUES (p_timeId, p_schema, p_table, 'MOVE_TABLE', p_oldGroup, p_newGroup);
+-- Insert an entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (p_function, 'TABLE MOVED', quote_ident(p_schema) || '.' || quote_ident(p_table),
+              'From the ' || CASE WHEN p_oldGroupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || p_oldGroup ||
+              ' to the ' || CASE WHEN p_newGroupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || p_newGroup);
+--
+    RETURN;
+  END;
+$_move_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
                                                       p_group TEXT, p_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -296,6 +408,128 @@ $emaj_get_assigned_group_sequence$
 $emaj_get_assigned_group_sequence$;
 COMMENT ON FUNCTION emaj.emaj_get_assigned_group_sequence(TEXT,TEXT) IS
 $$Returns the tables group a sequence is assigned to.$$;
+
+CREATE OR REPLACE FUNCTION emaj._get_current_seq(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT)
+RETURNS emaj.emaj_sequence LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_get_current_seq$
+-- This function reads the current characteristics of a sequence and returns it in an emaj_sequence format.
+-- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
+  DECLARE
+    r_seq                    emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+    EXECUTE format(
+        'SELECT nspname, relname, %s, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+        '  FROM %I.%I sq,'
+        '     pg_catalog.pg_sequence s'
+        '     JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+        '     JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
+        '  WHERE nspname = %L AND relname = %L',
+        p_timeId, p_schema, p_sequence, p_schema, p_sequence)
+      INTO STRICT r_seq;
+    RETURN r_seq;
+  END;
+$_get_current_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT,
+                                                   OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN)
+LANGUAGE plpgsql AS
+$_sequence_stat_seq$
+-- This function compares the state of a single sequence between 2 time stamps or between a time stamp and the current state.
+-- It is called by the _sequence_stat_group() function.
+-- Input: row from emaj_relation corresponding to the appplication sequence to proccess,
+--        the time stamp ids defining the time range to examine (a end time stamp id set to NULL indicates the current state).
+-- Output: number of sequence increments between both time stamps for the sequence
+--         a boolean indicating whether any structure property has been modified between both time stamps.
+  DECLARE
+    r_beginSeq               emaj.emaj_sequence%ROWTYPE;
+    r_endSeq                 emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+-- Get the sequence characteristics at begin time id.
+    SELECT *
+      INTO r_beginSeq
+      FROM emaj.emaj_sequence
+      WHERE sequ_schema = r_rel.rel_schema
+        AND sequ_name = r_rel.rel_tblseq
+        AND sequ_time_id = p_beginTimeId;
+-- Get the sequence characteristics at end time id.
+    IF p_endTimeId IS NOT NULL THEN
+      SELECT *
+        INTO r_endSeq
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = r_rel.rel_schema
+          AND sequ_name = r_rel.rel_tblseq
+          AND sequ_time_id = p_endTimeId;
+    ELSE
+      r_endSeq = emaj._get_current_seq(r_rel.rel_schema, r_rel.rel_tblseq, 0);
+    END IF;
+-- Compute the statistics
+    p_increments = (r_endSeq.sequ_last_val - r_beginSeq.sequ_last_val) / r_beginSeq.sequ_increment
+                   - CASE WHEN r_endSeq.sequ_is_called THEN 0 ELSE 1 END
+                   + CASE WHEN r_beginSeq.sequ_is_called THEN 0 ELSE 1 END;
+    p_hasStructureChanged = r_beginSeq.sequ_start_val <> r_endSeq.sequ_start_val
+                         OR r_beginSeq.sequ_increment <> r_endSeq.sequ_increment
+                         OR r_beginSeq.sequ_max_val <> r_endSeq.sequ_max_val
+                         OR r_beginSeq.sequ_min_val <> r_endSeq.sequ_min_val
+                         OR r_beginSeq.sequ_is_cycled <> r_endSeq.sequ_is_cycled;
+    RETURN;
+  END;
+$_sequence_stat_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._gen_sql_seq(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT, p_nbSeq BIGINT)
+RETURNS BIGINT LANGUAGE plpgsql AS
+$_gen_sql_seq$
+-- This function generates a SQL statement to set the final characteristics of a sequence.
+-- The statement is stored into a temporary table created by the _gen_sql_groups() calling function.
+-- If the sequence has not been changed between both marks, no statement is generated.
+-- Input: row from emaj_relation corresponding to the appplication sequence to proccess,
+--        the time id at requested start and end marks,
+--        the number of already processed sequences
+-- Output: number of generated SQL statements (0 or 1)
+  DECLARE
+    v_endTimeId              BIGINT;
+    v_rqSeq                  TEXT;
+    ref_seq_rec              emaj.emaj_sequence%ROWTYPE;
+    trg_seq_rec              emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+-- Get the sequence characteristics at start mark.
+    SELECT *
+      INTO ref_seq_rec
+      FROM emaj.emaj_sequence
+      WHERE sequ_schema = r_rel.rel_schema
+        AND sequ_name = r_rel.rel_tblseq
+        AND sequ_time_id = p_firstMarkTimeId;
+-- Get the sequence characteristics at end mark or the current state.
+    IF p_lastMarkTimeId IS NULL AND upper_inf(r_rel.rel_time_range) THEN
+-- No supplied last mark and the sequence currently belongs to its group, so get the current sequence characteritics.
+      trg_seq_rec = emaj._get_current_seq(r_rel.rel_schema, r_rel.rel_tblseq, 0);
+    ELSE
+-- A last mark is supplied, or the sequence does not belong to its group anymore, so get the sequence characteristics
+-- from the emaj_sequence table.
+      v_endTimeId = CASE WHEN upper_inf(r_rel.rel_time_range) OR p_lastMarkTimeId < upper(r_rel.rel_time_range)
+                           THEN p_lastMarkTimeId
+                         ELSE upper(r_rel.rel_time_range) END;
+      SELECT *
+        INTO trg_seq_rec
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = r_rel.rel_schema
+          AND sequ_name = r_rel.rel_tblseq
+          AND sequ_time_id = v_endTimeId;
+    END IF;
+-- Build the ALTER SEQUENCE clause.
+    SELECT emaj._build_alter_seq(ref_seq_rec, trg_seq_rec) INTO v_rqSeq;
+-- Insert into the temp table and return 1 if at least 1 characteristic needs to be changed.
+    IF v_rqSeq <> '' THEN
+      v_rqSeq = 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq) || ' ' || v_rqSeq || ';';
+      EXECUTE 'INSERT INTO emaj_temp_script '
+              '  SELECT NULL, -1 * $1, txid_current(), $2'
+        USING p_nbSeq + 1, v_rqSeq;
+      RETURN 1;
+    END IF;
+-- Otherwise return 0.
+    RETURN 0;
+  END;
+$_gen_sql_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
@@ -1401,6 +1635,232 @@ $$;
 COMMENT ON FUNCTION emaj.emaj_get_idle_groups(TEXT, TEXT) IS
 $$Builds a idle groups array, filtered on their names.$$;
 
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups(p_groupNames TEXT[], p_mark TEXT, p_comment TEXT, p_multiGroup BOOLEAN,
+                                                 p_eventToRecord BOOLEAN, p_loggedRlbkTargetMark TEXT DEFAULT NULL,
+                                                 p_timeId BIGINT DEFAULT NULL, p_dblinkSchema TEXT DEFAULT NULL)
+RETURNS INT LANGUAGE plpgsql AS
+$_set_mark_groups$
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
+-- It also updates 1) the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into
+-- all log tables between this previous mark and the new mark and 2) the current log session.
+-- The function is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks,
+-- like functions that start, stop or rollback groups.
+-- Input: group names array, mark to set, comment,
+--        boolean indicating whether the function is called by a multi group function
+--        boolean indicating whether the event has to be recorded into the emaj_hist table
+--        name of the rollback target mark when this mark is created by the logged_rollback functions (NULL by default)
+--        time stamp identifier to reuse (NULL by default) (this parameter is set when the mark is a rollback start mark)
+--        dblink schema when the mark is set by a rollback operation and dblink connection are used (NULL by default)
+-- Output: number of processed tables and sequences
+-- The insertion of the corresponding event in the emaj_hist table is performed by callers.
+  DECLARE
+    v_function               TEXT;
+    v_nbSeq                  INT;
+    v_group                  TEXT;
+    v_lsesTimeRange          INT8RANGE;
+    v_latestMarkTimeId       BIGINT;
+    v_nbChanges              BIGINT;
+    v_nbTbl                  INT;
+    v_stmt                   TEXT;
+    r_seq                    RECORD;
+    r_currSeq                emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END;
+-- If requested by the calling function, record the set mark begin in emaj_hist.
+    IF p_eventToRecord THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (v_function, 'BEGIN', array_to_string(p_groupNames,','), p_mark);
+    END IF;
+-- Get the time stamp of the operation, if not supplied as input parameter.
+    IF p_timeId IS NULL THEN
+      SELECT emaj._set_time_stamp(v_function, 'M') INTO p_timeId;
+    END IF;
+-- Record sequences state as early as possible (no lock protects them from other transactions activity).
+-- The join on pg_namespace and pg_class filters the potentially dropped application sequences.
+    v_nbSeq = 0;
+    FOR r_seq IN
+      SELECT rel_schema, rel_tblseq
+        FROM emaj.emaj_relation
+             JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'S'
+          AND rel_group = ANY (p_groupNames)
+    LOOP
+      r_currSeq = emaj._get_current_seq(r_seq.rel_schema, r_seq.rel_tblseq, p_timeId);
+      INSERT INTO emaj.emaj_sequence VALUES (r_currSeq.*);
+      v_nbSeq = v_nbSeq + 1;
+    END LOOP;
+-- Record the number of log rows for the previous last mark of each selected group.
+    FOREACH v_group IN ARRAY p_groupNames
+    LOOP
+-- Get the latest log session of the tables group.
+      SELECT lses_time_range
+        INTO v_lsesTimeRange
+        FROM emaj.emaj_log_session
+        WHERE lses_group = v_group
+        ORDER BY lses_time_range DESC
+        LIMIT 1;
+      IF p_timeId > lower(v_lsesTimeRange) OR lower(v_lsesTimeRange) IS NULL THEN
+-- This condition excludes marks set at start_group time, for which there is nothing to do.
+--   The lower bound may be null when the log session has been created by the emaj version upgrade processing and the last start_group
+--   call has not been found into the history.
+-- Get the latest mark for the tables group.
+        SELECT mark_time_id
+          INTO v_latestMarkTimeId
+          FROM emaj.emaj_mark
+          WHERE mark_group = v_group
+          ORDER BY mark_time_id DESC
+          LIMIT 1;
+-- Compute the number of changes for tables since this latest mark
+        SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
+          INTO v_nbChanges
+          FROM emaj.emaj_relation
+          WHERE rel_group = v_group
+            AND rel_kind = 'r'
+            AND upper_inf(rel_time_range);
+-- Update the latest mark statistics.
+        UPDATE emaj.emaj_mark
+          SET mark_log_rows_before_next = v_nbChanges
+          WHERE mark_group = v_group
+            AND mark_time_id = v_latestMarkTimeId;
+-- Update the current log session statistics.
+        UPDATE emaj.emaj_log_session
+          SET lses_marks = lses_marks + 1,
+              lses_log_rows = lses_log_rows + v_nbChanges
+          WHERE lses_group = v_group
+            AND lses_time_range = v_lsesTimeRange;
+      END IF;
+    END LOOP;
+-- For tables currently belonging to the groups, record their state and their log sequence last_value.
+    INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
+      SELECT rel_schema, rel_tblseq, p_timeId, reltuples, relpages, last_value
+        FROM emaj.emaj_relation
+             LEFT OUTER JOIN pg_catalog.pg_namespace ON (nspname = rel_schema)
+             LEFT OUTER JOIN pg_catalog.pg_class ON (relname = rel_tblseq AND relnamespace = pg_namespace.oid),
+             LATERAL emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence) AS last_value
+        WHERE upper_inf(rel_time_range)
+          AND rel_group = ANY (p_groupNames)
+          AND rel_kind = 'r';
+    GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
+-- Record the mark for each group into the emaj_mark table.
+    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_rlbk_protected, mark_comment, mark_logged_rlbk_target_mark)
+      SELECT group_name, p_mark, p_timeId, FALSE, p_comment, p_loggedRlbkTargetMark
+        FROM emaj.emaj_group
+        WHERE group_name = ANY(p_groupNames)
+        ORDER BY group_name;
+-- Before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table.
+-- It uses a dblink connection when the mark to set comes from a rollback operation that uses dblink connections.
+    v_stmt = 'SELECT emaj._cleanup_rollback_state()';
+    PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, p_dblinkSchema);
+-- If requested by the calling function, record the set mark end into emaj_hist.
+    IF p_eventToRecord THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (v_function, 'END', array_to_string(p_groupNames,','), p_mark);
+    END IF;
+--
+    RETURN v_nbSeq + v_nbTbl;
+  END;
+$_set_mark_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
+RETURNS SETOF emaj.emaj_log_stat_sequence_type LANGUAGE plpgsql AS
+$_log_stat_sequence$
+-- This function returns statistics about a single sequence, for the time period framed by a supplied time_id slice.
+-- It is called by the various emaj_log_stat_sequence() function.
+-- For each mark interval, possibly for different tables groups, it returns the number of increments and a flag to show any sequence
+--   properties changes.
+-- Input: schema and sequence names
+--        start and end time_id.
+-- Output: set of stats by time slice.
+  DECLARE
+    v_needCurrentState       BOOLEAN;
+    r_endSeq                 emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+-- Get the sequence current state, if it still belongs to an active group.
+    v_needCurrentState = EXISTS(
+      SELECT 0
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_sequence
+          AND upper_inf(rel_time_range)
+          AND group_is_logging
+          AND p_endTimeId IS NULL
+      );
+    IF v_needCurrentState THEN
+      r_endSeq = emaj._get_current_seq(p_schema, p_sequence, 0);
+    END IF;
+-- Compute and return the statistics by scanning the sequence history in the emaj_sequence table.
+    RETURN QUERY
+      WITH event AS (
+        SELECT sequ_time_id, lower(rel_time_range), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val,
+               sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called,
+               rel_group, rel_time_range, time_clock_timestamp, time_event,
+               coalesce(mark_name, '[deleted mark]') AS mark_name,
+               (time_event = 'S' OR sequ_time_id = lower(rel_time_range)) AS log_start,
+               (time_event = 'X' OR (NOT upper_inf(rel_time_range) AND sequ_time_id = upper(rel_time_range))) AS log_stop
+          FROM emaj.emaj_sequence
+               JOIN emaj.emaj_relation ON (rel_schema = sequ_schema AND rel_tblseq = sequ_name)
+               JOIN emaj.emaj_time_stamp ON (time_id = sequ_time_id)
+               LEFT OUTER JOIN emaj.emaj_mark ON (mark_group = rel_group AND mark_time_id = sequ_time_id)
+          WHERE sequ_schema = p_schema
+            AND sequ_name = p_sequence
+            AND (sequ_time_id <@ rel_time_range OR sequ_time_id = upper(rel_time_range))
+            AND (p_startTimeId IS NULL OR sequ_time_id >= p_startTimeId)
+            AND (p_endTimeId IS NULL OR sequ_time_id <= p_endTimeId)
+        UNION
+-- ... and add the sequence current state, if the upper bound is not fixed and if the sequence belongs to an active group yet.
+        SELECT NULL, NULL, r_endSeq.sequ_last_val, r_endSeq.sequ_start_val, r_endSeq.sequ_increment, r_endSeq.sequ_max_val,
+               r_endSeq.sequ_min_val, r_endSeq.sequ_cache_val, r_endSeq.sequ_is_cycled, r_endSeq.sequ_is_called,
+               rel_group, rel_time_range, clock_timestamp(), '', '[current state]', false, false
+          FROM emaj.emaj_relation
+          WHERE v_needCurrentState
+            AND rel_schema = p_schema
+            AND rel_tblseq = p_sequence
+            AND upper_inf(rel_time_range)
+        ORDER BY 1, 2
+        ), time_slice AS (
+-- Transform elementary time events into time slices
+         SELECT sequ_time_id AS start_time_id, lead(sequ_time_id) OVER () AS end_time_id,
+                sequ_last_val AS start_last_val, lead(sequ_last_val) OVER () AS end_last_val,
+                sequ_start_val AS start_start_val, lead(sequ_start_val) OVER () AS end_start_val,
+                sequ_increment AS start_increment, lead(sequ_increment) OVER () AS end_increment,
+                sequ_max_val AS start_max_val, lead(sequ_max_val) OVER () AS end_max_val,
+                sequ_min_val AS start_min_val, lead(sequ_min_val) OVER () AS end_min_val,
+                sequ_cache_val AS start_cache_val, lead(sequ_cache_val) OVER () AS end_cache_val,
+                sequ_is_cycled AS start_is_cycled, lead(sequ_is_cycled) OVER () AS end_is_cycled,
+                sequ_is_called AS start_is_called, lead(sequ_is_called) OVER () AS end_is_called,
+                rel_group,
+                rel_time_range AS start_rel_time_range, lead(rel_time_range) OVER () AS end_rel_time_range,
+                time_clock_timestamp AS start_timestamp, lead(time_clock_timestamp) OVER () AS end_timestamp,
+                time_event AS start_time_event, lead(time_event) OVER () AS end_time_event,
+                mark_name AS start_mark_name, lead(mark_name) OVER () AS end_mark_name,
+                log_start AS start_log_start, lead(log_start) OVER () AS end_log_start,
+                log_stop AS start_log_stop, lead(log_stop) OVER () AS end_log_stop
+           FROM event
+        )
+-- Filter time slices and compute statistics aggregates
+      SELECT rel_group AS stat_group, start_mark_name AS stat_first_mark, start_timestamp AS stat_first_mark_datetime,
+             start_time_id AS stat_first_time_id, start_log_start AS stat_is_log_start, end_mark_name AS stat_last_mark,
+             end_timestamp AS stat_last_mark_datetime, end_time_id AS stat_last_time_id, end_log_stop AS stat_is_log_stop,
+             (end_last_val - start_last_val) / start_increment
+               + CASE WHEN start_is_called THEN 0 ELSE 1 END
+               - CASE WHEN end_is_called THEN 0 ELSE 1 END AS stat_increments,
+             (start_start_val <> end_start_val OR start_increment <> end_increment OR start_max_val <> end_max_val
+                OR start_min_val <> end_min_val OR start_is_cycled <> end_is_cycled) AS stat_has_structure_changed,
+             count(rlbk_id)::INT AS stat_rollbacks
+        FROM time_slice
+             LEFT OUTER JOIN emaj.emaj_rlbk ON (rel_group = ANY (rlbk_groups) AND
+                                                rlbk_time_id >= start_time_id AND (end_time_id IS NULL OR rlbk_time_id < end_time_id))
+        WHERE end_timestamp IS NOT NULL                    -- time slice not starting with the very last event
+          AND start_rel_time_range = end_rel_time_range    -- same rel_time_range on the slice
+          AND NOT (start_log_stop AND end_log_start)       -- not a logging hole
+        GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+        ORDER BY start_time_id;
+  END;
+$_log_stat_sequence$;
+
 --<end_functions>                                pattern used by the tool that extracts and inserts the functions definition
 
 ----------------------------------------------------------------
@@ -1425,6 +1885,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
+GRANT EXECUTE ON FUNCTION emaj._get_current_seq(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_schema(p_schema TEXT, p_exceptionIfMissing BOOLEAN, p_checkNotEmaj BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;

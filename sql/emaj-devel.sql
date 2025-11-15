@@ -3725,8 +3725,7 @@ $_remove_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._move_tbl(p_schema TEXT, p_table TEXT, p_oldGroup TEXT, p_oldGroupIsLogging BOOLEAN, p_newGroup TEXT,
                                           p_newGroupIsLogging BOOLEAN, p_timeId BIGINT, p_function TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_move_tbl$
 -- The function changes the group ownership of a table. It is called during an alter group or a dynamic assignment operation.
 -- Required inputs: schema and table to move, old and new group names and their logging state,
@@ -4602,9 +4601,11 @@ $_drop_seq$
 $_drop_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._get_current_seq(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT)
-RETURNS emaj.emaj_sequence LANGUAGE plpgsql AS
+RETURNS emaj.emaj_sequence LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_get_current_seq$
 -- This function reads the current characteristics of a sequence and returns it in an emaj_sequence format.
+-- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
   DECLARE
     r_seq                    emaj.emaj_sequence%ROWTYPE;
   BEGIN
@@ -4972,8 +4973,7 @@ $_gen_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT,
                                                    OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN)
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+LANGUAGE plpgsql AS
 $_sequence_stat_seq$
 -- This function compares the state of a single sequence between 2 time stamps or between a time stamp and the current state.
 -- It is called by the _sequence_stat_group() function.
@@ -4981,7 +4981,6 @@ $_sequence_stat_seq$
 --        the time stamp ids defining the time range to examine (a end time stamp id set to NULL indicates the current state).
 -- Output: number of sequence increments between both time stamps for the sequence
 --         a boolean indicating whether any structure property has been modified between both time stamps.
--- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
   DECLARE
     r_beginSeq               emaj.emaj_sequence%ROWTYPE;
     r_endSeq                 emaj.emaj_sequence%ROWTYPE;
@@ -5018,8 +5017,7 @@ $_sequence_stat_seq$
 $_sequence_stat_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_seq(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT, p_nbSeq BIGINT)
-RETURNS BIGINT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS BIGINT LANGUAGE plpgsql AS
 $_gen_sql_seq$
 -- This function generates a SQL statement to set the final characteristics of a sequence.
 -- The statement is stored into a temporary table created by the _gen_sql_groups() calling function.
@@ -5028,7 +5026,6 @@ $_gen_sql_seq$
 --        the time id at requested start and end marks,
 --        the number of already processed sequences
 -- Output: number of generated SQL statements (0 or 1)
--- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
   DECLARE
     v_endTimeId              BIGINT;
     v_rqSeq                  TEXT;
@@ -7508,8 +7505,7 @@ $$Sets a mark on several E-Maj groups.$$;
 CREATE OR REPLACE FUNCTION emaj._set_mark_groups(p_groupNames TEXT[], p_mark TEXT, p_comment TEXT, p_multiGroup BOOLEAN,
                                                  p_eventToRecord BOOLEAN, p_loggedRlbkTargetMark TEXT DEFAULT NULL,
                                                  p_timeId BIGINT DEFAULT NULL, p_dblinkSchema TEXT DEFAULT NULL)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $_set_mark_groups$
 -- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
 -- It also updates 1) the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into
@@ -7524,7 +7520,6 @@ $_set_mark_groups$
 --        dblink schema when the mark is set by a rollback operation and dblink connection are used (NULL by default)
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
--- The function is defined as SECURITY DEFINER so that emaj_adm roles can use it even without SELECT right on the sequence.
   DECLARE
     v_function               TEXT;
     v_nbSeq                  INT;
@@ -11359,8 +11354,7 @@ COMMENT ON FUNCTION emaj.emaj_log_stat_sequence(TEXT, TEXT, TIMESTAMPTZ, TIMESTA
 $$Returns statistics about recorded changes between 2 timestamps for a single sequence.$$;
 
 CREATE OR REPLACE FUNCTION emaj._log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
-RETURNS SETOF emaj.emaj_log_stat_sequence_type LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS SETOF emaj.emaj_log_stat_sequence_type LANGUAGE plpgsql AS
 $_log_stat_sequence$
 -- This function returns statistics about a single sequence, for the time period framed by a supplied time_id slice.
 -- It is called by the various emaj_log_stat_sequence() function.
@@ -11369,7 +11363,6 @@ $_log_stat_sequence$
 -- Input: schema and sequence names
 --        start and end time_id.
 -- Output: set of stats by time slice.
--- The function is defined as SECURITY DEFINER so that emaj_adm roles can use it even without SELECT right on the sequence.
   DECLARE
     v_needCurrentState       BOOLEAN;
     r_endSeq                 emaj.emaj_sequence%ROWTYPE;
@@ -14719,6 +14712,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_f
                           OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(p_app_schema TEXT, p_app_table TEXT,
                           OUT log_schema TEXT, OUT log_table TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_current_seq(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT,
                                                   OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN) TO emaj_viewer;
