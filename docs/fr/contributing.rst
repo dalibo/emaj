@@ -51,7 +51,6 @@ Le fichier *emaj_tools.env* doit contenir :
 * la liste des versions de PostgreSQL supportées par la version courante d’E-Maj et qui disposent d’une instance PostgreSQL de test (variable *EMAJ_USER_PGVER*),
 * pour chaque version d’instance PostgreSQL utilisée pour les tests, 6 variables décrivant la localisation des binaires et du répertoire principal de l’instance, les rôle et port ip à utiliser pour la connexion à l’instance.
 
-
 Coder
 -----
 
@@ -141,13 +140,16 @@ Un solide environnement de test est fourni dans le dépôt. Il contient :
 Les scénarios de test
 '''''''''''''''''''''
 
-Le système de test comprend 5 scénarios de test :
+Le système de test comprend différents scénarios de test :
 
 * un scénario standard complet,
 * le même scénario mais en installant l’extension à partir du script *emaj-devel.sql* fourni pour les cas où une requête "*CREATE EXTENSION emaj*" n’est pas possible,
-* le même scénario mais en installant l’extension à partir de la version précédente puis en effectuant un *upgrade* dans la version courante,
-* un scénario réduit comportant un *upgrade* de la version précédente vers la version courante de l’extension alors que des groupes de tables sont actifs,
-* un scénario réduit similaire au précédent mais avec un *upgrade* depuis la plus ancienne version d’E-Maj disponible avec la plus ancienne version de PostgreSQL supportée.
+* le même scénario mais en installant l’extension à partir de la version précédente puis en effectuant immédiatement une mise à jour dans la version courante,
+* un scénario réduit avec une installation de l’extension à l’aide du script *emaj-devel.sql* mais exécuté par un rôle qui ne dispose pas des droits *SUPERUSER*,
+* un autre scénario réduit comportant une mise à jour de la version précédente vers la version courante de l’extension alors que des groupes de tables sont actifs,
+* un scénario réduit similaire au précédent mais avec une mise à jour depuis la plus ancienne version d’E-Maj disponible avec la plus ancienne version de PostgreSQL supportée,
+* deux scénarios testant la désinstallation puis réinstallation de l’extension, utilisant pour l’un une requête "*CREATE EXTENSION emaj*", et pour l’autre le script *emaj-devel.sql*,
+* deux scénarios testant une montée de version de PostgreSQL, l’un par sauvegarde *pg_dump* puis restauration, l’autre par l’outil *pg_upgrade*.
 
 Ces scénarios font appel à des scripts *psql*, tous localisés dans *test/sql*. Les scripts enchaînent dans différents contextes des séquences d’appels de fonctions E-Maj et de requêtes SQL de préparation et de contrôle des résultats obtenus.
 
@@ -178,20 +180,45 @@ L’outil de test se lance avec la commande ::
 
    tools/regress.sh
 
-Comme il commence par copier le fichier *emaj.control* dans les répertoires *SHAREDIR/extension* des versions de PostgreSQL configurées, il peut demander le mot de passe du compte Linux pour exécuter des commandes *sudo*. Au lancement, il génère aussi automatiquement le fichier *emaj-devel.sql*, la version *psql* du script de création de l’extension.
+Comme il commence par copier le fichier *emaj.control* dans les répertoires *SHAREDIR/extension* des versions de PostgreSQL configurées, il peut demander le mot de passe du compte Linux pour exécuter des commandes *sudo*.
 
-Il affiche ensuite la liste des fonctions de test dans un menu. Il suffit d’indiquer la lettre correspondant au test souhaité.
+Au lancement, l'outil génère automatiquement le fichier *emaj-devel.sql*, la version *psql* du script de création de l’extension. Il affiche ensuite dans un menu la liste des tests disponibles. ::
 
-On trouve :
+	Customizing emaj.control files...
+	Generating the psql install script...
+	/home/postgres/proj/emaj/sql/emaj-devel.sql generated.
+	
+	--- E-Maj regression tests ---
+	
+	Available tests:
+	----------------
+	a- pg 12 (port 5412) standart test
+	b- pg 13 (port 5413) standart test
+	c- pg 14 (port 5414) standart test
+	d- pg 15 (port 5415) standart test
+	e- pg 16 (port 5416) standart test
+	f- pg 18 (port 5418) standart test
+	m- pg 13 dump and 17 restore
+	p- pg 17 (port 5417) psql install test
+	q- pg 18 (port 5418) psql non superuser install test
+	r- pg 16 (port 5416) uninstall test
+	s- pg 17 (port 5417) uninstall from psql test
+	t- all tests, from a to f
+	u- pg 13 upgraded to pg 17
+	A- pg 12 (port 5412) starting with E-Maj upgrade
+	B- pg 13 (port 5413) starting with E-Maj upgrade
+	C- pg 14 (port 5414) starting with E-Maj upgrade
+	D- pg 15 (port 5415) starting with E-Maj upgrade
+	E- pg 16 (port 5416) starting with E-Maj upgrade
+	F- pg 18 (port 5418) starting with E-Maj upgrade
+	T- all tests with E-Maj upgrade, from A to F
+	U- pg 12 (port 5412) mixed with E-Maj upgrade from oldest version
+	V- pg 14 (port 5414) mixed with E-Maj upgrade
+	W- pg 16 (port 5416) mixed with E-Maj upgrade
+	
+	Test to run ?
 
-* les tests standards pour chaque version de PostgreSQL configurée,
-* les tests avec installation de la version précédente puis upgrade,
-* les tests avec installation de la version par le script *emaj-devel.sql*,
-* les tests avec *upgrade* de version E-Maj sur des groupes actifs,
-* des tests de sauvegarde de la base par *pg_dump* et restauration, avec des versions de PostgreSQL différentes,
-* un test d’*upgrade* de version de PostgreSQL par *pg_upgrade* avec une base contenant l’extension E-Maj.
-
-Il est important d’exécuter ces quatre premières séries de test pour chaque évolution E-Maj.
+Il est important d’exécuter ces séries de test pour chaque évolution E-Maj.
 
 Valider les résultats
 '''''''''''''''''''''

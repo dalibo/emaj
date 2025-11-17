@@ -11,8 +11,10 @@
 
 # EMAJ_REGTEST_STANDART            : Contains the sequence of sql scripts of the "standart" regression test
 # EMAJ_REGTEST_STANDART_PGVER      : Contains the PostgreSQL versions on which the "standart" regression test can be run
-# EMAJ_REGTEST_PSQL                : Contains the sequence of sql scripts of the "psql" regression test 
+# EMAJ_REGTEST_PSQL                : Contains the sequence of sql scripts of the "psql" regression test
 # EMAJ_REGTEST_PSQL_PGVER          : Contains the PostgreSQL versions on which the "psql" regression test can be run
+# EMAJ_REGTEST_NON_SUPERUSER       : Contains the sequence of sql scripts of the "psql non superuser install" regression test
+# EMAJ_REGTEST_NON_SUPERUSER_PGVER : Contains the PostgreSQL versions on which the "psql non superuser install" regression test can be run
 # EMAJ_REGTEST_UPGRADE             : Contains the sequence of sql scripts of the "E-Maj upgrade" regression test
 # EMAJ_REGTEST_UPGRADE_PGVER       : Contains the PostgreSQL versions on which the "E-Maj upgrade" regression test can be run
 # EMAJ_REGTEST_MIXED               : Contains the sequence of sql scripts of the "mixed with E-Maj upgrade" regression test
@@ -31,6 +33,8 @@ typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' '
 typeset -r EMAJ_REGTEST_STANDART_PGVER='12 13 14 15 16 18'
 typeset -r EMAJ_REGTEST_PSQL=('install_psql' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'stat' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_PSQL_PGVER=(17)
+typeset -r EMAJ_REGTEST_NON_SUPERUSER=('non_superuser_install')
+typeset -r EMAJ_REGTEST_NON_SUPERUSER_PGVER=(18)
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'stat' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER='12 13 14 15 16 18'
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
@@ -63,7 +67,7 @@ reg_test_version()
 
 # Regression test by itself - Fully inspired by pg_regress.c (in the PostgreSQL sources)
   echo
-  echo "Run regression test"
+  echo "Run regression test on Postgres ${1}"
   echo '============== dropping database "regression"         =============='
   ${PGBIN}/psql -c "DROP DATABASE IF EXISTS regression;"
   echo '============== creating database "regression"         =============='
@@ -261,23 +265,26 @@ echo "----------------"
 # BUILD THE TEST MENU # 
 #---------------------#
 # Overlap of NENU_KEY* values are not controlled
-# MENU_KEY_1STREGTEST_STANDART     : 1st letter attributed in the menu to execute a "standart" test for a specific PostgreSQL version
-# MENU_KEY_ALLREGTEST_STANDART     : Letter attributed in the menu to execute the "standart" test foreach PostgreSQL versions
-# MENU_KEY_1STREGTEST_DUMP_RESTORE : 1st letter attributed in the menu to execute a "dump and restore" test for a specific PostgreSQL version
-# MENU_KEY_1STREGTEST_UNINSTALL    : 1st letter attributed in the menu to execute a "uninstall" test for a specific PostgreSQL version
-# MENU_KEY_1STREGTEST_UNINST_PSQL  : 1st letter attributed in the menu to execute a "uninstall_psql" test for a specific PostgreSQL version
-# MENU_KEY_1STREGTEST_PGUPGRADE    : 1st letter attributed in the menu to execute a "pg_upgrade" test for a specific PostgreSQL version
-# MENU_KEY_1STREGTEST_UPGRADE      : 1st letter attributed in the menu to execute an "E-Maj upgrade" test for a specific PostgreSQL version
-# MENU_KEY_ALLREGTEST_UPGRADE      : Letter attributed in the menu to execute the "E-Maj upgrade" test foreach PostgreSQL versions
-# MENU_KEY_1STREGTEST_UPG_OLDEST   : 1st letter attributed in the menu to execute an "E-Maj upgrade from oldest version" test for a specific PostgreSQL version
-# MENU_KEY_1STREGTEST_MIXED        : 1st letter attributed in the menu to execute a "mixed with E-Maj upgrade" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_STANDART      : 1st letter attributed in the menu to execute a "standart" test for a specific PostgreSQL version
+# MENU_KEY_ALLREGTEST_STANDART      : Letter attributed in the menu to execute the "standart" test foreach PostgreSQL versions
+# MENU_KEY_1STREGTEST_DUMP_RESTORE  : 1st letter attributed in the menu to execute a "dump and restore" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_PSQL          : 1st letter attributed in the menu to execute a "psql install" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_NON_SUPERUSER : 1st letter attributed in the menu to execute a "psql non superuser install" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_UNINSTALL     : 1st letter attributed in the menu to execute a "uninstall" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_UNINST_PSQL   : 1st letter attributed in the menu to execute a "uninstall_psql" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_PGUPGRADE     : 1st letter attributed in the menu to execute a "pg_upgrade" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_UPGRADE       : 1st letter attributed in the menu to execute an "E-Maj upgrade" test for a specific PostgreSQL version
+# MENU_KEY_ALLREGTEST_UPGRADE       : Letter attributed in the menu to execute the "E-Maj upgrade" test foreach PostgreSQL versions
+# MENU_KEY_1STREGTEST_UPG_OLDEST    : 1st letter attributed in the menu to execute an "E-Maj upgrade from oldest version" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_MIXED         : 1st letter attributed in the menu to execute a "mixed with E-Maj upgrade" test for a specific PostgreSQL version
 
 MENU_KEY_1STREGTEST_STANDART='a'
 MENU_KEY_ALLREGTEST_STANDART='t'
 MENU_KEY_1STREGTEST_DUMP_RESTORE='m'
 MENU_KEY_1STREGTEST_PSQL='p'
-MENU_KEY_1STREGTEST_UNINSTALL='q'
-MENU_KEY_1STREGTEST_UNINST_PSQL='r'
+MENU_KEY_1STREGTEST_NON_SUPERUSER='q'
+MENU_KEY_1STREGTEST_UNINSTALL='r'
+MENU_KEY_1STREGTEST_UNINST_PSQL='s'
 MENU_KEY_1STREGTEST_PGUPGRADE='u'
 MENU_KEY_1STREGTEST_UPGRADE='A'
 MENU_KEY_ALLREGTEST_UPGRADE='T'
@@ -366,6 +373,25 @@ for PGMENUVER in ${EMAJ_REGTEST_PSQL_PGVER[@]}; do
       EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) psql install test" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
       # store the associated function to execute
       EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} psql"
+      # the next decimal ASCII character
+      let nCHAR++
+      let TODISPLAY++
+      continue 2
+    fi
+   done 
+done
+
+# REG TEST WITH A PSQL INSTALL BY A NON SUPERUSER
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_NON_SUPERUSER}`
+for PGMENUVER in ${EMAJ_REGTEST_NON_SUPERUSER_PGVER[@]}; do
+  for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
+    if [ "${PGMENUVER//.}" == "${PGUSERVER}" ]; then
+      # decimal to ASCII char
+      MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+      # store the menu's entry
+      EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) psql non superuser install test" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+      # store the associated function to execute
+      EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} non_superuser"
       # the next decimal ASCII character
       let nCHAR++
       let TODISPLAY++
@@ -488,6 +514,10 @@ read ANSWER
 #  AND                #
 # EXECUTE FUNCTION(S) #
 #---------------------#
+
+if [ "${ANSWER}" == "" ]; then
+  exit 0
+fi
 
 ANSWERISVALID=0
 for KEY in "${!EMAJ_REGTEST_MENU_ACTIONS[@]}"; do

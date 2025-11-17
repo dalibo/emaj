@@ -17,6 +17,6 @@ select emaj.emaj_drop_extension();
 \dx emaj
 \dn emaj
 
--- Drop the extra extension to get a stable re-install test
+-- Drop the extra extensions to get a stable re-install test
 drop extension dblink;
 drop extension btree_gist;

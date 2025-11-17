@@ -138,13 +138,16 @@ A solid test environment is supplied in the repository. It contains:
 The test scenarios
 ''''''''''''''''''
 
-The test system contains 5 scenarios:
+The test system contains several scenarios:
 
 * a full standart scenario,
 * the same scenario but installing the extension with the *emaj-devel.sql* script provided for cases when a *“CREATE EXTENSION emaj*” statement is not possible,
 * the same scenario but installing the extension from the previous version with an immediate upgrade into the current version,
-* a shorter scenario but with an upgrade from the previous extension version to the current one while tables groups are in logging state,
-* a similar scenario but with an upgrade from the oldest E-Maj version that is available for the oldest supported Postgres version.
+* a shorter scenario installing the extension with the *emaj-devel.sql* script but with a role not having the *SUPERUSER* rights,
+* another shorter scenario but with an upgrade from the previous extension version to the current one while tables groups are in logging state,
+* a similar scenario but with an upgrade from the oldest E-Maj version that is available for the oldest supported Postgres version,
+* two scenarios testing the extension uninstall and re-install, using either the *“CREATE EXTENSION emaj”* statement, or the *emaj-devel.sql* script,
+* two scenarios testing a PostgreSQL version upgrade, using either *pg_dump* and *psql*, or the *pg_upgrade* tool.
 
 These scenarios call *psql* scripts, all located into the *test/sql* directory. The scripts chain E-Maj function calls in different contexts, and SQL statements to prepare or check the results.
 
@@ -175,20 +178,47 @@ The test tool can be launched with the command::
 
    tools/regress.sh
 
-As it starts with a copy of the *emaj.control* file into the *SHAREDIR/extension* directory of each configured PostgreSQL version, it may ask for the password of the Linux account to be able to execute *sudo* commands. It also automatically generates the *emaj-devel.sql* script used to create the extension with *psql*.
+As it starts with a copy of the *emaj.control* file into the *SHAREDIR/extension* directory of each configured PostgreSQL version, it may ask for the password of the Linux account to be able to execute *sudo* commands.
 
-It then displays the list of test functions in a menu. Just enter the letter corresponding to the choosen test.
+The tool automatically generates the *emaj-devel.sql* script used to create the extension with *psql*.
 
-The test functions are:
+Then, it displays the list of available tests in a menu. ::
 
-* standart tests for each configured PostgreSQL version,
-* the tests with the installation of the previous version followed by an upgrade,
-* the tests with the installation of the version with the *emaj-devel.sql* script,
-* the tests with an E-Maj version upgrade while tables groups are in logging state,
-* tests chaining a database save with *pg_dump* and a restore, with different PostgreSQL versions,
-* a PostgreSQL upgrade version test using *pg_upgrade* with a database containing the E-Maj extension.
+	Customizing emaj.control files...
+	Generating the psql install script...
+	/home/postgres/proj/emaj/sql/emaj-devel.sql generated.
+	
+	--- E-Maj regression tests ---
+	
+	Available tests:
+	----------------
+	a- pg 12 (port 5412) standart test
+	b- pg 13 (port 5413) standart test
+	c- pg 14 (port 5414) standart test
+	d- pg 15 (port 5415) standart test
+	e- pg 16 (port 5416) standart test
+	f- pg 18 (port 5418) standart test
+	m- pg 13 dump and 17 restore
+	p- pg 17 (port 5417) psql install test
+	q- pg 18 (port 5418) psql non superuser install test
+	r- pg 16 (port 5416) uninstall test
+	s- pg 17 (port 5417) uninstall from psql test
+	t- all tests, from a to f
+	u- pg 13 upgraded to pg 17
+	A- pg 12 (port 5412) starting with E-Maj upgrade
+	B- pg 13 (port 5413) starting with E-Maj upgrade
+	C- pg 14 (port 5414) starting with E-Maj upgrade
+	D- pg 15 (port 5415) starting with E-Maj upgrade
+	E- pg 16 (port 5416) starting with E-Maj upgrade
+	F- pg 18 (port 5418) starting with E-Maj upgrade
+	T- all tests with E-Maj upgrade, from A to F
+	U- pg 12 (port 5412) mixed with E-Maj upgrade from oldest version
+	V- pg 14 (port 5414) mixed with E-Maj upgrade
+	W- pg 16 (port 5416) mixed with E-Maj upgrade
+	
+	Test to run ?
 
-It is important to execute the four first sets of tests for each E-Maj change.
+It is important to execute these sets of tests for each E-Maj change.
 
 Validate results
 ''''''''''''''''

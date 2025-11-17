@@ -1,0 +1,289 @@
+-- non_superuser_install.sql
+--     single script to test emaj installed with psql by a non superuser role
+--
+SET client_min_messages TO WARNING;
+------------------------------------------------------------
+-- Create roles, give grants and create needed extensions
+------------------------------------------------------------
+-- _regress_emaj_install owns the emaj environment
+create role _regress_emaj_install login password 'install';
+-- _regress_emaj_app owns the application objects
+create role _regress_emaj_app login password 'app';
+grant all on database regression to _regress_emaj_install, _regress_emaj_app;
+grant create on schema public to _regress_emaj_install;
+create extension dblink;
+------------------------------------------------------------
+-- Create the application objects and give grants to _regress_emaj_install
+------------------------------------------------------------
+set role _regress_emaj_app;
+DROP SCHEMA IF EXISTS mySchema7 CASCADE;
+CREATE SCHEMA mySchema7;
+SET search_path=mySchema7;
+CREATE TABLE myTbl1 (
+  col11       SERIAL           NOT NULL,
+  col12       TEXT             ,
+  PRIMARY KEY (col11)
+);
+CREATE SEQUENCE mySeq1;
+reset search_path;
+------------------------------------------------------------
+-- install the extension using the psql script
+------------------------------------------------------------
+set role _regress_emaj_install;
+\set ECHO errors
+psql:sql/emaj-devel.sql:14643: ERROR:  permission denied to create event trigger "emaj_protection_trg"
+HINT:  Must be superuser to create an event trigger.
+psql:sql/emaj-devel.sql:14643: STATEMENT:  CREATE EVENT TRIGGER emaj_protection_trg
+  ON sql_drop
+  WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
+  EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
+psql:sql/emaj-devel.sql:14654: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14654: STATEMENT:  CREATE EVENT TRIGGER emaj_sql_drop_trg
+  ON sql_drop
+  WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','ALTER TABLE','DROP TRIGGER')
+  EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
+psql:sql/emaj-devel.sql:14662: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14662: STATEMENT:  CREATE EVENT TRIGGER emaj_table_rewrite_trg
+  ON table_rewrite
+  EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
+psql:sql/emaj-devel.sql:14675: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14675: STATEMENT:  REVOKE ALL ON ALL FUNCTIONS IN SCHEMA emaj FROM PUBLIC;
+psql:sql/emaj-devel.sql:14681: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14681: STATEMENT:  GRANT ALL ON SCHEMA emaj TO emaj_adm;
+psql:sql/emaj-devel.sql:14682: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14682: STATEMENT:  GRANT ALL ON ALL TABLES IN SCHEMA emaj TO emaj_adm;
+psql:sql/emaj-devel.sql:14683: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14683: STATEMENT:  GRANT ALL ON ALL SEQUENCES IN SCHEMA emaj TO emaj_adm;
+psql:sql/emaj-devel.sql:14684: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14684: STATEMENT:  GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
+psql:sql/emaj-devel.sql:14693: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14693: STATEMENT:  GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
+psql:sql/emaj-devel.sql:14694: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14694: STATEMENT:  GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
+psql:sql/emaj-devel.sql:14695: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14695: STATEMENT:  GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
+psql:sql/emaj-devel.sql:14697: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14697: STATEMENT:  REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
+psql:sql/emaj-devel.sql:14700: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14700: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14701: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14701: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._clean_array(p_array TEXT[]) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14705: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14705: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN,
+                                                  p_checkIdle BOOLEAN, p_checkLogging BOOLEAN,
+                                                  p_checkRollbackable BOOLEAN, p_checkUnprotected BOOLEAN)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14706: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14706: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._check_schema(p_schema TEXT, p_exceptionIfMissing BOOLEAN, p_checkNotEmaj BOOLEAN) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14707: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14707: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14712: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14712: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
+                          p_finiteUpperBound BOOLEAN, p_checkLogSession BOOLEAN,
+                          OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
+                          OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
+                          OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14714: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14714: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(p_app_schema TEXT, p_app_table TEXT,
+                          OUT log_schema TEXT, OUT log_table TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14715: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14715: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._get_current_seq(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14716: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14716: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14718: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14718: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT,
+                                                  OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14719: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14719: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._get_log_sequence_last_value(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14720: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14720: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._get_app_sequence_last_value(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14721: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14721: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._verify_groups(p_groupNames TEXT[], p_onErrorStop boolean) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14722: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14722: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14723: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14723: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14724: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14724: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(p_groupName TEXT, p_datetime TIMESTAMPTZ) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14725: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14725: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(p_groupName TEXT, p_mark TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14726: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14726: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._get_previous_mark_group(p_groupName TEXT, p_mark TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14728: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14728: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._rlbk_check(p_groupNames TEXT[], p_mark TEXT, p_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14729: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14729: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(p_rlbkId INT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14731: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14731: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(p_rlbkId INT, p_batchNumber INT, p_schema TEXT, p_table TEXT,
+                          p_isReplRoleReplica BOOLEAN) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14732: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14732: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14733: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14733: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._cleanup_rollback_state() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14734: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14734: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14735: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14735: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_groups(p_groupNames TEXT[], p_firstMark TEXT, p_lastMark TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14737: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14737: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14738: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14738: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14739: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14739: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_groups(p_groupNames TEXT[], p_firstMark TEXT, p_lastMark TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14741: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14741: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._detailed_log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14742: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14742: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_sequence_stat_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14743: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14743: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_sequence_stat_groups(p_groupNames TEXT[], p_firstMark TEXT, p_lastMark TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14745: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14745: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._sequence_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14747: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14747: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_table(p_schema TEXT, p_table TEXT, p_startTs TIMESTAMPTZ, p_endTs TIMESTAMPTZ)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14750: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14750: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_table(p_schema TEXT, p_table TEXT, p_startGroup TEXT, p_startMark TEXT,
+                                                   p_endGroup TEXT, p_endMark TEXT)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14752: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14752: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._log_stat_table(p_schema TEXT, p_table TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14754: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14754: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startTs TIMESTAMPTZ, p_endTs TIMESTAMPTZ)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14757: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14757: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startGroup TEXT, p_startMark TEXT,
+                                                      p_endGroup TEXT, p_endMark TEXT)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14759: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14759: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14763: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14763: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter TEXT, p_groupsExcludeFilter TEXT,
+                                                         p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                         p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                         OUT p_key TEXT, OUT p_value TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14764: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14764: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_group(p_groupName TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14765: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14765: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14766: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14766: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_is_logging_group(p_groupName TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14767: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14767: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14768: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14768: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_idle_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14769: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14769: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14770: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14770: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(p_groupName TEXT, p_mark TEXT, p_isLoggedRlbk BOOLEAN) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14771: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14771: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14773: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14773: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
+                          TO emaj_viewer;
+psql:sql/emaj-devel.sql:14774: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14774: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_version() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14775: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14775: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_activity() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14776: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14776: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._rollback_activity() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14777: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14777: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_get_consolidable_rollbacks() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14779: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14779: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT, p_optionsList TEXT,
+                                                               p_tblseqs TEXT[]) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14783: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14783: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, INOUT p_lastMark TEXT,
+                                                           p_optionsList TEXT, p_tblseqs TEXT[], p_genSqlOnly BOOLEAN,
+                                                           OUT p_nbStmt INT, OUT p_copyOptions TEXT, OUT p_noEmptyFiles BOOLEAN,
+                                                           OUT p_isPsqlCopy BOOLEAN) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14786: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14786: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._gen_sql_dump_changes_tbl(p_logSchema TEXT, p_logTable TEXT, p_emajVerbAttnum INT, p_pkCols TEXT[],
+                                                         p_firstEmajGid BIGINT, p_lastEmajGid BIGINT, p_consolidationLevel TEXT,
+                                                         p_emajColumnsList TEXT, p_colsOrder TEXT, p_orderBy TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14788: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14788: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._gen_sql_dump_changes_seq(p_schema TEXT, p_sequence TEXT, p_firstEmajGid BIGINT, p_lastEmajGid BIGINT,
+                                                         p_consolidationLevel TEXT) TO emaj_viewer;
+psql:sql/emaj-devel.sql:14789: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14789: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14790: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14790: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14791: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14791: STATEMENT:  GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
+psql:sql/emaj-devel.sql:14826: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14826: STATEMENT:  INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
+psql:sql/emaj-devel.sql:14828: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14828: STATEMENT:  INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
+psql:sql/emaj-devel.sql:14837: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14837: STATEMENT:  WITH start_time_data AS (
+  SELECT clock_timestamp() - lower(verh_time_range) AS duration
+    FROM emaj.emaj_version_hist
+    LIMIT 1
+  )
+  UPDATE emaj.emaj_version_hist
+    SET verh_time_range = TSTZRANGE(clock_timestamp(), null, '[]'), verh_install_duration = duration
+    FROM start_time_data;
+psql:sql/emaj-devel.sql:14857: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:sql/emaj-devel.sql:14857: STATEMENT:  DO LANGUAGE plpgsql
+$do$
+  BEGIN
+    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';
+-- Check that the role is superuser.
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+    IF NOT FOUND THEN
+      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser. This may lead to permission issues when using E-Maj.', current_user;
+    END IF;
+-- Check the max_prepared_transactions GUC value and report a warning if its value is too low for parallel rollback.
+    IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
+      RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
+                    ' rollback is possible.', pg_catalog.current_setting('max_prepared_transactions');
+    END IF;
+--
+    RETURN;
+  END;
+$do$;
+\dx
+                                          List of installed extensions
+  Name   | Version | Default version |   Schema   |                         Description                          
+---------+---------+-----------------+------------+--------------------------------------------------------------
+ dblink  | 1.2     | 1.2             | public     | connect to other PostgreSQL databases from within a database
+ plpgsql | 1.0     | 1.0             | pg_catalog | PL/pgSQL procedural language
+(2 rows)
+
+------------------------------------------------------------
+-- drop the extension
+------------------------------------------------------------
+set role _regress_emaj_install;
+select emaj.emaj_drop_extension();
+ERROR:  schema "emaj" does not exist
+LINE 1: select emaj.emaj_drop_extension();
+               ^
+-- Drop the extra extensions to get a stable re-install test
+drop extension btree_gist;
+ERROR:  extension "btree_gist" does not exist
+reset role;
+drop extension dblink;
+-- Check that the emaj schema is not known anymore
+\dn emaj
+List of schemas
+ Name | Owner 
+------+-------
+(0 rows)
+
+------------------------------------------------------------
+-- Drop the application objects
+------------------------------------------------------------
+set role _regress_emaj_app;
+DROP SCHEMA IF EXISTS mySchema7 CASCADE;
+------------------------------------------------------------
+-- Drop roles
+------------------------------------------------------------
+reset role;
+revoke all on database regression from _regress_emaj_install, _regress_emaj_app;
+revoke all on schema public from _regress_emaj_install;
+drop role _regress_emaj_install, _regress_emaj_app;
