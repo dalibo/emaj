@@ -15,7 +15,8 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
-
+  * Do not try to create and manipulate event triggers when the extension has
+    been installed by a non superuser role using the emaj-<version>.sql script.
 
 
 4.7.1 (2025-Sept-27)

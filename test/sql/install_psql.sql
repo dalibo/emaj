@@ -17,7 +17,7 @@ end;
 -----------------------------
 
 -- check the emaj_version_hist content
-select verh_version from emaj.emaj_version_hist;
+select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
 select emaj.emaj_get_version();
 
 -- check history

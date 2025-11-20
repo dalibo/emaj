@@ -88,6 +88,11 @@ SELECT emaj._disable_event_triggers();
 --                                                            --
 ----------------------------------------------------------------
 
+-- Table emaj_version_hist
+
+ALTER TABLE emaj.emaj_version_hist
+  ADD COLUMN verh_installed_by_superuser  BOOLEAN DEFAULT TRUE;
+
 --
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
@@ -121,6 +126,15 @@ DROP FUNCTION IF EXISTS emaj._import_groups_conf_alter(P_GROUPNAMES TEXT[],P_MAR
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._installed_by_superuser()
+RETURNS BOOLEAN LANGUAGE SQL IMMUTABLE AS
+$$
+-- This function returns a boolean indicating whether the current version has been installed or upgraded by a superuser role.
+SELECT verh_installed_by_superuser
+  FROM emaj.emaj_version_hist
+  WHERE upper_inf(verh_time_range);
+$$;
+
 CREATE OR REPLACE FUNCTION emaj._clean_array(p_array TEXT[])
 RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS
 $$
@@ -1861,6 +1875,387 @@ $_log_stat_sequence$
   END;
 $_log_stat_sequence$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_disable_protection_by_event_triggers$
+-- This function disables all known E-Maj event triggers that are in enabled state.
+-- It may be used by an emaj_adm role.
+-- Output: number of effectively disabled event triggers.
+  DECLARE
+    v_eventTriggers          TEXT[];
+  BEGIN
+-- Raise an exception if the extension has not been installed by a superuser.
+    IF NOT emaj._installed_by_superuser() THEN
+      RAISE EXCEPTION 'emaj_disable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been '
+                      'installed by a superuser.';
+    END IF;
+-- Call the _disable_event_triggers() function and get the disabled event trigger names array.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Keep a trace into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('DISABLE_PROTECTION', 'EVENT TRIGGERS DISABLED',
+              CASE WHEN v_eventTriggers <> ARRAY[]::TEXT[] THEN array_to_string(v_eventTriggers, ', ') ELSE '<none>' END);
+-- Return the number of disabled event triggers.
+    RETURN coalesce(array_length(v_eventTriggers,1),0);
+  END;
+$emaj_disable_protection_by_event_triggers$;
+COMMENT ON FUNCTION emaj.emaj_disable_protection_by_event_triggers() IS
+$$Disables the protection of E-Maj components by event triggers.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_enable_protection_by_event_triggers()
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_enable_protection_by_event_triggers$
+-- This function enables all known E-Maj event triggers that are in disabled state.
+-- It may be used by an emaj_adm role.
+-- Output: number of effectively enabled event triggers.
+  DECLARE
+    v_eventTriggers          TEXT[];
+  BEGIN
+-- Raise an exception if the extension has not been installed by a superuser.
+    IF NOT emaj._installed_by_superuser() THEN
+      RAISE EXCEPTION 'emaj_enable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been '
+                      'installed by a superuser.';
+    END IF;
+-- Build the event trigger names array from the pg_event_trigger table.
+    SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname LIKE 'emaj%'
+        AND evtenabled = 'D';
+-- Call the _enable_event_triggers() function.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- Keep a trace into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS ENABLED',
+              CASE WHEN v_eventTriggers <> ARRAY[]::TEXT[] THEN array_to_string(v_eventTriggers, ', ') ELSE '<none>' END);
+-- Return the number of enabled event triggers.
+    RETURN coalesce(array_length(v_eventTriggers,1),0);
+  END;
+$emaj_enable_protection_by_event_triggers$;
+COMMENT ON FUNCTION emaj.emaj_enable_protection_by_event_triggers() IS
+$$Enables the protection of E-Maj components by event triggers.$$;
+
+CREATE OR REPLACE FUNCTION emaj._disable_event_triggers()
+RETURNS TEXT[] LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_disable_event_triggers$
+-- This function disables all known E-Maj event triggers that are in enabled state.
+-- The function is called by functions that alter or drop E-Maj components, such as
+--   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
+-- It is also called by the user emaj_disable_event_triggers_protection() function.
+-- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers().
+-- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger.
+-- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
+  DECLARE
+    v_eventTrigger           TEXT;
+    v_eventTriggers          TEXT[] = ARRAY[]::TEXT[];
+  BEGIN
+-- Exit immediately if the extension has not been installed by a superuser.
+    IF NOT emaj._installed_by_superuser() THEN
+      RETURN v_eventTriggers;
+    END IF;
+-- Build the event trigger names array from the pg_event_trigger table.
+-- A single operation like _alter_groups() may call the function several times. But this is not an issue as only enabled triggers are
+-- disabled.
+    SELECT coalesce(array_agg(evtname ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname LIKE 'emaj%'
+        AND evtenabled <> 'D';
+-- Disable each event trigger.
+    FOREACH v_eventTrigger IN ARRAY v_eventTriggers
+    LOOP
+      EXECUTE format('ALTER EVENT TRIGGER %I DISABLE',
+                     v_eventTrigger);
+    END LOOP;
+--
+    RETURN v_eventTriggers;
+  END;
+$_disable_event_triggers$;
+
+CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(p_eventTriggers TEXT[])
+RETURNS TEXT[] LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_enable_event_triggers$
+-- This function enables all event triggers supplied as parameter.
+-- It also recreates the emaj_protection_trg event trigger if it does not exist. This event trigger is the only component
+-- that is not linked to the emaj extension and cannot be protected by another event trigger.
+-- The function is called by functions that alter or drop E-Maj components, such as
+--   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
+-- It is also called by the user emaj_enable_event_triggers_protection() function.
+-- Input: array of event trigger names to enable.
+-- Output: same array.
+-- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
+-- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
+  DECLARE
+    v_eventTrigger           TEXT;
+  BEGIN
+-- Exit immediately if the extension has not been installed by a superuser.
+    IF NOT emaj._installed_by_superuser() THEN
+      RETURN p_eventTriggers;
+    END IF;
+-- If the emaj_protection_trg event trigger does not exist, recreate it and report.
+    PERFORM 0
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname = 'emaj_protection_trg';
+    IF NOT FOUND THEN
+      CREATE EVENT TRIGGER emaj_protection_trg
+        ON sql_drop
+        WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
+        EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
+      COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+      $$Blocks the removal of the emaj extension or schema.$$;
+      RAISE WARNING '_enable_event_triggers: the emaj_protection_trg event trigger has been recreated.';
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+        VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS RECREATED', 'emaj_protection_trg');
+    END If;
+    FOREACH v_eventTrigger IN ARRAY p_eventTriggers
+    LOOP
+      EXECUTE format('ALTER EVENT TRIGGER %I ENABLE',
+                     v_eventTrigger);
+    END LOOP;
+--
+  RETURN p_eventTriggers;
+  END;
+$_enable_event_triggers$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_drop_extension()
+RETURNS VOID LANGUAGE plpgsql AS
+$emaj_drop_extension$
+-- This function drops emaj from the current database, with both installation kinds,
+-- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
+-- - or with the alternate psql script.
+  DECLARE
+    v_nbObject               INTEGER;
+    v_roleToDrop             BOOLEAN;
+    v_dbList                 TEXT;
+    v_granteeRoleList        TEXT;
+    v_granteeClassList       TEXT;
+    v_granteeFunctionList    TEXT;
+    v_tspList                TEXT;
+    r_object                 RECORD;
+  BEGIN
+-- Perform some checks to verify that the conditions to execute the function are met.
+--
+-- Check emaj schema is present.
+    PERFORM 1 FROM pg_catalog.pg_namespace WHERE nspname = 'emaj';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_drop_extension: The schema ''emaj'' doesn''t exist';
+    END IF;
+--
+-- For extensions, check the current role is superuser.
+    IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
+      PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
+      END IF;
+    ELSE
+-- Otherwise, check the current role is the owner of the emaj schema, i.e. the role who installed emaj.
+      PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
+        WHERE nspowner = pg_roles.oid AND nspname = 'emaj' AND rolname = current_user;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be the owner of the emaj schema';
+      END IF;
+    END IF;
+--
+-- Check that no E-Maj schema contains any non E-Maj object.
+    v_nbObject = 0;
+    FOR r_object IN
+      SELECT msg FROM emaj._verify_all_schemas() msg
+        WHERE msg NOT LIKE 'Error: The E-Maj schema % does not exist anymore.'
+      LOOP
+-- An E-Maj schema contains objects that do not belong to the extension.
+      RAISE WARNING 'emaj_drop_extension - schema consistency checks: %',r_object.msg;
+      v_nbObject = v_nbObject + 1;
+    END LOOP;
+    IF v_nbObject > 0 THEN
+      RAISE EXCEPTION 'emaj_drop_extension: There are % unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall'
+                      ' function.', v_nbObject;
+    END IF;
+--
+-- OK, perform the removal actions.
+--
+-- Disable event triggers that would block the DROP EXTENSION command.
+    PERFORM emaj._disable_event_triggers();
+--
+-- If the emaj_demo_cleanup function exists (created by the emaj_demo.sql script), execute it.
+    PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+      WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_demo_cleanup';
+    IF FOUND THEN
+      PERFORM emaj.emaj_demo_cleanup();
+    END IF;
+-- If the emaj_parallel_rollback_test_cleanup function exists (created by the emaj_prepare_parallel_rollback_test.sql script), execute it.
+    PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+      WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_parallel_rollback_test_cleanup';
+    IF FOUND THEN
+      PERFORM emaj.emaj_parallel_rollback_test_cleanup();
+    END IF;
+--
+-- Drop all created groups, bypassing potential errors, to remove all components not directly linked to the EXTENSION.
+    PERFORM emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
+--
+-- Drop the emaj extension, if it is an EXTENSION.
+    DROP EXTENSION IF EXISTS emaj CASCADE;
+--
+-- Drop the primary schema.
+    DROP SCHEMA IF EXISTS emaj CASCADE;
+--
+-- Drop the event trigger that protects the extension against unattempted drop and its function (they are external to the extension).
+    DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
+--
+-- Revoke also the grants given to emaj_adm on the dblink_connect_u function at install time.
+    FOR r_object IN
+      SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+        WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
+      LOOP
+        BEGIN
+          EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
+        EXCEPTION
+          WHEN insufficient_privilege THEN
+            RAISE WARNING 'emaj_drop_extension: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...';
+        END;
+    END LOOP;
+--
+-- Check if emaj roles can be dropped.
+    v_roleToDrop = TRUE;
+--
+-- Are emaj roles also used in other databases of the cluster ?
+    v_dbList = NULL;
+    SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+      INTO v_dbList
+      FROM pg_database db
+           JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+      WHERE rolname = 'emaj_viewer'
+        AND datname <> current_database();
+    IF v_dbList IS NOT NULL THEN
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (%)', v_dbList;
+      v_roleToDrop = FALSE;
+    END IF;
+--
+    v_dbList = NULL;
+    SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+      INTO v_dbList
+      FROM pg_database db
+           JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+      WHERE rolname = 'emaj_adm'
+        AND datname <> current_database();
+    IF v_dbList IS NOT NULL THEN
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role is also referenced in some other databases (%)', v_dbList;
+      v_roleToDrop = FALSE;
+    END IF;
+--
+-- Are emaj roles granted to other roles ?
+    v_granteeRoleList = NULL;
+    SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+      INTO v_granteeRoleList
+      FROM pg_catalog.pg_roles q
+           JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+      WHERE r.rolname = 'emaj_viewer';
+    IF v_granteeRoleList IS NOT NULL THEN
+      RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_viewer role.',
+                    v_granteeRoleList;
+      v_roleToDrop = FALSE;
+    END IF;
+--
+    v_granteeRoleList = NULL;
+    SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+      INTO v_granteeRoleList
+      FROM pg_catalog.pg_roles q
+           JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+           JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+      WHERE r.rolname = 'emaj_adm';
+    IF v_granteeRoleList IS NOT NULL THEN
+      RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_adm role.',
+            v_granteeRoleList;
+      v_roleToDrop = FALSE;
+    END IF;
+--
+-- Are emaj roles granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
+    v_granteeClassList = NULL;
+    SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+      INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+      WHERE array_to_string (relacl,';') LIKE '%emaj_viewer=%';
+    IF v_granteeClassList IS NOT NULL THEN
+      IF length(v_granteeClassList) > 200 THEN
+        v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on tables, views or sequences (%).',
+                    v_granteeClassList;
+      v_roleToDrop = FALSE;
+    END IF;
+--
+    v_granteeClassList = NULL;
+    SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+      INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+      WHERE array_to_string (relacl,';') LIKE '%emaj_adm=%';
+    IF v_granteeClassList IS NOT NULL THEN
+      IF length(v_granteeClassList) > 200 THEN
+        v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on tables, views or sequences (%).',
+                    v_granteeClassList;
+      v_roleToDrop = FALSE;
+    END IF;
+--
+-- Are emaj roles granted to functions (other than just dropped emaj ones) ?
+    v_granteeFunctionList = NULL;
+    SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+      INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+      WHERE array_to_string (proacl,';') LIKE '%emaj_viewer=%';
+    IF v_granteeFunctionList IS NOT NULL THEN
+      IF length(v_granteeFunctionList) > 200 THEN
+        v_granteeFunctionList = substr(v_granteeFunctionList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on functions (%).',
+                    v_granteeFunctionList;
+      v_roleToDrop = FALSE;
+    END IF;
+--
+    v_granteeFunctionList = NULL;
+    SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+      INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+      WHERE array_to_string (proacl,';') LIKE '%emaj_adm=%';
+    IF v_granteeFunctionList IS NOT NULL THEN
+      IF length(v_granteeFunctionList) > 200 THEN
+        v_granteeClassList = substr(v_granteeFunctionList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on functions (%).',
+                    v_granteeFunctionList;
+      v_roleToDrop = FALSE;
+    END IF;
+--
+-- If emaj roles can be dropped, drop them.
+    IF v_roleToDrop THEN
+-- Revoke the remaining grants set on tablespaces
+      SELECT string_agg(spcname, ', ')
+        INTO v_tspList
+        FROM pg_catalog.pg_tablespace
+        WHERE array_to_string (spcacl,';') LIKE '%emaj_viewer=%' OR array_to_string (spcacl,';') LIKE '%emaj_adm=%';
+      IF v_tspList IS NOT NULL THEN
+        EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_viewer, emaj_adm';
+      END IF;
+-- ... and drop both emaj_viewer and emaj_adm roles.
+      DROP ROLE emaj_viewer, emaj_adm;
+      RAISE WARNING 'emaj_drop_extension: emaj_adm and emaj_viewer roles have been dropped.';
+    ELSE
+      RAISE WARNING 'emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.';
+    END IF;
+--
+    RETURN;
+  END;
+$emaj_drop_extension$;
+COMMENT ON FUNCTION emaj.emaj_drop_extension() IS
+$$Uninstalls the E-Maj components from the current database.$$;
+
 --<end_functions>                                pattern used by the tool that extracts and inserts the functions definition
 
 ----------------------------------------------------------------
@@ -1943,9 +2338,10 @@ WITH start_time_data AS (
     FROM start_time_data
     WHERE upper_inf(verh_time_range)
   )
-  INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_install_duration)
-    SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), duration
-      FROM start_time_data;
+  INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_install_duration, verh_installed_by_superuser)
+    SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), duration, rolsuper
+      FROM start_time_data, pg_catalog.pg_roles
+      WHERE rolname = current_user;
 
 -- Insert the upgrade end record in the operation history.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)

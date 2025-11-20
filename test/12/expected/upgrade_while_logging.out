@@ -170,25 +170,25 @@ select relname from pg_catalog.pg_class,
 (23 rows)
 
 -- check the emaj_version_hist content
-select verh_version from emaj.emaj_version_hist order by verh_time_range;
- verh_version 
---------------
- 3.1.0
- 3.2.0
- 3.3.0
- 3.4.0
- 4.0.0
- 4.0.1
- 4.1.0
- 4.2.0
- 4.3.0
- 4.3.1
- 4.4.0
- 4.5.0
- 4.6.0
- 4.7.0
- 4.7.1
- <devel>
+select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist order by verh_time_range;
+ verh_version | verh_installed_by_superuser 
+--------------+-----------------------------
+ 3.1.0        | t
+ 3.2.0        | t
+ 3.3.0        | t
+ 3.4.0        | t
+ 4.0.0        | t
+ 4.0.1        | t
+ 4.1.0        | t
+ 4.2.0        | t
+ 4.3.0        | t
+ 4.3.1        | t
+ 4.4.0        | t
+ 4.5.0        | t
+ 4.6.0        | t
+ 4.7.0        | t
+ 4.7.1        | t
+ <devel>      | t
 (16 rows)
 
 select emaj.emaj_get_version();
@@ -917,13 +917,14 @@ Tablespace: "tspemaj"
  bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Sequence for identity column: emaj.emaj_time_stamp.time_id
 
-                      Table "emaj.emaj_version_hist"
-        Column         |   Type    | Collation | Nullable |    Default     
------------------------+-----------+-----------+----------+----------------
- verh_version          | text      |           | not null | 
- verh_time_range       | tstzrange |           | not null | 
- verh_install_duration | interval  |           |          | 
- verh_txid             | bigint    |           |          | txid_current()
+                         Table "emaj.emaj_version_hist"
+           Column            |   Type    | Collation | Nullable |    Default     
+-----------------------------+-----------+-----------+----------+----------------
+ verh_version                | text      |           | not null | 
+ verh_time_range             | tstzrange |           | not null | 
+ verh_install_duration       | interval  |           |          | 
+ verh_txid                   | bigint    |           |          | txid_current()
+ verh_installed_by_superuser | boolean   |           |          | true
 Indexes:
     "emaj_version_hist_pkey" PRIMARY KEY, btree (verh_version)
     "emaj_version_hist_verh_version_verh_time_range_excl" EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)

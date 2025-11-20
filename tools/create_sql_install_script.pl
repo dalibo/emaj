@@ -40,8 +40,10 @@ use warnings; use strict;
       next;
     }
     if ($status == 2 && $line =~ /^-- This script must be executed by a role having SUPERUSER privileges\./) {
-      print FICOT "-- This script may be executed by a non SUPERUSER role. But in this case, the installation role must be\n";
-      print FICOT "--   the owner of application tables and sequences that will constitute the future tables groups.\n";
+      print FICOT "-- This script may be executed by a non SUPERUSER role. But in this case:\n";
+      print FICOT "--   - the installation role must be the owner of application tables and sequences that will be assigned to the\n";
+      print FICOT "--     future tables groups,\n";
+      print FICOT "--   - event triggers that protect the E-Maj environment are not created.\n";
       $status++;
       next;
     }
@@ -64,7 +66,7 @@ use warnings; use strict;
     }
     if ($status == 5) {
 # Comment the ALTER EXTENSION verbs
-      if ($line =~ /^ALTER EXTENSION/) {
+      if ($line =~ /^\s*ALTER EXTENSION/) {
         print FICOT "--$line";
         next;
       }
@@ -74,7 +76,7 @@ use warnings; use strict;
         print FICOT "--$line";
         $line = <FICIN>;
         print FICOT "--$line";
-        if ($1 eq 'emaj_table_rewrite_trg') { $status++; }
+        if ($eventTriggerName eq 'emaj_table_rewrite_trg') { $status++; }
         next;
       }
     }
@@ -97,7 +99,9 @@ use warnings; use strict;
       print FICOT "-- Check that the role is superuser.\n";
       print FICOT "    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;\n";
       print FICOT "    IF NOT FOUND THEN\n";
-      print FICOT "      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser. This may lead to permission issues when using E-Maj.', current_user;\n";
+      print FICOT "      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser.', current_user;\n";
+      print FICOT "      RAISE WARNING '    This may lead to permission issues when using E-Maj.';\n";
+      print FICOT "      RAISE WARNING '    Event triggers that protect the E-Maj environment cannot be created.';\n";
       print FICOT "    END IF;\n";
       $status++;
 	}

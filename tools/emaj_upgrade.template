@@ -182,9 +182,10 @@ WITH start_time_data AS (
     FROM start_time_data
     WHERE upper_inf(verh_time_range)
   )
-  INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_install_duration)
-    SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), duration
-      FROM start_time_data;
+  INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_install_duration, verh_installed_by_superuser)
+    SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), duration, rolsuper
+      FROM start_time_data, pg_catalog.pg_roles
+      WHERE rolname = current_user;
 
 -- Insert the upgrade end record in the operation history.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)

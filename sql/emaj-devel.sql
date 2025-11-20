@@ -6,8 +6,10 @@
 -- This psql script creates the emaj environment, for cases when the "CREATE EXTENSION" syntax is not possible.
 -- Use the "CREATE EXTENSION" syntax when possible.
 --
--- This script may be executed by a non SUPERUSER role. But in this case, the installation role must be
---   the owner of application tables and sequences that will constitute the future tables groups.
+-- This script may be executed by a non SUPERUSER role. But in this case:
+--   - the installation role must be the owner of application tables and sequences that will be assigned to the
+--     future tables groups,
+--   - event triggers that protect the E-Maj environment are not created.
 --
 -- The E-Maj technical tables will be installed into the default tablespace.
 -- The user executing the installation may set it to a particular value using a "set default_tablespace to <name>;" statement.
@@ -65,7 +67,7 @@ $$Contains all E-Maj related objects.$$;
 
 ----------------------------------------------------------------
 --                                                            --
---                      Enumerated types                      --
+--                  emaj_version_hist table                   --
 --                                                            --
 ----------------------------------------------------------------
 
@@ -79,12 +81,22 @@ CREATE TABLE emaj.emaj_version_hist (
   verh_install_duration        INTERVAL,                   -- installation or upgrade duration
   verh_txid                    BIGINT
                                DEFAULT txid_current(),     -- id of the transaction installing/upgrading the version
+  verh_installed_by_superuser  BOOLEAN,                    -- boolean indicating whether the installer role is superuser
   PRIMARY KEY (verh_version),
   EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
   );
-INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range) VALUES ('<devel>', TSTZRANGE(clock_timestamp(), null, '[]'));
+INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_installed_by_superuser)
+  SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), rolsuper
+    FROM pg_catalog.pg_roles
+    WHERE rolname = current_user;
 COMMENT ON TABLE emaj.emaj_version_hist IS
 $$Contains E-Maj versions history.$$;
+
+----------------------------------------------------------------
+--                                                            --
+--                      Enumerated types                      --
+--                                                            --
+----------------------------------------------------------------
 
 -- Enum of the possible values for the rlchg_change_kind column of the emaj_relation_change table.
 CREATE TYPE emaj._relation_change_kind_enum AS ENUM (
@@ -809,6 +821,15 @@ RETURNS INTEGER LANGUAGE SQL IMMUTABLE AS
 $$
 -- This function returns as an integer the current postgresql version.
 SELECT pg_catalog.current_setting('server_version_num')::INT;
+$$;
+
+CREATE OR REPLACE FUNCTION emaj._installed_by_superuser()
+RETURNS BOOLEAN LANGUAGE SQL IMMUTABLE AS
+$$
+-- This function returns a boolean indicating whether the current version has been installed or upgraded by a superuser role.
+SELECT verh_installed_by_superuser
+  FROM emaj.emaj_version_hist
+  WHERE upper_inf(verh_time_range);
 $$;
 
 CREATE OR REPLACE FUNCTION emaj._set_time_stamp(p_function TEXT, p_timeEvent CHAR(1))
@@ -14265,6 +14286,11 @@ $emaj_disable_protection_by_event_triggers$
   DECLARE
     v_eventTriggers          TEXT[];
   BEGIN
+-- Raise an exception if the extension has not been installed by a superuser.
+    IF NOT emaj._installed_by_superuser() THEN
+      RAISE EXCEPTION 'emaj_disable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been '
+                      'installed by a superuser.';
+    END IF;
 -- Call the _disable_event_triggers() function and get the disabled event trigger names array.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- Keep a trace into the emaj_hist table.
@@ -14287,6 +14313,11 @@ $emaj_enable_protection_by_event_triggers$
   DECLARE
     v_eventTriggers          TEXT[];
   BEGIN
+-- Raise an exception if the extension has not been installed by a superuser.
+    IF NOT emaj._installed_by_superuser() THEN
+      RAISE EXCEPTION 'emaj_enable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been '
+                      'installed by a superuser.';
+    END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
     SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
       FROM pg_catalog.pg_event_trigger
@@ -14314,11 +14345,16 @@ $_disable_event_triggers$
 --   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
 -- It is also called by the user emaj_disable_event_triggers_protection() function.
 -- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers().
--- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
+-- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger.
+-- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
   DECLARE
     v_eventTrigger           TEXT;
     v_eventTriggers          TEXT[] = ARRAY[]::TEXT[];
   BEGIN
+-- Exit immediately if the extension has not been installed by a superuser.
+    IF NOT emaj._installed_by_superuser() THEN
+      RETURN v_eventTriggers;
+    END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
 -- A single operation like _alter_groups() may call the function several times. But this is not an issue as only enabled triggers are
 -- disabled.
@@ -14350,9 +14386,14 @@ $_enable_event_triggers$
 -- Input: array of event trigger names to enable.
 -- Output: same array.
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
+-- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
   DECLARE
     v_eventTrigger           TEXT;
   BEGIN
+-- Exit immediately if the extension has not been installed by a superuser.
+    IF NOT emaj._installed_by_superuser() THEN
+      RETURN p_eventTriggers;
+    END IF;
 -- If the emaj_protection_trg event trigger does not exist, recreate it and report.
     PERFORM 0
       FROM pg_catalog.pg_event_trigger
@@ -14440,7 +14481,7 @@ $emaj_drop_extension$
 -- OK, perform the removal actions.
 --
 -- Disable event triggers that would block the DROP EXTENSION command.
-    PERFORM emaj.emaj_disable_protection_by_event_triggers();
+    PERFORM emaj._disable_event_triggers();
 --
 -- If the emaj_demo_cleanup function exists (created by the emaj_demo.sql script), execute it.
     PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
@@ -14628,40 +14669,41 @@ $$Uninstalls the E-Maj components from the current database.$$;
 --                                                            --
 ----------------------------------------------------------------
 --
--- Event triggers creation depends on postgres version:
--- - sql_drop event trigger needs postgres 9.3+
--- - table_rewrite trigger needs postgres 9.5+
--- Now that the oldest supported postgres version is 9.5, all installations should have both event triggers.
--- If E-Maj has been installed with older postgres versions, and this version has then been upgraded, the
--- set_event_triggers_protection.sql script can be used to add the missing components.
+DO LANGUAGE plpgsql
+$do$
+  BEGIN
+-- Verify that the installer role is a superuser.
+-- The installer role may not be a superuser when using the emaj-devel.sql alternate script that is derived from this script.
+    IF emaj._installed_by_superuser() THEN
 
--- sql_drop event triggers
+-- emaj_protection_trg.
+      CREATE EVENT TRIGGER emaj_protection_trg
+        ON sql_drop
+        WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
+        EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
+--      COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+--      $$Blocks the removal of the emaj extension or schema.$$;
+-- remove both event trigger components from the extension, so that they can fire the "DROP EXTENSION emaj".
+--      ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
+--      ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
 
-CREATE EVENT TRIGGER emaj_protection_trg
-  ON sql_drop
-  WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
-  EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
---COMMENT ON EVENT TRIGGER emaj_protection_trg IS
---$$Blocks the removal of the emaj extension or schema.$$;
+-- emaj_sql_drop_trg.
+      CREATE EVENT TRIGGER emaj_sql_drop_trg
+        ON sql_drop
+        WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','ALTER TABLE','DROP TRIGGER')
+        EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
+--      COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
+--      $$Controls the removal of E-Maj components.$$;
 
--- remove both event trigger components from the extension, so that they can fire the "DROP EXTENSION emaj"
---ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
---ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
-
-CREATE EVENT TRIGGER emaj_sql_drop_trg
-  ON sql_drop
-  WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','ALTER TABLE','DROP TRIGGER')
-  EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
---COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
---$$Controls the removal of E-Maj components.$$;
-
--- table_rewrite event trigger
-
-CREATE EVENT TRIGGER emaj_table_rewrite_trg
-  ON table_rewrite
-  EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
---COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
---$$Controls some changes in E-Maj tables structure.$$;
+-- emaj_table_rewrite_trg.
+      CREATE EVENT TRIGGER emaj_table_rewrite_trg
+        ON table_rewrite
+        EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
+--      COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
+--      $$Controls some changes in E-Maj tables structure.$$;
+    END IF;
+  END;
+$do$;
 
 ----------------------------------------------------------------
 --                                                            --
@@ -14844,7 +14886,9 @@ $do$
 -- Check that the role is superuser.
     PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
     IF NOT FOUND THEN
-      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser. This may lead to permission issues when using E-Maj.', current_user;
+      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser.', current_user;
+      RAISE WARNING '    This may lead to permission issues when using E-Maj.';
+      RAISE WARNING '    Event triggers that protect the E-Maj environment cannot be created.';
     END IF;
 -- Check the max_prepared_transactions GUC value and report a warning if its value is too low for parallel rollback.
     IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN

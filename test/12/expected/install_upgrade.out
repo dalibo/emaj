@@ -414,11 +414,11 @@ select relname from pg_catalog.pg_class,
 (23 rows)
 
 -- check the emaj_version_hist content
-select verh_version from emaj.emaj_version_hist order by verh_time_range;
- verh_version 
---------------
- 4.7.1
- <devel>
+select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist order by verh_time_range;
+ verh_version | verh_installed_by_superuser 
+--------------+-----------------------------
+ 4.7.1        | t
+ <devel>      | t
 (2 rows)
 
 select emaj.emaj_get_version();

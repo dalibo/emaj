@@ -11,7 +11,7 @@ use warnings; use strict;
 # The 3 variables below are to be customized
   my $dir = "/home/postgres/proj/emaj";
   my $ficSrc = $dir . "/sql/emaj--devel.sql";
-  my $dirOut = $dir . "/test/12/results";
+  my $dirOut = $dir . "/test/18/results";
 
 # Variables used to process the source code
   my $line;

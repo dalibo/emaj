@@ -401,7 +401,7 @@ create role _regress_emaj_anonym login password 'anonym';
 --
 grant create on tablespace tsplog1, "tsp log'2"
   to _regress_emaj_adm1, _regress_emaj_adm2;
--- give the CREATE right to emaj_adm on either trpemaj or tspemaj_renamed tablespace
+-- give the CREATE right to emaj_adm on either tspemaj or tspemaj_renamed tablespace
 DO LANGUAGE plpgsql
 $$
   BEGIN
