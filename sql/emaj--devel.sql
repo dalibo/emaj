@@ -2398,7 +2398,7 @@ $_assign_tables$
 --   And set the mark, using the same time identifier.
         PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
       END IF;
--- Create new log schemas if needed.
+-- Create the new log schema, if it doesn't exist yet.
       v_logSchema = 'emaj_' || p_schema;
       IF NOT EXISTS
            (SELECT 0
@@ -14422,6 +14422,7 @@ $emaj_drop_extension$
 -- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
 -- - or with the alternate psql script.
   DECLARE
+    v_isSuperuser            BOOLEAN;
     v_nbObject               INTEGER;
     v_roleToDrop             BOOLEAN;
     v_dbList                 TEXT;
@@ -14440,17 +14441,19 @@ $emaj_drop_extension$
     END IF;
 --
 -- For extensions, check the current role is superuser.
+    SELECT rolsuper INTO v_isSuperuser
+      FROM pg_catalog.pg_roles
+      WHERE rolname = current_user;
     IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
-      PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
-      IF NOT FOUND THEN
+      IF NOT v_isSuperuser THEN
         RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
       END IF;
     ELSE
--- Otherwise, check the current role is the owner of the emaj schema, i.e. the role who installed emaj.
+-- Otherwise, check the current role is the owner of the emaj schema (i.e. the role who installed emaj) or is a superuser.
       PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
         WHERE nspowner = pg_roles.oid AND nspname = 'emaj' AND rolname = current_user;
-      IF NOT FOUND THEN
-        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be the owner of the emaj schema';
+      IF NOT FOUND AND NOT v_isSuperuser THEN
+        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be the owner of the emaj schema or a superuser';
       END IF;
     END IF;
 --

@@ -18,6 +18,7 @@ grant create on schema public to _regress_emaj_install;
 create extension dblink;
 
 ----\du+
+----\drgS
 
 ------------------------------------------------------------
 -- Create the application objects and give grants to _regress_emaj_install
@@ -52,6 +53,7 @@ set role _regress_emaj_install;
 \i sql/emaj-devel.sql
 \set ECHO all
 
+
 -- check the emaj_version_hist content
 select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
 select emaj.emaj_get_version();
@@ -60,7 +62,8 @@ select emaj.emaj_get_version();
 -- build a tables group
 ------------------------------------------------------------
 select emaj.emaj_create_group('myGroup7');
-----select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
+----\dp mySchema7.myTbl1
+--select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
 select emaj.emaj_assign_sequence('myschema7', 'myseq1', 'myGroup7');
 
 ------------------------------------------------------------

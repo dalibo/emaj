@@ -7,14 +7,13 @@ SET client_min_messages TO WARNING;
 ------------------------------------------------------------
 -- _regress_emaj_install owns the emaj environment
 create role _regress_emaj_install login password 'install' createrole;
-ERROR:  role "_regress_emaj_install" already exists
 -- _regress_emaj_app owns the application objects
 create role _regress_emaj_app login password 'app';
-ERROR:  role "_regress_emaj_app" already exists
 grant all on database regression to _regress_emaj_install, _regress_emaj_app;
 grant create on schema public to _regress_emaj_install;
 create extension dblink;
 ----\du+
+----\drgS
 ------------------------------------------------------------
 -- Create the application objects and give grants to _regress_emaj_install
 ------------------------------------------------------------
@@ -37,9 +36,9 @@ reset search_path;
 ------------------------------------------------------------
 set role _regress_emaj_install;
 \set ECHO errors
-psql:sql/emaj-devel.sql:14901: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:14901: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:14901: WARNING:      Event triggers that protect the E-Maj environment cannot be created.
+psql:sql/emaj-devel.sql:14904: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:14904: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:14904: WARNING:      Event triggers that protect the E-Maj environment cannot be created.
 -- check the emaj_version_hist content
 select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
  verh_version | verh_installed_by_superuser 
@@ -62,7 +61,8 @@ select emaj.emaj_create_group('myGroup7');
                  1
 (1 row)
 
-----select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
+----\dp mySchema7.myTbl1
+--select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
 select emaj.emaj_assign_sequence('myschema7', 'myseq1', 'myGroup7');
  emaj_assign_sequence 
 ----------------------
@@ -90,28 +90,24 @@ CONTEXT:  PL/pgSQL function emaj.emaj_enable_protection_by_event_triggers() line
 set role _regress_emaj_install;
 select emaj.emaj_drop_extension();
 WARNING:  emaj_drop_extension: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...
-ERROR:  permission denied to drop role
-DETAIL:  Only roles with the CREATEROLE attribute and the ADMIN option on role "emaj_viewer" may drop this role.
-CONTEXT:  SQL statement "DROP ROLE emaj_viewer, emaj_adm"
-PL/pgSQL function emaj.emaj_drop_extension() line 226 at SQL statement
+WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_install) who have been granted emaj_viewer role.
+WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_install) who have been granted emaj_adm role.
+WARNING:  emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.
+ emaj_drop_extension 
+---------------------
+ 
+(1 row)
+
 -- Drop the extra extensions to get a stable re-install test
 drop extension btree_gist;
-ERROR:  cannot drop extension btree_gist because other objects depend on it
-DETAIL:  constraint emaj_version_hist_verh_version_verh_time_range_excl on table emaj.emaj_version_hist depends on operator class gist_text_ops for access method gist
-constraint emaj_group_hist_grph_group_grph_time_range_excl on table emaj.emaj_group_hist depends on operator class gist_text_ops for access method gist
-constraint emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl on table emaj.emaj_relation depends on operator class gist_text_ops for access method gist
-constraint emaj_rel_hist_relh_schema_relh_tblseq_relh_time_range_excl on table emaj.emaj_rel_hist depends on operator class gist_text_ops for access method gist
-constraint emaj_log_session_lses_group_lses_time_range_excl on table emaj.emaj_log_session depends on operator class gist_text_ops for access method gist
-HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 reset role;
 drop extension dblink;
 -- Check that the emaj schema is not known anymore
 \dn emaj
-       List of schemas
- Name |         Owner         
-------+-----------------------
- emaj | _regress_emaj_install
-(1 row)
+List of schemas
+ Name | Owner 
+------+-------
+(0 rows)
 
 ------------------------------------------------------------
 -- Drop the application objects
@@ -125,105 +121,3 @@ reset role;
 revoke all on database regression from _regress_emaj_install, _regress_emaj_app;
 revoke all on schema public from _regress_emaj_install;
 drop role _regress_emaj_install, _regress_emaj_app;
-ERROR:  role "_regress_emaj_install" cannot be dropped because some objects depend on it
-DETAIL:  owner of schema emaj
-owner of extension btree_gist
-owner of table emaj.emaj_version_hist
-owner of type emaj._relation_change_kind_enum
-owner of type emaj._rlbk_status_enum
-owner of type emaj._rlbk_step_enum
-owner of sequence emaj.emaj_global_seq
-owner of table emaj.emaj_param
-owner of sequence emaj.emaj_hist_hist_id_seq
-owner of table emaj.emaj_hist
-owner of sequence emaj.emaj_time_stamp_time_id_seq
-owner of table emaj.emaj_time_stamp
-owner of table emaj.emaj_group
-owner of table emaj.emaj_group_hist
-owner of table emaj.emaj_schema
-owner of table emaj.emaj_relation
-owner of table emaj.emaj_rel_hist
-owner of table emaj.emaj_relation_change
-owner of table emaj.emaj_log_session
-owner of table emaj.emaj_mark
-owner of table emaj.emaj_sequence
-owner of table emaj.emaj_table
-owner of table emaj.emaj_seq_hole
-owner of sequence emaj.emaj_rlbk_rlbk_id_seq
-owner of table emaj.emaj_rlbk
-owner of table emaj.emaj_rlbk_session
-owner of table emaj.emaj_rlbk_plan
-owner of table emaj.emaj_rlbk_stat
-owner of type emaj.emaj_log_stat_group_type
-owner of type emaj.emaj_detailed_log_stat_group_type
-owner of type emaj.emaj_sequence_stat_group_type
-owner of type emaj.emaj_log_stat_table_type
-owner of type emaj.emaj_log_stat_sequence_type
-owner of type emaj.emaj_rollback_activity_type
-owner of type emaj.emaj_consolidable_rollback_type
-owner of type emaj._verify_groups_type
-owner of type emaj._report_message_type
-owner of view emaj.emaj_visible_param
-owner of function emaj._emaj_param_change_fnct()
-owner of function emaj._pg_version_num()
-owner of function emaj._installed_by_superuser()
-owner of function emaj._set_time_stamp(text,character)
-owner of function emaj._clean_array(text[])
-owner of function emaj._dblink_open_cnx(text,text)
-owner of function emaj._dblink_sql_exec(text,text,text)
-owner of function emaj._dblink_close_cnx(text,text)
-owner of function emaj._get_default_tablespace()
-owner of function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean)
-owner of function emaj._check_json_groups_conf(json)
-owner of function emaj._check_json_table_properties(jsonb)
-owner of function emaj._check_json_param_conf(json)
-owner of function emaj._check_schema(text,boolean,boolean)
-owner of function emaj._check_tables_for_rollbackable_group(text,text[],boolean)
-owner of function emaj._build_tblseqs_array_from_regexp(text,text,text,text,boolean)
-owner of function emaj._check_tblseqs_array(text,text[],text,boolean)
-owner of function emaj._get_lock_tblseqs_groups(text,text[],text)
-owner of function emaj._check_mark_name(text[],text,boolean)
-owner of function emaj._check_new_mark(text[],text)
-owner of function emaj._check_marks_range(text[],text,text,boolean,boolean)
-owner of function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean)
-owner of function emaj._truncate_trigger_fnct()
-owner of function emaj._create_log_schemas(text,bigint)
-owner of function emaj._drop_log_schemas(text,boolean)
-owner of function emaj._build_path_name(text,text)
-owner of function emaj.emaj_assign_table(text,text,text,jsonb,text)
-owner of function emaj.emaj_assign_tables(text,text[],text,jsonb,text)
-owner of function emaj.emaj_assign_tables(text,text,text,text,jsonb,text)
-owner of function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean)
-owner of function emaj.emaj_get_assigned_group_table(text,text)
-owner of function emaj.emaj_remove_table(text,text,text)
-owner of function emaj.emaj_remove_tables(text,text[],text)
-owner of function emaj.emaj_remove_tables(text,text,text,text)
-owner of function emaj._remove_tables(text,text[],text,boolean,boolean)
-owner of function emaj.emaj_move_table(text,text,text,text)
-owner of function emaj.emaj_move_tables(text,text[],text,text)
-owner of function emaj.emaj_move_tables(text,text,text,text,text)
-owner of function emaj._move_tables(text,text[],text,text,boolean,boolean)
-owner of function emaj.emaj_modify_table(text,text,jsonb,text)
-owner of function emaj.emaj_modify_tables(text,text[],jsonb,text)
-owner of function emaj.emaj_modify_tables(text,text,text,jsonb,text)
-owner of function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean)
-owner of function emaj.emaj_get_current_log_table(text,text)
-owner of function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean)
-owner of function emaj._build_sql_tbl(text)
-owner of function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text)
-owner of function emaj._change_priority_tbl(text,text,integer,integer,bigint,text,text)
-owner of function emaj._change_log_data_tsp_tbl(text,text,text,text,text,text,bigint,text,text)
-owner of function emaj._change_log_index_tsp_tbl(text,text,text,text,text,text,bigint,text,text)
-owner of function emaj._change_ignored_triggers_tbl(text,text,text[],text[],bigint,text,text)
-owner of function emaj._remove_tbl(text,text,text,boolean,bigint,text)
-owner of function emaj._move_tbl(text,text,text,boolean,text,boolean,bigint,text)
-owner of function emaj._drop_tbl(emaj.emaj_relation,bigint)
-owner of function emaj._repair_tbl(text,text,text,boolean,bigint,text)
-owner of function emaj.emaj_assign_sequence(text,text,text,text)
-owner of function emaj.emaj_assign_sequences(text,text[],text,text)
-owner of function emaj.emaj_assign_sequences(text,text,text,text,text)
-owner of function emaj._assign_sequences(text,text[],text,text,boolean,boolean)
-owner of function emaj.emaj_get_assigned_group_sequence(text,text)
-owner of function emaj.emaj_remove_sequence(text,text,text)
-owner of function emaj.emaj_remove_sequences(text,text[],text)
-and 146 other objects (see server log for list)

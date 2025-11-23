@@ -206,6 +206,264 @@ $emaj_assign_tables$;
 COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT,TEXT,TEXT,JSONB,TEXT) IS
 $$Assign tables on name patterns into a tables group.$$;
 
+CREATE OR REPLACE FUNCTION emaj._assign_tables(p_schema TEXT, p_tables TEXT[], p_group TEXT, p_properties JSONB, p_mark TEXT,
+                                               p_multiTable BOOLEAN, p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_assign_tables$
+-- The function effectively assigns tables into a tables group.
+-- Inputs: schema, array of table names, group name, properties as JSON structure
+--         mark to set for lonnging groups, a boolean indicating whether several tables need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of tables effectively assigned to the tables group
+-- The JSONB p_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
+--   each properties being NULL by default
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
+--   the current database, needed to create log schemas.
+  DECLARE
+    v_function               TEXT;
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_priority               INT;
+    v_logDatTsp              TEXT;
+    v_logIdxTsp              TEXT;
+    v_ignoredTriggers        TEXT[];
+    v_ignoredTrgProfiles     TEXT[];
+    v_list                   TEXT;
+    v_array                  TEXT[];
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_logSchema              TEXT;
+    v_selectedIgnoredTrgs    TEXT[];
+    v_selectConditions       TEXT;
+    v_eventTriggers          TEXT[];
+    v_oneTable               TEXT;
+    v_nbAssignedTbl          INT = 0;
+  BEGIN
+    v_function = CASE WHEN p_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END;
+-- Insert the begin entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check supplied parameters.
+-- Check the group name and if ok, get some properties of the group.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE);
+    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+      FROM emaj.emaj_group
+      WHERE group_name = p_group;
+-- Check the supplied schema exists and is not an E-Maj schema.
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
+-- Check tables.
+    IF NOT p_arrayFromRegex THEN
+-- From the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array.
+      p_tables = emaj._clean_array(p_tables);
+-- Check that application tables exist.
+      SELECT string_agg(quote_ident(table_name), ', ' ORDER BY table_name)
+        INTO v_list
+        FROM unnest(p_tables) AS table_name
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = p_schema
+                     AND relname = table_name
+                     AND relkind IN ('r','p')
+                );
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) do not exist.', quote_ident(p_schema), v_list;
+      END IF;
+    END IF;
+-- Check or discard partitioned application tables (only elementary partitions can be managed by E-Maj).
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = ANY(p_tables)
+        AND relkind = 'p';
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) are partitionned tables (only elementary partitions are supported'
+                        ' by E-Maj).', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_tables: Some partitionned tables (%) are not selected.', v_list;
+        -- remove these tables from the tables to process
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
+      END IF;
+    END IF;
+-- Check or discard TEMP tables.
+    SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+      INTO v_list, v_array
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = ANY(p_tables)
+        AND relkind = 'r'
+        AND relpersistence = 't';
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) are TEMP tables.', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_tables: Some TEMP tables (%) are not selected.', v_list;
+        -- remove these tables from the tables to process
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
+      END IF;
+    END IF;
+-- If the group is ROLLBACKABLE, perform additional checks or filters (a PK, not UNLOGGED).
+    IF v_groupIsRollbackable THEN
+      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex);
+    END IF;
+-- Check or discard tables already assigned to a group.
+    SELECT string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_array
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = ANY(p_tables)
+        AND upper_inf(rel_time_range);
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) already belong to a group.', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_tables: Some tables already belonging to a group (%) are not selected.', v_list;
+        -- remove these tables from the tables to process
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
+      END IF;
+    END IF;
+-- Check and extract the tables JSON properties.
+    IF p_properties IS NOT NULL THEN
+      SELECT * INTO v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
+        FROM emaj._check_json_table_properties(p_properties);
+    END IF;
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(array[p_group], p_mark) INTO v_markName;
+-- OK,
+    IF p_tables IS NULL OR p_tables = '{}' THEN
+-- When no tables are finaly selected, just warn.
+      RAISE WARNING '_assign_tables: No table to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_groupIsLogging THEN
+--   Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--   vacuum operation.
+        PERFORM emaj._lock_groups(ARRAY[p_group], 'ROW EXCLUSIVE', FALSE);
+--   And set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+      END IF;
+-- Create the new log schema, if it doesn't exist yet.
+      v_logSchema = 'emaj_' || p_schema;
+      IF NOT EXISTS
+           (SELECT 0
+              FROM emaj.emaj_schema
+              WHERE sch_name = v_logSchema
+           ) THEN
+-- Check that the schema doesn't already exist.
+        IF EXISTS
+             (SELECT 0
+                FROM pg_catalog.pg_namespace
+                WHERE nspname = v_logSchema
+             ) THEN
+          RAISE EXCEPTION '_assign_tables: The schema "%" should not exist. Drop it manually.',v_logSchema;
+        END IF;
+-- Create the schema and give the appropriate rights.
+        EXECUTE format('CREATE SCHEMA %I AUTHORIZATION emaj_adm',
+                       v_logSchema);
+        EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                       v_logSchema);
+-- And record the schema creation into the emaj_schema and the emaj_hist tables.
+        INSERT INTO emaj.emaj_schema (sch_name, sch_time_id)
+          VALUES (v_logSchema, v_timeId);
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES (CASE WHEN p_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'LOG_SCHEMA CREATED', quote_ident(v_logSchema));
+      END IF;
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+      SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Effectively create the log components for each table.
+--   Build the SQL conditions to use in order to build the array of "triggers to ignore at rollback time" for each table.
+      IF v_ignoredTriggers IS NOT NULL OR v_ignoredTrgProfiles IS NOT NULL THEN
+--   Build the condition on trigger names using the ignored_triggers parameters.
+        IF v_ignoredTriggers IS NOT NULL THEN
+          v_selectConditions = 'tgname = ANY (' || quote_literal(v_ignoredTriggers) || ') OR ';
+        ELSE
+          v_selectConditions = '';
+        END IF;
+--   Build the regexp conditions on trigger names using the ignored_triggers_profile parameters.
+        IF v_ignoredTrgProfiles IS NOT NULL THEN
+          SELECT v_selectConditions || string_agg('tgname ~ ' || quote_literal(profile), ' OR ')
+            INTO v_selectConditions
+            FROM unnest(v_ignoredTrgProfiles) AS profile;
+        ELSE
+          v_selectConditions = v_selectConditions || 'FALSE';
+        END IF;
+      END IF;
+-- Process each table.
+      FOREACH v_oneTable IN ARRAY p_tables
+      LOOP
+-- Check that the triggers listed in ignored_triggers property exists for the table.
+        SELECT string_agg(quote_ident(trigger_name), ', ' ORDER BY trigger_name)
+          INTO v_list
+          FROM
+            (  SELECT trigger_name
+                 FROM unnest(v_ignoredTriggers) AS trigger_name
+             EXCEPT
+               SELECT tgname
+                 FROM pg_catalog.pg_trigger
+                      JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
+                      JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+                 WHERE nspname = p_schema
+                   AND relname = v_oneTable
+                   AND tgconstraint = 0
+                   AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
+            ) AS t;
+        IF v_list IS NOT NULL THEN
+          RAISE EXCEPTION '_assign_tables: some triggers (%) have not been found in the table %.%.',
+                          v_list, quote_ident(p_schema), quote_ident(v_oneTable);
+        END IF;
+-- Build the array of "triggers to ignore at rollback time".
+        IF v_selectConditions IS NOT NULL THEN
+          EXECUTE format('SELECT array_agg(tgname ORDER BY tgname)'
+                         '  FROM pg_catalog.pg_trigger'
+                         '       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)'
+                         '       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)'
+                         '  WHERE nspname = %L'
+                         '    AND relname = %L'
+                         '    AND tgconstraint = 0'
+                         '    AND tgname NOT IN (''emaj_log_trg'',''emaj_trunc_trg'')'
+                         '    AND (%s)',
+                         p_schema, v_oneTable, v_selectConditions)
+            INTO v_selectedIgnoredTrgs;
+        END IF;
+-- Create the table.
+        PERFORM emaj._add_tbl(p_schema, v_oneTable, p_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
+                              v_groupIsLogging, v_timeId, v_function);
+        v_nbAssignedTbl = v_nbAssignedTbl + 1;
+      END LOOP;
+-- Enable previously disabled event triggers
+      PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- Adjust the group characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_table = (
+              SELECT count(*)
+                FROM emaj.emaj_relation
+                WHERE rel_group = group_name
+                  AND upper_inf(rel_time_range)
+                  AND rel_kind = 'r'
+                             )
+        WHERE group_name = p_group;
+-- If the group is logging, check foreign keys with tables outside the groups (otherwise the check will be done at the group start time).
+      IF v_groupIsLogging THEN
+        PERFORM emaj._check_fk_groups(array[p_group]);
+      END IF;
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbAssignedTbl || ' tables assigned to the group ' || p_group);
+--
+    RETURN v_nbAssignedTbl;
+  END;
+$_assign_tables$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $emaj_get_assigned_group_table$
@@ -2024,6 +2282,7 @@ $emaj_drop_extension$
 -- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
 -- - or with the alternate psql script.
   DECLARE
+    v_isSuperuser            BOOLEAN;
     v_nbObject               INTEGER;
     v_roleToDrop             BOOLEAN;
     v_dbList                 TEXT;
@@ -2042,17 +2301,19 @@ $emaj_drop_extension$
     END IF;
 --
 -- For extensions, check the current role is superuser.
+    SELECT rolsuper INTO v_isSuperuser
+      FROM pg_catalog.pg_roles
+      WHERE rolname = current_user;
     IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
-      PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
-      IF NOT FOUND THEN
+      IF NOT v_isSuperuser THEN
         RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
       END IF;
     ELSE
--- Otherwise, check the current role is the owner of the emaj schema, i.e. the role who installed emaj.
+-- Otherwise, check the current role is the owner of the emaj schema (i.e. the role who installed emaj) or is a superuser.
       PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
         WHERE nspowner = pg_roles.oid AND nspname = 'emaj' AND rolname = current_user;
-      IF NOT FOUND THEN
-        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be the owner of the emaj schema';
+      IF NOT FOUND AND NOT v_isSuperuser THEN
+        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be the owner of the emaj schema or a superuser';
       END IF;
     END IF;
 --

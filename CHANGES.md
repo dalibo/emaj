@@ -17,6 +17,8 @@ E-Maj - Change log
 ###Bug fixes:###
   * Do not try to create and manipulate event triggers when the extension has
     been installed by a non superuser role using the emaj-<version>.sql script.
+  * Allow a superuser to drop an emaj extension installed by a non superuser
+    with the emaj-<version>.sql script.
 
 
 4.7.1 (2025-Sept-27)
