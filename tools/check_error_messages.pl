@@ -59,7 +59,7 @@ use warnings; use strict;
       $schema = ''; $fnctName = 'do'; $lineNumberInFnct = 1;
     }
 # Detection of warning or error messages
-    if ($line =~ /RAISE (EXCEPTION|WARNING)\s+'(.*?)'(\s|;|,)/) {
+    if ($line =~ /RAISE (EXCEPTION|WARNING)\s+'\s*(.*?)'(\s|;|,)/) {
       $msgType = $1; $msg = $2;
       next if ($msg eq '');
       $nbException++ if ($msgType eq 'EXCEPTION');
@@ -102,17 +102,14 @@ use warnings; use strict;
     $line = $1;
     $res = $2;
 # Get interresting pieces from each line
-    if ($line =~ /^.*\/(.+?)\.out:(ERROR|WARNING|psql):\s*(\S.*)/ ||             # line from postgres
-        $line =~ /^.*\/(.+?)\.out:PHP Warning.*?(ERROR|WARNING):\s*(\S.*)/ ||    # line ERROR or WARNING from PHP
-        $line =~ /^.*\/(.+?)\.out:DBD::Pg.*?(ERROR|WARNING):\s*(\S.*)/) {        # line ERROR or WARNING from Perl
+    if ($line =~ /^.*\/(.+?)\.out:.*?(ERROR|WARNING):\s*(\S.*)/) {        # line ERROR or WARNING
 # An interesting line is identified
       $script = $1 . '.sql';
       $msgType = $2;
-      $line = $3;
+      $msg = $3;
       if ($1 ne 'beforeMigLoggingGroup' && $1 ne 'install_previous' && $1 ne 'install_upgrade' && $1 !~ /psql/i) {
 # Ignore lines from the scripts that process code from the previous E-Maj version
         if ($msgType eq 'ERROR' || $msgType eq 'WARNING') {
-          $msg = $line;
           $nbFound = 0;
 # Look for this message in the recorded messages from the source
           while (($fnctId, $regexp) = each(%msgRegexp)) {
