@@ -7,15 +7,30 @@ SET client_min_messages TO WARNING;
 ------------------------------------------------------------
 -- _regress_emaj_install owns the emaj environment
 create role _regress_emaj_install login password 'install' createrole;
+-- anticipate the emaj_adm and emaj_viewer role creation
+create role emaj_adm;
+create role emaj_viewer;
+-- and anticipate the grants to the installer
+grant emaj_adm to _regress_emaj_install with admin true;
+grant emaj_viewer to _regress_emaj_install;
+\drgS
+                              List of role grants
+       Role name       |      Member of       |       Options       | Grantor  
+-----------------------+----------------------+---------------------+----------
+ _regress_emaj_install | emaj_adm             | ADMIN, INHERIT, SET | postgres
+ _regress_emaj_install | emaj_viewer          | INHERIT, SET        | postgres
+ pg_monitor            | pg_read_all_settings | INHERIT, SET        | postgres
+ pg_monitor            | pg_read_all_stats    | INHERIT, SET        | postgres
+ pg_monitor            | pg_stat_scan_tables  | INHERIT, SET        | postgres
+(5 rows)
+
 -- _regress_emaj_app owns the application objects
 create role _regress_emaj_app login password 'app';
 grant all on database regression to _regress_emaj_install, _regress_emaj_app;
 grant create on schema public to _regress_emaj_install;
 create extension dblink;
-----\du+
-----\drgS
 ------------------------------------------------------------
--- Create the application objects and give grants to _regress_emaj_install
+-- Create the application objects and give grants on them to _regress_emaj_install
 ------------------------------------------------------------
 set role _regress_emaj_app;
 DROP SCHEMA IF EXISTS mySchema7 CASCADE;
@@ -36,20 +51,28 @@ reset search_path;
 ------------------------------------------------------------
 set role _regress_emaj_install;
 \set ECHO errors
-psql:sql/emaj-devel.sql:14904: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:14904: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:14904: WARNING:      Event triggers that protect the E-Maj environment cannot be created.
--- check the emaj_version_hist content
+psql:sql/emaj-devel.sql:15025: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15025: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15025: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15025: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
+psql:sql/emaj-devel.sql:15025: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
+-- check the installation
+select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
+ hist_function | hist_event |  hist_object  |                                      hist_wording                                      | hist_user 
+---------------+------------+---------------+----------------------------------------------------------------------------------------+-----------
+ EMAJ_INSTALL  |            | E-Maj <devel> | Initialisation completed ((Not SUPERUSER, No event triggers, No COPY FROM, No COPY TO) | postgres
+(1 row)
+
 select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
  verh_version | verh_installed_by_superuser 
 --------------+-----------------------------
  <devel>      | f
 (1 row)
 
-select emaj.emaj_get_version();
- emaj_get_version 
-------------------
- <devel>
+select * from emaj.emaj_capabilities;
+ cap_event_trigger 
+-------------------
+ f
 (1 row)
 
 ------------------------------------------------------------
@@ -61,8 +84,7 @@ select emaj.emaj_create_group('myGroup7');
                  1
 (1 row)
 
-----\dp mySchema7.myTbl1
---select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
+----select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
 select emaj.emaj_assign_sequence('myschema7', 'myseq1', 'myGroup7');
  emaj_assign_sequence 
 ----------------------
@@ -78,12 +100,96 @@ select emaj.emaj_start_group('myGroup7', 'M1');
                 1
 (1 row)
 
+------------------------------------------------------------
+-- test inoperative function calls
+------------------------------------------------------------
 select emaj.emaj_disable_protection_by_event_triggers();
-ERROR:  emaj_disable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been installed by a superuser.
-CONTEXT:  PL/pgSQL function emaj.emaj_disable_protection_by_event_triggers() line 10 at RAISE
+WARNING:  emaj_disable_protection_by_event_triggers: This emaj extension does not support event triggers.
+ emaj_disable_protection_by_event_triggers 
+-------------------------------------------
+                                         0
+(1 row)
+
 select emaj.emaj_enable_protection_by_event_triggers();
-ERROR:  emaj_enable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been installed by a superuser.
-CONTEXT:  PL/pgSQL function emaj.emaj_enable_protection_by_event_triggers() line 10 at RAISE
+WARNING:  emaj_enable_protection_by_event_triggers: This emaj extension does not support event triggers.
+ emaj_enable_protection_by_event_triggers 
+------------------------------------------
+                                        0
+(1 row)
+
+------------------------------------------------------------
+-- test forbidden function calls
+------------------------------------------------------------
+-- missing pg_read_server_files grant
+select emaj.emaj_import_groups_configuration('/tmp/emaj_test');
+ERROR:  _check_can_copy_from: Reading from an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_read_server_files).
+CONTEXT:  PL/pgSQL function emaj._check_can_copy_from() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_copy_from()"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 17 at PERFORM
+select emaj.emaj_import_parameters_configuration('/tmp/emaj_test');
+ERROR:  _check_can_copy_from: Reading from an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_read_server_files).
+CONTEXT:  PL/pgSQL function emaj._check_can_copy_from() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_copy_from()"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 19 at PERFORM
+-- missing pg_write_server_files grant
+select emaj.emaj_export_groups_configuration('/tmp/emaj_test');
+ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
+CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_copy_to()"
+PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 11 at PERFORM
+select emaj.emaj_export_parameters_configuration('/tmp/emaj_test');
+ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
+CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_copy_to()"
+PL/pgSQL function emaj.emaj_export_parameters_configuration(text) line 10 at PERFORM
+select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/emaj_test');
+ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
+CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_copy_to()"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 39 at PERFORM
+select emaj.emaj_dump_changes_group('myGroup7', 'M1', NULL, '', NULL, '/tmp');
+ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
+CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_copy_to()"
+PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 39 at PERFORM
+select emaj.emaj_snap_group('myGroup7', '/tmp', NULL);
+ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
+CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_copy_to()"
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 35 at PERFORM
+select emaj.emaj_gen_sql_group('myGroup7', 'M1', NULL, '/tmp');
+ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
+CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_copy_to()"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 42 at PERFORM
+PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
+-- missing pg_execute_server_program grant
+reset role;
+grant pg_write_server_files to _regress_emaj_install;
+set role _regress_emaj_install;
+select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/emaj_test');
+ERROR:  _check_can_exec_program: Executing an external program is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).
+CONTEXT:  PL/pgSQL function emaj._check_can_exec_program() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_exec_program()"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 40 at PERFORM
+select emaj.emaj_dump_changes_group('myGroup7', 'M1', NULL, '', NULL, '/tmp');
+ERROR:  _check_can_exec_program: Executing an external program is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).
+CONTEXT:  PL/pgSQL function emaj._check_can_exec_program() line 7 at RAISE
+SQL statement "SELECT emaj._check_can_exec_program()"
+PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 40 at PERFORM
+reset role;
+revoke pg_write_server_files from _regress_emaj_install;
+------------------------------------------------------------
+-- check the E-Maj environment
+------------------------------------------------------------
+select * from emaj.emaj_verify_all();
+                                                                 emaj_verify_all                                                                  
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+ Warning: The "emaj_protection_trg" event triggers is missing. It can be recreated using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(3 rows)
+
 ------------------------------------------------------------
 -- drop the extension
 ------------------------------------------------------------
@@ -121,3 +227,7 @@ reset role;
 revoke all on database regression from _regress_emaj_install, _regress_emaj_app;
 revoke all on schema public from _regress_emaj_install;
 drop role _regress_emaj_install, _regress_emaj_app;
+drop role emaj_adm, emaj_viewer;
+--------- for cases when there remains issues with the extension drop by the installer role ; to be removed once OK
+----select emaj.emaj_drop_extension();
+----drop role _regress_emaj_install, _regress_emaj_app;

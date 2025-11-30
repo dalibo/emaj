@@ -55,11 +55,17 @@ select relname from pg_catalog.pg_class,
  emaj_version_hist
 (23 rows)
 
--- check the emaj_version_hist content
+-- check the emaj_version_hist and emaj_capabilities content
 select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
  verh_version | verh_installed_by_superuser 
 --------------+-----------------------------
  <devel>      | t
+(1 row)
+
+select * from emaj.emaj_capabilities;
+ cap_event_trigger 
+-------------------
+ t
 (1 row)
 
 select emaj.emaj_get_version();

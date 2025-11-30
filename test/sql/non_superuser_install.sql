@@ -6,8 +6,18 @@ SET client_min_messages TO WARNING;
 ------------------------------------------------------------
 -- Create roles, give grants and create needed extensions
 ------------------------------------------------------------
+
 -- _regress_emaj_install owns the emaj environment
 create role _regress_emaj_install login password 'install' createrole;
+
+-- anticipate the emaj_adm and emaj_viewer role creation
+create role emaj_adm;
+create role emaj_viewer;
+
+-- and anticipate the grants to the installer
+grant emaj_adm to _regress_emaj_install with admin true;
+grant emaj_viewer to _regress_emaj_install;
+\drgS
 
 -- _regress_emaj_app owns the application objects
 create role _regress_emaj_app login password 'app';
@@ -17,11 +27,8 @@ grant create on schema public to _regress_emaj_install;
 
 create extension dblink;
 
-----\du+
-----\drgS
-
 ------------------------------------------------------------
--- Create the application objects and give grants to _regress_emaj_install
+-- Create the application objects and give grants on them to _regress_emaj_install
 ------------------------------------------------------------
 set role _regress_emaj_app;
 
@@ -53,17 +60,16 @@ set role _regress_emaj_install;
 \i sql/emaj-devel.sql
 \set ECHO all
 
-
--- check the emaj_version_hist content
+-- check the installation
+select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
 select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
-select emaj.emaj_get_version();
+select * from emaj.emaj_capabilities;
 
 ------------------------------------------------------------
 -- build a tables group
 ------------------------------------------------------------
 select emaj.emaj_create_group('myGroup7');
-----\dp mySchema7.myTbl1
---select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
+----select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
 select emaj.emaj_assign_sequence('myschema7', 'myseq1', 'myGroup7');
 
 ------------------------------------------------------------
@@ -71,10 +77,42 @@ select emaj.emaj_assign_sequence('myschema7', 'myseq1', 'myGroup7');
 ------------------------------------------------------------
 select emaj.emaj_start_group('myGroup7', 'M1');
 
-
-
+------------------------------------------------------------
+-- test inoperative function calls
+------------------------------------------------------------
 select emaj.emaj_disable_protection_by_event_triggers();
 select emaj.emaj_enable_protection_by_event_triggers();
+
+------------------------------------------------------------
+-- test forbidden function calls
+------------------------------------------------------------
+-- missing pg_read_server_files grant
+select emaj.emaj_import_groups_configuration('/tmp/emaj_test');
+select emaj.emaj_import_parameters_configuration('/tmp/emaj_test');
+
+-- missing pg_write_server_files grant
+select emaj.emaj_export_groups_configuration('/tmp/emaj_test');
+select emaj.emaj_export_parameters_configuration('/tmp/emaj_test');
+select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/emaj_test');
+select emaj.emaj_dump_changes_group('myGroup7', 'M1', NULL, '', NULL, '/tmp');
+select emaj.emaj_snap_group('myGroup7', '/tmp', NULL);
+select emaj.emaj_gen_sql_group('myGroup7', 'M1', NULL, '/tmp');
+
+-- missing pg_execute_server_program grant
+reset role;
+grant pg_write_server_files to _regress_emaj_install;
+set role _regress_emaj_install;
+
+select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/emaj_test');
+select emaj.emaj_dump_changes_group('myGroup7', 'M1', NULL, '', NULL, '/tmp');
+
+reset role;
+revoke pg_write_server_files from _regress_emaj_install;
+
+------------------------------------------------------------
+-- check the E-Maj environment
+------------------------------------------------------------
+select * from emaj.emaj_verify_all();
 
 ------------------------------------------------------------
 -- drop the extension
@@ -92,7 +130,6 @@ drop extension dblink;
 -- Check that the emaj schema is not known anymore
 \dn emaj
 
-
 ------------------------------------------------------------
 -- Drop the application objects
 ------------------------------------------------------------
@@ -109,3 +146,8 @@ revoke all on database regression from _regress_emaj_install, _regress_emaj_app;
 revoke all on schema public from _regress_emaj_install;
 
 drop role _regress_emaj_install, _regress_emaj_app;
+drop role emaj_adm, emaj_viewer;
+
+--------- for cases when there remains issues with the extension drop by the installer role ; to be removed once OK
+----select emaj.emaj_drop_extension();
+----drop role _regress_emaj_install, _regress_emaj_app;

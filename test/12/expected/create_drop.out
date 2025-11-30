@@ -1036,7 +1036,7 @@ select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY t TO '/tmp/dummy/location/file'"
-PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 17 at EXECUTE
+PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 19 at EXECUTE
 --   ok
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json');
  emaj_export_groups_configuration 
@@ -1341,7 +1341,7 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
 WARNING:  _import_groups_conf (2): The tables group "unknownGroup" to import is not referenced in the JSON structure.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 79 at RAISE
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 31 at RETURN
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 33 at RETURN
 --   group already created
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1" }, { "group": "myGroup2" } ] }'::json, null, false);
 WARNING:  _import_groups_conf (2): The tables group "myGroup1" already exists.
@@ -1506,11 +1506,11 @@ select emaj.emaj_import_groups_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for reading: No such file or directory
 HINT:  COPY FROM instructs the PostgreSQL server process to read a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY t FROM '/tmp/dummy/location/file'"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 18 at EXECUTE
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 20 at EXECUTE
 \! echo 'not a json content' >/tmp/bad_groups_config.json
 select emaj.emaj_import_groups_configuration('/tmp/bad_groups_config.json');
 ERROR:  emaj_import_groups_configuration: The file content is not a valid JSON content.
-CONTEXT:  PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 28 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 30 at RAISE
 \! rm /tmp/bad_groups_config.json
 --   ok
 -- only 2 from the original groups
@@ -1568,7 +1568,7 @@ WARNING:  _import_groups_conf (2): In tables group "myGroup1" and for the table 
 WARNING:  _import_groups_conf (2): In tables group "myGroup1" and for the table myschema1.mytbl2, the trigger emaj_trunc_trg is an E-Maj trigger.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 79 at RAISE
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 31 at RETURN
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 33 at RETURN
 -- suppress 1 trigger
 \! sed -e 's/"mytbl2trg1",//' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_3.json', null, true);
@@ -1600,7 +1600,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint,text[]) line
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId, v_groupsToDrop)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text,boolean) line 90 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 82 at RETURN
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 31 at RETURN
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 33 at RETURN
 rollback;
 -- import a groups subset and drop the others, one being in logging state
 select emaj.emaj_start_group('myGroup5', 'Start_before_import');

@@ -366,7 +366,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMP
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.myseq2) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 29 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 52 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 54 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/myFile
 -- testing mark deletions
@@ -1250,7 +1250,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMP
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.mytbl7) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 29 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 52 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 54 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/script.sql
 rm: cannot remove '/tmp/emaj_18/alter_logging/script.sql': No such file or directory
@@ -2738,7 +2738,7 @@ select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, :'EMAJTESTTMPDIR
 ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 29 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 52 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 54 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script3.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
@@ -2761,7 +2761,7 @@ WARNING:  _import_groups_conf (2): In tables group "myGroup2", the table myschem
 WARNING:  _import_groups_conf (2): In tables group "myGroup2", the sequence myschema2."myTbl3_col31_seq" is already assigned to the group "myGroup1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 79 at RAISE
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 31 at RETURN
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 33 at RETURN
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
  emaj_import_groups_configuration 
 ----------------------------------

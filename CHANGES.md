@@ -6,6 +6,9 @@ E-Maj - Change log
   * Add 2 new functions to help building idempotent tables groups content
     definition scripts.
   * Add 3 helper functions to build group names arrays.
+  * Report a clear error message when using functions that read from or write
+    to external files and the emaj installer role has not the appropriate
+    rights.
   * Improve the initial comment of the JSON output produced by
     emaj_export_groups_configuration().
   * Improve checks of the input JSON structure when importing a tables group

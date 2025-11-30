@@ -93,6 +93,19 @@ SELECT emaj._disable_event_triggers();
 ALTER TABLE emaj.emaj_version_hist
   ADD COLUMN verh_installed_by_superuser  BOOLEAN DEFAULT TRUE;
 
+-- Table emaj_capabilities
+
+CREATE TABLE emaj.emaj_capabilities (
+  cap_event_trigger            BOOLEAN     NOT NULL        -- boolean indicating whether this emaj instance can manage event triggers
+  );
+COMMENT ON TABLE emaj.emaj_capabilities IS
+$$Contains the capabilities of this emaj instance.$$;
+
+-- All boolean columns are set to TRUE because the initial installation was necessary done by a superuser
+--   (no script being available for an upgrade by a non superuser).
+INSERT INTO emaj.emaj_capabilities (cap_event_trigger)
+  VALUES (TRUE);
+
 --
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
@@ -126,15 +139,6 @@ DROP FUNCTION IF EXISTS emaj._import_groups_conf_alter(P_GROUPNAMES TEXT[],P_MAR
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION emaj._installed_by_superuser()
-RETURNS BOOLEAN LANGUAGE SQL IMMUTABLE AS
-$$
--- This function returns a boolean indicating whether the current version has been installed or upgraded by a superuser role.
-SELECT verh_installed_by_superuser
-  FROM emaj.emaj_version_hist
-  WHERE upper_inf(verh_time_range);
-$$;
-
 CREATE OR REPLACE FUNCTION emaj._clean_array(p_array TEXT[])
 RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS
 $$
@@ -174,6 +178,48 @@ $_build_tblseqs_array_from_regexp$
            ) AS t;
   END;
 $_build_tblseqs_array_from_regexp$;
+
+CREATE OR REPLACE FUNCTION emaj._check_can_copy_from()
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_can_copy_from$
+-- This function checks that COPY FROM are allowed on this emaj instance for the installer role.
+-- This capability is evaluated by checking the pg_read_server_files rights.
+--   It may be false if the installer role was not a superuser and has not been granted the proper rights.
+  BEGIN
+    IF NOT pg_has_role('pg_read_server_files', 'usage') THEN
+      RAISE EXCEPTION '_check_can_copy_from: Reading from an external file is not allowed on this emaj instance'
+                      ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_read_server_files).';
+    END IF;
+  END;
+$_check_can_copy_from$;
+
+CREATE OR REPLACE FUNCTION emaj._check_can_copy_to()
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_can_copy_to$
+-- This function checks that COPY TO are allowed on this emaj instance for the installer role.
+-- This capability is evaluated by checking the pg_write_server_files rights.
+--   It may be false if the installer role was not a superuser and has not been granted the proper rights.
+  BEGIN
+    IF NOT pg_has_role('pg_write_server_files', 'usage') THEN
+      RAISE EXCEPTION '_check_can_copy_to: Writing into an external file is not allowed on this emaj instance'
+                      ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).';
+    END IF;
+  END;
+$_check_can_copy_to$;
+
+CREATE OR REPLACE FUNCTION emaj._check_can_exec_program()
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_can_exec_program$
+-- This function checks that COPY TO PROGRAM are allowed on this emaj instance for the installer role.
+-- This capability is evaluated by checking the pg_execute_server_program rights.
+--   It may be false if the installer role was not a superuser and has not been granted the proper rights.
+  BEGIN
+    IF NOT pg_has_role('pg_execute_server_program', 'usage') THEN
+      RAISE EXCEPTION '_check_can_exec_program: Executing an external program is not allowed on this emaj instance'
+                      ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).';
+    END IF;
+  END;
+$_check_can_exec_program$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
                                                     p_group TEXT, p_properties JSONB DEFAULT NULL, p_mark TEXT DEFAULT 'ASSIGN_%')
@@ -903,6 +949,37 @@ $$;
 COMMENT ON FUNCTION emaj.emaj_get_groups(TEXT, TEXT) IS
 $$Builds a groups array, filtered on their names.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(p_location TEXT, p_groups TEXT[] DEFAULT NULL)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_export_groups_configuration$
+-- This function stores some or all configured tables groups configuration into a file on the server.
+-- The JSON structure is built by the _export_groups_conf() function.
+-- Input: an optional array of goup's names, NULL means all tables groups
+-- Output: the number of tables groups recorded in the file.
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_groupsJson             JSON;
+  BEGIN
+-- Verify that the installer role is allowed to execute COPY TO statements.
+    PERFORM emaj._check_can_copy_to();
+-- Get the json structure.
+    SELECT emaj._export_groups_conf(p_groups) INTO v_groupsJson;
+-- Store the structure into the provided file name.
+    CREATE TEMP TABLE t (groups TEXT);
+    INSERT INTO t
+      SELECT line
+        FROM regexp_split_to_table(v_groupsJson::TEXT, '\n') AS line;
+    EXECUTE format ('COPY t TO %L',
+                    p_location);
+    DROP TABLE t;
+-- Return the number of recorded tables groups.
+    RETURN json_array_length(v_groupsJson->'tables_groups');
+  END;
+$emaj_export_groups_configuration$;
+COMMENT ON FUNCTION emaj.emaj_export_groups_configuration(TEXT, TEXT[]) IS
+$$Generates and stores in a file a json structure describing configured tables groups.$$;
+
 CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_groups_conf$
@@ -1066,6 +1143,8 @@ $emaj_import_groups_configuration$
     v_groupsText             TEXT;
     v_json                   JSON;
   BEGIN
+-- Verify that the installer role is allowed to execute COPY FROM statements.
+    PERFORM emaj._check_can_copy_from();
 -- Read the input file and put its content into a temporary table.
     CREATE TEMP TABLE t (groups TEXT);
     EXECUTE format ('COPY t FROM %L',
@@ -2133,6 +2212,569 @@ $_log_stat_sequence$
   END;
 $_log_stat_sequence$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT,
+                                                                p_optionsList TEXT, p_tblseqs TEXT[], p_scriptLocation TEXT)
+RETURNS TEXT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_gen_sql_dump_changes_group$
+-- This function returns SQL statements that read log tables and sequences states to show the data changes recorded between 2 marks for
+--   a group.
+-- The SQL statements are stored into a flat file with a COPY TO statement, using a location provided by the caller.
+-- Some options may be set to customize the SQL generation (here in alphabetic order):
+--   - COLS_ORDER=LOG_TABLE|PK defines the columns order in the output for tables (default depends on the consolidation level)
+--   - CONSOLIDATION=NONE|PARTIAL|FULL allows to get a consolidated view of changes for each PK during the mark range
+--   - EMAJ_COLUMNS=ALL|MIN|(columns list) restricts the emaj columns recorded into the output (default depends on the consolidation level)
+--   - ORDER_BY=PK|TIME defines the data sort criteria in the output for tables (default depends on the consolidation level)
+--   - SEQUENCES_ONLY filters only sequences
+--   - PSQL_COPY_DIR generates a psql \copy meta-command for each statement, using the directory name given by the option
+--   - PSQL_COPY_OPTIONS defines the options to use for the psql \copy meta-command
+--   - SQL_FORMAT=RAW|PRETTY defines how the generated SQL will be formatted
+--   - TABLES_ONLY filters only tables
+-- Complex options such as lists or directory names must be set between ().
+-- It's users responsability to create the directory containing the output file before the function call (with proper permissions
+--   allowing the cluster to write into).
+-- The SQL statements are generated by the _gen_sql_dump_changes_group() function.
+-- Input: group name, 2 mark names defining a range (The keyword 'EMAJ_LAST_MARK' can be used to specify the last set mark),
+--        options (a comma separated options list),
+--        array of schema qualified table and sequence names to process (NULL to process all relations),
+--        the absolute pathname of the file that will hold the result.
+-- Output: Message with the number of generated SQL statements.
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_nbStmt                 INT;
+    v_isPsqlCopy             BOOLEAN;
+  BEGIN
+-- Insert the BEGIN event into the history, but only if an external will be produced.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('GEN_SQL_DUMP_CHANGES_GROUP', 'BEGIN', p_groupName,
+       'From mark ' || coalesce(p_firstMark, '') || ' to ' || coalesce(p_lastMark, '') ||
+       ' towards ' || p_scriptLocation);
+-- Check the script location is not null.
+    IF p_scriptLocation IS NULL THEN
+      RAISE EXCEPTION 'emaj_gen_sql_dump_changes_group: The output script location parameter cannot be NULL.';
+    END IF;
+-- Verify that the installer role is allowed to execute COPY TO file and COPY TO PROGRAM statements.
+    PERFORM emaj._check_can_copy_to();
+    PERFORM emaj._check_can_exec_program();
+-- Call the _gen_sql_dump_changes_group() function to proccess options and build the SQL statements.
+    SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)
+      INTO v_nbStmt, v_isPsqlCopy;
+-- Process the emaj_temp_sql temporary table.
+-- An output file is supplied. So write the SQL script into the external file and drop the temporary table.
+    IF v_isPsqlCopy THEN
+-- If there are psql \copy meta-commands, remove the doubled antislash characters.
+      BEGIN
+      EXECUTE format ('COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)' ||
+                      ' TO PROGRAM ''sed "s/\\\\\\\\/\\\\/g" >%s'' ',
+                      p_scriptLocation);
+      EXCEPTION
+        WHEN OTHERS THEN
+--   If it fails (typically because the sed command is not available), write the script as is, and warn the user about the doubled
+--     antislashes he has to remove.
+      EXECUTE format ('COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number) TO %L',
+                      p_scriptLocation);
+          RAISE WARNING 'emaj_gen_sql_dump_changes_group: the shell sed command does not seem to exist.'
+                        ' Generated doubled antislash characters will need to be removed manually.';
+      END;
+    ELSE
+-- There is no psql meta-command so no antislashes to remove.
+      EXECUTE format ('COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number) TO %L',
+                      p_scriptLocation);
+    END IF;
+    DROP TABLE IF EXISTS emaj_temp_sql;
+-- Insert a END event into the history if a file has been generated.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('GEN_SQL_DUMP_CHANGES_GROUP', 'END', p_groupName, v_nbStmt || ' generated SQL statements');
+-- Return a formatted message.
+    RETURN format('%s SQL statements have been written into the "%s" file', v_nbStmt, p_scriptLocation);
+  END;
+$emaj_gen_sql_dump_changes_group$;
+COMMENT ON FUNCTION emaj.emaj_gen_sql_dump_changes_group(TEXT,TEXT,TEXT,TEXT,TEXT[],TEXT) IS
+$$Generate SQL statements into a file to dump recorded changes between two marks for application tables and sequences of an E-Maj group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT, p_optionsList TEXT,
+                                                        p_tblseqs TEXT[], p_dir TEXT)
+RETURNS TEXT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_dump_changes_group$
+-- This function reads log tables and sequences states to export into files the data changes recorded between 2 marks for a group.
+-- The function performs COPY TO statements, using the options provided by the caller.
+-- Some options may be set to customize the changes dump:
+--   - COLS_ORDER=LOG_TABLE|PK defines the columns order in the output for tables (default depends on the consolidation level)
+--   - CONSOLIDATION=NONE|PARTIAL|FULL allows to get a consolidated view of changes for each PK during the mark range
+--   - COPY_OPTIONS=(options) sets the options to use for COPY TO statements
+--   - EMAJ_COLUMNS=ALL|MIN|(columns list) restricts the emaj columns recorded into the output (default depends on the consolidation level)
+--   - NO_EMPTY_FILES ... removes empty files
+--   - ORDER_BY=PK|TIME defines the data sort criteria in the output for tables (default depends on the consolidation level)
+--   - SEQUENCES_ONLY filters only sequences
+--   - TABLES_ONLY filters only tables
+-- Complex options such as lists or directory names must be set between ().
+-- It's users responsability to create the directory  before the function call (with proper permissions allowing the cluster to
+--   write into).
+-- The SQL statements are generated by the _gen_sql_dump_changes_group() function.
+-- Input: group name, 2 mark names defining a range (The keyword 'EMAJ_LAST_MARK' can be used to specify the last set mark),
+--        options (a comma separated options list),
+--        array of schema qualified table and sequence names to process (NULL to process all relations),
+--        the absolute pathname of the directory where the files are to be created.
+-- Output: Message with the number of generated files (for tables and sequences, including the _INFO file).
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_copyOptions            TEXT;
+    v_noEmptyFiles           BOOLEAN;
+    v_nbFile                 INT = 1;
+    v_pathName               TEXT;
+    v_copyResult             INT;
+    v_nbRows                 INT;
+    v_stmt                   TEXT;
+    r_sql                    RECORD;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('DUMP_CHANGES_GROUP', 'BEGIN', p_groupName,
+       'From mark ' || coalesce(p_firstMark, '') || ' to ' || coalesce(p_lastMark, '') ||
+       coalesce(' towards ' || p_dir, ''));
+-- Verify that the installer role is allowed to execute COPY TO file and COPY TO PROGRAM statements.
+    PERFORM emaj._check_can_copy_to();
+    PERFORM emaj._check_can_exec_program();
+-- Call the _gen_sql_dump_changes_group() function to proccess options and get the SQL statements.
+    SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
+      INTO v_copyOptions, v_noEmptyFiles, p_lastMark
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g;
+-- Test the supplied output directory and copy options.
+    IF p_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_dump_changes_group: The directory parameter cannot be NULL.';
+    END IF;
+    EXECUTE format ('COPY (SELECT '''') TO %L %s',
+                    p_dir || '/_INFO', coalesce(v_copyOptions, ''));
+-- Execute each generated SQL statement.
+    FOR r_sql IN
+      SELECT sql_stmt_number, sql_schema, sql_tblseq, sql_file_name_suffix, sql_text
+        FROM emaj_temp_sql
+        WHERE sql_line_number = 1
+        ORDER BY sql_stmt_number
+      LOOP
+        IF r_sql.sql_text ~ '^(SET|RESET)' THEN
+-- The SET or RESET statements are executed as is.
+          EXECUTE r_sql.sql_text;
+        ELSE
+-- Otherwise, dump the log table or the sequence states.
+          v_pathName = emaj._build_path_name(p_dir, r_sql.sql_schema || '_' || r_sql.sql_tblseq || r_sql.sql_file_name_suffix);
+          EXECUTE format ('COPY (%s) TO %L %s',
+                          r_sql.sql_text, v_pathName, coalesce(v_copyOptions, ''));
+          v_copyResult = 1;
+-- If the output file is empty, remove it, if requested.
+          IF v_noEmptyFiles THEN
+            GET DIAGNOSTICS v_nbRows = ROW_COUNT;
+            IF v_nbRows = 0 THEN
+-- The file is removed by calling a rm shell command through a COPY TO PROGRAM statement.
+              EXECUTE format ('COPY (SELECT NULL) TO PROGRAM ''rm %s''',
+                              v_pathName);
+              v_copyResult = 0;
+            END IF;
+          END IF;
+          v_nbFile = v_nbFile + v_copyResult;
+-- Keep a trace of the dump execution.
+          UPDATE emaj_temp_sql
+            SET sql_result = v_copyResult
+            WHERE sql_stmt_number = r_sql.sql_stmt_number AND sql_line_number = 1;
+        END IF;
+    END LOOP;
+-- Create the _INFO file to keep information about the operation.
+-- It contains 3 first rows with general information and then 1 row per effectively written file, describing the file content.
+    v_stmt = '(SELECT ' || quote_literal('Dump logged changes for the group "' || p_groupName || '" between mark "' || p_firstMark ||
+                                         '" and mark "' || p_lastMark || '"') ||
+             ' UNION ALL' ||
+             ' SELECT ' || quote_literal(coalesce('  using options "' || p_optionsList || '"', ' without option')) ||
+             ' UNION ALL' ||
+             ' SELECT ' || quote_literal('  started at ' || statement_timestamp()) ||
+             ' UNION ALL' ||
+             ' SELECT ''File '' || '
+                      'translate(sql_schema || ''_'' || sql_tblseq || sql_file_name_suffix, E'' /\\$<>*'', ''_______'')'
+                      ' || '' covers '' || sql_rel_kind || '' "'' || sql_schema || ''.'' || sql_tblseq || ''" from mark "'''
+                      ' || sql_first_mark || ''" to mark "'' || sql_last_mark || ''"'''
+                'FROM emaj_temp_sql WHERE sql_line_number = 1 AND sql_result = 1)';
+    EXECUTE format ('COPY %s TO %L',
+                    v_stmt, p_dir || '/_INFO');
+-- Drop the temporary table.
+    DROP TABLE IF EXISTS emaj_temp_sql;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('DUMP_CHANGES_GROUP', 'END', p_groupName, v_nbFile || ' generated files');
+-- Return a formated message.
+    RETURN format('%s files have been created in %s', v_nbFile, p_dir);
+  END;
+$emaj_dump_changes_group$;
+COMMENT ON FUNCTION emaj.emaj_dump_changes_group(TEXT,TEXT,TEXT,TEXT,TEXT[],TEXT) IS
+$$Dump recorded changes between two marks for application tables and sequences of an E-Maj group into a given directory.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(p_groupName TEXT, p_dir TEXT, p_copyOptions TEXT)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_snap_group$
+-- This function creates a file for each table and sequence belonging to the group.
+-- For tables, these files contain all rows sorted on primary key.
+-- For sequences, they contain a single row describing the sequence.
+-- To do its job, the function performs COPY TO statement, with all default parameters.
+-- For table without primary key, rows are sorted on all non generated columns.
+-- There is no need for the group to be in IDLE state.
+-- As all COPY statements are executed inside a single transaction:
+--   - the function can be called while other transactions are running,
+--   - the snap files will present a coherent state of tables.
+-- It's users responsability:
+--   - to create the directory (with proper permissions allowing the cluster to write into) before the emaj_snap_group function call, and
+--   - maintain its content outside E-maj.
+-- Input: group name,
+--        the absolute pathname of the directory where the files are to be created
+--        the options to used in the COPY TO statements
+-- Output: number of processed tables and sequences
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_nbRel                  INT = 0;
+    v_colList                TEXT;
+    v_stmt                   TEXT;
+    r_tblsq                  RECORD;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_GROUP', 'BEGIN', p_groupName, p_dir);
+-- Check the group name.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE);
+-- Check the supplied directory is not null.
+    IF p_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_snap_group: The directory parameter cannot be NULL.';
+    END IF;
+-- Verify that the installer role is allowed to execute COPY TO statements.
+    PERFORM emaj._check_can_copy_to();
+-- Check the copy options parameter doesn't contain unquoted ; that could be used for sql injection.
+    IF regexp_replace(p_copyOptions,'''.*''','') LIKE '%;%' THEN
+      RAISE EXCEPTION 'emaj_snap_group: The COPY options parameter format is invalid.';
+    END IF;
+-- For each table/sequence of the emaj_relation table.
+    FOR r_tblsq IN
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_pk_cols,
+             quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name,
+             emaj._build_path_name(p_dir, rel_schema || '_' || rel_tblseq || '.snap') AS path_name
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range)
+          AND rel_group = p_groupName
+        ORDER BY rel_priority, rel_schema, rel_tblseq
+    LOOP
+      CASE r_tblsq.rel_kind
+        WHEN 'r' THEN
+-- It is a table.
+--   Build the order by columns list, using the PK, if it exists.
+          IF r_tblsq.rel_pk_cols IS NOT NULL THEN
+            SELECT string_agg(quote_ident(attname), ',')
+              INTO v_colList
+              FROM unnest(r_tblsq.rel_pk_cols) AS attname;
+          ELSE
+--   The table has no pkey, so get all columns, except generated ones.
+            SELECT string_agg(quote_ident(attname), ',' ORDER BY attnum)
+              INTO v_colList
+              FROM pg_catalog.pg_attribute
+              WHERE attrelid = (r_tblsq.full_relation_name)::regclass
+                AND attnum > 0
+                AND attisdropped = FALSE
+                AND attgenerated = '';
+          END IF;
+--   Dump the table
+          v_stmt = format('(SELECT * FROM %I.%I ORDER BY %s)',
+                          r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_colList);
+          EXECUTE format('COPY %s TO %L %s',
+                         v_stmt, r_tblsq.path_name, coalesce(p_copyOptions, ''));
+        WHEN 'S' THEN
+-- It is a sequence.
+          v_stmt = format('(SELECT relname, rel.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, rel.is_called'
+                          '  FROM %I.%I rel,'
+                          '       pg_catalog.pg_sequence s'
+                          '       JOIN pg_catalog.pg_class c ON (c.oid = s.seqrelid)'
+                          '       JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)'
+                          '  WHERE nspname = %L AND relname = %L)',
+                         r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+--    Dump the sequence properties.
+          EXECUTE format ('COPY %s TO %L %s',
+                          v_stmt, r_tblsq.path_name, coalesce(p_copyOptions, ''));
+      END CASE;
+      v_nbRel = v_nbRel + 1;
+    END LOOP;
+-- Create the _INFO file to keep general information about the snap operation.
+    v_stmt = '(SELECT ' || quote_literal('E-Maj snap of tables group ' || p_groupName || ' at ' || statement_timestamp()) || ')';
+    EXECUTE format ('COPY %s TO %L',
+                    v_stmt, p_dir || '/_INFO');
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_GROUP', 'END', p_groupName, v_nbRel || ' tables/sequences processed');
+--
+    RETURN v_nbRel;
+  END;
+$emaj_snap_group$;
+COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
+$$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
+
+CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT,
+                                                p_location TEXT, p_tblseqs TEXT[], p_currentUser TEXT)
+RETURNS BIGINT LANGUAGE plpgsql
+SET DateStyle = 'ISO, YMD' SET standard_conforming_strings = ON
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_gen_sql_groups$
+-- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
+-- or beetween a mark and the current state. The result is stored into an external file.
+-- The function can process groups that are in LOGGING state or not.
+-- The sql statements are placed between a BEGIN TRANSACTION and a COMMIT statements.
+-- The output file can be reused as input file to a psql command to replay the updates scenario. Just '\\'
+-- character strings (double antislash), if any, must be replaced by '\' (single antislash) before feeding
+-- the psql command.
+-- Input: - tables groups array
+--        - start mark
+--        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
+--        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
+--        - optional array of schema qualified table and sequence names to only process those tables and sequences
+--        - the current user of the calling function
+-- Output: number of generated SQL statements (non counting comments and transaction management)
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_firstMarkTimeId        BIGINT;
+    v_firstEmajGid           BIGINT;
+    v_lastMarkTimeId         BIGINT;
+    v_lastEmajGid            BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
+    v_tblseqErr              TEXT;
+    v_count                  INT;
+    v_prevCMM                TEXT;
+    v_nbSQL                  BIGINT;
+    v_nbSeq                  INT;
+    v_cumNbSQL               BIGINT = 0;
+    v_endComment             TEXT;
+    v_dateStyle              TEXT;
+    r_rel                    emaj.emaj_relation%ROWTYPE;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN p_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'BEGIN', array_to_string(p_groupNames,','),
+       'From mark ' || coalesce(p_firstMark, '') ||
+       CASE WHEN p_lastMark IS NULL OR p_lastMark = '' THEN ' to current state' ELSE ' to mark ' || p_lastMark END ||
+       CASE WHEN p_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
+-- Verify that the installer role is allowed to execute COPY TO statements.
+    PERFORM emaj._check_can_copy_to();
+-- Check the group name.
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
+      INTO p_groupNames;
+-- If there is at least 1 group to process, go on.
+    IF p_groupNames IS NOT NULL THEN
+-- Check the marks range and get some data about both marks.
+      SELECT *
+        INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
+        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark);
+-- If table/sequence names are supplied, check them.
+      IF p_tblseqs IS NOT NULL THEN
+        SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)
+          INTO p_tblseqs;
+      END IF;
+-- Check that all tables had pk at start mark time, by verifying the emaj_relation.rel_sql_gen_pk_conditions column.
+      SELECT string_agg(rel_schema || '.' || rel_tblseq, ', ' ORDER BY rel_schema, rel_tblseq), count(*)
+        INTO v_tblseqErr, v_count
+        FROM
+          (SELECT *
+             FROM emaj.emaj_relation
+             WHERE rel_group = ANY (p_groupNames)
+               AND rel_kind = 'r'                                                                  -- tables belonging to the groups
+               AND rel_time_range @> v_firstMarkTimeId                                             --   at the first mark time
+               AND (p_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (p_tblseqs))        -- filtered or not by the user
+               AND rel_sql_gen_pk_conditions IS NULL                                               -- no pk at assignment time
+          ) as t;
+      IF v_tblseqErr IS NOT NULL THEN
+        RAISE EXCEPTION '_gen_sql_groups: % tables/sequences (%) had no pkey at % mark time.',
+          v_count, v_tblseqErr, p_firstMark;
+      END IF;
+-- Create a temporary table to hold the generated script.
+      v_prevCMM = pg_catalog.current_setting('client_min_messages');
+      SET client_min_messages TO WARNING;
+      DROP TABLE IF EXISTS emaj_temp_script CASCADE;
+      PERFORM pg_catalog.set_config ('client_min_messages', v_prevCMM, FALSE);
+      CREATE TEMP TABLE emaj_temp_script (
+        scr_emaj_gid           BIGINT,              -- the emaj_gid of the corresponding log row,
+                                                    --   0 for initial technical statements,
+                                                    --   NULL for final technical statements
+        scr_subid              INT,                 -- used to distinguish several generated sql per log row
+        scr_emaj_txid          BIGINT,              -- for future use, to insert commit statement at each txid change
+        scr_sql                TEXT                 -- the generated sql text
+      );
+-- Test the supplied output file to avoid to discover a bad file name after having spent a lot of time to build the script.
+      IF p_location IS NOT NULL THEN
+        EXECUTE format ('COPY (SELECT 0) TO %L',
+                        p_location);
+      END IF;
+-- End of checks.
+-- Insert initial comments, some session parameters setting:
+--    - the standard_conforming_strings option to properly handle special characters,
+--    - the DateStyle mode used at export time,
+-- and a transaction start.
+      IF v_lastMarkTimeId IS NOT NULL THEN
+        v_endComment = ' and mark ' || p_lastMark;
+      ELSE
+        v_endComment = ' and the current state';
+      END IF;
+      SELECT setting INTO v_dateStyle
+        FROM pg_catalog.pg_settings
+        WHERE name = 'DateStyle';
+      INSERT INTO emaj_temp_script VALUES
+        (0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp()),
+        (0, 2, 0, '--    for tables group(s): ' || array_to_string(p_groupNames,',')),
+        (0, 3, 0, '--    processing logs between mark ' || p_firstMark || v_endComment);
+      IF p_tblseqs IS NOT NULL THEN
+        INSERT INTO emaj_temp_script VALUES
+          (0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(p_tblseqs,','));
+      END IF;
+      INSERT INTO emaj_temp_script VALUES
+        (0, 10, 0, 'SET standard_conforming_strings = OFF;'),
+        (0, 11, 0, 'SET escape_string_warning = OFF;'),
+        (0, 12, 0, 'SET datestyle = ' || quote_literal(v_dateStyle) || ';'),
+        (0, 20, 0, 'BEGIN TRANSACTION;');
+-- Process tables.
+      FOR r_rel IN
+        SELECT *
+          FROM emaj.emaj_relation
+          WHERE rel_group = ANY (p_groupNames)
+            AND rel_kind = 'r'                                                                  -- tables belonging to the groups
+            AND rel_time_range @> v_firstMarkTimeId                                             --   at the first mark time
+            AND (p_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (p_tblseqs))        -- filtered or not by the user
+            AND emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId,                            -- only tables having updates to process
+                                  least(v_lastMarkTimeId, upper(rel_time_range))) > 0
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- For each application table referenced in the emaj_relation table, process the related log table, by calling the _gen_sql_tbl() function.
+        SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid) INTO v_nbSQL;
+        v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+      END LOOP;
+-- Process sequences.
+      v_nbSeq = 0;
+      FOR r_rel IN
+        SELECT *
+          FROM emaj.emaj_relation
+          WHERE rel_group = ANY (p_groupNames)
+            AND rel_kind = 'S'
+            AND rel_time_range @> v_firstMarkTimeId                                -- sequences belonging to the groups at the start mark
+            AND (p_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (p_tblseqs))         -- filtered or not by the user
+          ORDER BY rel_schema DESC, rel_tblseq DESC
+      LOOP
+-- Process each sequence and increment the sequence counter.
+        v_nbSeq = v_nbSeq + emaj._gen_sql_seq(r_rel, v_firstMarkTimeId, v_lastMarkTimeId, v_nbSeq);
+      END LOOP;
+-- Add command to commit the transaction and reset the modified session parameters.
+      INSERT INTO emaj_temp_script VALUES
+        (NULL, 1, txid_current(), 'COMMIT;'),
+        (NULL, 10, txid_current(), 'RESET standard_conforming_strings;'),
+        (NULL, 11, txid_current(), 'RESET escape_string_warning;'),
+        (NULL, 11, txid_current(), 'RESET datestyle;');
+-- If an output file is supplied, write the SQL script on the external file and drop the temporary table.
+      IF p_location IS NOT NULL THEN
+        EXECUTE format ('COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid) TO %L',
+                        p_location);
+        DROP TABLE IF EXISTS emaj_temp_script;
+      ELSE
+-- Otherwise create a view to ease the generation script export..;
+        CREATE TEMPORARY VIEW emaj_sql_script AS
+          SELECT scr_sql
+            FROM emaj_temp_script
+            ORDER BY scr_emaj_gid NULLS LAST, scr_subid;
+-- ... and grant SELECT privileges on the temporary view and the underneath temporary table to the current user.
+        EXECUTE format('GRANT SELECT ON emaj_sql_script, emaj_temp_script TO %I',
+                       p_currentUser);
+      END IF;
+-- Return the number of sql verbs generated into the output file.
+      v_cumNbSQL = v_cumNbSQL + v_nbSeq;
+    END IF;
+-- Insert end in the history and return.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN p_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'END',
+              array_to_string(p_groupNames,','), v_cumNbSQL || ' generated statements' ||
+                CASE WHEN p_location IS NOT NULL THEN ' - script exported into ' || p_location ELSE ' - script not exported' END );
+--
+    RETURN v_cumNbSQL;
+  END;
+$_gen_sql_groups$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration(p_location TEXT)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_export_parameters_configuration$
+-- This function stores the parameters configuration into a file on the server.
+-- The JSON structure is built by the _export_param_conf() function.
+-- Output: the number of parameters of the recorded JSON structure.
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_paramsJson             JSON;
+  BEGIN
+-- Verify that the installer role is allowed to execute COPY TO statements.
+    PERFORM emaj._check_can_copy_to();
+-- Get the json structure.
+    SELECT emaj._export_param_conf() INTO v_paramsJson;
+-- Store the structure into the provided file name.
+    CREATE TEMP TABLE t (params TEXT);
+    INSERT INTO t
+      SELECT line
+        FROM regexp_split_to_table(v_paramsJson::TEXT, '\n') AS line;
+    EXECUTE format ('COPY t TO %L',
+                    p_location);
+    DROP TABLE t;
+-- Return the number of recorded parameters.
+    RETURN json_array_length(v_paramsJson->'parameters');
+  END;
+$emaj_export_parameters_configuration$;
+COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration(TEXT) IS
+$$Generates and stores in a file a json structure describing the E-Maj parameters.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(p_location TEXT, p_deleteCurrentConf BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_import_parameters_configuration$
+-- This function imports a file containing a JSON formatted structure representing E-Maj parameters to load.
+-- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
+-- It calls the _import_param_conf() function to perform the emaj_param table changes.
+-- Input: - input file location
+--        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
+--          (by default, the parameter keys not referenced in the input json structure are kept unchanged)
+-- Output: the number of inserted or updated parameter keys
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_paramsText             TEXT;
+    v_paramsJson             JSON;
+    v_nbParam                INT;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('IMPORT_PARAMETERS', 'BEGIN', 'Input file: ' || quote_literal(p_location));
+-- Verify that the installer role is allowed to execute COPY FROM statements.
+    PERFORM emaj._check_can_copy_from();
+-- Read the input file and put its content into a temporary table.
+    CREATE TEMP TABLE t (params TEXT);
+    EXECUTE format ('COPY t FROM %L',
+                    p_location);
+-- Aggregate the lines into a single text variable.
+    SELECT string_agg(params, E'\n') INTO v_paramsText
+      FROM t;
+    DROP TABLE t;
+-- Verify that the file content is a valid json structure.
+    BEGIN
+      v_paramsJson = v_paramsText::JSON;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'emaj_import_parameters_configuration: The file content is not a valid JSON content.';
+    END;
+-- Load the parameters.
+    SELECT emaj._import_param_conf(v_paramsJson, p_deleteCurrentConf) INTO v_nbParam;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('IMPORT_PARAMETERS', 'END', v_nbParam || ' parameters imported');
+--
+    RETURN v_nbParam;
+  END;
+$emaj_import_parameters_configuration$;
+COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(TEXT,BOOLEAN) IS
+$$Import E-Maj parameters from a JSON formatted file.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_disable_protection_by_event_triggers$
@@ -2140,12 +2782,15 @@ $emaj_disable_protection_by_event_triggers$
 -- It may be used by an emaj_adm role.
 -- Output: number of effectively disabled event triggers.
   DECLARE
+    v_canEventTrigger        BOOLEAN;
     v_eventTriggers          TEXT[];
   BEGIN
--- Raise an exception if the extension has not been installed by a superuser.
-    IF NOT emaj._installed_by_superuser() THEN
-      RAISE EXCEPTION 'emaj_disable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been '
-                      'installed by a superuser.';
+-- Raise a warning and return immediately if the extension doesn't support event triggers.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
+      RAISE WARNING 'emaj_disable_protection_by_event_triggers: This emaj extension does not support event triggers.';
+      RETURN 0;
     END IF;
 -- Call the _disable_event_triggers() function and get the disabled event trigger names array.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
@@ -2167,12 +2812,15 @@ $emaj_enable_protection_by_event_triggers$
 -- It may be used by an emaj_adm role.
 -- Output: number of effectively enabled event triggers.
   DECLARE
+    v_canEventTrigger        BOOLEAN;
     v_eventTriggers          TEXT[];
   BEGIN
--- Raise an exception if the extension has not been installed by a superuser.
-    IF NOT emaj._installed_by_superuser() THEN
-      RAISE EXCEPTION 'emaj_enable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been '
-                      'installed by a superuser.';
+-- Raise a warning and return immediately if the extension doesn't support event triggers.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
+      RAISE WARNING 'emaj_enable_protection_by_event_triggers: This emaj extension does not support event triggers.';
+      RETURN 0;
     END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
     SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
@@ -2204,11 +2852,14 @@ $_disable_event_triggers$
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger.
 -- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
   DECLARE
+    v_canEventTrigger        BOOLEAN;
     v_eventTrigger           TEXT;
     v_eventTriggers          TEXT[] = ARRAY[]::TEXT[];
   BEGIN
--- Exit immediately if the extension has not been installed by a superuser.
-    IF NOT emaj._installed_by_superuser() THEN
+-- Exit immediately if the extension doesn't support event triggers.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
       RETURN v_eventTriggers;
     END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
@@ -2244,10 +2895,13 @@ $_enable_event_triggers$
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
 -- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
   DECLARE
+    v_canEventTrigger        BOOLEAN;
     v_eventTrigger           TEXT;
   BEGIN
--- Exit immediately if the extension has not been installed by a superuser.
-    IF NOT emaj._installed_by_superuser() THEN
+-- Exit immediately if the extension doesn't support event triggers.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
       RETURN p_eventTriggers;
     END IF;
 -- If the emaj_protection_trg event trigger does not exist, recreate it and report.

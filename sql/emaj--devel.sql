@@ -58,7 +58,7 @@ $$Contains all E-Maj related objects.$$;
 
 ----------------------------------------------------------------
 --                                                            --
---                  emaj_version_hist table                   --
+--         Préliminary tables and capabilities setup          --
 --                                                            --
 ----------------------------------------------------------------
 
@@ -82,6 +82,45 @@ INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_installe
     WHERE rolname = current_user;
 COMMENT ON TABLE emaj.emaj_version_hist IS
 $$Contains E-Maj versions history.$$;
+
+-- Table containing the capabilities of this emaj instance.
+-- It only contains a single row.
+-- Its content is only set at emaj install time.
+-- It is created and populated early inn this script to let the install process know what to setup.
+-- All boolean columns are set to TRUE when the installer role is a SUPERUSER.
+CREATE TABLE emaj.emaj_capabilities (
+  cap_event_trigger            BOOLEAN     NOT NULL        -- boolean indicating whether this emaj instance can manage event triggers
+  );
+COMMENT ON TABLE emaj.emaj_capabilities IS
+$$Contains the capabilities of this emaj instance.$$;
+
+-- Setup the capabilities.
+DO LANGUAGE plpgsql
+$do$
+  DECLARE
+    v_isRoleSuperuser        BOOLEAN;
+    v_canEventTrigger        BOOLEAN = TRUE;
+  BEGIN
+    SELECT rolsuper INTO v_isRoleSuperuser
+      FROM pg_catalog.pg_roles
+      WHERE rolname = current_user;
+-- If the current role is superuser, all capabilities remain TRUE.
+    IF NOT v_isRoleSuperuser THEN
+-- Otherwise, check each capability.
+-- Try create an event trigger.
+      CREATE OR REPLACE FUNCTION emaj._tmp() RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS $$BEGIN END;$$;
+      BEGIN
+        CREATE EVENT TRIGGER _tmp ON sql_drop EXECUTE PROCEDURE emaj._tmp();
+      EXCEPTION WHEN OTHERS THEN
+        v_canEventTrigger = FALSE;
+      END;
+      DROP FUNCTION emaj._tmp();
+    END IF;
+    INSERT INTO emaj.emaj_capabilities (cap_event_trigger)
+      VALUES (v_canEventTrigger);
+    RETURN;
+  END;
+$do$;
 
 ----------------------------------------------------------------
 --                                                            --
@@ -812,15 +851,6 @@ RETURNS INTEGER LANGUAGE SQL IMMUTABLE AS
 $$
 -- This function returns as an integer the current postgresql version.
 SELECT pg_catalog.current_setting('server_version_num')::INT;
-$$;
-
-CREATE OR REPLACE FUNCTION emaj._installed_by_superuser()
-RETURNS BOOLEAN LANGUAGE SQL IMMUTABLE AS
-$$
--- This function returns a boolean indicating whether the current version has been installed or upgraded by a superuser role.
-SELECT verh_installed_by_superuser
-  FROM emaj.emaj_version_hist
-  WHERE upper_inf(verh_time_range);
 $$;
 
 CREATE OR REPLACE FUNCTION emaj._set_time_stamp(p_function TEXT, p_timeEvent CHAR(1))
@@ -1722,6 +1752,48 @@ $_check_tblseqs_array$
     RETURN v_tblseqs;
   END;
 $_check_tblseqs_array$;
+
+CREATE OR REPLACE FUNCTION emaj._check_can_copy_from()
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_can_copy_from$
+-- This function checks that COPY FROM are allowed on this emaj instance for the installer role.
+-- This capability is evaluated by checking the pg_read_server_files rights.
+--   It may be false if the installer role was not a superuser and has not been granted the proper rights.
+  BEGIN
+    IF NOT pg_has_role('pg_read_server_files', 'usage') THEN
+      RAISE EXCEPTION '_check_can_copy_from: Reading from an external file is not allowed on this emaj instance'
+                      ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_read_server_files).';
+    END IF;
+  END;
+$_check_can_copy_from$;
+
+CREATE OR REPLACE FUNCTION emaj._check_can_copy_to()
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_can_copy_to$
+-- This function checks that COPY TO are allowed on this emaj instance for the installer role.
+-- This capability is evaluated by checking the pg_write_server_files rights.
+--   It may be false if the installer role was not a superuser and has not been granted the proper rights.
+  BEGIN
+    IF NOT pg_has_role('pg_write_server_files', 'usage') THEN
+      RAISE EXCEPTION '_check_can_copy_to: Writing into an external file is not allowed on this emaj instance'
+                      ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).';
+    END IF;
+  END;
+$_check_can_copy_to$;
+
+CREATE OR REPLACE FUNCTION emaj._check_can_exec_program()
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_can_exec_program$
+-- This function checks that COPY TO PROGRAM are allowed on this emaj instance for the installer role.
+-- This capability is evaluated by checking the pg_execute_server_program rights.
+--   It may be false if the installer role was not a superuser and has not been granted the proper rights.
+  BEGIN
+    IF NOT pg_has_role('pg_execute_server_program', 'usage') THEN
+      RAISE EXCEPTION '_check_can_exec_program: Executing an external program is not allowed on this emaj instance'
+                      ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).';
+    END IF;
+  END;
+$_check_can_exec_program$;
 
 CREATE OR REPLACE FUNCTION emaj._get_lock_tblseqs_groups(p_schema TEXT, p_tblseqs TEXT[], p_newGroup TEXT,
                                                          OUT p_groups TEXT[], OUT p_loggingGroups TEXT[], OUT p_nbAuditOnlyGroups INT)
@@ -5986,6 +6058,8 @@ $emaj_export_groups_configuration$
   DECLARE
     v_groupsJson             JSON;
   BEGIN
+-- Verify that the installer role is allowed to execute COPY TO statements.
+    PERFORM emaj._check_can_copy_to();
 -- Get the json structure.
     SELECT emaj._export_groups_conf(p_groups) INTO v_groupsJson;
 -- Store the structure into the provided file name.
@@ -6166,6 +6240,8 @@ $emaj_import_groups_configuration$
     v_groupsText             TEXT;
     v_json                   JSON;
   BEGIN
+-- Verify that the installer role is allowed to execute COPY FROM statements.
+    PERFORM emaj._check_can_copy_from();
 -- Read the input file and put its content into a temporary table.
     CREATE TEMP TABLE t (groups TEXT);
     EXECUTE format ('COPY t FROM %L',
@@ -11605,7 +11681,7 @@ $emaj_gen_sql_dump_changes_group$
 -- Input: group name, 2 mark names defining a range (The keyword 'EMAJ_LAST_MARK' can be used to specify the last set mark),
 --        options (a comma separated options list),
 --        array of schema qualified table and sequence names to process (NULL to process all relations),
---        the absolute pathname of the file that will hold the result (NULL to get the result from a temporary table).
+--        the absolute pathname of the file that will hold the result.
 -- Output: Message with the number of generated SQL statements.
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
@@ -11621,6 +11697,9 @@ $emaj_gen_sql_dump_changes_group$
     IF p_scriptLocation IS NULL THEN
       RAISE EXCEPTION 'emaj_gen_sql_dump_changes_group: The output script location parameter cannot be NULL.';
     END IF;
+-- Verify that the installer role is allowed to execute COPY TO file and COPY TO PROGRAM statements.
+    PERFORM emaj._check_can_copy_to();
+    PERFORM emaj._check_can_exec_program();
 -- Call the _gen_sql_dump_changes_group() function to proccess options and build the SQL statements.
     SELECT p_nbStmt, p_isPsqlCopy
       FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)
@@ -11699,6 +11778,9 @@ $emaj_dump_changes_group$
       VALUES ('DUMP_CHANGES_GROUP', 'BEGIN', p_groupName,
        'From mark ' || coalesce(p_firstMark, '') || ' to ' || coalesce(p_lastMark, '') ||
        coalesce(' towards ' || p_dir, ''));
+-- Verify that the installer role is allowed to execute COPY TO file and COPY TO PROGRAM statements.
+    PERFORM emaj._check_can_copy_to();
+    PERFORM emaj._check_can_exec_program();
 -- Call the _gen_sql_dump_changes_group() function to proccess options and get the SQL statements.
     SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
       INTO v_copyOptions, v_noEmptyFiles, p_lastMark
@@ -12427,7 +12509,8 @@ $emaj_snap_group$
 --   - to create the directory (with proper permissions allowing the cluster to write into) before the emaj_snap_group function call, and
 --   - maintain its content outside E-maj.
 -- Input: group name,
---        the absolute pathname of the directory where the files are to be created and the options to used in the COPY TO statements
+--        the absolute pathname of the directory where the files are to be created
+--        the options to used in the COPY TO statements
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
@@ -12445,6 +12528,8 @@ $emaj_snap_group$
     IF p_dir IS NULL THEN
       RAISE EXCEPTION 'emaj_snap_group: The directory parameter cannot be NULL.';
     END IF;
+-- Verify that the installer role is allowed to execute COPY TO statements.
+    PERFORM emaj._check_can_copy_to();
 -- Check the copy options parameter doesn't contain unquoted ; that could be used for sql injection.
     IF regexp_replace(p_copyOptions,'''.*''','') LIKE '%;%' THEN
       RAISE EXCEPTION 'emaj_snap_group: The COPY options parameter format is invalid.';
@@ -12602,6 +12687,8 @@ $_gen_sql_groups$
        'From mark ' || coalesce(p_firstMark, '') ||
        CASE WHEN p_lastMark IS NULL OR p_lastMark = '' THEN ' to current state' ELSE ' to mark ' || p_lastMark END ||
        CASE WHEN p_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
+-- Verify that the installer role is allowed to execute COPY TO statements.
+    PERFORM emaj._check_can_copy_to();
 -- Check the group name.
     SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
       INTO p_groupNames;
@@ -12918,6 +13005,8 @@ $emaj_export_parameters_configuration$
   DECLARE
     v_paramsJson             JSON;
   BEGIN
+-- Verify that the installer role is allowed to execute COPY TO statements.
+    PERFORM emaj._check_can_copy_to();
 -- Get the json structure.
     SELECT emaj._export_param_conf() INTO v_paramsJson;
 -- Store the structure into the provided file name.
@@ -13042,6 +13131,8 @@ $emaj_import_parameters_configuration$
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
       VALUES ('IMPORT_PARAMETERS', 'BEGIN', 'Input file: ' || quote_literal(p_location));
+-- Verify that the installer role is allowed to execute COPY FROM statements.
+    PERFORM emaj._check_can_copy_from();
 -- Read the input file and put its content into a temporary table.
     CREATE TEMP TABLE t (params TEXT);
     EXECUTE format ('COPY t FROM %L',
@@ -14275,12 +14366,15 @@ $emaj_disable_protection_by_event_triggers$
 -- It may be used by an emaj_adm role.
 -- Output: number of effectively disabled event triggers.
   DECLARE
+    v_canEventTrigger        BOOLEAN;
     v_eventTriggers          TEXT[];
   BEGIN
--- Raise an exception if the extension has not been installed by a superuser.
-    IF NOT emaj._installed_by_superuser() THEN
-      RAISE EXCEPTION 'emaj_disable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been '
-                      'installed by a superuser.';
+-- Raise a warning and return immediately if the extension doesn't support event triggers.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
+      RAISE WARNING 'emaj_disable_protection_by_event_triggers: This emaj extension does not support event triggers.';
+      RETURN 0;
     END IF;
 -- Call the _disable_event_triggers() function and get the disabled event trigger names array.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
@@ -14302,12 +14396,15 @@ $emaj_enable_protection_by_event_triggers$
 -- It may be used by an emaj_adm role.
 -- Output: number of effectively enabled event triggers.
   DECLARE
+    v_canEventTrigger        BOOLEAN;
     v_eventTriggers          TEXT[];
   BEGIN
--- Raise an exception if the extension has not been installed by a superuser.
-    IF NOT emaj._installed_by_superuser() THEN
-      RAISE EXCEPTION 'emaj_enable_protection_by_event_triggers: This function is not allowed because the emaj extension has not been '
-                      'installed by a superuser.';
+-- Raise a warning and return immediately if the extension doesn't support event triggers.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
+      RAISE WARNING 'emaj_enable_protection_by_event_triggers: This emaj extension does not support event triggers.';
+      RETURN 0;
     END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
     SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
@@ -14339,11 +14436,14 @@ $_disable_event_triggers$
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger.
 -- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
   DECLARE
+    v_canEventTrigger        BOOLEAN;
     v_eventTrigger           TEXT;
     v_eventTriggers          TEXT[] = ARRAY[]::TEXT[];
   BEGIN
--- Exit immediately if the extension has not been installed by a superuser.
-    IF NOT emaj._installed_by_superuser() THEN
+-- Exit immediately if the extension doesn't support event triggers.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
       RETURN v_eventTriggers;
     END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
@@ -14379,10 +14479,13 @@ $_enable_event_triggers$
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
 -- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
   DECLARE
+    v_canEventTrigger        BOOLEAN;
     v_eventTrigger           TEXT;
   BEGIN
--- Exit immediately if the extension has not been installed by a superuser.
-    IF NOT emaj._installed_by_superuser() THEN
+-- Exit immediately if the extension doesn't support event triggers.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
       RETURN p_eventTriggers;
     END IF;
 -- If the emaj_protection_trg event trigger does not exist, recreate it and report.
@@ -14665,37 +14768,41 @@ $$Uninstalls the E-Maj components from the current database.$$;
 --
 DO LANGUAGE plpgsql
 $do$
+  DECLARE
+    v_canEventTrigger        BOOLEAN;
   BEGIN
--- Verify that the installer role is a superuser.
--- The installer role may not be a superuser when using the emaj-devel.sql alternate script that is derived from this script.
-    IF emaj._installed_by_superuser() THEN
+-- If this emaj installation doesn't support event triggers, just exit.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
+      RETURN;
+    END IF;
 
 -- emaj_protection_trg.
-      CREATE EVENT TRIGGER emaj_protection_trg
-        ON sql_drop
-        WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
-        EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
-      COMMENT ON EVENT TRIGGER emaj_protection_trg IS
-      $$Blocks the removal of the emaj extension or schema.$$;
+    CREATE EVENT TRIGGER emaj_protection_trg
+      ON sql_drop
+      WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
+      EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
+    COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+    $$Blocks the removal of the emaj extension or schema.$$;
 -- remove both event trigger components from the extension, so that they can fire the "DROP EXTENSION emaj".
-      ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
-      ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
+    ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
+    ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
 
 -- emaj_sql_drop_trg.
-      CREATE EVENT TRIGGER emaj_sql_drop_trg
-        ON sql_drop
-        WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','ALTER TABLE','DROP TRIGGER')
-        EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
-      COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
-      $$Controls the removal of E-Maj components.$$;
+    CREATE EVENT TRIGGER emaj_sql_drop_trg
+      ON sql_drop
+      WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','ALTER TABLE','DROP TRIGGER')
+      EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
+    COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
+    $$Controls the removal of E-Maj components.$$;
 
 -- emaj_table_rewrite_trg.
-      CREATE EVENT TRIGGER emaj_table_rewrite_trg
-        ON table_rewrite
-        EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
-      COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
-      $$Controls some changes in E-Maj tables structure.$$;
-    END IF;
+    CREATE EVENT TRIGGER emaj_table_rewrite_trg
+      ON table_rewrite
+      EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
+    COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
+    $$Controls some changes in E-Maj tables structure.$$;
   END;
 $do$;
 
@@ -14883,8 +14990,52 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 
 -- Insert the emaj schema into the emaj_schema table.
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
--- Insert the INIT event into the operations history.
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
+
+-- Perform final checks and messages report.
+DO LANGUAGE plpgsql
+$do$
+  DECLARE
+    v_extraWording           TEXT;
+    v_canEventTrigger        BOOLEAN;
+  BEGIN
+-- Warn if the role is not superuser.
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+    IF NOT FOUND THEN
+      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser.', current_user;
+      RAISE WARNING '    This may lead to permission issues when using E-Maj.';
+      v_extraWording = coalesce(v_extraWording || ', ', '(') || 'Not SUPERUSER';
+    END IF;
+-- Warn if event triggers have not been created.
+    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
+      FROM emaj.emaj_capabilities;
+    IF NOT v_canEventTrigger THEN
+      RAISE WARNING 'E-Maj installation: Event triggers that protect the E-Maj environment have not been created.';
+      v_extraWording = coalesce(v_extraWording || ', ', '') || 'No event triggers';
+    END IF;
+-- Warn if the installer role is not allowed to execute COPY TO or COPY FROM statements.
+    IF NOT pg_has_role('pg_read_server_files', 'usage') THEN
+      RAISE WARNING 'E-Maj installation: The current user has not been granted pg_read_server_files privileges.';
+      v_extraWording = coalesce(v_extraWording || ', ', '') || 'No COPY FROM';
+    END IF;
+    IF NOT pg_has_role('pg_write_server_files', 'usage') THEN
+      RAISE WARNING 'E-Maj installation: The current user has not been granted pg_write_server_files privileges.';
+      v_extraWording = coalesce(v_extraWording || ', ', '') || 'No COPY TO';
+    END IF;
+-- Warn if the max_prepared_transactions GUC value is too low for parallel rollback.
+    IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
+      RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
+                    ' rollback is possible.', pg_catalog.current_setting('max_prepared_transactions');
+      v_extraWording = coalesce(v_extraWording || ', ', '') || 'No parallel rollback';
+    END IF;
+-- Insert the completion event into the operations history.
+    v_extraWording = coalesce(' (' || v_extraWording || ')', '');
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed' || v_extraWording);
+--
+    RETURN;
+  END;
+$do$;
+
 -- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
 WITH start_time_data AS (
   SELECT clock_timestamp() - lower(verh_time_range) AS duration
@@ -14894,17 +15045,3 @@ WITH start_time_data AS (
   UPDATE emaj.emaj_version_hist
     SET verh_time_range = TSTZRANGE(clock_timestamp(), null, '[]'), verh_install_duration = duration
     FROM start_time_data;
-
--- Final checks and messages.
-DO LANGUAGE plpgsql
-$do$
-  BEGIN
--- Check the max_prepared_transactions GUC value and report a warning if its value is too low for parallel rollback.
-    IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
-      RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
-                    ' rollback is possible.', pg_catalog.current_setting('max_prepared_transactions');
-    END IF;
---
-    RETURN;
-  END;
-$do$;

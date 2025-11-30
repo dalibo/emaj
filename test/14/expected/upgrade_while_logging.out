@@ -135,6 +135,12 @@ select emaj.emaj_get_version();
  ver_group  | text |           |          | 
  ver_msg    | text |           |          | 
 
+                Table "emaj.emaj_capabilities"
+      Column       |  Type   | Collation | Nullable | Default 
+-------------------+---------+-----------+----------+---------
+ cap_event_trigger | boolean |           | not null | 
+Tablespace: "tspemaj"
+
           Composite type "emaj.emaj_consolidable_rollback_type"
             Column             |  Type   | Collation | Nullable | Default 
 -------------------------------+---------+-----------+----------+---------
