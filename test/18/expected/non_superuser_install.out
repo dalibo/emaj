@@ -9,7 +9,9 @@ SET client_min_messages TO WARNING;
 create role _regress_emaj_install login password 'install' createrole;
 -- anticipate the emaj_adm and emaj_viewer role creation
 create role emaj_adm;
+ERROR:  role "emaj_adm" already exists
 create role emaj_viewer;
+ERROR:  role "emaj_viewer" already exists
 -- and anticipate the grants to the installer
 grant emaj_adm to _regress_emaj_install with admin true;
 grant emaj_viewer to _regress_emaj_install;

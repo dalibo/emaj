@@ -849,6 +849,366 @@ $_gen_sql_seq$
   END;
 $_gen_sql_seq$;
 
+CREATE OR REPLACE FUNCTION emaj._verify_groups(p_groups TEXT[], p_onErrorStop BOOLEAN)
+RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
+$_verify_groups$
+-- The function verifies the consistency of a tables groups array.
+-- Input: - tables groups array,
+--        - a boolean indicating whether the function has to raise an exception in case of detected unconsistency.
+-- If onErrorStop boolean is false, it returns a set of _verify_groups_type records, one row per detected unconsistency, including
+-- the faulting schema and table or sequence names and a detailed message.
+-- If no error is detected, no row is returned.
+-- This function may be directly called by the Emaj_web client.
+  DECLARE
+    v_hint                   CONSTANT TEXT = 'You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.';
+    r_object                 RECORD;
+  BEGIN
+-- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
+-- Let's start with some global checks that always raise an exception if an issue is detected.
+-- Look for groups unconsistency.
+-- Unlike emaj_verify_all(), there is no direct check that application schemas exist.
+-- Check that all application relations referenced in the emaj_relation table still exist.
+    FOR r_object IN
+      SELECT t.rel_schema, t.rel_tblseq, r.rel_group,
+             'In tables group "' || r.rel_group || '", the ' ||
+               CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
+               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
+        FROM
+          (  SELECT rel_schema, rel_tblseq, rel_kind
+               FROM emaj.emaj_relation
+               WHERE rel_group = ANY (p_groups)
+                 AND upper_inf(rel_time_range)
+           EXCEPT                                -- all relations known by postgres
+             SELECT nspname, relname, relkind::TEXT
+               FROM pg_catalog.pg_class
+                    JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+               WHERE relkind IN ('r','S')
+          ) AS t, emaj.emaj_relation r         -- join with emaj_relation to get the group name
+        WHERE t.rel_schema = r.rel_schema
+          AND t.rel_tblseq = r.rel_tblseq
+          AND upper_inf(r.rel_time_range)
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (1): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that the log table for all tables referenced in the emaj_relation table still exist.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In tables group "' || rel_group || '", the log table "' ||
+               rel_log_schema || '"."' || rel_log_table || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_log_schema
+                     AND relname = rel_log_table
+                )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (2): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that the log function for each table referenced in the emaj_relation table still exists.
+    FOR r_object IN
+                                                  -- the schema and table names are rebuilt from the returned function name
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In tables group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function ||
+             '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r' AND upper_inf(rel_time_range)
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_proc
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+                   WHERE nspname = rel_log_schema
+                     AND proname = rel_log_function
+                )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (3): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that log and truncate triggers for all tables referenced in the emaj_relation table still exist.
+--   Start with the log trigger
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In tables group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND upper_inf(rel_time_range)
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_trigger
+                        JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND tgname = 'emaj_log_trg'
+                )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (4): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+--   Then the truncate trigger.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In tables group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND upper_inf(rel_time_range)
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_trigger
+                        JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND tgname = 'emaj_trunc_trg'
+                )
+      ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (5): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that all log tables have a structure consistent with the application tables they reference
+-- (same columns and same formats). It only returns one row per faulting table.
+    FOR r_object IN
+      WITH cte_app_tables_columns AS                  -- application table's columns
+        (SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+           FROM emaj.emaj_relation
+                JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+           WHERE attnum > 0
+             AND attisdropped = FALSE
+             AND rel_group = ANY (p_groups)
+             AND rel_kind = 'r'
+             AND upper_inf(rel_time_range)
+        ),
+           cte_log_tables_columns AS                  -- log table's columns
+        (SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+           FROM emaj.emaj_relation
+                JOIN pg_catalog.pg_class ON (relname = rel_log_table)
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_log_schema)
+                JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+            WHERE attnum > 0
+              AND NOT attisdropped
+              AND attnum < rel_emaj_verb_attnum
+              AND rel_group = ANY (p_groups)
+              AND rel_kind = 'r'
+              AND upper_inf(rel_time_range))
+      SELECT DISTINCT rel_schema, rel_tblseq, rel_group,
+             'In tables group "' || rel_group || '", the structure of the application table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
+             rel_log_schema || '"."' || rel_log_table || '").' AS msg
+        FROM
+          (
+            (                                        -- application table's columns
+               SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                 FROM cte_app_tables_columns
+             EXCEPT                                   -- minus log table's columns
+               SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                 FROM cte_log_tables_columns
+            )
+          UNION
+            (                                         -- log table's columns
+               SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                 FROM cte_log_tables_columns
+             EXCEPT                                    -- minus application table's columns
+               SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                 FROM cte_app_tables_columns
+            )
+          ) AS t
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that all tables have their primary key if they belong to a rollbackable group.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In the rollbackable tables group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has no primary key anymore.' AS msg
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND upper_inf(rel_time_range)
+          AND group_is_rollbackable
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = pg_class.oid)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND contype = 'p'
+                )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- For rollbackable groups, check that no table has been altered as UNLOGGED or dropped and recreated as TEMP table after the tables
+-- groups creation.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In the rollbackable tables group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+             JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND upper_inf(rel_time_range)
+          AND group_is_rollbackable
+          AND relpersistence <> 'p'
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that the primary key structure of all tables belonging to rollbackable groups is unchanged.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In the rollbackable tables group "' || rel_group || '", the primary key of the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has changed (' ||
+             registered_pk_columns || ' => ' || current_pk_columns || ').' AS msg
+        FROM
+          (SELECT rel_schema, rel_tblseq, rel_group,
+                  array_to_string(rel_pk_cols, ',') AS registered_pk_columns,
+                  string_agg(attname, ',' ORDER BY array_position(conkey, attnum)) AS current_pk_columns
+             FROM emaj.emaj_relation
+                  JOIN emaj.emaj_group ON (group_name = rel_group)
+                  JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                  JOIN pg_catalog.pg_constraint ON (conrelid = pg_class.oid)
+                  JOIN pg_catalog.pg_attribute ON (attrelid = conrelid)
+             WHERE rel_group = ANY (p_groups)
+               AND rel_kind = 'r'
+               AND upper_inf(rel_time_range)
+               AND group_is_rollbackable
+               AND contype = 'p'
+               AND attnum = ANY (conkey)
+             GROUP BY 1,2,3,4
+          ) AS t
+        WHERE registered_pk_columns <> current_pk_columns
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that the "GENERATED AS expression" columns list of all tables have not changed.
+-- (The expression of virtual generated columns be changed, without generating any trouble)
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In tables group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has changed (' ||
+             registered_gen_columns || ' => ' || current_gen_columns || ').' AS msg
+        FROM
+          (SELECT rel_schema, rel_tblseq, rel_group,
+                  coalesce(array_to_string(rel_gen_expr_cols, ','), '<none>') AS registered_gen_columns,
+                  coalesce(string_agg(attname, ',' ORDER BY attnum), '<none>') AS current_gen_columns
+             FROM emaj.emaj_relation
+                  JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_class.oid)
+             WHERE rel_group = ANY (p_groups)
+               AND rel_kind = 'r'
+               AND upper_inf(rel_time_range)
+               AND attgenerated <> ''
+               AND attnum > 0
+               AND NOT attisdropped
+             GROUP BY 1,2,3,4
+          ) AS t
+        WHERE registered_gen_columns <> current_gen_columns
+        ORDER BY 1,2,3,4
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check the array of triggers to ignore at rollback time only contains existing triggers.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'Error: In group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
+          || rel_schema || '"."' || rel_tblseq || '" is missing. '
+          || 'Use the emaj_modify_table() function to adjust the list of application triggers that should not be'
+          || ' automatically disabled at rollback time.' AS msg
+        FROM
+          (SELECT rel_group, rel_schema, rel_tblseq, unnest(rel_ignored_triggers) AS trg_name
+             FROM emaj.emaj_relation
+             WHERE upper_inf(rel_time_range)
+               AND rel_ignored_triggers IS NOT NULL
+          ) AS t
+        WHERE NOT EXISTS
+                 (SELECT NULL
+                    FROM pg_catalog.pg_trigger
+                         JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                         JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                    WHERE nspname = rel_schema
+                      AND relname = rel_tblseq
+                      AND tgname = trg_name
+                 )
+        ORDER BY 1,2,3,4
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (11): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that all log tables have the 6 required technical columns. It only returns one row per faulting table.
+    FOR r_object IN
+      SELECT DISTINCT rel_schema, rel_tblseq, rel_group,
+             'In tables group "' || rel_group || '", the log table "' ||
+             rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
+             string_agg(attname,', ' ORDER BY attname) || ').' AS msg
+        FROM
+          (  SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+               FROM emaj.emaj_relation,
+                   (VALUES ('emaj_verb'), ('emaj_tuple'), ('emaj_gid'), ('emaj_changed'), ('emaj_txid'), ('emaj_user')) AS t(attname)
+               WHERE rel_group = ANY (p_groups)
+                 AND rel_kind = 'r'
+                 AND upper_inf(rel_time_range)
+                 AND EXISTS
+                       (SELECT NULL
+                          FROM pg_catalog.pg_class
+                               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                          WHERE nspname = rel_log_schema
+                            AND relname = rel_log_table
+                       )
+           EXCEPT
+             SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+               FROM emaj.emaj_relation
+                    JOIN pg_catalog.pg_class ON (relname = rel_log_table)
+                    JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_log_schema)
+                    JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+               WHERE rel_group = ANY (p_groups)
+                 AND rel_kind = 'r'
+                 AND upper_inf(rel_time_range)
+                 AND attnum > 0
+                 AND attisdropped = FALSE
+                 AND attname IN ('emaj_verb', 'emaj_tuple', 'emaj_gid', 'emaj_changed', 'emaj_txid', 'emaj_user')
+          ) AS t2
+        GROUP BY rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (12): % %', r_object.msg, v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+--
+    RETURN;
+  END;
+$_verify_groups$;
+
 CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_drop_group$
