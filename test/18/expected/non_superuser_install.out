@@ -9,9 +9,7 @@ SET client_min_messages TO WARNING;
 create role _regress_emaj_install login password 'install' createrole;
 -- anticipate the emaj_adm and emaj_viewer role creation
 create role emaj_adm;
-ERROR:  role "emaj_adm" already exists
 create role emaj_viewer;
-ERROR:  role "emaj_viewer" already exists
 -- and anticipate the grants to the installer
 grant emaj_adm to _regress_emaj_install with admin true;
 grant emaj_viewer to _regress_emaj_install;
@@ -53,11 +51,11 @@ reset search_path;
 ------------------------------------------------------------
 set role _regress_emaj_install;
 \set ECHO errors
-psql:sql/emaj-devel.sql:15025: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15025: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15025: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
-psql:sql/emaj-devel.sql:15025: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
-psql:sql/emaj-devel.sql:15025: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
+psql:sql/emaj-devel.sql:15053: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15053: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15053: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15053: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
+psql:sql/emaj-devel.sql:15053: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_function | hist_event |  hist_object  |                                      hist_wording                                      | hist_user 
@@ -65,16 +63,16 @@ select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj
  EMAJ_INSTALL  |            | E-Maj <devel> | Initialisation completed ((Not SUPERUSER, No event triggers, No COPY FROM, No COPY TO) | postgres
 (1 row)
 
-select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
- verh_version | verh_installed_by_superuser 
---------------+-----------------------------
- <devel>      | f
+select verh_version from emaj.emaj_version_hist;
+ verh_version 
+--------------
+ <devel>
 (1 row)
 
-select * from emaj.emaj_capabilities;
- cap_event_trigger 
--------------------
- f
+select * from emaj.emaj_install_conf;
+ inst_as_extension | inst_by_superuser | inst_with_event_triggers 
+-------------------+-------------------+--------------------------
+ f                 | f                 | f
 (1 row)
 
 ------------------------------------------------------------
@@ -185,12 +183,11 @@ revoke pg_write_server_files from _regress_emaj_install;
 -- check the E-Maj environment
 ------------------------------------------------------------
 select * from emaj.emaj_verify_all();
-                                                                 emaj_verify_all                                                                  
---------------------------------------------------------------------------------------------------------------------------------------------------
+                                     emaj_verify_all                                     
+-----------------------------------------------------------------------------------------
  Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
- Warning: The "emaj_protection_trg" event triggers is missing. It can be recreated using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(3 rows)
+(2 rows)
 
 ------------------------------------------------------------
 -- drop the extension

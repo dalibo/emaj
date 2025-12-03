@@ -65,7 +65,13 @@ use warnings; use strict;
       print FICOT "CREATE EXTENSION IF NOT EXISTS btree_gist;\n";
       $status++;
     }
-    if ($status == 5) {
+# Modify the inst_as_extension boolean constant
+    if ($status == 5 && $line =~ /v_createdAsExtension     CONSTANT BOOLEAN = TRUE/) {
+      print FICOT "    v_createdAsExtension     CONSTANT BOOLEAN = FALSE;\n";
+      $status++;
+      next;
+    }
+    if ($status == 6) {
 # Comment the ALTER EXTENSION verbs
       if ($line =~ /^\s*ALTER EXTENSION/) {
         print FICOT "--$line";
@@ -81,21 +87,14 @@ use warnings; use strict;
         next;
       }
     }
-# Comment the calls to the pg_extension_config_dump() function
-    if ($status == 6) {
-      if ($line =~ /^SELECT pg_catalog\.pg_extension_config_dump/) {
-        print FICOT "--$line";
-        next;
-      }
-    }
 # Remove the comment setting for internal functions. This curiously fails in Amazon-RDS environment.
-    if ($status == 6 && $line =~ /^-- Set comments for all internal functions,/) {
+    if ($status == 7 && $line =~ /^-- Set comments for all internal functions,/) {
       for (my $i = 0; $i <= 22; $i++) { $line = <FICIN>; }
       $status++;
 	}
 
 # Add final checks and messages
-    if ($status == 7 && $line =~ /^-- Warn if the role is not superuser./) {
+    if ($status == 8 && $line =~ /^-- Warn if the role is not superuser./) {
       print FICOT "    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';\n";
       $status++;
 	}
@@ -107,7 +106,7 @@ use warnings; use strict;
   print FICOT "--\n";
   print FICOT "COMMIT;\n";
 
-  if ($status != 8) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 8."; }
+  if ($status != 9) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 9."; }
 
 # Close files
   close FICIN;

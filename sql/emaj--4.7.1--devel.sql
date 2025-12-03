@@ -88,23 +88,25 @@ SELECT emaj._disable_event_triggers();
 --                                                            --
 ----------------------------------------------------------------
 
--- Table emaj_version_hist
+-- Table emaj_install_conf
 
-ALTER TABLE emaj.emaj_version_hist
-  ADD COLUMN verh_installed_by_superuser  BOOLEAN DEFAULT TRUE;
-
--- Table emaj_capabilities
-
-CREATE TABLE emaj.emaj_capabilities (
-  cap_event_trigger            BOOLEAN     NOT NULL        -- boolean indicating whether this emaj instance can manage event triggers
+-- Table containing the install configuration characteristics of this emaj instance.
+-- It only contains a single row.
+-- Its content is only set at emaj install time.
+-- It is created and populated early in this script to let the install process know what to setup.
+CREATE TABLE emaj.emaj_install_conf (
+  inst_as_extension            BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance has been created as EXTENSION
+  inst_by_superuser            BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance has been installed by a
+                                                           --   SUPERUSER
+  inst_with_event_triggers     BOOLEAN     NOT NULL        -- boolean indicating whether this emaj instance supports event triggers
   );
-COMMENT ON TABLE emaj.emaj_capabilities IS
-$$Contains the capabilities of this emaj instance.$$;
+COMMENT ON TABLE emaj.emaj_install_conf IS
+$$Contains the install configuration characteristics of this emaj instance.$$;
 
 -- All boolean columns are set to TRUE because the initial installation was necessary done by a superuser
 --   (no script being available for an upgrade by a non superuser).
-INSERT INTO emaj.emaj_capabilities (cap_event_trigger)
-  VALUES (TRUE);
+INSERT INTO emaj.emaj_install_conf (inst_as_extension, inst_by_superuser, inst_with_event_triggers)
+  VALUES (TRUE, TRUE, TRUE);
 
 --
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
@@ -3135,6 +3137,124 @@ $emaj_import_parameters_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(TEXT,BOOLEAN) IS
 $$Import E-Maj parameters from a JSON formatted file.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
+RETURNS SETOF TEXT LANGUAGE plpgsql AS
+$emaj_verify_all$
+-- The function verifies the consistency between all emaj objects present inside emaj schema and
+-- emaj objects related to tables and sequences referenced in the emaj_relation table.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
+  DECLARE
+    v_supportEventTriggers   BOOLEAN;
+    v_errorFound             BOOLEAN = FALSE;
+    v_status                 INT;
+    v_schema                 TEXT;
+    v_paramList              TEXT;
+    r_object                 RECORD;
+  BEGIN
+-- Get the installation characteristics.
+    SELECT inst_with_event_triggers INTO STRICT v_supportEventTriggers
+      FROM emaj.emaj_install_conf;
+-- Check the postgres version compatibility.
+    IF emaj._pg_version_num() < 120000 THEN
+      RETURN NEXT 'Error: The current postgres version (' || version()
+               || ') is not compatible with this E-Maj version. It should be at least 12';
+      v_errorFound = TRUE;
+    END IF;
+-- Check all E-Maj schemas.
+    FOR r_object IN
+      SELECT msg
+        FROM emaj._verify_all_schemas() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- Check all groups components.
+    FOR r_object IN
+      SELECT msg
+        FROM emaj._verify_all_groups() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- Report a warning if emaj_param contains an unknown parameter.
+    SELECT string_agg(param_key, ', ' ORDER BY param_key)
+      INTO v_paramList
+      FROM emaj.emaj_visible_param
+      WHERE param_key NOT IN
+        ('dblink_user_password', 'history_retention', 'alter_log_table', 'avg_row_rollback_duration', 'avg_row_delete_log_duration',
+         'avg_fkey_check_duration', 'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration');
+    IF v_paramList IS NOT NULL THEN
+      RETURN NEXT format('Warning: the emaj_param table contains unknown parameters (%s).',
+                         v_paramList);
+    END IF;
+-- Report a warning if dblink connections are not operational.
+    IF has_function_privilege('emaj._dblink_open_cnx(text,text)', 'execute') THEN
+      SELECT p_status, p_schema INTO v_status, v_schema
+        FROM emaj._dblink_open_cnx('emaj_verify_all', current_role);
+      CASE v_status
+        WHEN 0, 1 THEN
+          PERFORM emaj._dblink_close_cnx('emaj_verify_all', v_schema);
+        WHEN -1 THEN
+          RETURN NEXT 'Warning: The dblink extension is not installed.';
+        WHEN -3 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the current role is not granted to execute dblink_connect_u().';
+        WHEN -4 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the transaction isolation level is not READ COMMITTED.';
+        WHEN -5 THEN
+          RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set in the emaj_param table.';
+        WHEN -6 THEN
+          RETURN NEXT 'Warning: The dblink connection test failed. The ''dblink_user_password'' parameter value is probably incorrect.';
+        WHEN -7 THEN
+          RETURN NEXT 'Warning: The role set in the ''dblink_user_password'' parameter has not emaj_adm rights.';
+        ELSE
+          RETURN NEXT format('Warning: The dblink connection test failed for an unknown reason (status = %s).',
+                             v_status::TEXT);
+      END CASE;
+    ELSE
+      RETURN NEXT 'Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).';
+    END If;
+-- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks.
+    IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
+      RETURN NEXT format('Warning: The max_prepared_transactions parameter value (%s) on this cluster is too low to launch parallel '
+                         'rollback.',
+                         pg_catalog.current_setting('max_prepared_transactions'));
+    END IF;
+    IF v_supportEventTriggers THEN
+-- Report a warning if the emaj_protection_trg event trigger should exist and is missing.
+-- The other event triggers are protected by the emaj extension they belong to.
+      PERFORM 0
+        FROM pg_catalog.pg_event_trigger
+        WHERE evtname = 'emaj_protection_trg';
+      IF NOT FOUND THEN
+        RETURN NEXT 'Warning: The "emaj_protection_trg" event triggers is missing. It can be recreated using the '
+                    'emaj_enable_protection_by_event_triggers() function.';
+      END IF;
+-- Report a warning if some E-Maj event triggers exist but are not enabled.
+      IF EXISTS
+           (SELECT 0
+              FROM pg_catalog.pg_event_trigger
+                WHERE evtname LIKE 'emaj%'
+                  AND evtenabled = 'D'
+           ) THEN
+        RETURN NEXT 'Warning: Some E-Maj event triggers are disabled. You may enable them using the '
+                    'emaj_enable_protection_by_event_triggers() function.';
+      END IF;
+    END IF;
+-- Final message if no error has been yet detected.
+    IF NOT v_errorFound THEN
+      RETURN NEXT 'No error detected';
+    END IF;
+--
+    RETURN;
+  END;
+$emaj_verify_all$;
+COMMENT ON FUNCTION emaj.emaj_verify_all() IS
+$$Verifies the consistency between existing E-Maj and application objects.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_disable_protection_by_event_triggers$
@@ -3142,13 +3262,13 @@ $emaj_disable_protection_by_event_triggers$
 -- It may be used by an emaj_adm role.
 -- Output: number of effectively disabled event triggers.
   DECLARE
-    v_canEventTrigger        BOOLEAN;
+    v_supportEventTriggers   BOOLEAN;
     v_eventTriggers          TEXT[];
   BEGIN
 -- Raise a warning and return immediately if the extension doesn't support event triggers.
-    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
-      FROM emaj.emaj_capabilities;
-    IF NOT v_canEventTrigger THEN
+    SELECT inst_with_event_triggers INTO STRICT v_supportEventTriggers
+      FROM emaj.emaj_install_conf;
+    IF NOT v_supportEventTriggers THEN
       RAISE WARNING 'emaj_disable_protection_by_event_triggers: This emaj extension does not support event triggers.';
       RETURN 0;
     END IF;
@@ -3172,13 +3292,13 @@ $emaj_enable_protection_by_event_triggers$
 -- It may be used by an emaj_adm role.
 -- Output: number of effectively enabled event triggers.
   DECLARE
-    v_canEventTrigger        BOOLEAN;
+    v_supportEventTriggers   BOOLEAN;
     v_eventTriggers          TEXT[];
   BEGIN
 -- Raise a warning and return immediately if the extension doesn't support event triggers.
-    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
-      FROM emaj.emaj_capabilities;
-    IF NOT v_canEventTrigger THEN
+    SELECT inst_with_event_triggers INTO STRICT v_supportEventTriggers
+      FROM emaj.emaj_install_conf;
+    IF NOT v_supportEventTriggers THEN
       RAISE WARNING 'emaj_enable_protection_by_event_triggers: This emaj extension does not support event triggers.';
       RETURN 0;
     END IF;
@@ -3212,14 +3332,14 @@ $_disable_event_triggers$
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger.
 -- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
   DECLARE
-    v_canEventTrigger        BOOLEAN;
+    v_supportEventTriggers   BOOLEAN;
     v_eventTrigger           TEXT;
     v_eventTriggers          TEXT[] = ARRAY[]::TEXT[];
   BEGIN
 -- Exit immediately if the extension doesn't support event triggers.
-    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
-      FROM emaj.emaj_capabilities;
-    IF NOT v_canEventTrigger THEN
+    SELECT inst_with_event_triggers INTO STRICT v_supportEventTriggers
+      FROM emaj.emaj_install_conf;
+    IF NOT v_supportEventTriggers THEN
       RETURN v_eventTriggers;
     END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
@@ -3255,13 +3375,13 @@ $_enable_event_triggers$
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
 -- The function doesn't execute anything when emaj has been installed with the emaj-devel.sql script by a non superuser role.
   DECLARE
-    v_canEventTrigger        BOOLEAN;
+    v_supportEventTriggers   BOOLEAN;
     v_eventTrigger           TEXT;
   BEGIN
 -- Exit immediately if the extension doesn't support event triggers.
-    SELECT cap_event_trigger INTO STRICT v_canEventTrigger
-      FROM emaj.emaj_capabilities;
-    IF NOT v_canEventTrigger THEN
+    SELECT inst_with_event_triggers INTO STRICT v_supportEventTriggers
+      FROM emaj.emaj_install_conf;
+    IF NOT v_supportEventTriggers THEN
       RETURN p_eventTriggers;
     END IF;
 -- If the emaj_protection_trg event trigger does not exist, recreate it and report.
@@ -3613,10 +3733,9 @@ WITH start_time_data AS (
     FROM start_time_data
     WHERE upper_inf(verh_time_range)
   )
-  INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_install_duration, verh_installed_by_superuser)
-    SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), duration, rolsuper
-      FROM start_time_data, pg_catalog.pg_roles
-      WHERE rolname = current_user;
+  INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_install_duration)
+    SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), duration
+      FROM start_time_data;
 
 -- Insert the upgrade end record in the operation history.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)

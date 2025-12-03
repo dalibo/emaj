@@ -33,8 +33,9 @@ select relname from pg_catalog.pg_class,
   where t.oid = pg_class.oid
   order by 1;
 
--- check the emaj_version_hist content
-select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist order by verh_time_range;
+-- check the emaj_version_hist and emaj_install_conf content
+select verh_version from emaj.emaj_version_hist order by verh_time_range;
+select * from emaj.emaj_install_conf;
 select emaj.emaj_get_version();
 
 -- check tables list

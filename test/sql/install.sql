@@ -23,9 +23,9 @@ select relname from pg_catalog.pg_class,
   where t.oid = pg_class.oid
   order by 1;
 
--- check the emaj_version_hist and emaj_capabilities content
-select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
-select * from emaj.emaj_capabilities;
+-- check the emaj_version_hist and emaj_install_conf content
+select verh_version from emaj.emaj_version_hist;
+select * from emaj.emaj_install_conf;
 select emaj.emaj_get_version();
 
 -- check history

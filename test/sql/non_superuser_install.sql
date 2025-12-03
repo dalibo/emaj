@@ -62,8 +62,8 @@ set role _regress_emaj_install;
 
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
-select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist;
-select * from emaj.emaj_capabilities;
+select verh_version from emaj.emaj_version_hist;
+select * from emaj.emaj_install_conf;
 
 ------------------------------------------------------------
 -- build a tables group
