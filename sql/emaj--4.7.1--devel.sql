@@ -154,6 +154,127 @@ $$
     WHERE element IS NOT NULL AND element <> '';
 $$;
 
+CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, p_callerRole TEXT, OUT p_status INT, OUT p_schema TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_dblink_open_cnx$
+-- This function tries to open a named dblink connection.
+-- It uses as target: the current cluster (port), the current database and a role defined in the emaj_param table.
+-- This connection role must be defined in the emaj_param table with a row having:
+--   - param_key = 'dblink_user_password',
+--   - param_value_text = 'user=<user> password=<password>' with the rules that apply to usual libPQ connect strings.
+-- The password can be omited if the connection doesn't require it.
+-- The dblink_connect_u is used to open the connection so that emaj_adm but non superuser roles can access the
+--    cluster even when no password is required to log on.
+-- The function is directly called by Emaj_web.
+-- Input:  connection name
+--         caller role to check for permissions
+-- Output: integer status return.
+--           1 successful connection
+--           0 already opened connection
+--          -1 dblink is not installed
+--          -2 dblink functions are not visible for the session (obsolete)
+--          -3 dblink functions execution is not granted to the role
+--          -4 the transaction isolation level is not READ COMMITTED
+--          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
+--          -6 error at dblink_connect() call
+--          -7 the dblink user/password from emaj_param has not emaj_adm rights
+--         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
+-- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
+--   of pg_read_all_settings.
+  DECLARE
+    v_nbCnx                  INT;
+    v_userPassword           TEXT;
+    v_connectString          TEXT;
+    v_stmt                   TEXT;
+    v_isEmajadm              BOOLEAN;
+    v_sqlstate               TEXT;
+  BEGIN
+-- Look for the schema holding the dblink functions.
+--   (NULL if the dblink_connect_u function is not available, which should not happen)
+    SELECT nspname INTO p_schema
+      FROM pg_catalog.pg_proc
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+      WHERE proname = 'dblink_connect_u'
+      LIMIT 1;
+    IF NOT FOUND THEN
+      p_status = -1;                      -- dblink is not installed
+    ELSIF NOT pg_catalog.has_function_privilege(p_callerRole, quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
+      p_status = -3;                      -- current role has not the execute rights on dblink functions
+    ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'emaj_verify_all') AND
+          pg_catalog.current_setting('transaction_isolation') <> 'read committed' THEN
+      p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
+                                          --   READ COMMITTED transaction
+    ELSE
+      EXECUTE format('SELECT 0 WHERE %L = ANY (%I.dblink_get_connections())',
+                     p_cnxName, p_schema);
+      GET DIAGNOSTICS v_nbCnx = ROW_COUNT;
+      IF v_nbCnx > 0 THEN
+-- Dblink is usable, so search the requested connection name in dblink connections list.
+        p_status = 0;                       -- the requested connection is already open
+      ELSE
+-- So, get the 'dblink_user_password' parameter if exists, from emaj_param.
+        SELECT param_value_text INTO v_userPassword
+          FROM emaj.emaj_param
+          WHERE param_key = 'dblink_user_password';
+        IF NOT FOUND THEN
+          p_status = -5;                    -- no 'dblink_user_password' parameter is defined in the emaj_param table
+        ELSE
+-- Build the connect string.
+          v_connectString = 'host='
+                         || CASE
+                              WHEN pg_catalog.current_setting('listen_addresses') = ''
+                                THEN coalesce(substring(pg_catalog.current_setting('unix_socket_directories') from '(.*?)\s*,'),
+                                              pg_catalog.current_setting('unix_socket_directories'))
+                              ELSE 'localhost'
+                            END
+                         || ' port=' || pg_catalog.current_setting('port')
+                         || ' dbname=' || pg_catalog.current_database()
+                         || ' ' || v_userPassword;
+-- Try to connect.
+          BEGIN
+            EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
+                           p_schema, p_cnxName, v_connectString);
+            p_status = 1;                   -- the connection is successful
+-- For E-Maj rollback first connections and test connections, check the role is member of emaj_adm.
+            IF (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
+              v_stmt = 'SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'') AS is_emaj_adm';
+              EXECUTE format('SELECT is_emaj_adm FROM %I.dblink(%L, %L) AS (is_emaj_adm BOOLEAN)',
+                             p_schema, p_cnxName, v_stmt)
+                INTO v_isEmajadm;
+              IF NOT v_isEmajadm THEN
+                p_status = -7;              -- the dblink user/password from emaj_param has not emaj_adm rights
+                EXECUTE format('SELECT %I.dblink_disconnect(%L)',
+                               p_schema, p_cnxName);
+              END IF;
+            END IF;
+          EXCEPTION
+            WHEN OTHERS THEN
+              p_status = -6;                -- the connection attempt failed
+              v_sqlstate = SQLSTATE;
+          END;
+        END IF;
+      END IF;
+    END IF;
+-- For connections used for rollback operations, record the dblink connection attempt in the emaj_hist table.
+    IF substring(p_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+        VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status ||
+          CASE p_status
+            WHEN -1 THEN ' (dblink extension not installed)'
+            WHEN -3 THEN ' (current role not allowed to EXECUTE dblink_connect_u())'
+            WHEN -4 THEN ' (transaction isolation level not READ COMMITTED)'
+            WHEN -5 THEN ' (missing ''dblink_user_password'' parameter in emaj_param table)'
+            WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
+            WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not emaj_adm rights)'
+            ELSE ''
+          END);
+    END IF;
+--
+    RETURN;
+  END;
+$_dblink_open_cnx$;
+
 CREATE OR REPLACE FUNCTION emaj._build_tblseqs_array_from_regexp(p_schema TEXT, p_relkind TEXT, p_includeFilter TEXT, p_excludeFilter TEXT,
                                                                  p_exceptionIfMissing BOOLEAN)
 RETURNS TEXT[] LANGUAGE plpgsql AS

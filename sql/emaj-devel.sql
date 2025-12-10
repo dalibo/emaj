@@ -951,6 +951,7 @@ $_dblink_open_cnx$
     v_connectString          TEXT;
     v_stmt                   TEXT;
     v_isEmajadm              BOOLEAN;
+    v_sqlstate               TEXT;
   BEGIN
 -- Look for the schema holding the dblink functions.
 --   (NULL if the dblink_connect_u function is not available, which should not happen)
@@ -1013,6 +1014,7 @@ $_dblink_open_cnx$
           EXCEPTION
             WHEN OTHERS THEN
               p_status = -6;                -- the connection attempt failed
+              v_sqlstate = SQLSTATE;
           END;
         END IF;
       END IF;
@@ -1020,7 +1022,16 @@ $_dblink_open_cnx$
 -- For connections used for rollback operations, record the dblink connection attempt in the emaj_hist table.
     IF substring(p_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-        VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status);
+        VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status ||
+          CASE p_status
+            WHEN -1 THEN ' (dblink extension not installed)'
+            WHEN -3 THEN ' (current role not allowed to EXECUTE dblink_connect_u())'
+            WHEN -4 THEN ' (transaction isolation level not READ COMMITTED)'
+            WHEN -5 THEN ' (missing ''dblink_user_password'' parameter in emaj_param table)'
+            WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
+            WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not emaj_adm rights)'
+            ELSE ''
+          END);
     END IF;
 --
     RETURN;

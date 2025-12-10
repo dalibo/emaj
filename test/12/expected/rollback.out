@@ -3144,7 +3144,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4045 | UNPROTECT_GROUP        |                            | myGroup1                     | Status 1                                                                                         | postgres
     4046 | UNPROTECT_GROUP        |                            | myGroup2                     | Status 1                                                                                         | postgres
     4047 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Unlogged rollback to mark Different_Mark (timestamp)                                             | postgres
-    4048 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -5                                                                                      | postgres
+    4048 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                       | postgres
     4049 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
     4050 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
     4051 | ROLLBACK_GROUP         | TIME STAMP SET             | 4007                         |                                                                                                  | postgres
@@ -3159,7 +3159,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4060 | DROP_GROUP             | TIME STAMP SET             | 4009                         |                                                                                                  | postgres
     4061 | DROP_GROUP             | END                        | auditOnlyEmptyGroup          | 0 tables/sequences processed                                                                     | postgres
     4117 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Unlogged rollback to mark Different_Mark (timestamp)                                             | postgres
-    4118 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -1                                                                                      | postgres
+    4118 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -1 (dblink extension not installed)                                                     | postgres
     4119 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
     4120 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
     4121 | ROLLBACK_GROUP         | TIME STAMP SET             | 4018                         |                                                                                                  | postgres
@@ -3168,7 +3168,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4124 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4003             | 0 / 2 sequences effectively processed.                                                           | postgres
     4125 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4003                                                                                 | postgres
     4126 | ROLLBACK_GROUP         | BEGIN                      | myGroup2                     | Unlogged rollback to mark Mark21 (timestamp)                                                     | postgres
-    4127 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -1                                                                                      | postgres
+    4127 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -1 (dblink extension not installed)                                                     | postgres
     4128 | LOCK_GROUP             | BEGIN                      | myGroup2                     | Rollback session #1                                                                              | postgres
     4129 | LOCK_GROUP             | END                        | myGroup2                     | Rollback session #1: 8 tables locked, 0 deadlock(s)                                              | postgres
     4130 | ROLLBACK_GROUP         | TIME STAMP SET             | 4019                         |                                                                                                  | postgres
@@ -3183,7 +3183,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4139 | SET_MARK_GROUPS        | TIME STAMP SET             | 4020                         |                                                                                                  | postgres
     4140 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | Mark1B                                                                                           | postgres
     4141 | ROLLBACK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | Unlogged rollback to mark Mark1B (timestamp)                                                     | postgres
-    4142 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -5                                                                                      | postgres
+    4142 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                       | postgres
     4143 | LOCK_GROUP             | BEGIN                      | myGroup1,myGroup2            | Rollback session #1                                                                              | postgres
     4144 | LOCK_GROUP             | END                        | myGroup1,myGroup2            | Rollback session #1: 13 tables locked, 0 deadlock(s)                                             | postgres
     4145 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4021                         |                                                                                                  | postgres
@@ -3193,7 +3193,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4149 | ROLLBACK_GROUPS        | END                        | myGroup1,myGroup2            | Rollback_id 4005                                                                                 | postgres
     4150 |                        | INSERTED PARAMETER         | dblink_user_password         | <masked data>                                                                                    | postgres
     4151 | ROLLBACK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | Unlogged rollback to mark Mark1B (timestamp)                                                     | postgres
-    4152 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -6                                                                                      | postgres
+    4152 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -6 (dblink connection test failed - SQLSTATE 08001)                                     | postgres
     4153 | LOCK_GROUP             | BEGIN                      | myGroup1,myGroup2            | Rollback session #1                                                                              | postgres
     4154 | LOCK_GROUP             | END                        | myGroup1,myGroup2            | Rollback session #1: 13 tables locked, 0 deadlock(s)                                             | postgres
     4155 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4022                         |                                                                                                  | postgres
@@ -3202,7 +3202,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4158 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4006             | 0 / 4 sequences effectively processed.                                                           | postgres
     4159 | ROLLBACK_GROUPS        | END                        | myGroup1,myGroup2            | Rollback_id 4006                                                                                 | postgres
     4160 | ROLLBACK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | Logged rollback to mark Mark1B (timestamp)                                                       | postgres
-    4161 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -4                                                                                      | postgres
+    4161 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = -4 (transaction isolation level not READ COMMITTED)                                     | postgres
     4162 | LOCK_GROUP             | BEGIN                      | myGroup1,myGroup2            | Rollback session #1                                                                              | postgres
     4163 | LOCK_GROUP             | END                        | myGroup1,myGroup2            | Rollback session #1: 13 tables locked, 0 deadlock(s)                                             | postgres
     4164 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4023                         |                                                                                                  | postgres
