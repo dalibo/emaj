@@ -98,6 +98,8 @@ CREATE TABLE emaj.emaj_install_conf (
   inst_as_extension            BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance has been created as EXTENSION
   inst_by_superuser            BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance has been installed by a
                                                            --   SUPERUSER
+  inst_with_emaj_adm           BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance supports the emaj_adm role
+  inst_with_emaj_viewer        BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance supports the emaj_viewer role
   inst_with_event_triggers     BOOLEAN     NOT NULL        -- boolean indicating whether this emaj instance supports event triggers
   );
 COMMENT ON TABLE emaj.emaj_install_conf IS
@@ -105,8 +107,10 @@ $$Contains the install configuration characteristics of this emaj instance.$$;
 
 -- All boolean columns are set to TRUE because the initial installation was necessary done by a superuser
 --   (no script being available for an upgrade by a non superuser).
-INSERT INTO emaj.emaj_install_conf (inst_as_extension, inst_by_superuser, inst_with_event_triggers)
-  VALUES (TRUE, TRUE, TRUE);
+INSERT INTO emaj.emaj_install_conf (inst_as_extension, inst_by_superuser, inst_with_emaj_adm, inst_with_emaj_viewer,
+                                    inst_with_event_triggers)
+  VALUES (TRUE, TRUE, TRUE, TRUE, TRUE);
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE emaj.emaj_install_conf FROM current_user;
 
 --
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
@@ -223,6 +227,64 @@ $_check_can_exec_program$
   END;
 $_check_can_exec_program$;
 
+CREATE OR REPLACE FUNCTION emaj._create_log_schemas(p_function TEXT, p_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_create_log_schemas$
+-- The function creates all log schemas that will be needed to create new log tables.
+-- The function is called at tables groups configuration import.
+-- Input: calling function to record into the emaj_hist table and time_id
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
+--   the current database.
+  DECLARE
+    v_supportEmajAdm         BOOLEAN;
+    v_supportEmajViewer      BOOLEAN;
+    r_schema                 RECORD;
+  BEGIN
+-- Create schemas.
+    FOR r_schema IN
+        SELECT DISTINCT 'emaj_' || tmp_schema AS log_schema
+          FROM tmp_app_table
+          WHERE NOT EXISTS                                                                -- minus those already created
+                  (SELECT 0
+                     FROM emaj.emaj_schema
+                     WHERE sch_name = 'emaj_' || tmp_schema)
+          ORDER BY 1
+    LOOP
+-- Check that the schema doesn't already exist.
+      IF EXISTS
+           (SELECT 0
+              FROM pg_catalog.pg_namespace
+              WHERE nspname = r_schema.log_schema
+           ) THEN
+        RAISE EXCEPTION '_create_log_schemas: The schema "%" should not exist. Drop it manually.',r_schema.log_schema;
+      END IF;
+-- Create the schema.
+      EXECUTE format('CREATE SCHEMA %I',
+                     r_schema.log_schema);
+-- And give the appropriate rights, when possible.
+      SELECT inst_with_emaj_adm, inst_with_emaj_viewer
+        INTO STRICT v_supportEmajAdm, v_supportEmajViewer
+        FROM emaj.emaj_install_conf;
+      IF v_supportEmajAdm THEN
+        EXECUTE format('ALTER SCHEMA %I OWNER TO emaj_adm',
+                       r_schema.log_schema);
+      END IF;
+      IF v_supportEmajViewer THEN
+        EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                       r_schema.log_schema);
+      END IF;
+-- And record the schema creation into the emaj_schema and the emaj_hist tables.
+      INSERT INTO emaj.emaj_schema (sch_name, sch_time_id)
+        VALUES (r_schema.log_schema, p_timeId);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES (p_function, 'LOG_SCHEMA CREATED', quote_ident(r_schema.log_schema));
+    END LOOP;
+--
+    RETURN;
+  END;
+$_create_log_schemas$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
                                                     p_group TEXT, p_properties JSONB DEFAULT NULL, p_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -282,6 +344,8 @@ $_assign_tables$
     v_timeId                 BIGINT;
     v_markName               TEXT;
     v_logSchema              TEXT;
+    v_supportEmajAdm         BOOLEAN;
+    v_supportEmajViewer      BOOLEAN;
     v_selectedIgnoredTrgs    TEXT[];
     v_selectConditions       TEXT;
     v_eventTriggers          TEXT[];
@@ -293,9 +357,10 @@ $_assign_tables$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event)
       VALUES (v_function, 'BEGIN');
 -- Check supplied parameters.
--- Check the group name and if ok, get some properties of the group.
+-- Check the group name and, if ok, get some properties of the group.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE);
-    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+    SELECT group_is_rollbackable, group_is_logging
+      INTO v_groupIsRollbackable, v_groupIsLogging
       FROM emaj.emaj_group
       WHERE group_name = p_group;
 -- Check the supplied schema exists and is not an E-Maj schema.
@@ -413,11 +478,21 @@ $_assign_tables$
              ) THEN
           RAISE EXCEPTION '_assign_tables: The schema "%" should not exist. Drop it manually.',v_logSchema;
         END IF;
--- Create the schema and give the appropriate rights.
-        EXECUTE format('CREATE SCHEMA %I AUTHORIZATION emaj_adm',
+-- Create the schema.
+        EXECUTE format('CREATE SCHEMA %I',
                        v_logSchema);
-        EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
-                       v_logSchema);
+-- And give the appropriate rights, when possible.
+        SELECT inst_with_emaj_adm, inst_with_emaj_viewer
+          INTO STRICT v_supportEmajAdm, v_supportEmajViewer
+          FROM emaj.emaj_install_conf;
+        IF v_supportEmajAdm THEN
+          EXECUTE format('ALTER SCHEMA %I OWNER TO emaj_adm',
+                         v_logSchema);
+        END IF;
+        IF v_supportEmajViewer THEN
+          EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                         v_logSchema);
+        END IF;
 -- And record the schema creation into the emaj_schema and the emaj_hist tables.
         INSERT INTO emaj.emaj_schema (sch_name, sch_time_id)
           VALUES (v_logSchema, v_timeId);
@@ -549,6 +624,244 @@ $emaj_get_assigned_group_table$;
 COMMENT ON FUNCTION emaj.emaj_get_assigned_group_table(TEXT,TEXT) IS
 $$Returns the tables group a table is assigned to.$$;
 
+CREATE OR REPLACE FUNCTION emaj._create_tbl(p_schema TEXT, p_tbl TEXT, p_groupName TEXT, p_priority INT, p_logDatTsp TEXT,
+                                            p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT, p_groupIsLogging BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_create_tbl$
+-- This function creates all what is needed to manage the log and rollback operations for an application table.
+-- Input: the application table to process,
+--        the group to add it into,
+--        the table properties: priority, tablespaces attributes and triggers to ignore at rollback time
+--        the time id of the operation,
+--        a boolean indicating whether the group is currently in logging state.
+-- The objects created in the log schema:
+--    - the associated log table, with its own sequence,
+--    - the function and trigger that log the tables updates.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted privileges on the
+--   application table.
+  DECLARE
+    v_emajNamesPrefix        TEXT;
+    v_baseLogTableName       TEXT;
+    v_baseLogIdxName         TEXT;
+    v_baseLogFnctName        TEXT;
+    v_baseSequenceName       TEXT;
+    v_logSchema              TEXT;
+    v_fullTableName          TEXT;
+    v_logTableName           TEXT;
+    v_logIdxName             TEXT;
+    v_logFnctName            TEXT;
+    v_sequenceName           TEXT;
+    v_dataTblSpace           TEXT;
+    v_idxTblSpace            TEXT;
+    v_prevCMM                TEXT;
+    v_pkCols                 TEXT[];
+    v_genExprCols            TEXT[];
+    v_rlbkColList            TEXT;
+    v_genColList             TEXT;
+    v_genValList             TEXT;
+    v_genSetList             TEXT;
+    v_genPkConditions        TEXT;
+    v_nbGenAlwaysIdentCol    INTEGER;
+    v_attnum                 SMALLINT;
+    v_alter_log_table_param  TEXT;
+    v_stmt                   TEXT;
+    v_supportEmajAdm         BOOLEAN;
+    v_supportEmajViewer      BOOLEAN;
+    v_triggerList            TEXT;
+  BEGIN
+-- The checks on the table properties are performed by the calling functions.
+-- Build the prefix of all emaj object to create.
+    IF length(p_tbl) <= 50 THEN
+-- For not too long table name, the prefix is the table name itself.
+      v_emajNamesPrefix = p_tbl;
+    ELSE
+-- For long table names (over 50 char long), compute the suffix to add to the first 50 characters (#1, #2, ...), by looking at the
+-- existing names.
+      SELECT substr(p_tbl, 1, 50) || '#' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_emajNamesPrefix
+        FROM
+          (SELECT (regexp_match(substr(rel_log_table, 51), '#(\d+)'))[1]::INT AS suffix
+             FROM emaj.emaj_relation
+             WHERE substr(rel_log_table, 1, 50) = substr(p_tbl, 1, 50)
+          ) AS t;
+    END IF;
+-- Build the name of emaj components associated to the application table (non schema qualified and not quoted).
+    v_baseLogTableName     = v_emajNamesPrefix || '_log';
+    v_baseLogIdxName       = v_emajNamesPrefix || '_log_idx';
+    v_baseLogFnctName      = v_emajNamesPrefix || '_log_fnct';
+    v_baseSequenceName     = v_emajNamesPrefix || '_log_seq';
+-- Build the different name for table, trigger, functions,...
+    v_logSchema        = 'emaj_' || p_schema;
+    v_fullTableName    = quote_ident(p_schema) || '.' || quote_ident(p_tbl);
+    v_logTableName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogTableName);
+    v_logIdxName       = quote_ident(v_baseLogIdxName);
+    v_logFnctName      = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogFnctName);
+    v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
+-- Prepare the TABLESPACE clauses for data and index
+    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(p_logDatTsp),'');
+    v_idxTblSpace = coalesce('USING INDEX TABLESPACE ' || quote_ident(p_logIdxTsp),'');
+-- Drop a potential log table or E-Maj trigger leftover.
+    v_prevCMM = pg_catalog.current_setting('client_min_messages');
+    SET client_min_messages TO WARNING;
+    EXECUTE format('DROP TABLE IF EXISTS %s',
+                   v_logTableName);
+    EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %I.%I',
+                   p_schema, p_tbl);
+    EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %I.%I',
+                   p_schema, p_tbl);
+    PERFORM pg_catalog.set_config ('client_min_messages', v_prevCMM, FALSE);
+-- Create the log table: it looks like the application table, with some additional technical columns.
+    EXECUTE format('CREATE TABLE %s (LIKE %s,'
+                   '  emaj_verb      VARCHAR(3)  NOT NULL,'
+                   '  emaj_tuple     VARCHAR(3)  NOT NULL,'
+                   '  emaj_gid       BIGINT      NOT NULL DEFAULT nextval(''emaj.emaj_global_seq''),'
+                   '  emaj_changed   TIMESTAMPTZ DEFAULT clock_timestamp(),'
+                   '  emaj_txid      BIGINT      DEFAULT txid_current(),'
+                   '  emaj_user      VARCHAR(32) DEFAULT session_user,'
+                   '  CONSTRAINT %s PRIMARY KEY (emaj_gid, emaj_tuple) %s'
+                   '  ) %s',
+                    v_logTableName, v_fullTableName, v_logIdxName, v_idxTblSpace, v_dataTblSpace);
+-- Get the attnum of the emaj_verb column.
+    SELECT attnum INTO STRICT v_attnum
+      FROM pg_catalog.pg_attribute
+           JOIN pg_catalog.pg_class ON (pg_class.oid = attrelid)
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = v_logSchema
+        AND relname = v_baseLogTableName
+        AND attname = 'emaj_verb';
+-- Adjust the log table structure with the alter_log_table parameter, if set.
+    SELECT param_value_text INTO v_alter_log_table_param
+      FROM emaj.emaj_param
+      WHERE param_key = ('alter_log_table');
+    IF v_alter_log_table_param IS NOT NULL AND v_alter_log_table_param <> '' THEN
+      EXECUTE format('ALTER TABLE %s %s',
+                     v_logTableName, v_alter_log_table_param);
+    END IF;
+-- Set the index associated to the primary key as cluster index (It may be useful for CLUSTER command).
+    EXECUTE format('ALTER TABLE ONLY %s CLUSTER ON %s',
+                   v_logTableName, v_logIdxName);
+-- Remove the NOT NULL constraints of application columns.
+--   They are useless and blocking to store truncate event for tables belonging to audit_only tables.
+    SELECT string_agg(action, ',') INTO v_stmt
+      FROM
+        (SELECT ' ALTER COLUMN ' || quote_ident(attname) || ' DROP NOT NULL' AS action
+           FROM pg_catalog.pg_attribute
+                JOIN pg_catalog.pg_class ON (pg_class.oid = attrelid)
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+           WHERE nspname = v_logSchema
+             AND relname = v_baseLogTableName
+             AND attnum > 0
+             AND attnum < v_attnum
+             AND NOT attisdropped
+             AND attnotnull
+        ) AS t;
+    IF v_stmt IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE %s %s',
+                     v_logTableName, v_stmt);
+    END IF;
+-- Create the sequence associated to the log table.
+    EXECUTE format('CREATE SEQUENCE %s',
+                   v_sequenceName);
+-- Create the log function.
+-- The new row is logged for each INSERT, the old row is logged for each DELETE and the old and new rows are logged for each UPDATE.
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
+         || 'BEGIN'
+-- The sequence associated to the log table is incremented at the beginning of the function ...
+         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
+-- ... and the global id sequence is incremented by the first/only INSERT into the log table.
+         || '  IF (TG_OP = ''DELETE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
+         || '    RETURN OLD;'
+         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
+         || '    RETURN NEW;'
+         || '  ELSIF (TG_OP = ''INSERT'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
+         || '    RETURN NEW;'
+         || '  END IF;'
+         || '  RETURN NULL;'
+         || 'END;'
+         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
+-- Create the log and truncate triggers.
+    EXECUTE format('CREATE TRIGGER emaj_log_trg'
+                   ' AFTER INSERT OR UPDATE OR DELETE ON %I.%I'
+                   '  FOR EACH ROW EXECUTE PROCEDURE %s()',
+                   p_schema, p_tbl, v_logFnctName);
+    EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                   '  BEFORE TRUNCATE ON %I.%I'
+                   '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                   p_schema, p_tbl);
+    IF p_groupIsLogging THEN
+-- If the group is in logging state, set the triggers as ALWAYS triggers, so that they can fire at rollback time.
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_log_trg, ENABLE ALWAYS TRIGGER emaj_log_trg',
+                     p_schema, p_tbl);
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_trunc_trg, ENABLE ALWAYS TRIGGER emaj_trunc_trg',
+                     p_schema, p_tbl);
+    ELSE
+-- If the group is idle, deactivate the triggers (they will be enabled at emaj_start_group time).
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_log_trg',
+                     p_schema, p_tbl);
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_trunc_trg',
+                     p_schema, p_tbl);
+    END IF;
+-- Set emaj_adm as owner of log objects, when supported.
+    SELECT inst_with_emaj_adm, inst_with_emaj_viewer
+      INTO STRICT v_supportEmajAdm, v_supportEmajViewer
+      FROM emaj.emaj_install_conf;
+    IF v_supportEmajAdm THEN
+      EXECUTE format('ALTER TABLE %s OWNER TO emaj_adm',
+                     v_logTableName);
+      EXECUTE format('ALTER SEQUENCE %s OWNER TO emaj_adm',
+                     v_sequenceName);
+      EXECUTE format('ALTER FUNCTION %s () OWNER TO emaj_adm',
+                     v_logFnctName);
+    END IF;
+-- Grant appropriate rights to the emaj_viewer role, whenn supported.
+    IF v_supportEmajViewer THEN
+      EXECUTE format('GRANT SELECT ON TABLE %s TO emaj_viewer',
+                     v_logTableName);
+      EXECUTE format('GRANT SELECT ON SEQUENCE %s TO emaj_viewer',
+                     v_sequenceName);
+    END IF;
+-- Build the PK columns names array and some pieces of SQL statements that will be needed at table rollback and gen_sql times.
+-- They are left NULL if the table has no pkey.
+    SELECT * FROM emaj._build_sql_tbl(v_fullTableName)
+      INTO v_pkCols, v_genExprCols, v_rlbkColList, v_genColList, v_genValList, v_genSetList, v_genPkConditions, v_nbGenAlwaysIdentCol;
+-- Register the table into emaj_relation.
+    INSERT INTO emaj.emaj_relation
+               (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority,
+                rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
+                rel_log_index, rel_log_sequence, rel_log_function, rel_ignored_triggers, rel_pk_cols, rel_gen_expr_cols,
+                rel_emaj_verb_attnum, rel_has_always_ident_col, rel_sql_rlbk_columns,
+                rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions)
+        VALUES (p_schema, p_tbl, int8range(p_timeId, NULL, '[)'), p_groupName, p_priority,
+                v_logSchema, p_logDatTsp, p_logIdxTsp, 'r', v_baseLogTableName,
+                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, p_ignoredTriggers, v_pkCols, v_genExprCols,
+                v_attnum, v_nbGenAlwaysIdentCol > 0, v_rlbkColList,
+                v_genColList, v_genValList, v_genSetList, v_genPkConditions);
+-- Check if the table has application (neither internal - ie. created for fk - nor previously created by emaj) triggers not already
+-- declared as 'to be ignored at rollback time'.
+    SELECT string_agg(tgname, ', ' ORDER BY tgname) INTO v_triggerList
+      FROM
+        (SELECT tgname
+           FROM pg_catalog.pg_trigger
+           WHERE tgrelid = v_fullTableName::regclass
+             AND tgconstraint = 0
+             AND tgname NOT LIKE E'emaj\\_%\\_trg'
+             AND NOT tgname = ANY(coalesce(p_ignoredTriggers, '{}'))
+        ) AS t;
+-- If yes, issue a warning.
+-- If a trigger updates another table in the same table group or outside, it could generate problem at rollback time.
+    IF v_triggerList IS NOT NULL THEN
+      RAISE WARNING '_create_tbl: The table "%" has triggers that will be automatically disabled during E-Maj rollback operations (%).'
+                    ' Use the emaj_modify_table() function to change this behaviour.', v_fullTableName, v_triggerList;
+    END IF;
+--
+    RETURN;
+  END;
+$_create_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._move_tbl(p_schema TEXT, p_table TEXT, p_oldGroup TEXT, p_oldGroupIsLogging BOOLEAN, p_newGroup TEXT,
                                           p_newGroupIsLogging BOOLEAN, p_timeId BIGINT, p_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -564,6 +877,8 @@ $_move_tbl$
     v_dataTblSpace           TEXT;
     v_idxTblSpace            TEXT;
     v_namesSuffix            TEXT;
+    v_supportEmajAdm         BOOLEAN;
+    v_supportEmajViewer      BOOLEAN;
   BEGIN
 -- Get the current relation characteristics.
     SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_sequence,
@@ -604,11 +919,18 @@ $_move_tbl$
 -- Set the index associated to the primary key as cluster index. It may be useful for CLUSTER command.
     EXECUTE format('ALTER TABLE ONLY %I.%I CLUSTER ON %I',
                    v_logSchema, v_currentLogTable, v_currentLogIndex);
--- Grant appropriate rights to both emaj roles.
-    EXECUTE format('ALTER TABLE %I.%I OWNER TO emaj_adm',
-                   v_logSchema, v_currentLogTable);
-    EXECUTE format('GRANT SELECT ON TABLE %I.%I TO emaj_viewer',
-                   v_logSchema, v_currentLogTable);
+-- Grant appropriate rights to both emaj roles, when possible.
+    SELECT inst_with_emaj_adm, inst_with_emaj_viewer
+      INTO STRICT v_supportEmajAdm, v_supportEmajViewer
+      FROM emaj.emaj_install_conf;
+    IF v_supportEmajAdm THEN
+      EXECUTE format('ALTER TABLE %I.%I OWNER TO emaj_adm',
+                     v_logSchema, v_currentLogTable);
+    END IF;
+    IF v_supportEmajViewer THEN
+      EXECUTE format('GRANT SELECT ON TABLE %I.%I TO emaj_viewer',
+                     v_logSchema, v_currentLogTable);
+    END IF;
 -- Register the end of the previous relation time frame and create a new relation time frame with the new group.
     UPDATE emaj.emaj_relation
       SET rel_time_range = int8range(lower(rel_time_range),p_timeId,'[)')
@@ -3416,7 +3738,11 @@ $emaj_drop_extension$
 -- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
 -- - or with the alternate psql script.
   DECLARE
+    v_createdAsExtension     BOOLEAN;
+    v_supportEmajAdm         BOOLEAN;
+    v_supportEmajViewer      BOOLEAN;
     v_isSuperuser            BOOLEAN;
+    v_isRoleCreaterole       BOOLEAN;
     v_nbObject               INTEGER;
     v_roleToDrop             BOOLEAN;
     v_dbList                 TEXT;
@@ -3426,19 +3752,17 @@ $emaj_drop_extension$
     v_tspList                TEXT;
     r_object                 RECORD;
   BEGIN
+-- Read some installation characteristics.
+    SELECT inst_as_extension, inst_with_emaj_adm, inst_with_emaj_viewer
+      INTO STRICT v_createdAsExtension, v_supportEmajAdm, v_supportEmajViewer
+      FROM emaj.emaj_install_conf;
 -- Perform some checks to verify that the conditions to execute the function are met.
 --
--- Check emaj schema is present.
-    PERFORM 1 FROM pg_catalog.pg_namespace WHERE nspname = 'emaj';
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_drop_extension: The schema ''emaj'' doesn''t exist';
-    END IF;
---
 -- For extensions, check the current role is superuser.
-    SELECT rolsuper INTO v_isSuperuser
+    SELECT rolsuper, rolcreaterole INTO v_isSuperuser, v_isRoleCreaterole
       FROM pg_catalog.pg_roles
       WHERE rolname = current_user;
-    IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
+    IF v_createdAsExtension THEN
       IF NOT v_isSuperuser THEN
         RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
       END IF;
@@ -3497,152 +3821,186 @@ $emaj_drop_extension$
     DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
 --
 -- Revoke also the grants given to emaj_adm on the dblink_connect_u function at install time.
-    FOR r_object IN
-      SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-        WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
-      LOOP
-        BEGIN
-          EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
-        EXCEPTION
-          WHEN insufficient_privilege THEN
-            RAISE WARNING 'emaj_drop_extension: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...';
-        END;
-    END LOOP;
---
--- Check if emaj roles can be dropped.
-    v_roleToDrop = TRUE;
---
--- Are emaj roles also used in other databases of the cluster ?
-    v_dbList = NULL;
-    SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
-      INTO v_dbList
-      FROM pg_database db
-           JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
-           JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
-      WHERE rolname = 'emaj_viewer'
-        AND datname <> current_database();
-    IF v_dbList IS NOT NULL THEN
-      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (%)', v_dbList;
-      v_roleToDrop = FALSE;
+    IF v_supportEmajAdm THEN
+      FOR r_object IN
+        SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+          WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
+        LOOP
+          BEGIN
+            EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
+          EXCEPTION
+            WHEN insufficient_privilege THEN
+              RAISE WARNING 'emaj_drop_extension: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...';
+          END;
+      END LOOP;
     END IF;
 --
-    v_dbList = NULL;
-    SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
-      INTO v_dbList
-      FROM pg_database db
-           JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
-           JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
-      WHERE rolname = 'emaj_adm'
-        AND datname <> current_database();
-    IF v_dbList IS NOT NULL THEN
-      RAISE WARNING 'emaj_drop_extension: The emaj_adm role is also referenced in some other databases (%)', v_dbList;
-      v_roleToDrop = FALSE;
-    END IF;
---
--- Are emaj roles granted to other roles ?
-    v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
-      INTO v_granteeRoleList
-      FROM pg_catalog.pg_roles q
-           JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
-           JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
-      WHERE r.rolname = 'emaj_viewer';
-    IF v_granteeRoleList IS NOT NULL THEN
-      RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_viewer role.',
-                    v_granteeRoleList;
-      v_roleToDrop = FALSE;
-    END IF;
---
-    v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
-      INTO v_granteeRoleList
-      FROM pg_catalog.pg_roles q
-           JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
-           JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
-      WHERE r.rolname = 'emaj_adm';
-    IF v_granteeRoleList IS NOT NULL THEN
-      RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_adm role.',
-            v_granteeRoleList;
-      v_roleToDrop = FALSE;
-    END IF;
---
--- Are emaj roles granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
-    v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
-      INTO v_granteeClassList
-      FROM pg_catalog.pg_namespace
-           JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
-      WHERE array_to_string (relacl,';') LIKE '%emaj_viewer=%';
-    IF v_granteeClassList IS NOT NULL THEN
-      IF length(v_granteeClassList) > 200 THEN
-        v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
-      END IF;
-      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on tables, views or sequences (%).',
-                    v_granteeClassList;
-      v_roleToDrop = FALSE;
-    END IF;
---
-    v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
-      INTO v_granteeClassList
-      FROM pg_catalog.pg_namespace
-           JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
-      WHERE array_to_string (relacl,';') LIKE '%emaj_adm=%';
-    IF v_granteeClassList IS NOT NULL THEN
-      IF length(v_granteeClassList) > 200 THEN
-        v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
-      END IF;
-      RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on tables, views or sequences (%).',
-                    v_granteeClassList;
-      v_roleToDrop = FALSE;
-    END IF;
---
--- Are emaj roles granted to functions (other than just dropped emaj ones) ?
-    v_granteeFunctionList = NULL;
-    SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
-      INTO v_granteeFunctionList
-      FROM pg_catalog.pg_namespace
-           JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
-      WHERE array_to_string (proacl,';') LIKE '%emaj_viewer=%';
-    IF v_granteeFunctionList IS NOT NULL THEN
-      IF length(v_granteeFunctionList) > 200 THEN
-        v_granteeFunctionList = substr(v_granteeFunctionList,1,200) || '...';
-      END IF;
-      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on functions (%).',
-                    v_granteeFunctionList;
-      v_roleToDrop = FALSE;
-    END IF;
---
-    v_granteeFunctionList = NULL;
-    SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
-      INTO v_granteeFunctionList
-      FROM pg_catalog.pg_namespace
-           JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
-      WHERE array_to_string (proacl,';') LIKE '%emaj_adm=%';
-    IF v_granteeFunctionList IS NOT NULL THEN
-      IF length(v_granteeFunctionList) > 200 THEN
-        v_granteeClassList = substr(v_granteeFunctionList,1,200) || '...';
-      END IF;
-      RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on functions (%).',
-                    v_granteeFunctionList;
-      v_roleToDrop = FALSE;
-    END IF;
---
--- If emaj roles can be dropped, drop them.
-    IF v_roleToDrop THEN
--- Revoke the remaining grants set on tablespaces
-      SELECT string_agg(spcname, ', ')
-        INTO v_tspList
-        FROM pg_catalog.pg_tablespace
-        WHERE array_to_string (spcacl,';') LIKE '%emaj_viewer=%' OR array_to_string (spcacl,';') LIKE '%emaj_adm=%';
-      IF v_tspList IS NOT NULL THEN
-        EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_viewer, emaj_adm';
-      END IF;
--- ... and drop both emaj_viewer and emaj_adm roles.
-      DROP ROLE emaj_viewer, emaj_adm;
-      RAISE WARNING 'emaj_drop_extension: emaj_adm and emaj_viewer roles have been dropped.';
+-- Determine whether the emaj_adm role can be dropped.
+-- If emaj_adm is not supported in this emaj instance, just warn.
+    IF NOT v_supportEmajAdm THEN
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role is not supported in this database.';
+    ELSIF NOT v_isRoleCreaterole THEN
+      RAISE WARNING 'emaj_drop_extension: The current role has not the CREATEROLE rights needed to drop emaj_adm.';
     ELSE
-      RAISE WARNING 'emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.';
+      v_roleToDrop = TRUE;
+-- Is emaj_adm also used in other databases of the cluster ?
+      v_dbList = NULL;
+      SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+        INTO v_dbList
+        FROM pg_database db
+             JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+             JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+        WHERE rolname = 'emaj_adm'
+          AND datname <> current_database();
+      IF v_dbList IS NOT NULL THEN
+        RAISE WARNING 'emaj_drop_extension: The emaj_adm role is also referenced in some other databases (%)', v_dbList;
+        v_roleToDrop = FALSE;
+      END IF;
+-- Is emaj_adm granted to other roles ?
+      v_granteeRoleList = NULL;
+      SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+        INTO v_granteeRoleList
+        FROM pg_catalog.pg_roles q
+             JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+             JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+        WHERE r.rolname = 'emaj_adm';
+      IF v_granteeRoleList IS NOT NULL THEN
+        RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_adm role.',
+              v_granteeRoleList;
+        v_roleToDrop = FALSE;
+      END IF;
+-- Is emaj_adm granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
+      v_granteeClassList = NULL;
+      SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+        INTO v_granteeClassList
+        FROM pg_catalog.pg_namespace
+             JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+        WHERE array_to_string (relacl,';') LIKE '%emaj_adm=%';
+      IF v_granteeClassList IS NOT NULL THEN
+        IF length(v_granteeClassList) > 200 THEN
+          v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
+        END IF;
+        RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on tables, views or sequences (%).',
+                      v_granteeClassList;
+        v_roleToDrop = FALSE;
+      END IF;
+-- Is emaj_adm granted to functions (other than just dropped emaj ones) ?
+      v_granteeFunctionList = NULL;
+      SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+        INTO v_granteeFunctionList
+        FROM pg_catalog.pg_namespace
+             JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+        WHERE array_to_string (proacl,';') LIKE '%emaj_adm=%';
+      IF v_granteeFunctionList IS NOT NULL THEN
+        IF length(v_granteeFunctionList) > 200 THEN
+          v_granteeClassList = substr(v_granteeFunctionList,1,200) || '...';
+        END IF;
+        RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on functions (%).',
+                      v_granteeFunctionList;
+        v_roleToDrop = FALSE;
+      END IF;
+-- If emaj_adm can be dropped, do it.
+      IF v_roleToDrop THEN
+-- Revoke first the remaining grants set on tablespaces
+        SELECT string_agg(spcname, ', ')
+          INTO v_tspList
+          FROM pg_catalog.pg_tablespace
+          WHERE array_to_string (spcacl,';') LIKE '%emaj_adm=%';
+        IF v_tspList IS NOT NULL THEN
+          EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_adm';
+        END IF;
+-- ... and drop the role.
+        DROP ROLE emaj_viewer;
+        RAISE WARNING 'emaj_drop_extension: the emaj_adm role has been dropped.';
+      ELSE
+        RAISE WARNING 'emaj_drop_extension: For these reasons, emaj_adm has not been dropped by this script.';
+      END IF;
+    END IF;
+--
+-- Determine whether the emaj_viewer role can be dropped.
+-- If emaj_viewer is not supported in this emaj instance, just warn.
+    IF NOT v_supportEmajViewer THEN
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role is not supported in this database.';
+    ELSIF NOT v_isRoleCreaterole THEN
+      RAISE WARNING 'emaj_drop_extension: The current role has not the CREATEROLE rights needed to drop emaj_viewer.';
+    ELSE
+--
+-- Is emaj_viewer also used in other databases of the cluster ?
+      v_dbList = NULL;
+      SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+        INTO v_dbList
+        FROM pg_database db
+             JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+             JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+        WHERE rolname = 'emaj_viewer'
+          AND datname <> current_database();
+      IF v_dbList IS NOT NULL THEN
+        RAISE WARNING 'emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (%)', v_dbList;
+        v_roleToDrop = FALSE;
+      END IF;
+--
+-- Is emaj_viewer granted to other roles ?
+      v_granteeRoleList = NULL;
+      SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+        INTO v_granteeRoleList
+        FROM pg_catalog.pg_roles q
+             JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+             JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+        WHERE r.rolname = 'emaj_viewer';
+      IF v_granteeRoleList IS NOT NULL THEN
+        RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_viewer role.',
+                      v_granteeRoleList;
+        v_roleToDrop = FALSE;
+      END IF;
+--
+-- Is emaj_viewer granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
+      v_granteeClassList = NULL;
+      SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+        INTO v_granteeClassList
+        FROM pg_catalog.pg_namespace
+             JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+        WHERE array_to_string (relacl,';') LIKE '%emaj_viewer=%';
+      IF v_granteeClassList IS NOT NULL THEN
+        IF length(v_granteeClassList) > 200 THEN
+          v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
+        END IF;
+        RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on tables, views or sequences (%).',
+                      v_granteeClassList;
+        v_roleToDrop = FALSE;
+      END IF;
+--
+-- Is emaj_viewer granted to functions (other than just dropped emaj ones) ?
+      v_granteeFunctionList = NULL;
+      SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+        INTO v_granteeFunctionList
+        FROM pg_catalog.pg_namespace
+             JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+        WHERE array_to_string (proacl,';') LIKE '%emaj_viewer=%';
+      IF v_granteeFunctionList IS NOT NULL THEN
+        IF length(v_granteeFunctionList) > 200 THEN
+          v_granteeFunctionList = substr(v_granteeFunctionList,1,200) || '...';
+        END IF;
+        RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on functions (%).',
+                      v_granteeFunctionList;
+        v_roleToDrop = FALSE;
+      END IF;
+--
+-- If emaj_viewer can be dropped, do it.
+      IF v_roleToDrop THEN
+-- Revoke first the remaining grants set on tablespaces
+        SELECT string_agg(spcname, ', ')
+          INTO v_tspList
+          FROM pg_catalog.pg_tablespace
+          WHERE array_to_string (spcacl,';') LIKE '%emaj_viewer=%';
+        IF v_tspList IS NOT NULL THEN
+          EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_viewer';
+        END IF;
+-- ... and drop the role.
+        DROP ROLE emaj_viewer;
+        RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has been dropped.';
+      ELSE
+        RAISE WARNING 'emaj_drop_extension: For these reasons, the emaj_viewer role has not been dropped by this script.';
+      END IF;
     END IF;
 --
     RETURN;

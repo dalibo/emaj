@@ -18,7 +18,7 @@ drop cascades to function emaj_parallel_rollback_test_app_schema.mytbl2trgfct()
 NOTICE:  extension "emaj" does not exist, skipping
 NOTICE:  drop cascades to 245 other objects
 DETAIL:  drop cascades to table emaj.emaj_version_hist
-drop cascades to table emaj.emaj_capabilities
+drop cascades to table emaj.emaj_install_conf
 drop cascades to type emaj._relation_change_kind_enum
 drop cascades to type emaj._rlbk_status_enum
 drop cascades to type emaj._rlbk_step_enum
@@ -119,10 +119,11 @@ drop cascades to function emaj.emaj_remove_sequences(text,text,text,text)
 drop cascades to function emaj._remove_sequences(text,text[],text,boolean,boolean)
 and 145 other objects (see server log for list)
 NOTICE:  drop cascades to event trigger emaj_protection_trg
-WARNING:  emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (postgres)
 WARNING:  emaj_drop_extension: The emaj_adm role is also referenced in some other databases (postgres)
 WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_adm1, _regress_emaj_adm2) who have been granted emaj_adm role.
-WARNING:  emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.
+WARNING:  emaj_drop_extension: For these reasons, emaj_adm has not been dropped by this script.
+WARNING:  emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (postgres)
+WARNING:  emaj_drop_extension: For these reasons, the emaj_viewer role has not been dropped by this script.
  emaj_drop_extension 
 ---------------------
  

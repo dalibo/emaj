@@ -1,66 +1,73 @@
 -- non_superuser_install.sql
---     single script to test emaj installed with psql by a non superuser role
+--     single script to test emaj installed with psql by a non superuser role.
+--     various use case are tested, giving more and more capabilities to the installer role
 --
 SET client_min_messages TO WARNING;
 ------------------------------------------------------------
--- Create roles, give grants and create needed extensions
+-- Setup objects needed for the whole test scenario by the superuser
 ------------------------------------------------------------
--- _regress_emaj_install owns the emaj environment
-create role _regress_emaj_install login password 'install' createrole;
--- anticipate the emaj_adm and emaj_viewer role creation
-create role emaj_adm;
-create role emaj_viewer;
--- and anticipate the grants to the installer
-grant emaj_adm to _regress_emaj_install with admin true;
-grant emaj_viewer to _regress_emaj_install;
-\drgS
-                              List of role grants
-       Role name       |      Member of       |       Options       | Grantor  
------------------------+----------------------+---------------------+----------
- _regress_emaj_install | emaj_adm             | ADMIN, INHERIT, SET | postgres
- _regress_emaj_install | emaj_viewer          | INHERIT, SET        | postgres
- pg_monitor            | pg_read_all_settings | INHERIT, SET        | postgres
- pg_monitor            | pg_read_all_stats    | INHERIT, SET        | postgres
- pg_monitor            | pg_stat_scan_tables  | INHERIT, SET        | postgres
-(5 rows)
-
--- _regress_emaj_app owns the application objects
+-- drop emaj and test roles, if they exist and if nothing blocks it
+drop role if exists emaj_adm, emaj_viewer;
+drop role if exists _regress_emaj_app, _regress_emaj_install, _regress_emaj_admin2;
+-- _regress_emaj_app role: owns the application objects
 create role _regress_emaj_app login password 'app';
-grant all on database regression to _regress_emaj_install, _regress_emaj_app;
+grant all on database regression to _regress_emaj_app;
+-- _regress_emaj_install owns the emaj environment
+create role _regress_emaj_install login password 'install';
+grant all on database regression to _regress_emaj_install;
 grant create on schema public to _regress_emaj_install;
+-- _regress_emaj_admin2 is another administration role
+create role _regress_emaj_admin2 login password 'admin2';
+-- needed extension
 create extension dblink;
+grant execute on function dblink_connect_u(text,text) to _regress_emaj_install;
 ------------------------------------------------------------
--- Create the application objects and give grants on them to _regress_emaj_install
+-- Create application objects
 ------------------------------------------------------------
 set role _regress_emaj_app;
-DROP SCHEMA IF EXISTS mySchema7 CASCADE;
-CREATE SCHEMA mySchema7;
-GRANT USAGE ON SCHEMA mySchema7 TO _regress_emaj_install;
-SET search_path=mySchema7;
+-- Objects owned by the installer (_regress_emaj_install)
+DROP SCHEMA IF EXISTS appSchema1 CASCADE;
+CREATE SCHEMA appSchema1;
+SET search_path=appSchema1;
 CREATE TABLE myTbl1 (
   col11       SERIAL           NOT NULL,
   col12       TEXT             ,
   PRIMARY KEY (col11)
 );
 CREATE SEQUENCE mySeq1;
-GRANT ALL ON ALL TABLES IN SCHEMA mySchema7 TO _regress_emaj_install;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA mySchema7 TO _regress_emaj_install;
+GRANT USAGE ON SCHEMA appSchema1 TO _regress_emaj_install;
+GRANT ALL ON ALL TABLES IN SCHEMA appSchema1 TO _regress_emaj_install;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA appSchema1 TO _regress_emaj_install;
+reset search_path;
+-- Objects owned by the another role (_regress_emaj_app)
+set role _regress_emaj_install;
+DROP SCHEMA IF EXISTS instSchema1 CASCADE;
+CREATE SCHEMA instSchema1;
+SET search_path=instSchema1;
+CREATE TABLE myTbl1 (
+  col11       SERIAL           NOT NULL,
+  col12       TEXT             ,
+  PRIMARY KEY (col11)
+);
 reset search_path;
 ------------------------------------------------------------
--- install the extension using the psql script
+-- Step 1: the installer role has the minimum rights to use E-Maj
 ------------------------------------------------------------
 set role _regress_emaj_install;
+-- install emaj
 \set ECHO errors
-psql:sql/emaj-devel.sql:15053: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15053: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15053: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
-psql:sql/emaj-devel.sql:15053: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
-psql:sql/emaj-devel.sql:15053: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15198: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: emaj_viewer role is not supported.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
- hist_function | hist_event |  hist_object  |                                      hist_wording                                      | hist_user 
----------------+------------+---------------+----------------------------------------------------------------------------------------+-----------
- EMAJ_INSTALL  |            | E-Maj <devel> | Initialisation completed ((Not SUPERUSER, No event triggers, No COPY FROM, No COPY TO) | postgres
+ hist_function | hist_event |  hist_object  |                                                    hist_wording                                                    | hist_user 
+---------------+------------+---------------+--------------------------------------------------------------------------------------------------------------------+-----------
+ EMAJ_INSTALL  |            | E-Maj <devel> | Initialisation completed (not SUPERUSER, no emaj_adm, no emaj_viewer, no event triggers, no COPY FROM, no COPY TO) | postgres
 (1 row)
 
 select verh_version from emaj.emaj_version_hist;
@@ -70,39 +77,88 @@ select verh_version from emaj.emaj_version_hist;
 (1 row)
 
 select * from emaj.emaj_install_conf;
- inst_as_extension | inst_by_superuser | inst_with_event_triggers 
--------------------+-------------------+--------------------------
- f                 | f                 | f
+ inst_as_extension | inst_by_superuser | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
+-------------------+-------------------+--------------------+-----------------------+--------------------------
+ f                 | f                 | f                  | f                     | f
 (1 row)
 
-------------------------------------------------------------
+select * from emaj.emaj_verify_all();
+                                     emaj_verify_all                                     
+-----------------------------------------------------------------------------------------
+ Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+ No error detected
+(2 rows)
+
 -- build a tables group
-------------------------------------------------------------
-select emaj.emaj_create_group('myGroup7');
+select emaj.emaj_create_group('instGroup1');
  emaj_create_group 
 -------------------
                  1
 (1 row)
 
-----select emaj.emaj_assign_table('myschema7', 'mytbl1', 'myGroup7');
-select emaj.emaj_assign_sequence('myschema7', 'myseq1', 'myGroup7');
+select emaj.emaj_assign_table('instschema1', 'mytbl1', 'instGroup1');
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+select emaj.emaj_assign_sequence('instschema1', 'mytbl1_col11_seq', 'instGroup1');
  emaj_assign_sequence 
 ----------------------
                     1
 (1 row)
 
-------------------------------------------------------------
 -- start the group and perform data changes
-------------------------------------------------------------
-select emaj.emaj_start_group('myGroup7', 'M1');
+select emaj.emaj_start_group('instGroup1', 'M1');
  emaj_start_group 
 ------------------
-                1
+                2
 (1 row)
 
-------------------------------------------------------------
--- test inoperative function calls
-------------------------------------------------------------
+insert into instSchema1.mytbl1 (col12) values ('Row 1');
+-- set a mark and perform data change
+select emaj.emaj_set_mark_group('instGroup1', 'M2');
+ emaj_set_mark_group 
+---------------------
+                   2
+(1 row)
+
+update instSchema1.mytbl1 set col12 = 'Modified row 1' where col11 = 1;
+insert into instSchema1.mytbl1 (col12) values ('Row 2');
+-- logged rollback to M2 without dblink connection
+select * from emaj.emaj_logged_rollback_group('instGroup1','M2');
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
+ Notice        | Rollback id = 1.
+ Notice        | 1 / 1 tables effectively processed.
+ Notice        | 1 / 1 sequences effectively processed.
+(3 rows)
+
+select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
+ hist_object | hist_wording 
+-------------+--------------
+ rlbk#1      | Status = -5
+(1 row)
+
+-- rollback to M2 with dblink connection
+insert into emaj.emaj_param (param_key, param_value_text) 
+  values ('dblink_user_password','user=_regress_emaj_install password=install');
+select * from emaj.emaj_rollback_group('instGroup1','M2');
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
+ Notice        | Rollback id = 2.
+ Notice        | 1 / 1 tables effectively processed.
+ Notice        | 1 / 1 sequences effectively processed.
+(3 rows)
+
+-- ######### the dblink connection fails because emaj_adm doesn't exist => TO BE FIXED #########
+select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
+ hist_object | hist_wording 
+-------------+--------------
+ rlbk#1      | Status = -6
+(1 row)
+
+-- test inoperative or forbidden function calls
 select emaj.emaj_disable_protection_by_event_triggers();
 WARNING:  emaj_disable_protection_by_event_triggers: This emaj extension does not support event triggers.
  emaj_disable_protection_by_event_triggers 
@@ -117,9 +173,6 @@ WARNING:  emaj_enable_protection_by_event_triggers: This emaj extension does not
                                         0
 (1 row)
 
-------------------------------------------------------------
--- test forbidden function calls
-------------------------------------------------------------
 -- missing pg_read_server_files grant
 select emaj.emaj_import_groups_configuration('/tmp/emaj_test');
 ERROR:  _check_can_copy_from: Reading from an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_read_server_files).
@@ -147,17 +200,17 @@ ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this
 CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
 SQL statement "SELECT emaj._check_can_copy_to()"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 39 at PERFORM
-select emaj.emaj_dump_changes_group('myGroup7', 'M1', NULL, '', NULL, '/tmp');
+select emaj.emaj_dump_changes_group('instGroup1', 'M1', NULL, '', NULL, '/tmp');
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
 CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
 SQL statement "SELECT emaj._check_can_copy_to()"
 PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 39 at PERFORM
-select emaj.emaj_snap_group('myGroup7', '/tmp', NULL);
+select emaj.emaj_snap_group('instGroup1', '/tmp', NULL);
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
 CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
 SQL statement "SELECT emaj._check_can_copy_to()"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 35 at PERFORM
-select emaj.emaj_gen_sql_group('myGroup7', 'M1', NULL, '/tmp');
+select emaj.emaj_gen_sql_group('instGroup1', 'M1', NULL, '/tmp');
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
 CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
 SQL statement "SELECT emaj._check_can_copy_to()"
@@ -172,7 +225,7 @@ ERROR:  _check_can_exec_program: Executing an external program is not allowed on
 CONTEXT:  PL/pgSQL function emaj._check_can_exec_program() line 7 at RAISE
 SQL statement "SELECT emaj._check_can_exec_program()"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 40 at PERFORM
-select emaj.emaj_dump_changes_group('myGroup7', 'M1', NULL, '', NULL, '/tmp');
+select emaj.emaj_dump_changes_group('instGroup1', 'M1', NULL, '', NULL, '/tmp');
 ERROR:  _check_can_exec_program: Executing an external program is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).
 CONTEXT:  PL/pgSQL function emaj._check_can_exec_program() line 7 at RAISE
 SQL statement "SELECT emaj._check_can_exec_program()"
@@ -180,53 +233,282 @@ PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) 
 reset role;
 revoke pg_write_server_files from _regress_emaj_install;
 ------------------------------------------------------------
--- check the E-Maj environment
+-- Step 2: assign application objects owned by another role
 ------------------------------------------------------------
+set role _regress_emaj_install;
+-- build another tables group
+select emaj.emaj_create_group('appGroup1');
+ emaj_create_group 
+-------------------
+                 1
+(1 row)
+
+-- ######### emaj_assign_table needs TO BE FIXED ########
+select emaj.emaj_assign_table('appschema1', 'mytbl1', 'appGroup1');
+ERROR:  must be owner of table mytbl1
+CONTEXT:  SQL statement "ALTER TABLE appschema1.mytbl1 DISABLE TRIGGER emaj_log_trg"
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean) line 173 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
+                             p_timeId, p_groupIsLogging)"
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 18 at PERFORM
+SQL statement "SELECT emaj._add_tbl(p_schema, v_oneTable, p_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
+                              v_groupIsLogging, v_timeId, v_function)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 238 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
+select emaj.emaj_assign_sequence('appschema1', 'myseq1', 'appGroup1');
+ emaj_assign_sequence 
+----------------------
+                    1
+(1 row)
+
+-- start the group and perform data changes
+select emaj.emaj_start_group('appGroup1', 'M1');
+ emaj_start_group 
+------------------
+                1
+(1 row)
+
+insert into appSchema1.mytbl1 (col12) values ('Row 1');
+-- set a mark and perform data change
+select emaj.emaj_set_mark_group('appGroup1', 'M2');
+ emaj_set_mark_group 
+---------------------
+                   1
+(1 row)
+
+update appSchema1.mytbl1 set col12 = 'Modified row 1' where col11 = 1;
+insert into appSchema1.mytbl1 (col12) values ('Row 2');
+-- rollback to M2
+select * from emaj.emaj_rollback_group('appGroup1','M2');
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
+ Notice        | Rollback id = 3.
+ Notice        | 0 / 1 sequences effectively processed.
+(2 rows)
+
+-- ok, but no dblink use (not enough rights)
+select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
+ hist_object | hist_wording 
+-------------+--------------
+ rlbk#1      | Status = 0
+(1 row)
+
+------------------------------------------------------------
+-- Step 3: add grants to perform COPY FROM or TO
+------------------------------------------------------------
+reset role;
+GRANT pg_read_server_files TO _regress_emaj_install;
+GRANT pg_write_server_files TO _regress_emaj_install;
+GRANT pg_execute_server_program TO _regress_emaj_install;
+set role _regress_emaj_install;
+select emaj.emaj_export_groups_configuration('/tmp/emaj_test');
+ emaj_export_groups_configuration 
+----------------------------------
+                                2
+(1 row)
+
+select emaj.emaj_import_groups_configuration('/tmp/emaj_test', NULL, TRUE);
+ emaj_import_groups_configuration 
+----------------------------------
+                                2
+(1 row)
+
+select emaj.emaj_export_parameters_configuration('/tmp/emaj_test');
+ emaj_export_parameters_configuration 
+--------------------------------------
+                                    1
+(1 row)
+
+select emaj.emaj_import_parameters_configuration('/tmp/emaj_test');
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    1
+(1 row)
+
+select emaj.emaj_gen_sql_dump_changes_group('instGroup1', 'M1', 'M2', '', NULL, '/tmp/emaj_test');
+                  emaj_gen_sql_dump_changes_group                  
+-------------------------------------------------------------------
+ 2 SQL statements have been written into the "/tmp/emaj_test" file
+(1 row)
+
+\! rm /tmp/emaj_test
+------------------------------------------------------------
+-- Step 4: let another role perform emaj administration tasks
+------------------------------------------------------------
+reset role;
+grant _regress_emaj_install to _regress_emaj_admin2;
+reset role;
+set role _regress_emaj_admin2;
 select * from emaj.emaj_verify_all();
-                                     emaj_verify_all                                     
------------------------------------------------------------------------------------------
- Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+                                                emaj_verify_all                                                
+---------------------------------------------------------------------------------------------------------------
+ Warning: The dblink connection test failed. The 'dblink_user_password' parameter value is probably incorrect.
  No error detected
 (2 rows)
 
-------------------------------------------------------------
+select emaj.emaj_stop_groups(emaj.emaj_get_logging_groups());
+ emaj_stop_groups 
+------------------
+                3
+(1 row)
+
 -- drop the extension
-------------------------------------------------------------
+reset role;
 set role _regress_emaj_install;
 select emaj.emaj_drop_extension();
-WARNING:  emaj_drop_extension: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...
-WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_install) who have been granted emaj_viewer role.
-WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_install) who have been granted emaj_adm role.
-WARNING:  emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.
+WARNING:  emaj_drop_extension: The emaj_adm role is not supported in this database.
+WARNING:  emaj_drop_extension: The emaj_viewer role is not supported in this database.
  emaj_drop_extension 
 ---------------------
  
 (1 row)
 
--- Drop the extra extensions to get a stable re-install test
-drop extension btree_gist;
+------------------------------------------------------------
+-- Step 5: create an emaj_adm role and reinstall the extension
+------------------------------------------------------------
 reset role;
-drop extension dblink;
--- Check that the emaj schema is not known anymore
-\dn emaj
-List of schemas
- Name | Owner 
-------+-------
-(0 rows)
+create role emaj_adm;
+grant emaj_adm to _regress_emaj_install;
+set role _regress_emaj_install;
+-- install emaj
+\set ECHO errors
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15198: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: emaj_viewer role is not supported.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+-- check the installation
+select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
+ hist_function | hist_event |  hist_object  |                                       hist_wording                                       | hist_user 
+---------------+------------+---------------+------------------------------------------------------------------------------------------+-----------
+ EMAJ_INSTALL  |            | E-Maj <devel> | Initialisation completed (not SUPERUSER, no emaj_adm, no emaj_viewer, no event triggers) | postgres
+(1 row)
+
+select * from emaj.emaj_install_conf;
+ inst_as_extension | inst_by_superuser | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
+-------------------+-------------------+--------------------+-----------------------+--------------------------
+ f                 | f                 | f                  | f                     | f
+(1 row)
+
+-- drop the extension
+select emaj.emaj_drop_extension();
+WARNING:  emaj_drop_extension: The emaj_adm role is not supported in this database.
+WARNING:  emaj_drop_extension: The emaj_viewer role is not supported in this database.
+ emaj_drop_extension 
+---------------------
+ 
+(1 row)
 
 ------------------------------------------------------------
--- Drop the application objects
-------------------------------------------------------------
-set role _regress_emaj_app;
-DROP SCHEMA IF EXISTS mySchema7 CASCADE;
-------------------------------------------------------------
--- Drop roles
+-- Step 6: add grants to _regress_emaj_install and reinstall the extension
 ------------------------------------------------------------
 reset role;
-revoke all on database regression from _regress_emaj_install, _regress_emaj_app;
-revoke all on schema public from _regress_emaj_install;
-drop role _regress_emaj_install, _regress_emaj_app;
+GRANT emaj_adm TO _regress_emaj_install WITH ADMIN TRUE;
+ALTER ROLE _regress_emaj_install CREATEROLE;
+set role _regress_emaj_install;
+-- install emaj
+\set ECHO errors
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15198: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+-- check the installation
+select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
+ hist_function | hist_event |  hist_object  |                        hist_wording                         | hist_user 
+---------------+------------+---------------+-------------------------------------------------------------+-----------
+ EMAJ_INSTALL  |            | E-Maj <devel> | Initialisation completed (not SUPERUSER, no event triggers) | postgres
+(1 row)
+
+select * from emaj.emaj_install_conf;
+ inst_as_extension | inst_by_superuser | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
+-------------------+-------------------+--------------------+-----------------------+--------------------------
+ f                 | f                 | t                  | t                     | f
+(1 row)
+
+-- grant emaj_viewer to _regress_emaj_admin2 and try some emaj functions
+reset role;
+revoke _regress_emaj_install from _regress_emaj_admin2;
+grant emaj_viewer to _regress_emaj_admin2;
+set role _regress_emaj_admin2;
+select * from emaj.emaj_verify_all();
+                                        emaj_verify_all                                         
+------------------------------------------------------------------------------------------------
+ Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).
+ No error detected
+(2 rows)
+
+-- grant emaj_adm to _regress_emaj_admin2 and try some emaj functions
+reset role;
+grant emaj_adm to _regress_emaj_admin2;
+reset role;
+set role _regress_emaj_admin2;
+select emaj.emaj_cleanup_rollback_state();
+ emaj_cleanup_rollback_state 
+-----------------------------
+                           0
+(1 row)
+
+-- drop the extension
+reset role;
+set role _regress_emaj_install;
+\drgS
+                                List of role grants
+       Role name       |         Member of         |       Options       | Grantor  
+-----------------------+---------------------------+---------------------+----------
+ _regress_emaj_admin2  | emaj_adm                  | INHERIT, SET        | postgres
+ _regress_emaj_admin2  | emaj_viewer               | INHERIT, SET        | postgres
+ _regress_emaj_install | emaj_adm                  | ADMIN, INHERIT, SET | postgres
+ _regress_emaj_install | emaj_viewer               | ADMIN               | postgres
+ _regress_emaj_install | pg_execute_server_program | INHERIT, SET        | postgres
+ _regress_emaj_install | pg_read_server_files      | INHERIT, SET        | postgres
+ _regress_emaj_install | pg_write_server_files     | INHERIT, SET        | postgres
+ pg_monitor            | pg_read_all_settings      | INHERIT, SET        | postgres
+ pg_monitor            | pg_read_all_stats         | INHERIT, SET        | postgres
+ pg_monitor            | pg_stat_scan_tables       | INHERIT, SET        | postgres
+(10 rows)
+
+select emaj.emaj_drop_extension();
+WARNING:  no privileges could be revoked for "dblink_connect_u"
+WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_admin2, _regress_emaj_install) who have been granted emaj_adm role.
+WARNING:  emaj_drop_extension: For these reasons, emaj_adm has not been dropped by this script.
+WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_admin2, _regress_emaj_install) who have been granted emaj_viewer role.
+WARNING:  emaj_drop_extension: For these reasons, the emaj_viewer role has not been dropped by this script.
+ emaj_drop_extension 
+---------------------
+ 
+(1 row)
+
+\du
+                                   List of roles
+       Role name       |                         Attributes                         
+-----------------------+------------------------------------------------------------
+ _regress_emaj_admin2  | 
+ _regress_emaj_app     | 
+ _regress_emaj_install | Create role
+ emaj_adm              | Cannot login
+ emaj_viewer           | Cannot login
+ myuser                | 
+ postgres              | Superuser, Create role, Create DB, Replication, Bypass RLS
+
+------------------------------------------------------------
+-- Step 7: exit the scenario by leaving a test environment suitable for Emaj_web test
+------------------------------------------------------------
+-- Revoke grants and capabilities
+reset role;
+revoke emaj_adm, emaj_viewer from _regress_emaj_install, _regress_emaj_admin2;
+revoke all on function dblink_connect_u(text,text) from _regress_emaj_install;
+revoke pg_read_server_files from _regress_emaj_install;
+revoke pg_write_server_files from _regress_emaj_install;
+revoke pg_execute_server_program from _regress_emaj_install;
+alter role _regress_emaj_install nocreaterole;
+-- Drop emaj roles
 drop role emaj_adm, emaj_viewer;
---------- for cases when there remains issues with the extension drop by the installer role ; to be removed once OK
-----select emaj.emaj_drop_extension();
-----drop role _regress_emaj_install, _regress_emaj_app;
+-- Reinstall emaj
+set role _regress_emaj_install;
+\set ECHO errors
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15198: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: emaj_viewer role is not supported.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
+psql:sql/emaj-devel.sql:15198: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.

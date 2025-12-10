@@ -169,27 +169,33 @@ select relname from pg_catalog.pg_class,
  emaj_version_hist
 (23 rows)
 
--- check the emaj_version_hist content
-select verh_version, verh_installed_by_superuser from emaj.emaj_version_hist order by verh_time_range;
- verh_version | verh_installed_by_superuser 
---------------+-----------------------------
- 3.1.0        | t
- 3.2.0        | t
- 3.3.0        | t
- 3.4.0        | t
- 4.0.0        | t
- 4.0.1        | t
- 4.1.0        | t
- 4.2.0        | t
- 4.3.0        | t
- 4.3.1        | t
- 4.4.0        | t
- 4.5.0        | t
- 4.6.0        | t
- 4.7.0        | t
- 4.7.1        | t
- <devel>      | t
+-- check the emaj_version_hist and emaj_install_conf content
+select verh_version from emaj.emaj_version_hist order by verh_time_range;
+ verh_version 
+--------------
+ 3.1.0
+ 3.2.0
+ 3.3.0
+ 3.4.0
+ 4.0.0
+ 4.0.1
+ 4.1.0
+ 4.2.0
+ 4.3.0
+ 4.3.1
+ 4.4.0
+ 4.5.0
+ 4.6.0
+ 4.7.0
+ 4.7.1
+ <devel>
 (16 rows)
+
+select * from emaj.emaj_install_conf;
+ inst_as_extension | inst_by_superuser | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
+-------------------+-------------------+--------------------+-----------------------+--------------------------
+ t                 | t                 | t                  | t                     | t
+(1 row)
 
 select emaj.emaj_get_version();
  emaj_get_version 
@@ -218,11 +224,6 @@ select emaj.emaj_get_version();
  ver_tblseq | text |           |          | 
  ver_group  | text |           |          | 
  ver_msg    | text |           |          | 
-
-                Table "emaj.emaj_capabilities"
-      Column       |  Type   | Collation | Nullable | Default 
--------------------+---------+-----------+----------+---------
- cap_event_trigger | boolean |           | not null | 
 
           Composite type "emaj.emaj_consolidable_rollback_type"
             Column             |  Type   | Collation | Nullable | Default 
@@ -343,6 +344,15 @@ Sequence for identity column: emaj.emaj_hist.hist_id
  hist_id | bigint | yes  | hist_id
 primary key, btree, for table "emaj.emaj_hist"
 Tablespace: "tspemaj"
+
+                   Table "emaj.emaj_install_conf"
+          Column          |  Type   | Collation | Nullable | Default 
+--------------------------+---------+-----------+----------+---------
+ inst_as_extension        | boolean |           | not null | 
+ inst_by_superuser        | boolean |           | not null | 
+ inst_with_emaj_adm       | boolean |           | not null | 
+ inst_with_emaj_viewer    | boolean |           | not null | 
+ inst_with_event_triggers | boolean |           | not null | 
 
                 Table "emaj.emaj_log_session"
      Column      |   Type    | Collation | Nullable | Default 
@@ -922,14 +932,13 @@ Tablespace: "tspemaj"
  bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Sequence for identity column: emaj.emaj_time_stamp.time_id
 
-                         Table "emaj.emaj_version_hist"
-           Column            |   Type    | Collation | Nullable |    Default     
------------------------------+-----------+-----------+----------+----------------
- verh_version                | text      |           | not null | 
- verh_time_range             | tstzrange |           | not null | 
- verh_install_duration       | interval  |           |          | 
- verh_txid                   | bigint    |           |          | txid_current()
- verh_installed_by_superuser | boolean   |           |          | true
+                      Table "emaj.emaj_version_hist"
+        Column         |   Type    | Collation | Nullable |    Default     
+-----------------------+-----------+-----------+----------+----------------
+ verh_version          | text      |           | not null | 
+ verh_time_range       | tstzrange |           | not null | 
+ verh_install_duration | interval  |           |          | 
+ verh_txid             | bigint    |           |          | txid_current()
 Indexes:
     "emaj_version_hist_pkey" PRIMARY KEY, btree (verh_version)
     "emaj_version_hist_verh_version_verh_time_range_excl" EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)

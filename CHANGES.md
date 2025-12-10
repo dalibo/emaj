@@ -3,26 +3,30 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-  * Add 2 new functions to help building idempotent tables groups content
-    definition scripts.
-  * Add 3 helper functions to build group names arrays.
-  * Report a clear error message when using functions that read from or write
-    to external files and the emaj installer role has not the appropriate
-    rights.
+  * Writing idempotent administration scripts:
+    * Add 2 new functions to help building idempotent tables groups content
+      definition scripts.
+    * Add 3 helper functions to build group names arrays.
+    * Add a parameter in import_groups_configuration() functions to
+      automatically drop the existing groups that are not imported.
+  * Let E-Maj work when the extension is installed by a non superuser role
+    using the emaj-<version>.sql script:
+    * Do not create and manipulate event triggers when the installer role is
+      not allowed to do it.
+    * Do not create and use emaj_adm or emaj_viewer roles when the installer
+      role has not the needed rights to do it
+    * Report a clear error message when using functions that read from or write
+      to external files and the emaj installer role has not the appropriate
+      rights.
   * Improve the initial comment of the JSON output produced by
     emaj_export_groups_configuration().
   * Improve checks of the input JSON structure when importing a tables group
     configuration.
-  * Add a parameter in import_groups_configuration() functions to automatically
-    drop the existing groups that are not imported.
   * Minor code changes.
 
 ###Bug fixes:###
-  * Do not try to create and manipulate event triggers when the extension has
-    been installed by a non superuser role using the emaj-<version>.sql script.
   * Allow a superuser to drop an emaj extension installed by a non superuser
     with the emaj-<version>.sql script.
-
 
 4.7.1 (2025-Sept-27)
 ------
