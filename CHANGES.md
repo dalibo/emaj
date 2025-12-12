@@ -14,7 +14,7 @@ E-Maj - Change log
     * Do not create and manipulate event triggers when the installer role is
       not allowed to do it.
     * Do not create and use emaj_adm or emaj_viewer roles when the installer
-      role has not the needed rights to do it
+      role has not the needed rights to do it.
     * Report a clear error message when using functions that read from or write
       to external files and the emaj installer role has not the appropriate
       rights.

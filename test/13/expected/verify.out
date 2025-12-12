@@ -85,7 +85,7 @@ begin;
   select * from emaj.emaj_verify_all();
                                                            emaj_verify_all                                                           
 -------------------------------------------------------------------------------------------------------------------------------------
- Warning: The dblink connection test failed. The 'dblink_user_password' parameter value is probably incorrect.
+ Warning: The dblink connection attempt failed. The 'dblink_user_password' parameter value is probably incorrect.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
 (3 rows)
@@ -98,7 +98,7 @@ begin;
   select * from emaj.emaj_verify_all();
                                                            emaj_verify_all                                                           
 -------------------------------------------------------------------------------------------------------------------------------------
- Warning: The role set in the 'dblink_user_password' parameter has not emaj_adm rights.
+ Warning: The role set in the 'dblink_user_password' parameter has not emaj administration rights.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
 (3 rows)

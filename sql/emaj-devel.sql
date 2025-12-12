@@ -950,7 +950,7 @@ $_dblink_open_cnx$
     v_userPassword           TEXT;
     v_connectString          TEXT;
     v_stmt                   TEXT;
-    v_isEmajadm              BOOLEAN;
+    v_isEmajAdmin            BOOLEAN;
     v_sqlstate               TEXT;
   BEGIN
 -- Look for the schema holding the dblink functions.
@@ -969,11 +969,11 @@ $_dblink_open_cnx$
       p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
                                           --   READ COMMITTED transaction
     ELSE
+-- dblink is usable, so search the requested connection name in dblink connections list.
       EXECUTE format('SELECT 0 WHERE %L = ANY (%I.dblink_get_connections())',
                      p_cnxName, p_schema);
       GET DIAGNOSTICS v_nbCnx = ROW_COUNT;
       IF v_nbCnx > 0 THEN
--- Dblink is usable, so search the requested connection name in dblink connections list.
         p_status = 0;                       -- the requested connection is already open
       ELSE
 -- So, get the 'dblink_user_password' parameter if exists, from emaj_param.
@@ -999,24 +999,38 @@ $_dblink_open_cnx$
             EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
                            p_schema, p_cnxName, v_connectString);
             p_status = 1;                   -- the connection is successful
--- For E-Maj rollback first connections and test connections, check the role is member of emaj_adm.
-            IF (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
-              v_stmt = 'SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'') AS is_emaj_adm';
-              EXECUTE format('SELECT is_emaj_adm FROM %I.dblink(%L, %L) AS (is_emaj_adm BOOLEAN)',
-                             p_schema, p_cnxName, v_stmt)
-                INTO v_isEmajadm;
-              IF NOT v_isEmajadm THEN
-                p_status = -7;              -- the dblink user/password from emaj_param has not emaj_adm rights
-                EXECUTE format('SELECT %I.dblink_disconnect(%L)',
-                               p_schema, p_cnxName);
-              END IF;
-            END IF;
           EXCEPTION
             WHEN OTHERS THEN
               p_status = -6;                -- the connection attempt failed
               v_sqlstate = SQLSTATE;
           END;
+-- For E-Maj rollback first connections and test connections, check the role is an E-Maj administrator
+--   i.e. the role is either the installer or a member of emaj_adm.
+--   Error on the statement is trapped because the emaj_adm role may not exist or be unused in this emaj instance.
+          IF p_status = 1 AND (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
+            v_stmt = 'SELECT '
+                        '(SELECT nspowner::regrole::text = current_user FROM pg_catalog.pg_namespace WHERE nspname = ''emaj'') '
+                     'OR '
+                        '(SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'')) '
+                     'AS is_emaj_admin';
+            BEGIN
+              EXECUTE format('SELECT is_emaj_admin FROM %I.dblink(%L, %L) AS (is_emaj_admin BOOLEAN)',
+                             p_schema, p_cnxName, v_stmt)
+                INTO v_isEmajAdmin;
+              IF NOT v_isEmajAdmin THEN
+                p_status = -7;              -- the dblink user/password from emaj_param is not an E-Maj administrator
+              END IF;
+            EXCEPTION
+              WHEN OTHERS THEN
+                p_status = -7;              -- the connection attempt failed
+            END;
+          END IF;
         END IF;
+      END IF;
+      IF p_status < 0 THEN
+-- Disconnect an opened connection if an error has been detected.
+        EXECUTE format('SELECT %I.dblink_disconnect(%L) WHERE %L = ANY (%I.dblink_get_connections())',
+                       p_schema, p_cnxName, p_cnxName, p_schema);
       END IF;
     END IF;
 -- For connections used for rollback operations, record the dblink connection attempt in the emaj_hist table.
@@ -1029,7 +1043,7 @@ $_dblink_open_cnx$
             WHEN -4 THEN ' (transaction isolation level not READ COMMITTED)'
             WHEN -5 THEN ' (missing ''dblink_user_password'' parameter in emaj_param table)'
             WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
-            WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not emaj_adm rights)'
+            WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not emaj administration rights)'
             ELSE ''
           END);
     END IF;
@@ -13995,9 +14009,9 @@ $emaj_verify_all$
         WHEN -5 THEN
           RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set in the emaj_param table.';
         WHEN -6 THEN
-          RETURN NEXT 'Warning: The dblink connection test failed. The ''dblink_user_password'' parameter value is probably incorrect.';
+          RETURN NEXT 'Warning: The dblink connection attempt failed. The ''dblink_user_password'' parameter value is probably incorrect.';
         WHEN -7 THEN
-          RETURN NEXT 'Warning: The role set in the ''dblink_user_password'' parameter has not emaj_adm rights.';
+          RETURN NEXT 'Warning: The role set in the ''dblink_user_password'' parameter has not emaj administration rights.';
         ELSE
           RETURN NEXT format('Warning: The dblink connection test failed for an unknown reason (status = %s).',
                              v_status::TEXT);

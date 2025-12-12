@@ -109,7 +109,6 @@ select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLI
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=_regress_emaj_install password=install');
 select * from emaj.emaj_rollback_group('instGroup1','M2');
--- ######### the dblink connection fails because emaj_adm doesn't exist => TO BE FIXED #########
 select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
 
 -- test inoperative or forbidden function calls
