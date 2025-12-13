@@ -274,14 +274,19 @@ select public.handle_emaj_sequences(12300);
 -----------------------------
 reset role;
 analyze mytbl4;
--- rollback with dblink_connect_u not granted
+-- rollback without dblink
 
-revoke execute on function dblink_connect_u(text,text) from emaj_adm;
+alter function public.dblink_connect(text,text) rename to renamed_dblink_connect;
+alter function public.dblink_connect(text) rename to renamed_dblink_connect;
+
 set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M3',false) order by 1,2;
+
 reset role;
-grant execute on function dblink_connect_u(text,text) to emaj_adm;
+alter function public.renamed_dblink_connect(text,text) rename to dblink_connect;
+alter function public.renamed_dblink_connect(text) rename to dblink_connect;
+
 set role _regress_emaj_adm1;
 
 -----------------------------

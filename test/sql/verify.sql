@@ -27,11 +27,7 @@ rollback;
 -- dblink connection tests
 --
 -- The "dblink not installed" test is located into the install_psql.sql script
-
--- Test the lack of execute right on dblink_connect_u() (they are not yet granted to emaj_adm)
-set role emaj_adm;
-select * from emaj.emaj_verify_all();
-reset role;
+-- The "lack of execute right on dblink_connect_u()" test is located into the non_superuser_install.sql script
 
 -- Test a transaction isolation not READ COMMITTED
 begin transaction isolation level REPEATABLE READ;

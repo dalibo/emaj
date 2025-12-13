@@ -36,6 +36,8 @@ S'ils n'existent pas déjà, les 2 rôles *emaj_adm* et *emaj_viewer* sont égal
 
 Enfin, le script d'installation examine la configuration de l'instance. Le cas échéant, il affiche un message d'avertissement concernant le :ref:`paramètre max_prepared_transactions<parallel_rollback_prerequisite>`.
 
+.. _create_emaj_extension_by_script:
+
 Création de l’extension par script
 ----------------------------------
 
@@ -50,6 +52,10 @@ où <répertoire_emaj> est le répertoire issu de l’:ref:`installation du logi
 	Il n’est pas indispensable d’avoir le droit super-utilisateur pour exécuter ce script d’installation. Mais si ce n’est pas le cas, le rôle utilisé devra disposer des droits nécessaires pour créer les triggers sur les tables applicatives des futurs groupes de tables.
 
 Dans ce mode d’installation, toutes les optimisations des rollbacks E-Maj ne sont pas disponibles, conduisant à un niveau de performance dégradé sur ces opérations.
+
+Lorsque le rôle qui installe l’extension ne dispose pas du droit *SUPERUSER*, le :ref:`suivi des rollbacks E-Maj<emaj_rollback_activity_prerequisites>` ou la :doc:`soumission des rollbacks E-Maj parallélisés<parallelRollbackClient>` nécessitent d’attribuer à ce rôle (et uniquement à lui) le droit d’exécuter la fonction *dblink_connect_u()*, ce droit n’étant pas attribué par défaut pour cette fonction, pour des raisons de sécurité : ::
+
+    GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO <rôle install>;
 
 
 Adaptation du fichier de configuration postgresql.conf
@@ -71,7 +77,7 @@ Un certain nombre de paramètres influence le fonctionnement d'E-Maj. Le détail
 
 Cette étape de valorisation des paramètres est optionnelle. Leur valeur par défaut permet à E-Maj de fonctionner correctement.
 
-Néanmoins, si l'administrateur E-Maj souhaite bénéficier du suivi des opérations de rollback, il est nécessaire de valoriser le paramètre **dblink_user_password** dans la table :ref:`emaj_param <emaj_param>` et de donner au rôle utilisé par l’adminstrateur E-Maj le droit d’exécuter la fonction *dblink_connect_u*. :ref:`Plus de détails... <emaj_rollback_activity_prerequisites>`
+Néanmoins, si l'administrateur E-Maj souhaite bénéficier du :ref:`suivi des opérations de rollback E-Maj<emaj_rollback_activity_prerequisites>`, il est nécessaire de valoriser le paramètre **dblink_user_password** dans la table :ref:`emaj_param <emaj_param>`.
 
 Test et démonstration
 ---------------------

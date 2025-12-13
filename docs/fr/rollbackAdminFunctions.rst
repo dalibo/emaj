@@ -51,12 +51,7 @@ Pré-requis
 
 Pour permettre aux administrateurs E-Maj de suivre la progression d'une opération de rollback, les fonctions activées dans l'opération mettent à jour plusieurs tables techniques au fur et à mesure de son avancement. Pour que ces mises à jour soient visibles alors que la transaction dans laquelle le rollback s'effectue est encore en cours, ces mises à jour sont effectuées au travers d'une connexion *dblink*.
 
-Si elle n’est pas déjà présente, l’extension *dblink* est automatiquement installée au moment de la création de l’extension *emaj*. Mais le suivi des rollbacks nécessite également :
-
-* de donner à l’administrateur E-Maj (et uniquement à lui) le droit d’exécuter la fonction *dblink_connect_u(text,text)*, ce droit n’étant pas attribué par défaut pour cette fonction, pour des raisons de sécurité ;
-* d’enregistrer dans la table des paramètres, :ref:`emaj_param <emaj_param>`, un identifiant de connexion utilisable par dblink. ::
-
-   GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO <rôle admin> ;
+Si elle n’est pas déjà présente, l’extension *dblink* est automatiquement installée au moment de la création de l’extension *emaj*. Mais le suivi des rollbacks nécessite également d’enregistrer dans la table des paramètres, :ref:`emaj_param <emaj_param>`, un identifiant de connexion utilisable par dblink. ::
 
    INSERT INTO emaj.emaj_param (param_key, param_value_text) 
    VALUES ('dblink_user_password','user=<user> password=<password>');
@@ -64,6 +59,8 @@ Si elle n’est pas déjà présente, l’extension *dblink* est automatiquement
 Le rôle de connexion déclaré doit disposer des droits *emaj_adm* (ou être super-utilisateur).
 
 Enfin, la transaction principale effectuant l'opération de rollback doit avoir un mode de concurrence « *read committed* » (la valeur par défaut).
+
+Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut également que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<create_emaj_extension_by_script>`.
 
 Fonction de suivi
 ^^^^^^^^^^^^^^^^^

@@ -369,7 +369,6 @@ GRANT
 GRANT
 GRANT
 GRANT
-GRANT
 ERROR:  event trigger "emaj_protection_trg" already exists
 ALTER EVENT TRIGGER
 COMMENT

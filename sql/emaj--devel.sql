@@ -907,7 +907,7 @@ $$
     WHERE element IS NOT NULL AND element <> '';
 $$;
 
-CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, p_callerRole TEXT, OUT p_status INT, OUT p_schema TEXT)
+CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_dblink_open_cnx$
@@ -921,7 +921,6 @@ $_dblink_open_cnx$
 --    cluster even when no password is required to log on.
 -- The function is directly called by Emaj_web.
 -- Input:  connection name
---         caller role to check for permissions
 -- Output: integer status return.
 --           1 successful connection
 --           0 already opened connection
@@ -936,6 +935,7 @@ $_dblink_open_cnx$
 -- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
 --   of pg_read_all_settings.
   DECLARE
+    v_function               TEXT;
     v_nbCnx                  INT;
     v_userPassword           TEXT;
     v_connectString          TEXT;
@@ -943,17 +943,23 @@ $_dblink_open_cnx$
     v_isEmajAdmin            BOOLEAN;
     v_sqlstate               TEXT;
   BEGIN
+-- Determine the function to execute to open the dblink connection:
+--   dblink_connect() if the installer is superuser, otherwise dblink_connect_u()
+    SELECT CASE WHEN inst_by_superuser THEN 'dblink_connect' ELSE 'dblink_connect_u' END
+      INTO v_function
+      FROM emaj.emaj_install_conf;
 -- Look for the schema holding the dblink functions.
 --   (NULL if the dblink_connect_u function is not available, which should not happen)
     SELECT nspname INTO p_schema
       FROM pg_catalog.pg_proc
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
-      WHERE proname = 'dblink_connect_u'
+      WHERE proname = v_function
       LIMIT 1;
     IF NOT FOUND THEN
       p_status = -1;                      -- dblink is not installed
-    ELSIF NOT pg_catalog.has_function_privilege(p_callerRole, quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
-      p_status = -3;                      -- current role has not the execute rights on dblink functions
+    ELSIF v_function = 'dblink_connect_u' AND
+          NOT pg_catalog.has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'EXECUTE') THEN
+      p_status = -3;                      -- installer role has not the EXECUTE rights on the dblink connection function
     ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'emaj_verify_all') AND
           pg_catalog.current_setting('transaction_isolation') <> 'read committed' THEN
       p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
@@ -986,15 +992,15 @@ $_dblink_open_cnx$
                          || ' ' || v_userPassword;
 -- Try to connect.
           BEGIN
-            EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
-                           p_schema, p_cnxName, v_connectString);
+            EXECUTE format('SELECT %I.%I(%L ,%L)',
+                           p_schema, v_function, p_cnxName, v_connectString);
             p_status = 1;                   -- the connection is successful
           EXCEPTION
             WHEN OTHERS THEN
               p_status = -6;                -- the connection attempt failed
               v_sqlstate = SQLSTATE;
           END;
--- For E-Maj rollback first connections and test connections, check the role is an E-Maj administrator
+-- For E-Maj rollback first connections and test connections, check the role from emaj_param is an E-Maj administrator
 --   i.e. the role is either the installer or a member of emaj_adm.
 --   Error on the statement is trapped because the emaj_adm role may not exist or be unused in this emaj instance.
           IF p_status = 1 AND (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
@@ -1029,7 +1035,7 @@ $_dblink_open_cnx$
         VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status ||
           CASE p_status
             WHEN -1 THEN ' (dblink extension not installed)'
-            WHEN -3 THEN ' (current role not allowed to EXECUTE dblink_connect_u())'
+            WHEN -3 THEN ' (installer role not allowed to EXECUTE dblink_connect_u())'
             WHEN -4 THEN ' (transaction isolation level not READ COMMITTED)'
             WHEN -5 THEN ' (missing ''dblink_user_password'' parameter in emaj_param table)'
             WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
@@ -8698,7 +8704,7 @@ $_rlbk_async$
 -- If dblink is used (which should always be true), try to open the first session connection (no error is issued if it is already opened).
     IF v_isDblinkUsed THEN
       SELECT p_status INTO v_dbLinkCnxStatus
-        FROM emaj._dblink_open_cnx('rlbk#1', current_role);
+        FROM emaj._dblink_open_cnx('rlbk#1');
       IF v_dbLinkCnxStatus < 0 THEN
         RAISE EXCEPTION '_rlbk_async: Error while opening the dblink session #1 (Status of the dblink connection attempt = %'
                         ' - see E-Maj documentation).',
@@ -8770,7 +8776,7 @@ $_rlbk_init$
 -- First try to open a dblink connection.
       SELECT p_status, (p_status >= 0), CASE WHEN p_status >= 0 THEN p_schema ELSE NULL END
         INTO v_dbLinkCnxStatus, v_isDblinkUsed, v_dbLinkSchema
-        FROM emaj._dblink_open_cnx('rlbk#1', current_role);
+        FROM emaj._dblink_open_cnx('rlbk#1');
 -- For parallel rollback (i.e. when nb sessions > 1), the dblink connection must be ok.
       IF p_nbSession > 1 AND NOT v_isDblinkUsed THEN
         RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink'
@@ -9687,7 +9693,7 @@ $_rlbk_session_lock$
 -- For dblink session > 1, open the connection (the session 1 is already opened).
     IF p_session > 1 THEN
       SELECT p_status INTO v_dbLinkCnxStatus
-        FROM emaj._dblink_open_cnx('rlbk#' || p_session, current_role);
+        FROM emaj._dblink_open_cnx('rlbk#' || p_session);
       IF v_dbLinkCnxStatus < 0 THEN
         RAISE EXCEPTION '_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
                         ' - see E-Maj documentation).',
@@ -13984,9 +13990,9 @@ $emaj_verify_all$
                          v_paramList);
     END IF;
 -- Report a warning if dblink connections are not operational.
-    IF has_function_privilege('emaj._dblink_open_cnx(text,text)', 'execute') THEN
+    IF has_function_privilege('emaj._dblink_open_cnx(text)', 'execute') THEN
       SELECT p_status, p_schema INTO v_status, v_schema
-        FROM emaj._dblink_open_cnx('emaj_verify_all', current_role);
+        FROM emaj._dblink_open_cnx('emaj_verify_all');
       CASE v_status
         WHEN 0, 1 THEN
           PERFORM emaj._dblink_close_cnx('emaj_verify_all', v_schema);
@@ -14707,21 +14713,6 @@ $emaj_drop_extension$
 --
 -- Drop the event trigger that protects the extension against unattempted drop and its function (they are external to the extension).
     DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
---
--- Revoke also the grants given to emaj_adm on the dblink_connect_u function at install time.
-    IF v_supportEmajAdm THEN
-      FOR r_object IN
-        SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-          WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
-        LOOP
-          BEGIN
-            EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
-          EXCEPTION
-            WHEN insufficient_privilege THEN
-              RAISE WARNING 'emaj_drop_extension: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...';
-          END;
-      END LOOP;
-    END IF;
 --
 -- Determine whether the emaj_adm role can be dropped.
 -- If emaj_adm is not supported in this emaj instance, just warn.

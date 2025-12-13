@@ -9,7 +9,9 @@ Préalables
 
 L’outil proposé est codé en *perl*. Il nécessite que le logiciel **perl** avec les modules *DBI* et *DBD::Pg* soient installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l’instance PostgreSQL).
 
-Pour disposer d’informations précises sur l’avancement des opérations de rollback en cours, il est nécessaire de valoriser le paramètre :doc:`dblink_user_password<parameters>` et de donner les droits d’exécution de la fonction *dblink_connect_u(text,text)*. :ref:`Plus de détails...<emaj_rollback_activity_prerequisites>`
+Pour disposer d’informations précises sur l’avancement des opérations de rollback en cours, il est nécessaire de valoriser le paramètre :doc:`dblink_user_password<parameters>`. :ref:`Plus de détails...<emaj_rollback_activity_prerequisites>`
+
+Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut également que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<create_emaj_extension_by_script>`.
 
 Syntaxe
 -------

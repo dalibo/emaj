@@ -21,6 +21,10 @@ L’outil proposé est codé en *perl*. Il nécessite que le logiciel **perl** a
 
 Le rollback de chaque session au sein d'une unique transaction implique l'utilisation de commit à deux phases. En conséquence, le paramètre **max_prepared_transactions** du fichier *postgresql.conf* doit être ajusté. La valeur par défaut du paramètre est 0. Il faut donc la modifier en spécifiant une valeur au moins égale au nombre maximum de *sessions* qui seront utilisées.
 
+Il est également nécessaire de valoriser le paramètre :doc:`dblink_user_password dans la table emaj_param<parameters>`.
+
+Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut aussi que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<create_emaj_extension_by_script>`.
+
 Syntaxe
 -------
 

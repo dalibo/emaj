@@ -38,7 +38,7 @@ Le traitement de l’ensemble des séquences concernées par le rollback E-Maj e
 
 A chaque étape élémentaire, la fonction qui pilote l’exécution du plan met à jour la table *emaj_rlbk_plan*. La consultation de cette table peut donner des informations sur la façon dont un rollback E-Maj s’est déroulé.
 
-Si le paramètre *dblink_user_password* est valorisé et si le droit d’exécution de la fonction *dblink_connect_u* a été donné à l’adminstrateur lancant l’opération de rollback, les mises à jour de la table *emaj_rlbk_plan* sont réalisées dans des transactions autonomes, de sorte qu’il est possible de visualiser l’avancement du rollback en temps réel. C’est ce que font la fonction :ref:`emaj_rollback_activity()<emaj_rollback_activity>` et les clients :doc:`emajRollbackMonitor<parallelRollbackClient>` et :doc:`Emaj_web<webUsage>`. Si la connexion dblink n’est pas utilisable, la fonction :ref:`emaj_verify_all()<emaj_verify_all>` en indique la raison.
+Si le paramètre *dblink_user_password* est valorisé, les mises à jour de la table *emaj_rlbk_plan* sont réalisées dans des transactions autonomes, de sorte qu’il est possible de visualiser l’avancement du rollback en temps réel. C’est ce que font la fonction :ref:`emaj_rollback_activity()<emaj_rollback_activity>` et les clients :doc:`emajRollbackMonitor<parallelRollbackClient>` et :doc:`Emaj_web<webUsage>`. Si la connexion dblink n’est pas utilisable, la fonction :ref:`emaj_verify_all()<emaj_verify_all>` en indique la raison.
 
 .. _single_table_rollback:
 

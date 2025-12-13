@@ -158,12 +158,12 @@ rollback;
 
 -- should be OK, with different cases of dblink status
 -- hide dblink_connect functions
-alter function public.dblink_connect_u(text,text) rename to renamed_dblink_connect_u;
-alter function public.dblink_connect_u(text) rename to renamed_dblink_connect_u;
+alter function public.dblink_connect(text,text) rename to renamed_dblink_connect;
+alter function public.dblink_connect(text) rename to renamed_dblink_connect;
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select * from emaj.emaj_rollback_group('myGroup2','Mark21');
-alter function public.renamed_dblink_connect_u(text,text) rename to dblink_connect_u;
-alter function public.renamed_dblink_connect_u(text) rename to dblink_connect_u;
+alter function public.renamed_dblink_connect(text,text) rename to dblink_connect;
+alter function public.renamed_dblink_connect(text) rename to dblink_connect;
 
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 

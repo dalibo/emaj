@@ -1044,8 +1044,9 @@ select public.handle_emaj_sequences(12300);
 -----------------------------
 reset role;
 analyze mytbl4;
--- rollback with dblink_connect_u not granted
-revoke execute on function dblink_connect_u(text,text) from emaj_adm;
+-- rollback without dblink
+alter function public.dblink_connect(text,text) rename to renamed_dblink_connect;
+alter function public.dblink_connect(text) rename to renamed_dblink_connect;
 set role _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
  rlbk_severity |              rlbk_message              
@@ -1064,7 +1065,8 @@ select * from emaj.emaj_logged_rollback_group('myGroup2','M3',false) order by 1,
 (3 rows)
 
 reset role;
-grant execute on function dblink_connect_u(text,text) to emaj_adm;
+alter function public.renamed_dblink_connect(text,text) rename to dblink_connect;
+alter function public.renamed_dblink_connect(text) rename to dblink_connect;
 set role _regress_emaj_adm1;
 -----------------------------
 -- Checking step 3
@@ -1191,7 +1193,7 @@ select hist_function, hist_event, hist_object,
    hist_function   |   hist_event   |    hist_object    |                                           regexp_replace                                           | hist_user 
 -------------------+----------------+-------------------+----------------------------------------------------------------------------------------------------+-----------
  ROLLBACK_GROUP    | BEGIN          | myGroup2          | Logged rollback to mark M2 (timestamp)                                                             | postgres
- DBLINK_OPEN_CNX   |                | rlbk#1            | Status = -3 (current role not allowed to EXECUTE dblink_connect_u())                               | postgres
+ DBLINK_OPEN_CNX   |                | rlbk#1            | Status = -1 (dblink extension not installed)                                                       | postgres
  LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | postgres
  LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | postgres
  ROLLBACK_GROUP    | TIME STAMP SET | 12300             |                                                                                                    | postgres
@@ -1212,7 +1214,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP    | NOTICE         | Rollback id 12300 | 1 / 2 sequences effectively processed.                                                             | postgres
  ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12300                                                                                  | postgres
  ROLLBACK_GROUP    | BEGIN          | myGroup2          | Logged rollback to mark M3 (timestamp)                                                             | postgres
- DBLINK_OPEN_CNX   |                | rlbk#1            | Status = -3 (current role not allowed to EXECUTE dblink_connect_u())                               | postgres
+ DBLINK_OPEN_CNX   |                | rlbk#1            | Status = -1 (dblink extension not installed)                                                       | postgres
  LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | postgres
  LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | postgres
  ROLLBACK_GROUP    | TIME STAMP SET | 12302             |                                                                                                    | postgres

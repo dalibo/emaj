@@ -134,6 +134,7 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE emaj.emaj_install_conf FROM cur
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._dblink_open_cnx(P_CNXNAME TEXT,P_CALLERROLE TEXT,OUT P_STATUS INT,OUT P_SCHEMA TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_import_groups_configuration(P_JSON JSON,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_import_groups_configuration(P_LOCATION TEXT,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj._import_groups_conf(P_JSON JSON,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_LOCATION TEXT,P_MARK TEXT);
@@ -154,7 +155,7 @@ $$
     WHERE element IS NOT NULL AND element <> '';
 $$;
 
-CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, p_callerRole TEXT, OUT p_status INT, OUT p_schema TEXT)
+CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_dblink_open_cnx$
@@ -168,7 +169,6 @@ $_dblink_open_cnx$
 --    cluster even when no password is required to log on.
 -- The function is directly called by Emaj_web.
 -- Input:  connection name
---         caller role to check for permissions
 -- Output: integer status return.
 --           1 successful connection
 --           0 already opened connection
@@ -183,6 +183,7 @@ $_dblink_open_cnx$
 -- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
 --   of pg_read_all_settings.
   DECLARE
+    v_function               TEXT;
     v_nbCnx                  INT;
     v_userPassword           TEXT;
     v_connectString          TEXT;
@@ -190,17 +191,23 @@ $_dblink_open_cnx$
     v_isEmajAdmin            BOOLEAN;
     v_sqlstate               TEXT;
   BEGIN
+-- Determine the function to execute to open the dblink connection:
+--   dblink_connect() if the installer is superuser, otherwise dblink_connect_u()
+    SELECT CASE WHEN inst_by_superuser THEN 'dblink_connect' ELSE 'dblink_connect_u' END
+      INTO v_function
+      FROM emaj.emaj_install_conf;
 -- Look for the schema holding the dblink functions.
 --   (NULL if the dblink_connect_u function is not available, which should not happen)
     SELECT nspname INTO p_schema
       FROM pg_catalog.pg_proc
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
-      WHERE proname = 'dblink_connect_u'
+      WHERE proname = v_function
       LIMIT 1;
     IF NOT FOUND THEN
       p_status = -1;                      -- dblink is not installed
-    ELSIF NOT pg_catalog.has_function_privilege(p_callerRole, quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
-      p_status = -3;                      -- current role has not the execute rights on dblink functions
+    ELSIF v_function = 'dblink_connect_u' AND
+          NOT pg_catalog.has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'EXECUTE') THEN
+      p_status = -3;                      -- installer role has not the EXECUTE rights on the dblink connection function
     ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'emaj_verify_all') AND
           pg_catalog.current_setting('transaction_isolation') <> 'read committed' THEN
       p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
@@ -233,15 +240,15 @@ $_dblink_open_cnx$
                          || ' ' || v_userPassword;
 -- Try to connect.
           BEGIN
-            EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
-                           p_schema, p_cnxName, v_connectString);
+            EXECUTE format('SELECT %I.%I(%L ,%L)',
+                           p_schema, v_function, p_cnxName, v_connectString);
             p_status = 1;                   -- the connection is successful
           EXCEPTION
             WHEN OTHERS THEN
               p_status = -6;                -- the connection attempt failed
               v_sqlstate = SQLSTATE;
           END;
--- For E-Maj rollback first connections and test connections, check the role is an E-Maj administrator
+-- For E-Maj rollback first connections and test connections, check the role from emaj_param is an E-Maj administrator
 --   i.e. the role is either the installer or a member of emaj_adm.
 --   Error on the statement is trapped because the emaj_adm role may not exist or be unused in this emaj instance.
           IF p_status = 1 AND (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
@@ -276,7 +283,7 @@ $_dblink_open_cnx$
         VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status ||
           CASE p_status
             WHEN -1 THEN ' (dblink extension not installed)'
-            WHEN -3 THEN ' (current role not allowed to EXECUTE dblink_connect_u())'
+            WHEN -3 THEN ' (installer role not allowed to EXECUTE dblink_connect_u())'
             WHEN -4 THEN ' (transaction isolation level not READ COMMITTED)'
             WHEN -5 THEN ' (missing ''dblink_user_password'' parameter in emaj_param table)'
             WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
@@ -2933,6 +2940,241 @@ $_set_mark_groups$
   END;
 $_set_mark_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(p_rlbkId INT, p_multiGroup BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$_rlbk_async$
+-- The function calls the main rollback functions following the initialisation phase.
+-- It is only called by the Emaj_web client, in an asynchronous way, so that the rollback can be then monitored by the client.
+-- Input: rollback identifier, and a boolean saying if the rollback is a logged rollback
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  DECLARE
+    v_isDblinkUsed           BOOLEAN;
+    v_dbLinkCnxStatus        INT;
+  BEGIN
+-- Get the rollback characteristics from the emaj_rlbk table.
+    SELECT rlbk_is_dblink_used INTO v_isDblinkUsed
+      FROM emaj.emaj_rlbk
+      WHERE rlbk_id = p_rlbkId;
+-- If dblink is used (which should always be true), try to open the first session connection (no error is issued if it is already opened).
+    IF v_isDblinkUsed THEN
+      SELECT p_status INTO v_dbLinkCnxStatus
+        FROM emaj._dblink_open_cnx('rlbk#1');
+      IF v_dbLinkCnxStatus < 0 THEN
+        RAISE EXCEPTION '_rlbk_async: Error while opening the dblink session #1 (Status of the dblink connection attempt = %'
+                        ' - see E-Maj documentation).',
+          v_dbLinkCnxStatus;
+      END IF;
+    ELSE
+      RAISE EXCEPTION '_rlbk_async: The function is called but dblink cannot be used. This is an error from the client side.';
+    END IF;
+-- Simply chain the internal functions.
+    PERFORM emaj._rlbk_session_lock(p_rlbkId, 1);
+    PERFORM emaj._rlbk_start_mark(p_rlbkId, p_multiGroup);
+    PERFORM emaj._rlbk_session_exec(p_rlbkId, 1);
+    RETURN QUERY
+      SELECT *
+        FROM emaj._rlbk_end(p_rlbkId, p_multiGroup);
+  END;
+$_rlbk_async$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_init(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN, p_nbSession INT, p_multiGroup BOOLEAN,
+                                           p_isAlterGroupAllowed BOOLEAN, p_comment TEXT DEFAULT NULL)
+RETURNS INT LANGUAGE plpgsql AS
+$_rlbk_init$
+-- This is the first step of a rollback group processing.
+-- It tests the environment, the supplied parameters and the foreign key constraints.
+-- By calling the _rlbk_planning() function, it defines the different elementary steps needed for the operation,
+-- and spread the load on the requested number of sessions.
+-- It returns a rollback id that will be needed by next steps (or NULL if there are some NULL input).
+-- This function may be directly called by the Emaj_web client.
+  DECLARE
+    v_startTs                TIMESTAMPTZ;
+    v_markName               TEXT;
+    v_markTimeId             BIGINT;
+    v_markTimestamp          TIMESTAMPTZ;
+    v_nbTblInGroups          INT;
+    v_nbSeqInGroups          INT;
+    v_dbLinkCnxStatus        INT;
+    v_isDblinkUsed           BOOLEAN;
+    v_dbLinkSchema           TEXT;
+    v_effNbTable             INT;
+    v_histId                 BIGINT;
+    v_stmt                   TEXT;
+    v_rlbkId                 INT;
+  BEGIN
+    v_startTs = clock_timestamp();
+-- Check supplied group names and mark parameters.
+    SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE) INTO v_markName;
+    IF v_markName IS NOT NULL THEN
+-- Check that no group is damaged.
+      PERFORM 0
+        FROM emaj._verify_groups(p_groupNames, TRUE);
+-- Get the time stamp id and its clock timestamp for the first group (as we know this time stamp is the same for all groups of the array).
+      SELECT time_id, time_clock_timestamp INTO v_markTimeId, v_markTimestamp
+        FROM emaj.emaj_mark
+             JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+        WHERE mark_group = p_groupNames[1]
+          AND mark_name = v_markName;
+-- Insert a BEGIN event into the history.
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN p_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN',
+                array_to_string(p_groupNames,','),
+                CASE WHEN p_isLoggedRlbk THEN 'Logged' ELSE 'Unlogged' END || ' rollback to mark ' || v_markName
+                || ' [' || v_markTimestamp || ']'
+               )
+        RETURNING hist_id INTO v_histId;
+-- Get the total number of tables and sequences for these groups.
+      SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTblInGroups, v_nbSeqInGroups
+        FROM emaj.emaj_group
+        WHERE group_name = ANY (p_groupNames) ;
+-- First try to open a dblink connection.
+      SELECT p_status, (p_status >= 0), CASE WHEN p_status >= 0 THEN p_schema ELSE NULL END
+        INTO v_dbLinkCnxStatus, v_isDblinkUsed, v_dbLinkSchema
+        FROM emaj._dblink_open_cnx('rlbk#1');
+-- For parallel rollback (i.e. when nb sessions > 1), the dblink connection must be ok.
+      IF p_nbSession > 1 AND NOT v_isDblinkUsed THEN
+        RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink'
+                        ' connection attempt = % - see E-Maj documentation)',
+          v_dbLinkCnxStatus;
+      END IF;
+-- Create the row representing the rollback event in the emaj_rlbk table and get the rollback id back.
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, ' ||
+               'rlbk_comment, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, ' ||
+               'rlbk_eff_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
+               'rlbk_dblink_schema, rlbk_is_dblink_used, rlbk_start_datetime) ' ||
+               'VALUES (' || quote_literal(p_groupNames) || ',' || quote_literal(v_markName) || ',' ||
+               v_markTimeId || ',' || p_isLoggedRlbk || ',' || quote_nullable(p_isAlterGroupAllowed) || ',' ||
+               quote_nullable(p_comment) || ',' || p_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ',' ||
+               CASE WHEN v_nbSeqInGroups = 0 THEN '0' ELSE 'NULL' END || ',''PLANNING'',' || v_histId || ',' ||
+               quote_nullable(v_dbLinkSchema) || ',' || v_isDblinkUsed || ',' || quote_literal(v_startTs) || ') RETURNING rlbk_id';
+      SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_rlbkId;
+-- Create the session row the emaj_rlbk_session table.
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk_session (rlbs_rlbk_id, rlbs_session, rlbs_txid, rlbs_start_datetime) ' ||
+               'VALUES (' || v_rlbkId || ', 1, ' || txid_current() || ',' ||
+                quote_literal(clock_timestamp()) || ') RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema);
+-- Call the rollback planning function to define all the elementary steps to perform, compute their estimated duration
+-- and spread the elementary steps among sessions.
+      v_stmt = 'SELECT emaj._rlbk_planning(' || v_rlbkId || ')';
+      SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_effNbTable;
+-- Update the emaj_rlbk table to set the real number of tables to process and adjust the rollback status.
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_eff_nb_table = ' || v_effNbTable ||
+               ', rlbk_status = ''LOCKING'', rlbk_end_planning_datetime = ''' || clock_timestamp() || '''' ||
+               ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema);
+    END IF;
+--
+    RETURN v_rlbkId;
+  END;
+$_rlbk_init$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(p_rlbkId INT, p_session INT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_rlbk_session_lock$
+-- It opens the session if needed, creates the session row in the emaj_rlbk_session table
+-- and then locks all the application tables for the session.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted privileges on tables.
+  DECLARE
+    v_isDblinkUsed           BOOLEAN;
+    v_dblinkSchema           TEXT;
+    v_dbLinkCnxStatus        INT;
+    v_stmt                   TEXT;
+    v_groupNames             TEXT[];
+    v_nbRetry                SMALLINT = 0;
+    v_ok                     BOOLEAN = FALSE;
+    v_nbTbl                  INT;
+    r_tbl                    RECORD;
+  BEGIN
+-- Get the rollback characteristics from the emaj_rlbk table.
+    SELECT rlbk_is_dblink_used, rlbk_dblink_schema, rlbk_groups
+      INTO v_isDblinkUsed, v_dblinkSchema, v_groupNames
+      FROM emaj.emaj_rlbk
+      WHERE rlbk_id = p_rlbkId;
+-- For dblink session > 1, open the connection (the session 1 is already opened).
+    IF p_session > 1 THEN
+      SELECT p_status INTO v_dbLinkCnxStatus
+        FROM emaj._dblink_open_cnx('rlbk#' || p_session);
+      IF v_dbLinkCnxStatus < 0 THEN
+        RAISE EXCEPTION '_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
+                        ' - see E-Maj documentation).',
+          p_session, v_dbLinkCnxStatus;
+      END IF;
+-- ... and create the session row the emaj_rlbk_session table.
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk_session (rlbs_rlbk_id, rlbs_session, rlbs_txid, rlbs_start_datetime) ' ||
+               'VALUES (' || p_rlbkId || ',' || p_session || ',' || txid_current() || ',' ||
+                quote_literal(clock_timestamp()) || ') RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
+    END IF;
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('LOCK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), 'Rollback session #' || p_session);
+--
+-- Acquire locks on tables.
+--
+-- In case of deadlock, retry up to 5 times.
+    WHILE NOT v_ok AND v_nbRetry < 5 LOOP
+      BEGIN
+        v_nbTbl = 0;
+-- Scan all tables of the session, in priority ascending order.
+        FOR r_tbl IN
+          SELECT quote_ident(rlbp_schema) || '.' || quote_ident(rlbp_table) AS fullName,
+                 EXISTS
+                   (SELECT 1
+                      FROM emaj.emaj_rlbk_plan rlbp2
+                      WHERE rlbp2.rlbp_rlbk_id = p_rlbkId
+                        AND rlbp2.rlbp_session = p_session
+                        AND rlbp2.rlbp_schema = rlbp1.rlbp_schema
+                        AND rlbp2.rlbp_table = rlbp1.rlbp_table
+                        AND rlbp2.rlbp_step = 'DIS_LOG_TRG'
+                   ) AS disLogTrg
+            FROM emaj.emaj_rlbk_plan rlbp1
+                 JOIN emaj.emaj_relation ON (rel_schema = rlbp_schema AND rel_tblseq = rlbp_table AND upper_inf(rel_time_range))
+            WHERE rlbp_rlbk_id = p_rlbkId
+              AND rlbp_step = 'LOCK_TABLE'
+              AND rlbp_session = p_session
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+-- Lock each table.
+-- The locking level is EXCLUSIVE mode.
+-- This blocks all concurrent update capabilities of all tables of the groups (including tables with no logged update to rollback),
+-- in order to ensure a stable state of the group at the end of the rollback operation).
+-- But these tables can be accessed by SELECT statements during the E-Maj rollback.
+          EXECUTE format('LOCK TABLE %s IN EXCLUSIVE MODE',
+                         r_tbl.fullName);
+          v_nbTbl = v_nbTbl + 1;
+        END LOOP;
+-- OK, all tables locked.
+        v_ok = TRUE;
+      EXCEPTION
+        WHEN deadlock_detected THEN
+          v_nbRetry = v_nbRetry + 1;
+          RAISE NOTICE '_rlbk_session_lock: A deadlock has been trapped while locking tables for groups "%".',
+            array_to_string(v_groupNames,',');
+      END;
+    END LOOP;
+    IF NOT v_ok THEN
+      PERFORM emaj._rlbk_error(p_rlbkId, '_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables',
+                               'rlbk#' || p_session);
+      RAISE EXCEPTION '_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".',
+        array_to_string(v_groupNames,',');
+    END IF;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('LOCK_GROUP', 'END', array_to_string(v_groupNames,','),
+              'Rollback session #' || p_session || ': ' || v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+--
+    RETURN;
+-- Trap and record exception during the rollback operation.
+  EXCEPTION
+    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+      RAISE;
+    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_session_lock() for session ' || p_session || ': ' || SQLERRM, 'rlbk#' || p_session);
+      RAISE;
+  END;
+$_rlbk_session_lock$;
+
 CREATE OR REPLACE FUNCTION emaj._log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
 RETURNS SETOF emaj.emaj_log_stat_sequence_type LANGUAGE plpgsql AS
 $_log_stat_sequence$
@@ -3649,9 +3891,9 @@ $emaj_verify_all$
                          v_paramList);
     END IF;
 -- Report a warning if dblink connections are not operational.
-    IF has_function_privilege('emaj._dblink_open_cnx(text,text)', 'execute') THEN
+    IF has_function_privilege('emaj._dblink_open_cnx(text)', 'execute') THEN
       SELECT p_status, p_schema INTO v_status, v_schema
-        FROM emaj._dblink_open_cnx('emaj_verify_all', current_role);
+        FROM emaj._dblink_open_cnx('emaj_verify_all');
       CASE v_status
         WHEN 0, 1 THEN
           PERFORM emaj._dblink_close_cnx('emaj_verify_all', v_schema);
@@ -3954,21 +4196,6 @@ $emaj_drop_extension$
 --
 -- Drop the event trigger that protects the extension against unattempted drop and its function (they are external to the extension).
     DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
---
--- Revoke also the grants given to emaj_adm on the dblink_connect_u function at install time.
-    IF v_supportEmajAdm THEN
-      FOR r_object IN
-        SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-          WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
-        LOOP
-          BEGIN
-            EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
-          EXCEPTION
-            WHEN insufficient_privilege THEN
-              RAISE WARNING 'emaj_drop_extension: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...';
-          END;
-      END LOOP;
-    END IF;
 --
 -- Determine whether the emaj_adm role can be dropped.
 -- If emaj_adm is not supported in this emaj instance, just warn.

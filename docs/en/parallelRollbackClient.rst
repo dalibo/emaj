@@ -21,6 +21,10 @@ The provided tool is coded in *perl*. It needs that the **perl** software with t
 
 Rolling back each session on behalf of a unique transaction implies the use of two phase commit. As a consequence, the **max_prepared_transactions** parameter of the *postgresql.conf* file must be adjusted. As the default value of this parameter equals 0, it must be modified by specifying a value at least equal to the maximum number of *sessions* that will be used.
 
+It is also necessary to set the :doc:`dblink_user_password parameter into the emaj_param table<parameters>`.
+
+If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<create_emaj_extension_by_script>` function.
+
 Syntax
 ------
 

@@ -206,6 +206,7 @@ select emaj.emaj_drop_extension();
 reset role;
 create role emaj_adm;
 grant emaj_adm to _regress_emaj_install;
+revoke all on function dblink_connect_u(text,text) from _regress_emaj_install;
 
 set role _regress_emaj_install;
 
@@ -217,6 +218,7 @@ set role _regress_emaj_install;
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
 select * from emaj.emaj_install_conf;
+select * from emaj.emaj_verify_all();
 
 -- drop the extension
 select emaj.emaj_drop_extension();
@@ -270,7 +272,6 @@ select emaj.emaj_drop_extension();
 reset role;
 revoke emaj_adm, emaj_viewer from _regress_emaj_install, _regress_emaj_admin2;
 
-revoke all on function dblink_connect_u(text,text) from _regress_emaj_install;
 revoke pg_read_server_files from _regress_emaj_install;
 revoke pg_write_server_files from _regress_emaj_install;
 revoke pg_execute_server_program from _regress_emaj_install;

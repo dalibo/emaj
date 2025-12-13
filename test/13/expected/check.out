@@ -126,7 +126,7 @@ select funcname, calls from pg_stat_user_functions
  _create_seq                               |    48
  _create_tbl                               |   176
  _dblink_close_cnx                         |   125
- _dblink_open_cnx                          |   150
+ _dblink_open_cnx                          |   149
  _dblink_sql_exec                          |  2407
  _delete_before_mark_group                 |    24
  _delete_between_marks_group               |    15
@@ -203,8 +203,8 @@ select funcname, calls from pg_stat_user_functions
  _start_groups                             |    56
  _stop_groups                              |    68
  _truncate_trigger_fnct                    |    15
- _verify_all_groups                        |    57
- _verify_all_schemas                       |    57
+ _verify_all_groups                        |    56
+ _verify_all_schemas                       |    56
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
@@ -249,7 +249,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_logging_groups                   |     6
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |    11
- emaj_get_version                          |    20
+ emaj_get_version                          |    21
  emaj_import_groups_configuration          |     4
  emaj_import_groups_configuration          |    17
  emaj_import_parameters_configuration      |     4
@@ -297,7 +297,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |    10
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    57
+ emaj_verify_all                           |    56
 (204 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)

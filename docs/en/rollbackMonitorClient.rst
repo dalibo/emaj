@@ -8,7 +8,9 @@ Prerequisite
 
 The provided tool is coded in *perl*. It needs that the **perl** software with the *DBI* and *DBD::Pg* modules be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance).
 
-In order to get detailed information about the in-progress rollback operations, it is necessary to set the :doc:`dblink_user_password<parameters>` parameter and give right to execute the *dblink_connect_u* function. :ref:`More details... <emaj_rollback_activity_prerequisites>`
+In order to get detailed information about the in-progress rollback operations, it is necessary to set the :doc:`dblink_user_password<parameters>` parameter.
+
+If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<create_emaj_extension_by_script>` function.
 
 Syntax
 ------

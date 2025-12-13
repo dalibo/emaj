@@ -38,7 +38,7 @@ The processing of all sequences concerned by the E-Maj rollback is performed by 
 
 For each elementary step, the function that drives the plan execution updates the *emaj_rlbk_plan* table. Reading this table’s content may bring interesting information about the way the E-Maj rollback operation has been processed.
 
-If the *dblink_user_password* parameter is set and the execution right on the *dblink_connect_u* function has been given to the E-Maj administrator submitting the rollback, the *emaj_rlbk_plan* updates are processed into autonomous transactions, so that it is possible to look at the rollback operation in real time. That’s what the :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function and the :doc:`emajRollbackMonitor<parallelRollbackClient>` and :doc:`Emaj_web<webUsage>` clients do. If the dblink connection is not operational, the :ref:`emaj_verify_all()<emaj_verify_all>` function explains why.
+If the *dblink_user_password* parameter is set, the *emaj_rlbk_plan* updates are processed into autonomous transactions, so that it is possible to look at the rollback operation in real time. That’s what the :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function and the :doc:`emajRollbackMonitor<parallelRollbackClient>` and :doc:`Emaj_web<webUsage>` clients do. If the dblink connection is not operational, the :ref:`emaj_verify_all()<emaj_verify_all>` function explains why.
 
 .. _single_table_rollback:
 
