@@ -1,4 +1,4 @@
--- viewer.sql : test use of functions by an emaj_viewer role
+-- viewer.sql : test emaj data access and functions calls by an emaj_viewer role
 --
 
 -- set sequence restart value
@@ -26,7 +26,7 @@ select emaj.emaj_create_group('emptyGroup');
 select emaj.emaj_start_group('emptyGroup');
 
 --
-set role _regress_emaj_viewer;
+set session_authorization to _regress_emaj_viewer;
 --
 -----------------------------
 -- authorized table or view accesses
@@ -150,4 +150,4 @@ select emaj.emaj_import_parameters_configuration('{}'::json);
 select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
 
 --
-reset role;
+reset session_authorization;

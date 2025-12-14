@@ -500,7 +500,7 @@ begin;
 rollback;
 
 -- a non emaj user should be able to create, alter and drop a table without being disturbed by E-Maj event triggers
-set role _regress_emaj_anonym;
+set session_authorization to _regress_emaj_anonym;
 
 create schema anonym_user_schema;
 create table anonym_user_schema.anonym_user_table (col1 int);
@@ -508,7 +508,7 @@ alter table anonym_user_schema.anonym_user_table add column col2 text;
 drop table anonym_user_schema.anonym_user_table;
 drop schema anonym_user_schema;
 
-reset role;
+reset session_authorization;
 
 -----------------------------
 -- test end: check

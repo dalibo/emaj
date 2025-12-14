@@ -13,10 +13,10 @@ truncate emaj.emaj_hist;
 -- grant emaj_adm role 
 -----------------------------
 grant emaj_adm to _regress_emaj_adm1, _regress_emaj_adm2;
---update emaj.emaj_param set param_value_text = 'user=_regress_emaj_adm1'
---  where param_key = 'dblink_user_password';
+update emaj.emaj_param set param_value_text = 'user=_regress_emaj_adm1 password=adm'
+  where param_key = 'dblink_user_password';
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 -----------------------------
 -- authorized table accesses
 -----------------------------
@@ -250,7 +250,7 @@ select count(*) from emaj.emaj_rlbk_stat;
 -----------------------------
 -- cleanup application tables
 -----------------------------
-reset role;
+reset session_authorization;
 truncate mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b; 
 truncate mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6, mySchema2.myTbl7, mySchema2.myTbl8;
 insert into myschema2.myTbl7 select i from generate_series(0,100,1) i;
@@ -261,7 +261,7 @@ truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
 truncate mySchema4.myTblP, mySchema4.myPartP1a, mySchema4.myPartP1b, mySchema4.myPartP2, mySchema4.myTblR1, mySchema4.myTblR2 CASCADE;
 -- analyze to get some statistics
 analyze;
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 -----------------------------
 -- explicitely purge the histories
 -----------------------------
@@ -276,7 +276,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                                                      hist_wording                                                                                      
 -----------------+------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 27 emaj_hist rows deleted ; 16 log session rows deleted ; 13 group history rows deleted ; 143 relation history rows deleted ; 95 relation changes deleted ; 43 rollback events deleted
+ PURGE_HISTORIES |            | 28 emaj_hist rows deleted ; 16 log session rows deleted ; 13 group history rows deleted ; 143 relation history rows deleted ; 95 relation changes deleted ; 43 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 
@@ -406,7 +406,7 @@ select public.handle_emaj_sequences(12200);
 -- Step 1 : for myGroup1, update tables and set 2 marks
 -----------------------------
 --
-reset role;
+reset session_authorization;
 set search_path=public,myschema1;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
@@ -415,7 +415,7 @@ delete from myTbl1 where col11 > 10;
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','M2');
  emaj_set_mark_group 
 ---------------------
@@ -423,7 +423,7 @@ select emaj.emaj_set_mark_group('myGroup1','M2');
 (1 row)
 
 --
-reset role;
+reset session_authorization;
 set search_path=public,myschema1;
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
@@ -433,7 +433,7 @@ insert into myTbl4 values (3,'FK...',1,10,'ABC');
 delete from myTbl1 where col11 = 10;
 update myTbl1 set col12='DEF' where col11 <= 2;
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','M3');
  emaj_set_mark_group 
 ---------------------
@@ -547,39 +547,39 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 12000 order by hist_id;
-   hist_function    |    hist_event     |    hist_object    |                                                  regexp_replace                                                   | hist_user 
---------------------+-------------------+-------------------+-------------------------------------------------------------------------------------------------------------------+-----------
- START_GROUP        | BEGIN             | myGroup1          | With log reset                                                                                                    | postgres
- START_GROUP        | TIME STAMP SET    | 12016             |                                                                                                                   | postgres
- PURGE_HISTORIES    |                   |                   | 56 emaj_hist rows deleted ; 1 group history rows deleted ; 8 relation changes deleted ; 0 rollback events deleted | postgres
- LOCK_GROUP         | BEGIN             | myGroup1          |                                                                                                                   | postgres
- LOCK_GROUP         | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                    | postgres
- SET_MARK_GROUP     | BEGIN             | myGroup1          | M1                                                                                                                | postgres
- SET_MARK_GROUP     | END               | myGroup1          | M1                                                                                                                | postgres
- START_GROUP        | END               | myGroup1          | 7 tables/sequences processed                                                                                      | postgres
-                    | DELETED PARAMETER | history_retention |                                                                                                                   | postgres
- START_GROUP        | BEGIN             | myGroup2          | With log reset                                                                                                    | postgres
- START_GROUP        | TIME STAMP SET    | 12017             |                                                                                                                   | postgres
- LOCK_GROUP         | BEGIN             | myGroup2          |                                                                                                                   | postgres
- LOCK_GROUP         | END               | myGroup2          | 6 tables locked, 0 deadlock(s)                                                                                    | postgres
- SET_MARK_GROUP     | BEGIN             | myGroup2          | M1                                                                                                                | postgres
- SET_MARK_GROUP     | END               | myGroup2          | M1                                                                                                                | postgres
- START_GROUP        | END               | myGroup2          | 8 tables/sequences processed                                                                                      | postgres
- SET_MARK_GROUP     | BEGIN             | myGroup1          |                                                                                                                   | postgres
- LOCK_GROUP         | BEGIN             | myGroup1          |                                                                                                                   | postgres
- LOCK_GROUP         | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                    | postgres
- SET_MARK_GROUP     | TIME STAMP SET    | 12200             |                                                                                                                   | postgres
- SET_MARK_GROUP     | END               | myGroup1          | M2                                                                                                                | postgres
- SET_MARK_GROUP     | BEGIN             | myGroup1          |                                                                                                                   | postgres
- LOCK_GROUP         | BEGIN             | myGroup1          |                                                                                                                   | postgres
- LOCK_GROUP         | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                    | postgres
- SET_MARK_GROUP     | TIME STAMP SET    | 12201             |                                                                                                                   | postgres
- SET_MARK_GROUP     | END               | myGroup1          | M3                                                                                                                | postgres
- COMMENT_MARK_GROUP |                   | myGroup1          | Mark M3                                                                                                           | postgres
+   hist_function    |    hist_event     |    hist_object    |                                                  regexp_replace                                                   |     hist_user      
+--------------------+-------------------+-------------------+-------------------------------------------------------------------------------------------------------------------+--------------------
+ START_GROUP        | BEGIN             | myGroup1          | With log reset                                                                                                    | _regress_emaj_adm2
+ START_GROUP        | TIME STAMP SET    | 12016             |                                                                                                                   | _regress_emaj_adm2
+ PURGE_HISTORIES    |                   |                   | 56 emaj_hist rows deleted ; 1 group history rows deleted ; 8 relation changes deleted ; 0 rollback events deleted | _regress_emaj_adm2
+ LOCK_GROUP         | BEGIN             | myGroup1          |                                                                                                                   | _regress_emaj_adm2
+ LOCK_GROUP         | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP     | BEGIN             | myGroup1          | M1                                                                                                                | _regress_emaj_adm2
+ SET_MARK_GROUP     | END               | myGroup1          | M1                                                                                                                | _regress_emaj_adm2
+ START_GROUP        | END               | myGroup1          | 7 tables/sequences processed                                                                                      | _regress_emaj_adm2
+                    | DELETED PARAMETER | history_retention |                                                                                                                   | _regress_emaj_adm2
+ START_GROUP        | BEGIN             | myGroup2          | With log reset                                                                                                    | _regress_emaj_adm2
+ START_GROUP        | TIME STAMP SET    | 12017             |                                                                                                                   | _regress_emaj_adm2
+ LOCK_GROUP         | BEGIN             | myGroup2          |                                                                                                                   | _regress_emaj_adm2
+ LOCK_GROUP         | END               | myGroup2          | 6 tables locked, 0 deadlock(s)                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP     | BEGIN             | myGroup2          | M1                                                                                                                | _regress_emaj_adm2
+ SET_MARK_GROUP     | END               | myGroup2          | M1                                                                                                                | _regress_emaj_adm2
+ START_GROUP        | END               | myGroup2          | 8 tables/sequences processed                                                                                      | _regress_emaj_adm2
+ SET_MARK_GROUP     | BEGIN             | myGroup1          |                                                                                                                   | _regress_emaj_adm2
+ LOCK_GROUP         | BEGIN             | myGroup1          |                                                                                                                   | _regress_emaj_adm2
+ LOCK_GROUP         | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP     | TIME STAMP SET    | 12200             |                                                                                                                   | _regress_emaj_adm2
+ SET_MARK_GROUP     | END               | myGroup1          | M2                                                                                                                | _regress_emaj_adm2
+ SET_MARK_GROUP     | BEGIN             | myGroup1          |                                                                                                                   | _regress_emaj_adm2
+ LOCK_GROUP         | BEGIN             | myGroup1          |                                                                                                                   | _regress_emaj_adm2
+ LOCK_GROUP         | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP     | TIME STAMP SET    | 12201             |                                                                                                                   | _regress_emaj_adm2
+ SET_MARK_GROUP     | END               | myGroup1          | M3                                                                                                                | _regress_emaj_adm2
+ COMMENT_MARK_GROUP |                   | myGroup1          | Mark M3                                                                                                           | _regress_emaj_adm2
 (27 rows)
 
 -- user tables
-reset role;
+reset session_authorization;
 select * from mySchema1.myTbl1 order by col11,col12;
  col11 |   col12    | col13 
 -------+------------+-------
@@ -739,7 +739,7 @@ update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c
 insert into myTbl6 select i, point(i,1.3), box(point(i,0),point(i+0.2,1)), circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27','EXECUTING',(i,point(i,1.3))::mycomposite from generate_series (1,8) as i;
 update myTbl6 set col64 = '<(5,6),3.5>', col65 = null, col67 = 'COMPLETED' where col61 between 1 and 3;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup2','M2');
  emaj_set_mark_group 
 ---------------------
@@ -747,7 +747,7 @@ select emaj.emaj_set_mark_group('myGroup2','M2');
 (1 row)
 
 --
-reset role;
+reset session_authorization;
 set search_path=public,myschema2;
 select nextval('myschema2.myseq1');
  nextval 
@@ -776,7 +776,7 @@ update myTbl4 set col43 = 2;
 delete from mytbl5 where 4 = any(col53);
 delete from myTbl6 where col65 is null and col61 <> 0;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup2','M3');
  emaj_set_mark_group 
 ---------------------
@@ -867,22 +867,22 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 12300 order by hist_id;
- hist_function  |   hist_event   | hist_object |         regexp_replace         | hist_user 
-----------------+----------------+-------------+--------------------------------+-----------
- SET_MARK_GROUP | BEGIN          | myGroup2    |                                | postgres
- LOCK_GROUP     | BEGIN          | myGroup2    |                                | postgres
- LOCK_GROUP     | END            | myGroup2    | 6 tables locked, 0 deadlock(s) | postgres
- SET_MARK_GROUP | TIME STAMP SET | 12300       |                                | postgres
- SET_MARK_GROUP | END            | myGroup2    | M2                             | postgres
- SET_MARK_GROUP | BEGIN          | myGroup2    |                                | postgres
- LOCK_GROUP     | BEGIN          | myGroup2    |                                | postgres
- LOCK_GROUP     | END            | myGroup2    | 6 tables locked, 0 deadlock(s) | postgres
- SET_MARK_GROUP | TIME STAMP SET | 12301       |                                | postgres
- SET_MARK_GROUP | END            | myGroup2    | M3                             | postgres
+ hist_function  |   hist_event   | hist_object |         regexp_replace         |     hist_user      
+----------------+----------------+-------------+--------------------------------+--------------------
+ SET_MARK_GROUP | BEGIN          | myGroup2    |                                | _regress_emaj_adm1
+ LOCK_GROUP     | BEGIN          | myGroup2    |                                | _regress_emaj_adm1
+ LOCK_GROUP     | END            | myGroup2    | 6 tables locked, 0 deadlock(s) | _regress_emaj_adm1
+ SET_MARK_GROUP | TIME STAMP SET | 12300       |                                | _regress_emaj_adm1
+ SET_MARK_GROUP | END            | myGroup2    | M2                             | _regress_emaj_adm1
+ SET_MARK_GROUP | BEGIN          | myGroup2    |                                | _regress_emaj_adm1
+ LOCK_GROUP     | BEGIN          | myGroup2    |                                | _regress_emaj_adm1
+ LOCK_GROUP     | END            | myGroup2    | 6 tables locked, 0 deadlock(s) | _regress_emaj_adm1
+ SET_MARK_GROUP | TIME STAMP SET | 12301       |                                | _regress_emaj_adm1
+ SET_MARK_GROUP | END            | myGroup2    | M3                             | _regress_emaj_adm1
 (10 rows)
 
 -- user tables
-reset role;
+reset session_authorization;
 select * from mySchema2.myTbl1 order by col11,col12;
  col11 |   col12    | col13 
 -------+------------+-------
@@ -945,7 +945,7 @@ select * from mySchema2.myTbl6 order by col61;
 (6 rows)
 
 -- log tables
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
@@ -1044,12 +1044,12 @@ select public.handle_emaj_sequences(12400);
 -----------------------------
 -- Step 3 : for myGroup2, double logged rollback
 -----------------------------
-reset role;
+reset session_authorization;
 analyze mytbl4;
 -- rollback without dblink
 alter function public.dblink_connect(text,text) rename to renamed_dblink_connect;
 alter function public.dblink_connect(text) rename to renamed_dblink_connect;
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
@@ -1066,10 +1066,10 @@ select * from emaj.emaj_logged_rollback_group('myGroup2','M3',false) order by 1,
  Notice        | Rollback id = 12401.
 (3 rows)
 
-reset role;
+reset session_authorization;
 alter function public.renamed_dblink_connect(text,text) rename to dblink_connect;
 alter function public.renamed_dblink_connect(text) rename to dblink_connect;
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 -----------------------------
 -- Checking step 3
 -----------------------------
@@ -1192,54 +1192,54 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 12400 order by hist_id;
-   hist_function   |   hist_event   |    hist_object    |                                           regexp_replace                                           | hist_user 
--------------------+----------------+-------------------+----------------------------------------------------------------------------------------------------+-----------
- ROLLBACK_GROUP    | BEGIN          | myGroup2          | Logged rollback to mark M2 (timestamp)                                                             | postgres
- DBLINK_OPEN_CNX   |                | rlbk#1            | Status = -1 (dblink extension not installed)                                                       | postgres
- LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | postgres
- LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_GROUP    | TIME STAMP SET | 12400             |                                                                                                    | postgres
- SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12400_START                                                                                   | postgres
- SET_MARK_GROUP    | END            | myGroup2          | RLBK_12400_START                                                                                   | postgres
- ROLLBACK_SEQUENCE |                | myschema2.myseq1  | RESTART 1001 MAXVALUE 2000 CYCLE                                                                   | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl4  | All log rows where emaj_gid > 12300041 and <= 12400000, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl6  | All log rows where emaj_gid > 12300041 and <= 12400000                                             | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12300041 and <= 12400000                                             | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                                                                         | postgres
- ROLLBACK_GROUP    | TIME STAMP SET | 12401             |                                                                                                    | postgres
- SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12400_DONE                                                                                    | postgres
- SET_MARK_GROUP    | END            | myGroup2          | RLBK_12400_DONE                                                                                    | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12400 | Rollback id = 12400.                                                                               | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12400 | 3 / 6 tables effectively processed.                                                                | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12400 | 1 / 2 sequences effectively processed.                                                             | postgres
- ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12400                                                                                  | postgres
- ROLLBACK_GROUP    | BEGIN          | myGroup2          | Logged rollback to mark M3 (timestamp)                                                             | postgres
- DBLINK_OPEN_CNX   |                | rlbk#1            | Status = -1 (dblink extension not installed)                                                       | postgres
- LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | postgres
- LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_GROUP    | TIME STAMP SET | 12402             |                                                                                                    | postgres
- SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12401_START                                                                                   | postgres
- SET_MARK_GROUP    | END            | myGroup2          | RLBK_12401_START                                                                                   | postgres
- ROLLBACK_SEQUENCE |                | myschema2.myseq1  | RESTART 1004 MAXVALUE 9223372036854775807 NO CYCLE                                                 | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl6  | All log rows where emaj_gid > 12300049 and <= 12400006                                             | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl4  | All log rows where emaj_gid > 12300049 and <= 12400006, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12300049 and <= 12400006                                             | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                                                                         | postgres
- ROLLBACK_GROUP    | TIME STAMP SET | 12403             |                                                                                                    | postgres
- SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12401_DONE                                                                                    | postgres
- SET_MARK_GROUP    | END            | myGroup2          | RLBK_12401_DONE                                                                                    | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12401 | Rollback id = 12401.                                                                               | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12401 | 3 / 6 tables effectively processed.                                                                | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12401 | 1 / 2 sequences effectively processed.                                                             | postgres
- ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12401                                                                                  | postgres
+   hist_function   |   hist_event   |    hist_object    |                                           regexp_replace                                           |     hist_user      
+-------------------+----------------+-------------------+----------------------------------------------------------------------------------------------------+--------------------
+ ROLLBACK_GROUP    | BEGIN          | myGroup2          | Logged rollback to mark M2 (timestamp)                                                             | _regress_emaj_adm2
+ DBLINK_OPEN_CNX   |                | rlbk#1            | Status = -1 (dblink extension not installed)                                                       | _regress_emaj_adm2
+ LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | _regress_emaj_adm2
+ LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | _regress_emaj_adm2
+ ROLLBACK_GROUP    | TIME STAMP SET | 12400             |                                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12400_START                                                                                   | _regress_emaj_adm2
+ SET_MARK_GROUP    | END            | myGroup2          | RLBK_12400_START                                                                                   | _regress_emaj_adm2
+ ROLLBACK_SEQUENCE |                | myschema2.myseq1  | RESTART 1001 MAXVALUE 2000 CYCLE                                                                   | _regress_emaj_adm2
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl4  | All log rows where emaj_gid > 12300041 and <= 12400000, in session_replication_role = replica mode | _regress_emaj_adm2
+ ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                                                                         | _regress_emaj_adm2
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl6  | All log rows where emaj_gid > 12300041 and <= 12400000                                             | _regress_emaj_adm2
+ ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | _regress_emaj_adm2
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12300041 and <= 12400000                                             | _regress_emaj_adm2
+ ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                                                                         | _regress_emaj_adm2
+ ROLLBACK_GROUP    | TIME STAMP SET | 12401             |                                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12400_DONE                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP    | END            | myGroup2          | RLBK_12400_DONE                                                                                    | _regress_emaj_adm2
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12400 | Rollback id = 12400.                                                                               | _regress_emaj_adm2
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12400 | 3 / 6 tables effectively processed.                                                                | _regress_emaj_adm2
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12400 | 1 / 2 sequences effectively processed.                                                             | _regress_emaj_adm2
+ ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12400                                                                                  | _regress_emaj_adm2
+ ROLLBACK_GROUP    | BEGIN          | myGroup2          | Logged rollback to mark M3 (timestamp)                                                             | _regress_emaj_adm2
+ DBLINK_OPEN_CNX   |                | rlbk#1            | Status = -1 (dblink extension not installed)                                                       | _regress_emaj_adm2
+ LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | _regress_emaj_adm2
+ LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | _regress_emaj_adm2
+ ROLLBACK_GROUP    | TIME STAMP SET | 12402             |                                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12401_START                                                                                   | _regress_emaj_adm2
+ SET_MARK_GROUP    | END            | myGroup2          | RLBK_12401_START                                                                                   | _regress_emaj_adm2
+ ROLLBACK_SEQUENCE |                | myschema2.myseq1  | RESTART 1004 MAXVALUE 9223372036854775807 NO CYCLE                                                 | _regress_emaj_adm2
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl6  | All log rows where emaj_gid > 12300049 and <= 12400006                                             | _regress_emaj_adm2
+ ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | _regress_emaj_adm2
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl4  | All log rows where emaj_gid > 12300049 and <= 12400006, in session_replication_role = replica mode | _regress_emaj_adm2
+ ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                                                                         | _regress_emaj_adm2
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12300049 and <= 12400006                                             | _regress_emaj_adm2
+ ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                                                                         | _regress_emaj_adm2
+ ROLLBACK_GROUP    | TIME STAMP SET | 12403             |                                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12401_DONE                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP    | END            | myGroup2          | RLBK_12401_DONE                                                                                    | _regress_emaj_adm2
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12401 | Rollback id = 12401.                                                                               | _regress_emaj_adm2
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12401 | 3 / 6 tables effectively processed.                                                                | _regress_emaj_adm2
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12401 | 1 / 2 sequences effectively processed.                                                             | _regress_emaj_adm2
+ ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12401                                                                                  | _regress_emaj_adm2
 (42 rows)
 
 -- user tables
-reset role;
+reset session_authorization;
 select * from mySchema2.myTbl1 order by col11,col12;
  col11 |   col12    | col13 
 -------+------------+-------
@@ -1302,7 +1302,7 @@ select * from mySchema2.myTbl6 order by col61;
 (6 rows)
 
 -- log tables
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
@@ -1422,13 +1422,13 @@ select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 (3 rows)
 
 --
-reset role;
+reset session_authorization;
 set search_path=public,myschema1;
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
 delete from myTbl1 where col11 = 1;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M4');
  emaj_set_mark_group 
 ---------------------
@@ -1436,10 +1436,10 @@ select emaj.emaj_set_mark_group('myGroup1','M4');
 (1 row)
 
 --
-reset role;
+reset session_authorization;
 update "myTbl3" set col33 = col33 / 2;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M5');
  emaj_set_mark_group 
 ---------------------
@@ -1447,10 +1447,10 @@ select emaj.emaj_set_mark_group('myGroup1','M5');
 (1 row)
 
 --
-reset role;
+reset session_authorization;
 update myTbl1 set col11 = 99 where col11 = 1;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M6');
  emaj_set_mark_group 
 ---------------------
@@ -1595,43 +1595,43 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 12500 order by hist_id;
-   hist_function    |   hist_event   |    hist_object    |                                           regexp_replace                                           | hist_user 
---------------------+----------------+-------------------+----------------------------------------------------------------------------------------------------+-----------
- ROLLBACK_GROUP     | BEGIN          | myGroup1          | Unlogged rollback to mark M2 (timestamp)                                                           | postgres
- DBLINK_OPEN_CNX    |                | rlbk#1            | Status = 1                                                                                         | postgres
- LOCK_GROUP         | BEGIN          | myGroup1          | Rollback session #1                                                                                | postgres
- LOCK_GROUP         | END            | myGroup1          | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_GROUP     | TIME STAMP SET | 12500             |                                                                                                    | postgres
- ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl4  | All log rows where emaj_gid > 12200029 and <= 12500000, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END            | myschema1.mytbl4  | 5 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl1  | All log rows where emaj_gid > 12200029 and <= 12500000, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END            | myschema1.mytbl1  | 5 rolled back primary keys                                                                         | postgres
- ROLLBACK_GROUP     | MARK DELETED   | myGroup1          | mark M3 is deleted                                                                                 | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12500 | Rollback id = 12500.                                                                               | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12500 | 2 / 5 tables effectively processed.                                                                | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12500 | 0 / 2 sequences effectively processed.                                                             | postgres
- DBLINK_CLOSE_CNX   |                | rlbk#1            |                                                                                                    | postgres
- ROLLBACK_GROUP     | END            | myGroup1          | Rollback_id 12500                                                                                  | postgres
- SET_MARK_GROUP     | BEGIN          | myGroup1          |                                                                                                    | postgres
- LOCK_GROUP         | BEGIN          | myGroup1          |                                                                                                    | postgres
- LOCK_GROUP         | END            | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                     | postgres
- SET_MARK_GROUP     | TIME STAMP SET | 12501             |                                                                                                    | postgres
- CLEANUP_RLBK_STATE |                | Rollback id 12500 | set to COMMITTED                                                                                   | postgres
- SET_MARK_GROUP     | END            | myGroup1          | M4                                                                                                 | postgres
- SET_MARK_GROUP     | BEGIN          | myGroup1          |                                                                                                    | postgres
- LOCK_GROUP         | BEGIN          | myGroup1          |                                                                                                    | postgres
- LOCK_GROUP         | END            | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                     | postgres
- SET_MARK_GROUP     | TIME STAMP SET | 12502             |                                                                                                    | postgres
- SET_MARK_GROUP     | END            | myGroup1          | M5                                                                                                 | postgres
- SET_MARK_GROUP     | BEGIN          | myGroup1          |                                                                                                    | postgres
- LOCK_GROUP         | BEGIN          | myGroup1          |                                                                                                    | postgres
- LOCK_GROUP         | END            | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                     | postgres
- SET_MARK_GROUP     | TIME STAMP SET | 12503             |                                                                                                    | postgres
- SET_MARK_GROUP     | END            | myGroup1          | M6                                                                                                 | postgres
+   hist_function    |   hist_event   |    hist_object    |                                           regexp_replace                                           |     hist_user      
+--------------------+----------------+-------------------+----------------------------------------------------------------------------------------------------+--------------------
+ ROLLBACK_GROUP     | BEGIN          | myGroup1          | Unlogged rollback to mark M2 (timestamp)                                                           | _regress_emaj_adm1
+ DBLINK_OPEN_CNX    |                | rlbk#1            | Status = 1                                                                                         | _regress_emaj_adm1
+ LOCK_GROUP         | BEGIN          | myGroup1          | Rollback session #1                                                                                | _regress_emaj_adm1
+ LOCK_GROUP         | END            | myGroup1          | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP     | TIME STAMP SET | 12500             |                                                                                                    | _regress_emaj_adm1
+ ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl4  | All log rows where emaj_gid > 12200029 and <= 12500000, in session_replication_role = replica mode | _regress_emaj_adm1
+ ROLLBACK_TABLE     | END            | myschema1.mytbl4  | 5 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl1  | All log rows where emaj_gid > 12200029 and <= 12500000, in session_replication_role = replica mode | _regress_emaj_adm1
+ ROLLBACK_TABLE     | END            | myschema1.mytbl1  | 5 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_GROUP     | MARK DELETED   | myGroup1          | mark M3 is deleted                                                                                 | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12500 | Rollback id = 12500.                                                                               | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12500 | 2 / 5 tables effectively processed.                                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12500 | 0 / 2 sequences effectively processed.                                                             | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX   |                | rlbk#1            |                                                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP     | END            | myGroup1          | Rollback_id 12500                                                                                  | _regress_emaj_adm1
+ SET_MARK_GROUP     | BEGIN          | myGroup1          |                                                                                                    | _regress_emaj_adm1
+ LOCK_GROUP         | BEGIN          | myGroup1          |                                                                                                    | _regress_emaj_adm1
+ LOCK_GROUP         | END            | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                     | _regress_emaj_adm1
+ SET_MARK_GROUP     | TIME STAMP SET | 12501             |                                                                                                    | _regress_emaj_adm1
+ CLEANUP_RLBK_STATE |                | Rollback id 12500 | set to COMMITTED                                                                                   | _regress_emaj_adm1
+ SET_MARK_GROUP     | END            | myGroup1          | M4                                                                                                 | _regress_emaj_adm1
+ SET_MARK_GROUP     | BEGIN          | myGroup1          |                                                                                                    | _regress_emaj_adm1
+ LOCK_GROUP         | BEGIN          | myGroup1          |                                                                                                    | _regress_emaj_adm1
+ LOCK_GROUP         | END            | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                     | _regress_emaj_adm1
+ SET_MARK_GROUP     | TIME STAMP SET | 12502             |                                                                                                    | _regress_emaj_adm1
+ SET_MARK_GROUP     | END            | myGroup1          | M5                                                                                                 | _regress_emaj_adm1
+ SET_MARK_GROUP     | BEGIN          | myGroup1          |                                                                                                    | _regress_emaj_adm1
+ LOCK_GROUP         | BEGIN          | myGroup1          |                                                                                                    | _regress_emaj_adm1
+ LOCK_GROUP         | END            | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                     | _regress_emaj_adm1
+ SET_MARK_GROUP     | TIME STAMP SET | 12503             |                                                                                                    | _regress_emaj_adm1
+ SET_MARK_GROUP     | END            | myGroup1          | M6                                                                                                 | _regress_emaj_adm1
 (31 rows)
 
 -- user tables
-reset role;
+reset session_authorization;
 select * from mySchema1.myTbl1 order by col11,col12;
  col11 |   col12    | col13 
 -------+------------+-------
@@ -1694,7 +1694,7 @@ select * from mySchema1.myTbl4 order by col41;
 (0 rows)
 
 -- log tables
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
@@ -1924,57 +1924,57 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 12600 order by hist_id;
-   hist_function   |   hist_event   |    hist_object    |                                           regexp_replace                                           | hist_user 
--------------------+----------------+-------------------+----------------------------------------------------------------------------------------------------+-----------
- ROLLBACK_GROUP    | BEGIN          | myGroup2          | Logged rollback to mark M2 (timestamp)                                                             | postgres
- DBLINK_OPEN_CNX   |                | rlbk#1            | Status = 1                                                                                         | postgres
- LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | postgres
- LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_GROUP    | TIME STAMP SET | 12600             |                                                                                                    | postgres
- SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12600_START                                                                                   | postgres
- SET_MARK_GROUP    | END            | myGroup2          | RLBK_12600_START                                                                                   | postgres
- ROLLBACK_SEQUENCE |                | myschema2.myseq1  | RESTART 1001 MAXVALUE 2000 CYCLE                                                                   | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl6  | All log rows where emaj_gid > 12300041 and <= 12600000                                             | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl4  | All log rows where emaj_gid > 12300041 and <= 12600000, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12300041 and <= 12600000                                             | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                                                                         | postgres
- ROLLBACK_GROUP    | TIME STAMP SET | 12601             |                                                                                                    | postgres
- SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12600_DONE                                                                                    | postgres
- SET_MARK_GROUP    | END            | myGroup2          | RLBK_12600_DONE                                                                                    | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12600 | Rollback id = 12600.                                                                               | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12600 | 3 / 6 tables effectively processed.                                                                | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12600 | 1 / 2 sequences effectively processed.                                                             | postgres
- DBLINK_CLOSE_CNX  |                | rlbk#1            |                                                                                                    | postgres
- ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12600                                                                                  | postgres
- ROLLBACK_GROUP    | BEGIN          | myGroup2          | Unlogged rollback to mark M3 (timestamp)                                                           | postgres
- DBLINK_OPEN_CNX   |                | rlbk#1            | Status = 1                                                                                         | postgres
- LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | postgres
- LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_GROUP    | TIME STAMP SET | 12602             |                                                                                                    | postgres
- ROLLBACK_SEQUENCE |                | myschema2.myseq1  | RESTART 1004 MAXVALUE 9223372036854775807 NO CYCLE                                                 | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl6  | All log rows where emaj_gid > 12300049 and <= 12600006                                             | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl4  | All log rows where emaj_gid > 12300049 and <= 12600006, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12300049 and <= 12600006                                             | postgres
- ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                                                                         | postgres
- ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12400_START is deleted                                                                   | postgres
- ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12400_DONE is deleted                                                                    | postgres
- ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12401_START is deleted                                                                   | postgres
- ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12401_DONE is deleted                                                                    | postgres
- ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12600_START is deleted                                                                   | postgres
- ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12600_DONE is deleted                                                                    | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12601 | Rollback id = 12601.                                                                               | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12601 | 3 / 6 tables effectively processed.                                                                | postgres
- ROLLBACK_GROUP    | NOTICE         | Rollback id 12601 | 1 / 2 sequences effectively processed.                                                             | postgres
- DBLINK_CLOSE_CNX  |                | rlbk#1            |                                                                                                    | postgres
- ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12601                                                                                  | postgres
+   hist_function   |   hist_event   |    hist_object    |                                           regexp_replace                                           |     hist_user      
+-------------------+----------------+-------------------+----------------------------------------------------------------------------------------------------+--------------------
+ ROLLBACK_GROUP    | BEGIN          | myGroup2          | Logged rollback to mark M2 (timestamp)                                                             | _regress_emaj_adm1
+ DBLINK_OPEN_CNX   |                | rlbk#1            | Status = 1                                                                                         | _regress_emaj_adm1
+ LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | _regress_emaj_adm1
+ LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP    | TIME STAMP SET | 12600             |                                                                                                    | _regress_emaj_adm1
+ SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12600_START                                                                                   | _regress_emaj_adm1
+ SET_MARK_GROUP    | END            | myGroup2          | RLBK_12600_START                                                                                   | _regress_emaj_adm1
+ ROLLBACK_SEQUENCE |                | myschema2.myseq1  | RESTART 1001 MAXVALUE 2000 CYCLE                                                                   | _regress_emaj_adm1
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl6  | All log rows where emaj_gid > 12300041 and <= 12600000                                             | _regress_emaj_adm1
+ ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl4  | All log rows where emaj_gid > 12300041 and <= 12600000, in session_replication_role = replica mode | _regress_emaj_adm1
+ ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12300041 and <= 12600000                                             | _regress_emaj_adm1
+ ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_GROUP    | TIME STAMP SET | 12601             |                                                                                                    | _regress_emaj_adm1
+ SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12600_DONE                                                                                    | _regress_emaj_adm1
+ SET_MARK_GROUP    | END            | myGroup2          | RLBK_12600_DONE                                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12600 | Rollback id = 12600.                                                                               | _regress_emaj_adm1
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12600 | 3 / 6 tables effectively processed.                                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12600 | 1 / 2 sequences effectively processed.                                                             | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX  |                | rlbk#1            |                                                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12600                                                                                  | _regress_emaj_adm1
+ ROLLBACK_GROUP    | BEGIN          | myGroup2          | Unlogged rollback to mark M3 (timestamp)                                                           | _regress_emaj_adm1
+ DBLINK_OPEN_CNX   |                | rlbk#1            | Status = 1                                                                                         | _regress_emaj_adm1
+ LOCK_GROUP        | BEGIN          | myGroup2          | Rollback session #1                                                                                | _regress_emaj_adm1
+ LOCK_GROUP        | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP    | TIME STAMP SET | 12602             |                                                                                                    | _regress_emaj_adm1
+ ROLLBACK_SEQUENCE |                | myschema2.myseq1  | RESTART 1004 MAXVALUE 9223372036854775807 NO CYCLE                                                 | _regress_emaj_adm1
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl6  | All log rows where emaj_gid > 12300049 and <= 12600006                                             | _regress_emaj_adm1
+ ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl4  | All log rows where emaj_gid > 12300049 and <= 12600006, in session_replication_role = replica mode | _regress_emaj_adm1
+ ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12300049 and <= 12600006                                             | _regress_emaj_adm1
+ ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12400_START is deleted                                                                   | _regress_emaj_adm1
+ ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12400_DONE is deleted                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12401_START is deleted                                                                   | _regress_emaj_adm1
+ ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12401_DONE is deleted                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12600_START is deleted                                                                   | _regress_emaj_adm1
+ ROLLBACK_GROUP    | MARK DELETED   | myGroup2          | mark RLBK_12600_DONE is deleted                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12601 | Rollback id = 12601.                                                                               | _regress_emaj_adm1
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12601 | 3 / 6 tables effectively processed.                                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP    | NOTICE         | Rollback id 12601 | 1 / 2 sequences effectively processed.                                                             | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX  |                | rlbk#1            |                                                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP    | END            | myGroup2          | Rollback_id 12601                                                                                  | _regress_emaj_adm1
 (45 rows)
 
 -- user tables
-reset role;
+reset session_authorization;
 select * from mySchema2.myTbl1 order by col11,col12;
  col11 |   col12    | col13 
 -------+------------+-------
@@ -2037,7 +2037,7 @@ select * from mySchema2.myTbl6 order by col61;
 (6 rows)
 
 -- log tables
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
@@ -2136,14 +2136,14 @@ select public.handle_emaj_sequences(12700);
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
-reset role;
+reset session_authorization;
 set search_path=public,myschema1;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
@@ -2153,13 +2153,13 @@ select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 (3 rows)
 
 --
-reset role;
+reset session_authorization;
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 insert into myTbl4 values (11,'',1,1,'Step 6');
 insert into myTbl4 values (12,'',1,1,'Step 6');
 --
 -- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true,'my comment');"
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true, 'my comment'), false);
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
@@ -2319,53 +2319,53 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 12700 order by hist_id;
-   hist_function    |   hist_event   |    hist_object     |                                           regexp_replace                                           | hist_user 
---------------------+----------------+--------------------+----------------------------------------------------------------------------------------------------+-----------
- ROLLBACK_GROUP     | BEGIN          | myGroup1           | Unlogged rollback to mark M5 (timestamp)                                                           | postgres
- DBLINK_OPEN_CNX    |                | rlbk#1             | Status = 1                                                                                         | postgres
- LOCK_GROUP         | BEGIN          | myGroup1           | Rollback session #1                                                                                | postgres
- LOCK_GROUP         | END            | myGroup1           | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_GROUP     | TIME STAMP SET | 12700              |                                                                                                    | postgres
- ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl4   | All log rows where emaj_gid > 12500024 and <= 12700003, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END            | myschema1.mytbl4   | 2 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl1   | All log rows where emaj_gid > 12500024 and <= 12700003, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END            | myschema1.mytbl1   | 1 rolled back primary keys                                                                         | postgres
- ROLLBACK_GROUP     | MARK DELETED   | myGroup1           | mark M6 is deleted                                                                                 | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12700  | Rollback id = 12700.                                                                               | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12700  | 2 / 5 tables effectively processed.                                                                | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12700  | 0 / 2 sequences effectively processed.                                                             | postgres
- DBLINK_CLOSE_CNX   |                | rlbk#1             |                                                                                                    | postgres
- ROLLBACK_GROUP     | END            | myGroup1           | Rollback_id 12700                                                                                  | postgres
- ROLLBACK_GROUP     | BEGIN          | myGroup1           | Logged rollback to mark M4 (timestamp)                                                             | postgres
- DBLINK_OPEN_CNX    |                | rlbk#1             | Status = 1                                                                                         | postgres
- DBLINK_OPEN_CNX    |                | rlbk#1             | Status = 0                                                                                         | postgres
- LOCK_GROUP         | BEGIN          | myGroup1           | Rollback session #1                                                                                | postgres
- LOCK_GROUP         | END            | myGroup1           | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_GROUP     | TIME STAMP SET | 12701              |                                                                                                    | postgres
- SET_MARK_GROUP     | BEGIN          | myGroup1           | RLBK_12701_START                                                                                   | postgres
- CLEANUP_RLBK_STATE |                | Rollback id 12600  | set to COMMITTED                                                                                   | postgres
- CLEANUP_RLBK_STATE |                | Rollback id 12601  | set to COMMITTED                                                                                   | postgres
- CLEANUP_RLBK_STATE |                | Rollback id 12700  | set to COMMITTED                                                                                   | postgres
- SET_MARK_GROUP     | END            | myGroup1           | RLBK_12701_START                                                                                   | postgres
- ROLLBACK_TABLE     | BEGIN          | myschema1."myTbl3" | All log rows where emaj_gid > 12500014 and <= 12700006                                             | postgres
- ROLLBACK_TABLE     | END            | myschema1."myTbl3" | 10 rolled back primary keys                                                                        | postgres
- ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl4   | All log rows where emaj_gid > 12500014 and <= 12700006, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END            | myschema1.mytbl4   | 2 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl1   | All log rows where emaj_gid > 12500014 and <= 12700006, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END            | myschema1.mytbl1   | 1 rolled back primary keys                                                                         | postgres
- ROLLBACK_GROUP     | TIME STAMP SET | 12702              |                                                                                                    | postgres
- SET_MARK_GROUP     | BEGIN          | myGroup1           | RLBK_12701_DONE                                                                                    | postgres
- SET_MARK_GROUP     | END            | myGroup1           | RLBK_12701_DONE                                                                                    | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12701  | Rollback id = 12701.                                                                               | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12701  | 3 / 5 tables effectively processed.                                                                | postgres
- ROLLBACK_GROUP     | NOTICE         | Rollback id 12701  | 0 / 2 sequences effectively processed.                                                             | postgres
- DBLINK_CLOSE_CNX   |                | rlbk#1             |                                                                                                    | postgres
- ROLLBACK_GROUP     | END            | myGroup1           | Rollback_id 12701                                                                                  | postgres
- COMMENT_ROLLBACK   |                | 12701              |                                                                                                    | postgres
+   hist_function    |   hist_event   |    hist_object     |                                           regexp_replace                                           |     hist_user      
+--------------------+----------------+--------------------+----------------------------------------------------------------------------------------------------+--------------------
+ ROLLBACK_GROUP     | BEGIN          | myGroup1           | Unlogged rollback to mark M5 (timestamp)                                                           | _regress_emaj_adm1
+ DBLINK_OPEN_CNX    |                | rlbk#1             | Status = 1                                                                                         | _regress_emaj_adm1
+ LOCK_GROUP         | BEGIN          | myGroup1           | Rollback session #1                                                                                | _regress_emaj_adm1
+ LOCK_GROUP         | END            | myGroup1           | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP     | TIME STAMP SET | 12700              |                                                                                                    | _regress_emaj_adm1
+ ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl4   | All log rows where emaj_gid > 12500024 and <= 12700003, in session_replication_role = replica mode | _regress_emaj_adm1
+ ROLLBACK_TABLE     | END            | myschema1.mytbl4   | 2 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl1   | All log rows where emaj_gid > 12500024 and <= 12700003, in session_replication_role = replica mode | _regress_emaj_adm1
+ ROLLBACK_TABLE     | END            | myschema1.mytbl1   | 1 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_GROUP     | MARK DELETED   | myGroup1           | mark M6 is deleted                                                                                 | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12700  | Rollback id = 12700.                                                                               | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12700  | 2 / 5 tables effectively processed.                                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12700  | 0 / 2 sequences effectively processed.                                                             | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX   |                | rlbk#1             |                                                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP     | END            | myGroup1           | Rollback_id 12700                                                                                  | _regress_emaj_adm1
+ ROLLBACK_GROUP     | BEGIN          | myGroup1           | Logged rollback to mark M4 (timestamp)                                                             | _regress_emaj_adm1
+ DBLINK_OPEN_CNX    |                | rlbk#1             | Status = 1                                                                                         | _regress_emaj_adm1
+ DBLINK_OPEN_CNX    |                | rlbk#1             | Status = 0                                                                                         | _regress_emaj_adm1
+ LOCK_GROUP         | BEGIN          | myGroup1           | Rollback session #1                                                                                | _regress_emaj_adm1
+ LOCK_GROUP         | END            | myGroup1           | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP     | TIME STAMP SET | 12701              |                                                                                                    | _regress_emaj_adm1
+ SET_MARK_GROUP     | BEGIN          | myGroup1           | RLBK_12701_START                                                                                   | _regress_emaj_adm1
+ CLEANUP_RLBK_STATE |                | Rollback id 12600  | set to COMMITTED                                                                                   | _regress_emaj_adm1
+ CLEANUP_RLBK_STATE |                | Rollback id 12601  | set to COMMITTED                                                                                   | _regress_emaj_adm1
+ CLEANUP_RLBK_STATE |                | Rollback id 12700  | set to COMMITTED                                                                                   | _regress_emaj_adm1
+ SET_MARK_GROUP     | END            | myGroup1           | RLBK_12701_START                                                                                   | _regress_emaj_adm1
+ ROLLBACK_TABLE     | BEGIN          | myschema1."myTbl3" | All log rows where emaj_gid > 12500014 and <= 12700006                                             | _regress_emaj_adm1
+ ROLLBACK_TABLE     | END            | myschema1."myTbl3" | 10 rolled back primary keys                                                                        | _regress_emaj_adm1
+ ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl4   | All log rows where emaj_gid > 12500014 and <= 12700006, in session_replication_role = replica mode | _regress_emaj_adm1
+ ROLLBACK_TABLE     | END            | myschema1.mytbl4   | 2 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl1   | All log rows where emaj_gid > 12500014 and <= 12700006, in session_replication_role = replica mode | _regress_emaj_adm1
+ ROLLBACK_TABLE     | END            | myschema1.mytbl1   | 1 rolled back primary keys                                                                         | _regress_emaj_adm1
+ ROLLBACK_GROUP     | TIME STAMP SET | 12702              |                                                                                                    | _regress_emaj_adm1
+ SET_MARK_GROUP     | BEGIN          | myGroup1           | RLBK_12701_DONE                                                                                    | _regress_emaj_adm1
+ SET_MARK_GROUP     | END            | myGroup1           | RLBK_12701_DONE                                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12701  | Rollback id = 12701.                                                                               | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12701  | 3 / 5 tables effectively processed.                                                                | _regress_emaj_adm1
+ ROLLBACK_GROUP     | NOTICE         | Rollback id 12701  | 0 / 2 sequences effectively processed.                                                             | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX   |                | rlbk#1             |                                                                                                    | _regress_emaj_adm1
+ ROLLBACK_GROUP     | END            | myGroup1           | Rollback_id 12701                                                                                  | _regress_emaj_adm1
+ COMMENT_ROLLBACK   |                | 12701              |                                                                                                    | _regress_emaj_adm1
 (41 rows)
 
 -- user tables
-reset role;
+reset session_authorization;
 select * from mySchema1.myTbl1 order by col11,col12;
  col11 |   col12    | col13 
 -------+------------+-------
@@ -2428,7 +2428,7 @@ select * from mySchema1.myTbl4 order by col41;
 (0 rows)
 
 -- log tables
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
@@ -2558,14 +2558,14 @@ select public.handle_emaj_sequences(12800);
 -----------------------------
 set search_path=public,myschema1;
 --
-reset role;
+reset session_authorization;
 delete from "myTbl3" where col31 = 14;
 delete from "myTbl3" where col31 = 15;
 delete from "myTbl3" where col31 = 16;
 delete from "myTbl3" where col31 = 17;
 delete from "myTbl3" where col31 = 18;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_comment like '%to mark M4 start';
  emaj_rename_mark_group 
 ------------------------
@@ -2684,20 +2684,20 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 12800 order by hist_id;
-      hist_function       | hist_event | hist_object |                    regexp_replace                     | hist_user 
---------------------------+------------+-------------+-------------------------------------------------------+-----------
- RENAME_MARK_GROUP        | BEGIN      | myGroup1    | RLBK_12701_START                                      | postgres
- RENAME_MARK_GROUP        | END        | myGroup1    | RLBK_12701_START renamed Before logged rollback to M4 | postgres
- DELETE_MARK_GROUP        | BEGIN      | myGroup1    | RLBK_12701_DONE                                       | postgres
- DELETE_MARK_GROUP        | END        | myGroup1    | RLBK_12701_DONE                                       | postgres
- DELETE_MARK_GROUP        | BEGIN      | myGroup1    | M1                                                    | postgres
- DELETE_MARK_GROUP        | END        | myGroup1    | M1                                                    | postgres
- DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1    | M4                                                    | postgres
- DELETE_BEFORE_MARK_GROUP | END        | myGroup1    | 1 marks deleted ; M4 is now the initial mark          | postgres
+      hist_function       | hist_event | hist_object |                    regexp_replace                     |     hist_user      
+--------------------------+------------+-------------+-------------------------------------------------------+--------------------
+ RENAME_MARK_GROUP        | BEGIN      | myGroup1    | RLBK_12701_START                                      | _regress_emaj_adm1
+ RENAME_MARK_GROUP        | END        | myGroup1    | RLBK_12701_START renamed Before logged rollback to M4 | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | BEGIN      | myGroup1    | RLBK_12701_DONE                                       | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | END        | myGroup1    | RLBK_12701_DONE                                       | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | BEGIN      | myGroup1    | M1                                                    | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | END        | myGroup1    | M1                                                    | _regress_emaj_adm1
+ DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1    | M4                                                    | _regress_emaj_adm1
+ DELETE_BEFORE_MARK_GROUP | END        | myGroup1    | 1 marks deleted ; M4 is now the initial mark          | _regress_emaj_adm1
 (8 rows)
 
 -- user tables
-reset role;
+reset session_authorization;
 select * from mySchema1.myTbl1 order by col11,col12;
  col11 |   col12    | col13 
 -------+------------+-------
@@ -2755,7 +2755,7 @@ select * from mySchema1.myTbl4 order by col41;
 (0 rows)
 
 -- log tables
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
@@ -2842,4 +2842,4 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 --6	up R-M5 up LR-M4(->M4S+M4E)
 --7	up M7 REN-M4S DEL-M4E DEL-M1 DELBEF-M4
 --
-reset role;
+reset session_authorization;

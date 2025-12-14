@@ -10,7 +10,7 @@ select public.handle_emaj_sequences(14000);
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
 
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 
 -- before going on, save and reload parameters
 select emaj.emaj_import_parameters_configuration(emaj.emaj_export_parameters_configuration());
@@ -109,7 +109,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 14000 order by hist_id;
 
 -- log tables
-reset role;
+reset session_authorization;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
@@ -131,9 +131,9 @@ select public.handle_emaj_sequences(14200);
 -----------------------------
 -- prepare phil's group#3, group
 --
-reset role;
+reset session_authorization;
 alter table "phil's schema""3"."myTbl2\" add primary key (col21);
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 
 select emaj.emaj_create_group('phil''s group#3",');
 select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
@@ -141,7 +141,7 @@ select emaj.emaj_assign_sequences('phil''s schema"3','.*',null,'phil''s group#3"
 
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
 --
-reset role;
+reset session_authorization;
 set search_path=public,"phil's schema""3";
 --
 insert into "phil's tbl1" select i, 'AB''C', E'\\014'::bytea from generate_series (1,31) as i;
@@ -155,17 +155,17 @@ insert into "myTbl2\" values (2,'DEF',NULL);
 select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 --
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('phil''s group#3",','M2_rollbackable');
 select emaj.emaj_set_mark_group('phil''s group#3",','M2_again!');
 --
-reset role;
+reset session_authorization;
 delete from "phil's tbl1" where "phil's col11" = 10;
 update "phil's tbl1" set "phil's col12" = 'DEF' where "phil's col11" <= 2;
 
 select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1','Third mark set');
 --
 select emaj.emaj_rename_mark_group('phil''s group#3",','phil''s mark #1','phil''s mark #3');
@@ -204,11 +204,11 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 14200 order by hist_id;
 
 -- user tables
-reset role;
+reset session_authorization;
 select * from "phil's schema""3"."phil's tbl1" order by "phil's col11","phil's col12";
 select * from "phil's schema""3"."myTbl2\" order by col21;
 -- log tables
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select "phil's col11", "phil's col12", "phil\s""col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
 
@@ -219,7 +219,7 @@ select public.handle_emaj_sequences(14300);
 -- Step 10 : for myGroup1, in a transaction, update tables and rollback the transaction, 
 --           then rollback to previous mark 
 -----------------------------
-reset role;
+reset session_authorization;
 set search_path=public,myschema1;
 --
 begin transaction;
@@ -227,7 +227,7 @@ begin transaction;
 rollback;
 --
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order by 1,2;
 
 -----------------------------
@@ -253,7 +253,7 @@ select public.handle_emaj_sequences(14400);
 -- Step 11 : tests snaps and script generation functions
 -----------------------------
 -- first perform changes in a table with generated columns
-reset role;
+reset session_authorization;
 set search_path=public,myschema1;
 insert into mytbl2b (col21) values (10),(11);
 update mytbl2b set col21 = 12 where col21 = 11;
@@ -281,7 +281,7 @@ alter sequence myschema2.myseq1 minvalue 1 maxvalue 100 increment 10 start 21 re
 -- create the directory for the first snaps set
 \! mkdir -p $EMAJTESTTMPDIR/snaps1
 -- ... and snap all groups
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
 select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
 select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
@@ -325,7 +325,7 @@ begin;
   select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
 
   \! cat $EMAJTESTTMPDIR/myGroup1.sql
-  reset role;
+  reset session_authorization;
   \set FILE1 :EMAJTESTTMPDIR '/myGroup1.sql'
   \i :FILE1
   \set FILE2 :EMAJTESTTMPDIR '/myGroup2.sql'
@@ -333,7 +333,7 @@ begin;
   \set FILE3 :EMAJTESTTMPDIR '/Group3.sql'
   \i :FILE3
 
-  set role _regress_emaj_adm1;
+  set session_authorization to _regress_emaj_adm1;
   select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
   select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
   select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
@@ -348,10 +348,10 @@ rollback;
 \! diff --exclude _INFO_s $EMAJTESTTMPDIR/snaps1 $EMAJTESTTMPDIR/snaps2
 
 -- reset the sequence myschema2.myseq1 to its previous characteristics
-reset role;
+reset session_authorization;
 alter sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 9223372036854775807 minvalue 1000 cache 1 no cycle;
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 
 -----------------------------
 -- Checking step 11
@@ -376,37 +376,37 @@ select emaj.emaj_stop_group('phil''s group#3",');
 -- remove the "phil's tbl1" table, rename it and reassign it to its group
 select emaj.emaj_remove_table('phil''s schema"3','phil''s tbl1');
 
-reset role;
+reset session_authorization;
 alter table "phil's schema""3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_assign_table('phil''s schema"3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
 
 -- use the table and its group
 select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
 
-reset role;
+reset session_authorization;
 update "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
 
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 
-reset role;
+reset session_authorization;
 delete from "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
 
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_table_rename',false) order by 1,2;
 select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
 --
-reset role;
+reset session_authorization;
 alter table "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
 
 -----------------------------
 -- Checking step 12
 -----------------------------
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14500 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -422,7 +422,7 @@ select public.handle_emaj_sequences(14600);
 -----------------------------
 -- Step 13 : test use of groups or marks protection
 -----------------------------
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 -- try to rollback a protected group
 select emaj.emaj_protect_group('myGroup2');
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
@@ -464,33 +464,33 @@ select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":["mytbl2
 
 select emaj.emaj_set_mark_group('myGroup1','MC1');
 
-reset role;
+reset session_authorization;
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (2000,2012) as i;
 insert into myTbl2 values (2000,'TC1',NULL);
 delete from myTbl1 where col11 > 2010;
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC2');
 
-reset role;
+reset session_authorization;
 update myTbl2 set col22 = 'TC2' WHERE col22 ='TC1';
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC1',false) order by 1,2;
 
-reset role;
+reset session_authorization;
 insert into myTbl2 values (2000,'TC3',NULL);
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC1_DONE');
 select emaj.emaj_set_mark_group('myGroup1','MC3');
 
-reset role;
+reset session_authorization;
 insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
 update myTbl4 set col44 = NULL where col41 = 2000;
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC4');
 select emaj.emaj_set_mark_group('myGroup1','MC5');
 
@@ -520,35 +520,35 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
 
 select emaj.emaj_set_mark_group('myGroup1','MC6');
 
-reset role;
+reset session_authorization;
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (2000,2012) as i;
 insert into myTbl2 values (3000,'TC6',NULL);
 delete from myTbl1 where col11 > 2010;
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC7');
 
-reset role;
+reset session_authorization;
 update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC8');
 
-reset role;
+reset session_authorization;
 insert into myTbl2 values (3001,'TC8',NULL);
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC8',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
 select emaj.emaj_set_mark_group('myGroup1','MC9');
 
-reset role;
+reset session_authorization;
 insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
 update myTbl4 set col44 = NULL where col41 = 2000;
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
@@ -563,24 +563,24 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
 
 select emaj.emaj_set_mark_group('myGroup1','MC10');
 
-reset role;
+reset session_authorization;
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (3000,3010) as i;
 delete from myTbl1 where col11 > 3005;
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 
-reset role;
+reset session_authorization;
 update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC11');
 
-reset role;
+reset session_authorization;
 insert into myTbl4 values (3000,'FK...',1,10,'ABC');
 update myTbl4 set col44 = NULL where col41 = 3000;
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
@@ -595,41 +595,41 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
 
 select emaj.emaj_set_mark_group('myGroup1','MC15');
 
-reset role;
+reset session_authorization;
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (4000,4012) as i;
 insert into myTbl2 values (4000,'TC15',NULL);
 delete from myTbl1 where col11 > 4010;
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','MC16');
 
-reset role;
+reset session_authorization;
 update myTbl2 set col22 = 'TC16' WHERE col22 ='TC15';
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC15',false) order by 1,2;
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC15_DONE');
 
 select emaj.emaj_set_mark_group('myGroup1','MC17');
 
-reset role;
+reset session_authorization;
 insert into myTbl2 values (4001,'TC15',NULL);
 
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 
-reset role;
+reset session_authorization;
 select * from myTbl1 order by col11;
 select * from myTbl2 order by col21;
 
 -----------------------------
 -- Checking step 14
 -----------------------------
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table where tbl_schema = 'myschema1' order by tbl_time_id, tbl_schema, tbl_name;
@@ -648,4 +648,4 @@ select * from emaj.emaj_rollback_group('myGroup1','Multi-1',true) order by 1,2;
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR
-reset role;
+reset session_authorization;

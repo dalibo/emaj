@@ -1,4 +1,4 @@
--- viewer.sql : test use of functions by an emaj_viewer role
+-- viewer.sql : test emaj data access and functions calls by an emaj_viewer role
 --
 -- set sequence restart value
 select public.handle_emaj_sequences(11000);
@@ -71,7 +71,7 @@ select emaj.emaj_start_group('emptyGroup');
 (1 row)
 
 --
-set role _regress_emaj_viewer;
+set session_authorization to _regress_emaj_viewer;
 --
 -----------------------------
 -- authorized table or view accesses
@@ -489,4 +489,4 @@ ERROR:  permission denied for function emaj_import_parameters_configuration
 select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
 ERROR:  permission denied for function emaj_import_parameters_configuration
 --
-reset role;
+reset session_authorization;

@@ -18,7 +18,7 @@ grant all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", m
 -----------------------------
 -- create groups
 -----------------------------
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2',true);
 select emaj.emaj_create_group('phil''s group#3",',false);
@@ -60,7 +60,7 @@ commit;
 -- Step 1 : for myGroup1, update tables, set 2 marks, perform 2 unlogged rollbacks and protect the group and its last mark
 -----------------------------
 --
-reset role;
+reset session_authorization;
 set search_path=myschema1;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
@@ -69,10 +69,10 @@ delete from myTbl1 where col11 > 10;
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M2');
 --
-reset role;
+reset session_authorization;
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
@@ -80,25 +80,25 @@ insert into myTbl4 values (3,'FK...',1,10,'ABC');
 delete from myTbl1 where col11 = 10;
 update myTbl1 set col12='DEF' where col11 <= 2;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup1','M3');
 select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 --
-reset role;
+reset session_authorization;
 delete from myTbl1 where col11 > 3;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
 insert into myTbl2 values (3,'GHI',NULL);
 update myTbl4 set col43 = 3 where col41 = 2;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_protect_mark_group('myGroup1','M3');
 select emaj.emaj_protect_group('myGroup1');
 
 -----------------------------
 -- Step 2 : for myGroup2, start, update tables and set 2 marks 
 -----------------------------
-reset role;
+reset session_authorization;
 set search_path=myschema2;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
@@ -108,23 +108,23 @@ select nextval('myschema2.myseq1');
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup2','M2');
 --
-reset role;
+reset session_authorization;
 set search_path=myschema2;
 select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
 --
 alter sequence mySeq1 NO MAXVALUE NO CYCLE;
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 --
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
 --
-set role _regress_emaj_adm1;
+set session_authorization to _regress_emaj_adm1;
 select emaj.emaj_set_mark_group('myGroup2','M3');
 
 -----------------------------
@@ -195,4 +195,4 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -------------------------------
 -- There is no specific test for this version
 
-reset role;
+reset session_authorization;

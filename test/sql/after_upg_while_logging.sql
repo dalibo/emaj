@@ -13,7 +13,7 @@ revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", 
 -----------------------------
 -- Step 1 : check the E-Maj installation
 -----------------------------
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_verify_all();
 
 select * from emaj.emaj_log_session order by 1,2;
@@ -38,12 +38,12 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 -----------------------------
 -- Step 3 : for myGroup1, update tables, then unprotect, logged_rollback, rename the end rollback mark and consolidate the rollback
 -----------------------------
-reset role;
+reset session_authorization;
 set search_path=myschema1;
 --
 update "myTbl3" set col33 = col33 / 2;
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 select emaj.emaj_unprotect_mark_group('myGroup1','M3');
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -55,25 +55,25 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
 -----------------------------
 -- Step 4 : for myGroup1, update tables and sequences again then set 3 marks and get stats
 -----------------------------
-reset role;
+reset session_authorization;
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
 delete from myTbl1 where col11 = 1;
 select nextval('myschema1."myTbl3_col31_seq"');
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','M4');
 --
-reset role;
+reset session_authorization;
 update "myTbl3" set col33 = col33 / 2;
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','M5');
 --
-reset role;
+reset session_authorization;
 update myTbl1 set col11 = 99 where col11 = 1;
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_group('myGroup1','M6');
 --
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
@@ -92,7 +92,7 @@ select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
-reset role;
+reset session_authorization;
 set search_path=myschema1;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
@@ -100,17 +100,17 @@ insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 truncate myTbl2 cascade;
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 --
-reset role;
+reset session_authorization;
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 copy myTbl4 from stdin;
 11		1	1	Step 6
 12		1	1	Step 6
 \.
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,2;
 
 -----------------------------
@@ -122,12 +122,12 @@ select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1
 -----------------------------
 -- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
-reset role;
+reset session_authorization;
 set search_path=myschema1;
 --
 delete from "myTbl3" where col31 between 14 and 18;
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_comment like '%to mark M4 start';
 select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark where mark_comment like '%to mark M4 end';
 select emaj.emaj_delete_mark_group('myGroup1','M1');
@@ -137,18 +137,18 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 -- Step 9 : for myGroup6, perform a table change and verify that no log trigger has been called
 --          and finaly drop the group
 -----------------------------
-reset role;
+reset session_authorization;
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (1),(2);
 select count(*) from emaj_myschema6."table_with_51_characters_long_name_____0_________0#1_log";
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_start_group('myGroup6', 'Start G6');
 --
-reset role;
+reset session_authorization;
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (3),(4);
 delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
 --
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL) order by 1,2,3,4;
 select * from emaj.emaj_rollback_group('myGroup6', 'Start G6');
@@ -175,10 +175,10 @@ select public.handle_emaj_sequences(30000);
 -- the groups are left in their current state for the parallel rollback test.
 -- perform some updates to prepare the parallel rollback test
 -- set a mark for both groups
-set role _regress_emaj_adm2;
+set session_authorization to _regress_emaj_adm2;
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-1');
 --
-reset role;
+reset session_authorization;
 select count(*) from mySchema1.myTbl4;
 select count(*) from mySchema1.myTbl1;
 select count(*) from mySchema1.myTbl2; 

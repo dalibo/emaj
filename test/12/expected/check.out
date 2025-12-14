@@ -139,7 +139,7 @@ select funcname, calls from pg_stat_user_functions
  _drop_log_schemas                         |   134
  _drop_seq                                 |    73
  _drop_tbl                                 |   231
- _emaj_param_change_fnct                   |    48
+ _emaj_param_change_fnct                   |    49
  _enable_event_triggers                    |   297
  _estimate_rlbk_step_duration              |   820
  _estimate_rollback_groups                 |    13

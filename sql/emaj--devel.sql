@@ -917,8 +917,7 @@ $_dblink_open_cnx$
 --   - param_key = 'dblink_user_password',
 --   - param_value_text = 'user=<user> password=<password>' with the rules that apply to usual libPQ connect strings.
 -- The password can be omited if the connection doesn't require it.
--- The dblink_connect_u is used to open the connection so that emaj_adm but non superuser roles can access the
---    cluster even when no password is required to log on.
+-- The connection is performed by calling dblink_connect() when the installer role is superuser, or dblink_connect_u() in other cases.
 -- The function is directly called by Emaj_web.
 -- Input:  connection name
 -- Output: integer status return.
