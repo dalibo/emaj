@@ -12,6 +12,9 @@ truncate emaj.emaj_hist;
 -----------------------------
 grant emaj_adm to _regress_emaj_adm1, _regress_emaj_adm2;
 
+--update emaj.emaj_param set param_value_text = 'user=_regress_emaj_adm1'
+--  where param_key = 'dblink_user_password';
+
 --
 set role _regress_emaj_adm1;
 
@@ -124,7 +127,7 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 select emaj.emaj_start_group('myGroup2','M1');
 
 -- set sequence restart value
-select public.handle_emaj_sequences(12100);
+select public.handle_emaj_sequences(12200);
 
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks
@@ -195,7 +198,7 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid, emaj_
     from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 -- set sequence restart value
-select public.handle_emaj_sequences(12200);
+select public.handle_emaj_sequences(12300);
 
 -----------------------------
 -- Step 2 : for myGroup2, start, update tables and set 2 marks 
@@ -240,14 +243,14 @@ select emaj.emaj_set_mark_group('myGroup2','M3');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12200 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12300 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
-  from emaj.emaj_hist where hist_id >= 12200 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 12300 order by hist_id;
 
 -- user tables
 reset role;
@@ -267,7 +270,7 @@ select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_mys
 select col61, col62, col63, col64, col65, col66, col67, col68, col69, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -- set sequence restart value
-select public.handle_emaj_sequences(12300);
+select public.handle_emaj_sequences(12400);
 
 -----------------------------
 -- Step 3 : for myGroup2, double logged rollback
@@ -296,14 +299,14 @@ set role _regress_emaj_adm1;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12300 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12400 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
-  from emaj.emaj_hist where hist_id >= 12300 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 12400 order by hist_id;
 
 -- user tables
 reset role;
@@ -323,7 +326,7 @@ select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_mys
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -- set sequence restart value
-select public.handle_emaj_sequences(12400);
+select public.handle_emaj_sequences(12500);
 
 -----------------------------
 -- Step 4 : for myGroup1, rollback then update tables then set 3 marks
@@ -357,14 +360,14 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12400 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12500 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
-  from emaj.emaj_hist where hist_id >= 12400 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 12500 order by hist_id;
 
 -- user tables
 reset role;
@@ -382,7 +385,7 @@ select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 -- set sequence restart value
-select public.handle_emaj_sequences(12500);
+select public.handle_emaj_sequences(12600);
 
 -----------------------------
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
@@ -398,14 +401,14 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12500 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12600 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
-  from emaj.emaj_hist where hist_id >= 12500 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 12600 order by hist_id;
 
 -- user tables
 reset role;
@@ -425,7 +428,7 @@ select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_mys
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -- set sequence restart value
-select public.handle_emaj_sequences(12600);
+select public.handle_emaj_sequences(12700);
 
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
@@ -449,7 +452,7 @@ insert into myTbl4 values (12,'',1,1,'Step 6');
 set role _regress_emaj_adm1;
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true, 'my comment'), false);
 
-select emaj.emaj_comment_rollback(12601,'Updated comment');
+select emaj.emaj_comment_rollback(12701,'Updated comment');
 
 -- and check the rollback result
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_comment,
@@ -475,14 +478,14 @@ select * from
   where checked_stat_rows <> 0;  
 --
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12600 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12700 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
-  from emaj.emaj_hist where hist_id >= 12600 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 12700 order by hist_id;
 
 -- user tables
 reset role;
@@ -500,7 +503,7 @@ select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 -- set sequence restart value
-select public.handle_emaj_sequences(12700);
+select public.handle_emaj_sequences(12800);
 
 -----------------------------
 -- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
@@ -529,14 +532,14 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12700 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12800 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
-  from emaj.emaj_hist where hist_id >= 12700 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 12800 order by hist_id;
 
 -- user tables
 reset role;

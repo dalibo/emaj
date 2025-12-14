@@ -156,15 +156,15 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
   from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
- myGroup2   | myschema2   | myTbl3     | M1              |              12017 | M2             |             12200 | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl1     | M1              |              12017 | M2             |             12200 | postgres  | DELETE    |         1
- myGroup2   | myschema2   | mytbl1     | M1              |              12017 | M2             |             12200 | postgres  | INSERT    |        11
- myGroup2   | myschema2   | mytbl1     | M1              |              12017 | M2             |             12200 | postgres  | UPDATE    |         3
- myGroup2   | myschema2   | mytbl2     | M1              |              12017 | M2             |             12200 | postgres  | INSERT    |         2
- myGroup2   | myschema2   | mytbl5     | M1              |              12017 | M2             |             12200 | postgres  | INSERT    |         2
- myGroup2   | myschema2   | mytbl5     | M1              |              12017 | M2             |             12200 | postgres  | UPDATE    |         1
- myGroup2   | myschema2   | mytbl6     | M1              |              12017 | M2             |             12200 | postgres  | INSERT    |         8
- myGroup2   | myschema2   | mytbl6     | M1              |              12017 | M2             |             12200 | postgres  | UPDATE    |         3
+ myGroup2   | myschema2   | myTbl3     | M1              |              12017 | M2             |             12300 | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl1     | M1              |              12017 | M2             |             12300 | postgres  | DELETE    |         1
+ myGroup2   | myschema2   | mytbl1     | M1              |              12017 | M2             |             12300 | postgres  | INSERT    |        11
+ myGroup2   | myschema2   | mytbl1     | M1              |              12017 | M2             |             12300 | postgres  | UPDATE    |         3
+ myGroup2   | myschema2   | mytbl2     | M1              |              12017 | M2             |             12300 | postgres  | INSERT    |         2
+ myGroup2   | myschema2   | mytbl5     | M1              |              12017 | M2             |             12300 | postgres  | INSERT    |         2
+ myGroup2   | myschema2   | mytbl5     | M1              |              12017 | M2             |             12300 | postgres  | UPDATE    |         1
+ myGroup2   | myschema2   | mytbl6     | M1              |              12017 | M2             |             12300 | postgres  | INSERT    |         8
+ myGroup2   | myschema2   | mytbl6     | M1              |              12017 | M2             |             12300 | postgres  | UPDATE    |         3
 (9 rows)
 
 select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
@@ -172,8 +172,8 @@ select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
- myGroup2   | myschema2   | myTbl3_col31_seq | M1              |              12017 | M2             |             12200 |              10 | f
- myGroup2   | myschema2   | myseq1           | M1              |              12017 | M2             |             12200 |               1 | f
+ myGroup2   | myschema2   | myTbl3_col31_seq | M1              |              12017 | M2             |             12300 |              10 | f
+ myGroup2   | myschema2   | myseq1           | M1              |              12017 | M2             |             12300 |               1 | f
 (2 rows)
 
 -- delete intermediate old marks
@@ -252,10 +252,10 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RET
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                  mark_comment                  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+------------------------+------------------------------------------------+---------------------------+------------------------------
- myGroup2   | M3                           |        12201 | f                      | This mark is old                               |                         0 | 
- myGroup1   | M4                           |        12401 | f                      |                                                |                        10 | 
- myGroup1   | M5                           |        12402 | f                      |                                                |                         3 | 
- myGroup1   | Before logged rollback to M4 |        12601 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
+ myGroup2   | M3                           |        12301 | f                      | This mark is old                               |                         0 | 
+ myGroup1   | M4                           |        12501 | f                      |                                                |                        10 | 
+ myGroup1   | M5                           |        12502 | f                      |                                                |                         3 | 
+ myGroup1   | Before logged rollback to M4 |        12701 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
  myGroup1   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
  myGroup2   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
  myGroup1   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
@@ -267,14 +267,14 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema2   | myTbl3_col31_seq  |        12201 |            20 | t
- myschema2   | myseq1            |        12201 |          1003 | t
- myschema1   | myTbl3_col31_seq  |        12401 |            20 | t
- myschema1   | mytbl2b_col20_seq |        12401 |             5 | t
- myschema1   | myTbl3_col31_seq  |        12402 |            20 | t
- myschema1   | mytbl2b_col20_seq |        12402 |             5 | t
- myschema1   | myTbl3_col31_seq  |        12601 |            20 | t
- myschema1   | mytbl2b_col20_seq |        12601 |             5 | t
+ myschema2   | myTbl3_col31_seq  |        12301 |            20 | t
+ myschema2   | myseq1            |        12301 |          1003 | t
+ myschema1   | myTbl3_col31_seq  |        12501 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12501 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12502 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12502 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12701 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12701 |             5 | t
  myschema1   | myTbl3_col31_seq  |        14000 |            20 | t
  myschema1   | mytbl2b_col20_seq |        14000 |             5 | t
  myschema2   | myTbl3_col31_seq  |        14000 |            20 | t
@@ -296,27 +296,27 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
 ------------+----------+-------------+------------+-----------+----------------------
- myschema2  | myTbl3   |       12201 |          0 |         0 |                   10
- myschema2  | mytbl1   |       12201 |          0 |         0 |                   15
- myschema2  | mytbl2   |       12201 |          0 |         0 |                    2
- myschema2  | mytbl4   |       12201 |          0 |         0 |                    4
- myschema2  | mytbl5   |       12201 |          0 |         0 |                    4
- myschema2  | mytbl6   |       12201 |          1 |         1 |                   14
- myschema1  | myTbl3   |       12401 |          0 |         0 |                   10
- myschema1  | mytbl1   |       12401 |          0 |         0 |                   30
- myschema1  | mytbl2   |       12401 |          0 |         0 |                    3
- myschema1  | mytbl2b  |       12401 |          0 |         0 |                    3
- myschema1  | mytbl4   |       12401 |          0 |         0 |                    8
- myschema1  | myTbl3   |       12402 |          0 |         0 |                   20
- myschema1  | mytbl1   |       12402 |          0 |         0 |                   30
- myschema1  | mytbl2   |       12402 |          0 |         0 |                    3
- myschema1  | mytbl2b  |       12402 |          0 |         0 |                    3
- myschema1  | mytbl4   |       12402 |          0 |         0 |                    8
- myschema1  | myTbl3   |       12601 |          0 |         0 |                   20
- myschema1  | mytbl1   |       12601 |          0 |         0 |                   32
- myschema1  | mytbl2   |       12601 |          0 |         0 |                    3
- myschema1  | mytbl2b  |       12601 |          0 |         0 |                    3
- myschema1  | mytbl4   |       12601 |          0 |         0 |                   12
+ myschema2  | myTbl3   |       12301 |          0 |         0 |                   10
+ myschema2  | mytbl1   |       12301 |          0 |         0 |                   15
+ myschema2  | mytbl2   |       12301 |          0 |         0 |                    2
+ myschema2  | mytbl4   |       12301 |          0 |         0 |                    4
+ myschema2  | mytbl5   |       12301 |          0 |         0 |                    4
+ myschema2  | mytbl6   |       12301 |          1 |         1 |                   14
+ myschema1  | myTbl3   |       12501 |          0 |         0 |                   10
+ myschema1  | mytbl1   |       12501 |          0 |         0 |                   30
+ myschema1  | mytbl2   |       12501 |          0 |         0 |                    3
+ myschema1  | mytbl2b  |       12501 |          0 |         0 |                    3
+ myschema1  | mytbl4   |       12501 |          0 |         0 |                    8
+ myschema1  | myTbl3   |       12502 |          0 |         0 |                   20
+ myschema1  | mytbl1   |       12502 |          0 |         0 |                   30
+ myschema1  | mytbl2   |       12502 |          0 |         0 |                    3
+ myschema1  | mytbl2b  |       12502 |          0 |         0 |                    3
+ myschema1  | mytbl4   |       12502 |          0 |         0 |                    8
+ myschema1  | myTbl3   |       12701 |          0 |         0 |                   20
+ myschema1  | mytbl1   |       12701 |          0 |         0 |                   32
+ myschema1  | mytbl2   |       12701 |          0 |         0 |                    3
+ myschema1  | mytbl2b  |       12701 |          0 |         0 |                    3
+ myschema1  | mytbl4   |       12701 |          0 |         0 |                   12
  myschema1  | myTbl3   |       14000 |          0 |         0 |                   45
  myschema1  | mytbl1   |       14000 |          0 |         0 |                   33
  myschema1  | mytbl2   |       14000 |          0 |         0 |                    3
@@ -366,11 +366,11 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |              12402 |            12600 |              1
- myschema1   | mytbl4     |              12402 |            12600 |              2
- myschema2   | mytbl4     |              12201 |            12502 |              6
- myschema2   | mytbl5     |              12201 |            12502 |              3
- myschema2   | mytbl6     |              12201 |            12502 |              9
+ myschema1   | mytbl1     |              12502 |            12700 |              1
+ myschema1   | mytbl4     |              12502 |            12700 |              2
+ myschema2   | mytbl4     |              12301 |            12602 |              6
+ myschema2   | mytbl5     |              12301 |            12602 |              3
+ myschema2   | mytbl6     |              12301 |            12602 |              9
 (5 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14000 order by time_id;
@@ -408,7 +408,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | postgres
  LOCK_GROUPS              | END               | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                                        | postgres
  SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | STOP_%                                                                                                                                 | postgres
- CLEANUP_RLBK_STATE       |                   | Rollback id 12601            | set to COMMITTED                                                                                                                       | postgres
+ CLEANUP_RLBK_STATE       |                   | Rollback id 12701            | set to COMMITTED                                                                                                                       | postgres
  SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | STOP_%                                                                                                                                 | postgres
  STOP_GROUPS              | END               | myGroup1,myGroup2            | 15 tables/sequences processed                                                                                                          | postgres
  START_GROUPS             | BEGIN             | myGroup1,myGroup2            | Without log reset                                                                                                                      | postgres
@@ -520,8 +520,8 @@ reset role;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
-     1 | Step 6     | \x01  | INS       | NEW        | 12600004
-     1 | Step 6     | \x01  | DEL       | OLD        | 12600029
+     1 | Step 6     | \x01  | INS       | NEW        | 12700004
+     1 | Step 6     | \x01  | DEL       | OLD        | 12700029
 (2 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
@@ -537,60 +537,60 @@ select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from e
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-    11 | 10.00 | UPD       | OLD        | 12400015
-    11 |  5.00 | UPD       | NEW        | 12400015
-    12 | 10.00 | UPD       | OLD        | 12400016
-    12 |  5.00 | UPD       | NEW        | 12400016
-    13 | 10.00 | UPD       | OLD        | 12400017
-    13 |  5.00 | UPD       | NEW        | 12400017
-    14 | 10.00 | UPD       | OLD        | 12400018
-    14 |  5.00 | UPD       | NEW        | 12400018
-    15 | 10.00 | UPD       | OLD        | 12400019
-    15 |  5.00 | UPD       | NEW        | 12400019
-    16 | 10.00 | UPD       | OLD        | 12400020
-    16 |  5.00 | UPD       | NEW        | 12400020
-    17 | 10.00 | UPD       | OLD        | 12400021
-    17 |  5.00 | UPD       | NEW        | 12400021
-    18 | 10.00 | UPD       | OLD        | 12400022
-    18 |  5.00 | UPD       | NEW        | 12400022
-    19 | 10.00 | UPD       | OLD        | 12400023
-    19 |  5.00 | UPD       | NEW        | 12400023
-    20 | 10.00 | UPD       | OLD        | 12400024
-    20 |  5.00 | UPD       | NEW        | 12400024
-    11 |  5.00 | DEL       | OLD        | 12600007
-    12 |  5.00 | DEL       | OLD        | 12600008
-    13 |  5.00 | DEL       | OLD        | 12600009
-    14 |  5.00 | DEL       | OLD        | 12600010
-    15 |  5.00 | DEL       | OLD        | 12600011
-    16 |  5.00 | DEL       | OLD        | 12600012
-    17 |  5.00 | DEL       | OLD        | 12600013
-    18 |  5.00 | DEL       | OLD        | 12600014
-    19 |  5.00 | DEL       | OLD        | 12600015
-    20 |  5.00 | DEL       | OLD        | 12600016
-    11 | 10.00 | INS       | NEW        | 12600017
-    12 | 10.00 | INS       | NEW        | 12600018
-    13 | 10.00 | INS       | NEW        | 12600019
-    14 | 10.00 | INS       | NEW        | 12600020
-    15 | 10.00 | INS       | NEW        | 12600021
-    16 | 10.00 | INS       | NEW        | 12600022
-    17 | 10.00 | INS       | NEW        | 12600023
-    18 | 10.00 | INS       | NEW        | 12600024
-    19 | 10.00 | INS       | NEW        | 12600025
-    20 | 10.00 | INS       | NEW        | 12600026
-    14 | 10.00 | DEL       | OLD        | 12700001
-    15 | 10.00 | DEL       | OLD        | 12700002
-    16 | 10.00 | DEL       | OLD        | 12700003
-    17 | 10.00 | DEL       | OLD        | 12700004
-    18 | 10.00 | DEL       | OLD        | 12700005
+    11 | 10.00 | UPD       | OLD        | 12500015
+    11 |  5.00 | UPD       | NEW        | 12500015
+    12 | 10.00 | UPD       | OLD        | 12500016
+    12 |  5.00 | UPD       | NEW        | 12500016
+    13 | 10.00 | UPD       | OLD        | 12500017
+    13 |  5.00 | UPD       | NEW        | 12500017
+    14 | 10.00 | UPD       | OLD        | 12500018
+    14 |  5.00 | UPD       | NEW        | 12500018
+    15 | 10.00 | UPD       | OLD        | 12500019
+    15 |  5.00 | UPD       | NEW        | 12500019
+    16 | 10.00 | UPD       | OLD        | 12500020
+    16 |  5.00 | UPD       | NEW        | 12500020
+    17 | 10.00 | UPD       | OLD        | 12500021
+    17 |  5.00 | UPD       | NEW        | 12500021
+    18 | 10.00 | UPD       | OLD        | 12500022
+    18 |  5.00 | UPD       | NEW        | 12500022
+    19 | 10.00 | UPD       | OLD        | 12500023
+    19 |  5.00 | UPD       | NEW        | 12500023
+    20 | 10.00 | UPD       | OLD        | 12500024
+    20 |  5.00 | UPD       | NEW        | 12500024
+    11 |  5.00 | DEL       | OLD        | 12700007
+    12 |  5.00 | DEL       | OLD        | 12700008
+    13 |  5.00 | DEL       | OLD        | 12700009
+    14 |  5.00 | DEL       | OLD        | 12700010
+    15 |  5.00 | DEL       | OLD        | 12700011
+    16 |  5.00 | DEL       | OLD        | 12700012
+    17 |  5.00 | DEL       | OLD        | 12700013
+    18 |  5.00 | DEL       | OLD        | 12700014
+    19 |  5.00 | DEL       | OLD        | 12700015
+    20 |  5.00 | DEL       | OLD        | 12700016
+    11 | 10.00 | INS       | NEW        | 12700017
+    12 | 10.00 | INS       | NEW        | 12700018
+    13 | 10.00 | INS       | NEW        | 12700019
+    14 | 10.00 | INS       | NEW        | 12700020
+    15 | 10.00 | INS       | NEW        | 12700021
+    16 | 10.00 | INS       | NEW        | 12700022
+    17 | 10.00 | INS       | NEW        | 12700023
+    18 | 10.00 | INS       | NEW        | 12700024
+    19 | 10.00 | INS       | NEW        | 12700025
+    20 | 10.00 | INS       | NEW        | 12700026
+    14 | 10.00 | DEL       | OLD        | 12800001
+    15 | 10.00 | DEL       | OLD        | 12800002
+    16 | 10.00 | DEL       | OLD        | 12800003
+    17 | 10.00 | DEL       | OLD        | 12800004
+    18 | 10.00 | DEL       | OLD        | 12800005
 (45 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 | col45  | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+--------+-----------+------------+----------
-    11 |       |     1 |     1 | Step 6 | INS       | NEW        | 12600005
-    12 |       |     1 |     1 | Step 6 | INS       | NEW        | 12600006
-    11 |       |     1 |     1 | Step 6 | DEL       | OLD        | 12600027
-    12 |       |     1 |     1 | Step 6 | DEL       | OLD        | 12600028
+    11 |       |     1 |     1 | Step 6 | INS       | NEW        | 12700005
+    12 |       |     1 |     1 | Step 6 | INS       | NEW        | 12700006
+    11 |       |     1 |     1 | Step 6 | DEL       | OLD        | 12700027
+    12 |       |     1 |     1 | Step 6 | DEL       | OLD        | 12700028
 (4 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
@@ -785,10 +785,10 @@ select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',fal
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                  mark_comment                  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+------------------------------+--------------+------------------------+------------------------------------------------+---------------------------+------------------------------
- myGroup2         | M3                           |        12201 | f                      | This mark is old                               |                         0 | 
- myGroup1         | M4                           |        12401 | f                      |                                                |                        10 | 
- myGroup1         | M5                           |        12402 | f                      |                                                |                         3 | 
- myGroup1         | Before logged rollback to M4 |        12601 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
+ myGroup2         | M3                           |        12301 | f                      | This mark is old                               |                         0 | 
+ myGroup1         | M4                           |        12501 | f                      |                                                |                        10 | 
+ myGroup1         | M5                           |        12502 | f                      |                                                |                         3 | 
+ myGroup1         | Before logged rollback to M4 |        12701 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
  myGroup1         | STOP_%                       |        14000 | f                      |                                                |                         0 | 
  myGroup2         | STOP_%                       |        14000 | f                      |                                                |                         0 | 
  myGroup1         | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
@@ -803,14 +803,14 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
    sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -----------------+-------------------+--------------+---------------+----------------
- myschema2       | myTbl3_col31_seq  |        12201 |            20 | t
- myschema2       | myseq1            |        12201 |          1003 | t
- myschema1       | myTbl3_col31_seq  |        12401 |            20 | t
- myschema1       | mytbl2b_col20_seq |        12401 |             5 | t
- myschema1       | myTbl3_col31_seq  |        12402 |            20 | t
- myschema1       | mytbl2b_col20_seq |        12402 |             5 | t
- myschema1       | myTbl3_col31_seq  |        12601 |            20 | t
- myschema1       | mytbl2b_col20_seq |        12601 |             5 | t
+ myschema2       | myTbl3_col31_seq  |        12301 |            20 | t
+ myschema2       | myseq1            |        12301 |          1003 | t
+ myschema1       | myTbl3_col31_seq  |        12501 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        12501 |             5 | t
+ myschema1       | myTbl3_col31_seq  |        12502 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        12502 |             5 | t
+ myschema1       | myTbl3_col31_seq  |        12701 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        12701 |             5 | t
  myschema1       | myTbl3_col31_seq  |        14000 |            20 | t
  myschema1       | mytbl2b_col20_seq |        14000 |             5 | t
  myschema2       | myTbl3_col31_seq  |        14000 |            20 | t
@@ -838,27 +838,27 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
    tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
 -----------------+-------------+-------------+----------------------
- myschema2       | myTbl3      |       12201 |                   10
- myschema2       | mytbl1      |       12201 |                   15
- myschema2       | mytbl2      |       12201 |                    2
- myschema2       | mytbl4      |       12201 |                    4
- myschema2       | mytbl5      |       12201 |                    4
- myschema2       | mytbl6      |       12201 |                   14
- myschema1       | myTbl3      |       12401 |                   10
- myschema1       | mytbl1      |       12401 |                   30
- myschema1       | mytbl2      |       12401 |                    3
- myschema1       | mytbl2b     |       12401 |                    3
- myschema1       | mytbl4      |       12401 |                    8
- myschema1       | myTbl3      |       12402 |                   20
- myschema1       | mytbl1      |       12402 |                   30
- myschema1       | mytbl2      |       12402 |                    3
- myschema1       | mytbl2b     |       12402 |                    3
- myschema1       | mytbl4      |       12402 |                    8
- myschema1       | myTbl3      |       12601 |                   20
- myschema1       | mytbl1      |       12601 |                   32
- myschema1       | mytbl2      |       12601 |                    3
- myschema1       | mytbl2b     |       12601 |                    3
- myschema1       | mytbl4      |       12601 |                   12
+ myschema2       | myTbl3      |       12301 |                   10
+ myschema2       | mytbl1      |       12301 |                   15
+ myschema2       | mytbl2      |       12301 |                    2
+ myschema2       | mytbl4      |       12301 |                    4
+ myschema2       | mytbl5      |       12301 |                    4
+ myschema2       | mytbl6      |       12301 |                   14
+ myschema1       | myTbl3      |       12501 |                   10
+ myschema1       | mytbl1      |       12501 |                   30
+ myschema1       | mytbl2      |       12501 |                    3
+ myschema1       | mytbl2b     |       12501 |                    3
+ myschema1       | mytbl4      |       12501 |                    8
+ myschema1       | myTbl3      |       12502 |                   20
+ myschema1       | mytbl1      |       12502 |                   30
+ myschema1       | mytbl2      |       12502 |                    3
+ myschema1       | mytbl2b     |       12502 |                    3
+ myschema1       | mytbl4      |       12502 |                    8
+ myschema1       | myTbl3      |       12701 |                   20
+ myschema1       | mytbl1      |       12701 |                   32
+ myschema1       | mytbl2      |       12701 |                    3
+ myschema1       | mytbl2b     |       12701 |                    3
+ myschema1       | mytbl4      |       12701 |                   12
  myschema1       | myTbl3      |       14000 |                   45
  myschema1       | mytbl1      |       14000 |                   33
  myschema1       | mytbl2      |       14000 |                    3
@@ -914,75 +914,75 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |              12402 |            12600 |              1
- myschema1   | mytbl4     |              12402 |            12600 |              2
- myschema2   | mytbl4     |              12201 |            12502 |              6
- myschema2   | mytbl5     |              12201 |            12502 |              3
- myschema2   | mytbl6     |              12201 |            12502 |              9
+ myschema1   | mytbl1     |              12502 |            12700 |              1
+ myschema1   | mytbl4     |              12502 |            12700 |              2
+ myschema2   | mytbl4     |              12301 |            12602 |              6
+ myschema2   | mytbl5     |              12301 |            12602 |              3
+ myschema2   | mytbl6     |              12301 |            12602 |              9
 (5 rows)
 
 select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
  rlbt_rlbk_id |   rlbt_step    | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_quantity 
 --------------+----------------+-------------+------------+-------------------+---------------
-        12300 | RLBK_SEQUENCES |             |            |                   |             2
-        12300 | SET_FK_DEF     |             |            |                   |             2
-        12300 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             4
-        12300 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
-        12300 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
-        12300 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
-        12300 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
-        12300 | CTRL-DBLINK    |             |            |                   |             8
-        12301 | RLBK_SEQUENCES |             |            |                   |             2
-        12301 | SET_FK_DEF     |             |            |                   |             2
-        12301 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             2
-        12301 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
-        12301 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
-        12301 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
-        12301 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
-        12301 | CTRL-DBLINK    |             |            |                   |             8
         12400 | RLBK_SEQUENCES |             |            |                   |             2
-        12400 | DIS_LOG_TRG    |             |            |                   |             2
-        12400 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             3
-        12400 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             8
-        12400 | DELETE_LOG     | myschema1   | mytbl1     |                   |             3
-        12400 | DELETE_LOG     | myschema1   | mytbl4     |                   |             8
-        12400 | ENA_LOG_TRG    |             |            |                   |             2
-        12400 | CTRL+DBLINK    |             |            |                   |             9
+        12400 | SET_FK_DEF     |             |            |                   |             2
+        12400 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             4
+        12400 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
+        12400 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
+        12400 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
+        12400 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
+        12400 | CTRL-DBLINK    |             |            |                   |             8
+        12401 | RLBK_SEQUENCES |             |            |                   |             2
+        12401 | SET_FK_DEF     |             |            |                   |             2
+        12401 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             2
+        12401 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
+        12401 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
+        12401 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
+        12401 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
+        12401 | CTRL-DBLINK    |             |            |                   |             8
         12500 | RLBK_SEQUENCES |             |            |                   |             2
-        12500 | SET_FK_DEF     |             |            |                   |             2
-        12500 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             8
-        12500 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
-        12500 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
-        12500 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
-        12500 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
-        12500 | CTRL+DBLINK    |             |            |                   |             8
-        12501 | RLBK_SEQUENCES |             |            |                   |             2
-        12501 | DIS_LOG_TRG    |             |            |                   |             3
-        12501 | SET_FK_DEF     |             |            |                   |             2
-        12501 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             6
-        12501 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
-        12501 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
-        12501 | DELETE_LOG     | myschema2   | mytbl4     |                   |             6
-        12501 | DELETE_LOG     | myschema2   | mytbl5     |                   |             3
-        12501 | DELETE_LOG     | myschema2   | mytbl6     |                   |             9
-        12501 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
-        12501 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
-        12501 | ENA_LOG_TRG    |             |            |                   |             3
-        12501 | CTRL+DBLINK    |             |            |                   |            17
+        12500 | DIS_LOG_TRG    |             |            |                   |             2
+        12500 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             3
+        12500 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             8
+        12500 | DELETE_LOG     | myschema1   | mytbl1     |                   |             3
+        12500 | DELETE_LOG     | myschema1   | mytbl4     |                   |             8
+        12500 | ENA_LOG_TRG    |             |            |                   |             2
+        12500 | CTRL+DBLINK    |             |            |                   |             9
         12600 | RLBK_SEQUENCES |             |            |                   |             2
-        12600 | DIS_LOG_TRG    |             |            |                   |             2
-        12600 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
-        12600 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
-        12600 | DELETE_LOG     | myschema1   | mytbl1     |                   |             1
-        12600 | DELETE_LOG     | myschema1   | mytbl4     |                   |             2
-        12600 | ENA_LOG_TRG    |             |            |                   |             2
-        12600 | CTRL+DBLINK    |             |            |                   |             9
+        12600 | SET_FK_DEF     |             |            |                   |             2
+        12600 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             8
+        12600 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
+        12600 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
+        12600 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
+        12600 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
+        12600 | CTRL+DBLINK    |             |            |                   |             8
         12601 | RLBK_SEQUENCES |             |            |                   |             2
-        12601 | RLBK_TABLE     | myschema1   | myTbl3     |                   |            10
-        12601 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
-        12601 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
-        12601 | CTRL+DBLINK    |             |            |                   |             4
+        12601 | DIS_LOG_TRG    |             |            |                   |             3
+        12601 | SET_FK_DEF     |             |            |                   |             2
+        12601 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             6
+        12601 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
+        12601 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
+        12601 | DELETE_LOG     | myschema2   | mytbl4     |                   |             6
+        12601 | DELETE_LOG     | myschema2   | mytbl5     |                   |             3
+        12601 | DELETE_LOG     | myschema2   | mytbl6     |                   |             9
+        12601 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
+        12601 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
+        12601 | ENA_LOG_TRG    |             |            |                   |             3
+        12601 | CTRL+DBLINK    |             |            |                   |            17
+        12700 | RLBK_SEQUENCES |             |            |                   |             2
+        12700 | DIS_LOG_TRG    |             |            |                   |             2
+        12700 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
+        12700 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
+        12700 | DELETE_LOG     | myschema1   | mytbl1     |                   |             1
+        12700 | DELETE_LOG     | myschema1   | mytbl4     |                   |             2
+        12700 | ENA_LOG_TRG    |             |            |                   |             2
+        12700 | CTRL+DBLINK    |             |            |                   |             9
+        12701 | RLBK_SEQUENCES |             |            |                   |             2
+        12701 | RLBK_TABLE     | myschema1   | myTbl3     |                   |            10
+        12701 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
+        12701 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
+        12701 | CTRL+DBLINK    |             |            |                   |             4
         14000 | RLBK_SEQUENCES |             |            |                   |             4
         14000 | CTRL+DBLINK    |             |            |                   |             1
         14001 | RLBK_SEQUENCES |             |            |                   |             4
@@ -1235,76 +1235,76 @@ select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |              12402 |            12600 |              1
+ myschema1   | mytbl1     |              12502 |            12700 |              1
  myschema1   | mytbl1     |              14009 |            14300 |             20
- myschema1   | mytbl4     |              12402 |            12600 |              2
- myschema2   | mytbl4     |              12201 |            12502 |              6
- myschema2   | mytbl5     |              12201 |            12502 |              3
- myschema2   | mytbl6     |              12201 |            12502 |              9
+ myschema1   | mytbl4     |              12502 |            12700 |              2
+ myschema2   | mytbl4     |              12301 |            12602 |              6
+ myschema2   | mytbl5     |              12301 |            12602 |              3
+ myschema2   | mytbl6     |              12301 |            12602 |              9
 (6 rows)
 
 select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
  rlbt_rlbk_id |   rlbt_step    | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_quantity 
 --------------+----------------+-------------+------------+-------------------+---------------
-        12300 | RLBK_SEQUENCES |             |            |                   |             2
-        12300 | SET_FK_DEF     |             |            |                   |             2
-        12300 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             4
-        12300 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
-        12300 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
-        12300 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
-        12300 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
-        12300 | CTRL-DBLINK    |             |            |                   |             8
-        12301 | RLBK_SEQUENCES |             |            |                   |             2
-        12301 | SET_FK_DEF     |             |            |                   |             2
-        12301 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             2
-        12301 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
-        12301 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
-        12301 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
-        12301 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
-        12301 | CTRL-DBLINK    |             |            |                   |             8
         12400 | RLBK_SEQUENCES |             |            |                   |             2
-        12400 | DIS_LOG_TRG    |             |            |                   |             2
-        12400 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             3
-        12400 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             8
-        12400 | DELETE_LOG     | myschema1   | mytbl1     |                   |             3
-        12400 | DELETE_LOG     | myschema1   | mytbl4     |                   |             8
-        12400 | ENA_LOG_TRG    |             |            |                   |             2
-        12400 | CTRL+DBLINK    |             |            |                   |             9
+        12400 | SET_FK_DEF     |             |            |                   |             2
+        12400 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             4
+        12400 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
+        12400 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
+        12400 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
+        12400 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
+        12400 | CTRL-DBLINK    |             |            |                   |             8
+        12401 | RLBK_SEQUENCES |             |            |                   |             2
+        12401 | SET_FK_DEF     |             |            |                   |             2
+        12401 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             2
+        12401 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
+        12401 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
+        12401 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
+        12401 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
+        12401 | CTRL-DBLINK    |             |            |                   |             8
         12500 | RLBK_SEQUENCES |             |            |                   |             2
-        12500 | SET_FK_DEF     |             |            |                   |             2
-        12500 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             8
-        12500 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
-        12500 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
-        12500 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
-        12500 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
-        12500 | CTRL+DBLINK    |             |            |                   |             8
-        12501 | RLBK_SEQUENCES |             |            |                   |             2
-        12501 | DIS_LOG_TRG    |             |            |                   |             3
-        12501 | SET_FK_DEF     |             |            |                   |             2
-        12501 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             6
-        12501 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
-        12501 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
-        12501 | DELETE_LOG     | myschema2   | mytbl4     |                   |             6
-        12501 | DELETE_LOG     | myschema2   | mytbl5     |                   |             3
-        12501 | DELETE_LOG     | myschema2   | mytbl6     |                   |             9
-        12501 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
-        12501 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
-        12501 | ENA_LOG_TRG    |             |            |                   |             3
-        12501 | CTRL+DBLINK    |             |            |                   |            17
+        12500 | DIS_LOG_TRG    |             |            |                   |             2
+        12500 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             3
+        12500 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             8
+        12500 | DELETE_LOG     | myschema1   | mytbl1     |                   |             3
+        12500 | DELETE_LOG     | myschema1   | mytbl4     |                   |             8
+        12500 | ENA_LOG_TRG    |             |            |                   |             2
+        12500 | CTRL+DBLINK    |             |            |                   |             9
         12600 | RLBK_SEQUENCES |             |            |                   |             2
-        12600 | DIS_LOG_TRG    |             |            |                   |             2
-        12600 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
-        12600 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
-        12600 | DELETE_LOG     | myschema1   | mytbl1     |                   |             1
-        12600 | DELETE_LOG     | myschema1   | mytbl4     |                   |             2
-        12600 | ENA_LOG_TRG    |             |            |                   |             2
-        12600 | CTRL+DBLINK    |             |            |                   |             9
+        12600 | SET_FK_DEF     |             |            |                   |             2
+        12600 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             8
+        12600 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
+        12600 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
+        12600 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
+        12600 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
+        12600 | CTRL+DBLINK    |             |            |                   |             8
         12601 | RLBK_SEQUENCES |             |            |                   |             2
-        12601 | RLBK_TABLE     | myschema1   | myTbl3     |                   |            10
-        12601 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
-        12601 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
-        12601 | CTRL+DBLINK    |             |            |                   |             4
+        12601 | DIS_LOG_TRG    |             |            |                   |             3
+        12601 | SET_FK_DEF     |             |            |                   |             2
+        12601 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             6
+        12601 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
+        12601 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
+        12601 | DELETE_LOG     | myschema2   | mytbl4     |                   |             6
+        12601 | DELETE_LOG     | myschema2   | mytbl5     |                   |             3
+        12601 | DELETE_LOG     | myschema2   | mytbl6     |                   |             9
+        12601 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
+        12601 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
+        12601 | ENA_LOG_TRG    |             |            |                   |             3
+        12601 | CTRL+DBLINK    |             |            |                   |            17
+        12700 | RLBK_SEQUENCES |             |            |                   |             2
+        12700 | DIS_LOG_TRG    |             |            |                   |             2
+        12700 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
+        12700 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
+        12700 | DELETE_LOG     | myschema1   | mytbl1     |                   |             1
+        12700 | DELETE_LOG     | myschema1   | mytbl4     |                   |             2
+        12700 | ENA_LOG_TRG    |             |            |                   |             2
+        12700 | CTRL+DBLINK    |             |            |                   |             9
+        12701 | RLBK_SEQUENCES |             |            |                   |             2
+        12701 | RLBK_TABLE     | myschema1   | myTbl3     |                   |            10
+        12701 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
+        12701 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
+        12701 | CTRL+DBLINK    |             |            |                   |             4
         14000 | RLBK_SEQUENCES |             |            |                   |             4
         14000 | CTRL+DBLINK    |             |            |                   |             1
         14001 | RLBK_SEQUENCES |             |            |                   |             4
@@ -2411,9 +2411,9 @@ set role _regress_emaj_adm2;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                   mark_comment                   | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+------------------------+--------------------------------------------------+---------------------------+------------------------------
- myGroup1   | M4                           |        12401 | f                      |                                                  |                        10 | 
- myGroup1   | M5                           |        12402 | f                      |                                                  |                         3 | 
- myGroup1   | Before logged rollback to M4 |        12601 | f                      | Automatically set at rollback to mark M4 start   |                        28 | 
+ myGroup1   | M4                           |        12501 | f                      |                                                  |                        10 | 
+ myGroup1   | M5                           |        12502 | f                      |                                                  |                         3 | 
+ myGroup1   | Before logged rollback to M4 |        12701 | f                      | Automatically set at rollback to mark M4 start   |                        28 | 
  myGroup1   | STOP_%                       |        14000 | f                      |                                                  |                         0 | 
  myGroup1   | Stop after rollback          |        14007 | f                      |                                                  |                         0 | 
  myGroup1   | Multi-1                      |        14009 | f                      |                                                  |                        10 | 
@@ -2441,21 +2441,21 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table where tbl_schema = 'myschema1' order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema1  | myTbl3   |       12401 |                   10
- myschema1  | mytbl1   |       12401 |                   30
- myschema1  | mytbl2   |       12401 |                    3
- myschema1  | mytbl2b  |       12401 |                    3
- myschema1  | mytbl4   |       12401 |                    8
- myschema1  | myTbl3   |       12402 |                   20
- myschema1  | mytbl1   |       12402 |                   30
- myschema1  | mytbl2   |       12402 |                    3
- myschema1  | mytbl2b  |       12402 |                    3
- myschema1  | mytbl4   |       12402 |                    8
- myschema1  | myTbl3   |       12601 |                   20
- myschema1  | mytbl1   |       12601 |                   32
- myschema1  | mytbl2   |       12601 |                    3
- myschema1  | mytbl2b  |       12601 |                    3
- myschema1  | mytbl4   |       12601 |                   12
+ myschema1  | myTbl3   |       12501 |                   10
+ myschema1  | mytbl1   |       12501 |                   30
+ myschema1  | mytbl2   |       12501 |                    3
+ myschema1  | mytbl2b  |       12501 |                    3
+ myschema1  | mytbl4   |       12501 |                    8
+ myschema1  | myTbl3   |       12502 |                   20
+ myschema1  | mytbl1   |       12502 |                   30
+ myschema1  | mytbl2   |       12502 |                    3
+ myschema1  | mytbl2b  |       12502 |                    3
+ myschema1  | mytbl4   |       12502 |                    8
+ myschema1  | myTbl3   |       12701 |                   20
+ myschema1  | mytbl1   |       12701 |                   32
+ myschema1  | mytbl2   |       12701 |                    3
+ myschema1  | mytbl2b  |       12701 |                    3
+ myschema1  | mytbl4   |       12701 |                   12
  myschema1  | myTbl3   |       14000 |                   45
  myschema1  | mytbl1   |       14000 |                   33
  myschema1  | mytbl2   |       14000 |                    3
@@ -2553,7 +2553,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 -------------+------------+--------------------+------------------+----------------
  myschema1   | myTbl3     |              14705 |            14709 |             20
  myschema1   | myTbl3     |              14710 |            14717 |             20
- myschema1   | mytbl1     |              12402 |            12600 |              1
+ myschema1   | mytbl1     |              12502 |            12700 |              1
  myschema1   | mytbl1     |              14009 |            14300 |             20
  myschema1   | mytbl1     |              14701 |            14704 |             26
  myschema1   | mytbl1     |              14710 |            14717 |             26
@@ -2565,7 +2565,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
  myschema1   | mytbl2b    |              14701 |            14704 |              4
  myschema1   | mytbl2b    |              14710 |            14717 |              6
  myschema1   | mytbl2b    |              14724 |            14727 |              4
- myschema1   | mytbl4     |              12402 |            12600 |              2
+ myschema1   | mytbl4     |              12502 |            12700 |              2
  myschema1   | mytbl4     |              14705 |            14709 |              3
  myschema1   | mytbl4     |              14710 |            14717 |              3
  myschema1   | mytbl4     |              14718 |            14723 |              3

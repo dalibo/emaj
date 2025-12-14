@@ -182,7 +182,7 @@ begin;
 commit;
 
 -- dblink connection should now be ok (missing right on dblink functions is tested in adm1.sql)
-update emaj.emaj_param set param_value_text = 'user=postgres password=postgres' 
+update emaj.emaj_param set param_value_text = 'user=postgres password=postgres'
   where param_key = 'dblink_user_password';
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 
