@@ -99,7 +99,7 @@ $do$
       WHERE rolname = current_user;
     v_existEmajAdm = EXISTS (SELECT 0 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_adm');
     v_adminOption = CASE WHEN NOT v_existEmajAdm THEN FALSE
-                         ELSE pg_has_role(current_role, 'emaj_adm', 'MEMBER WITH ADMIN OPTION') END;
+                         ELSE pg_catalog.pg_has_role(current_role, 'emaj_adm', 'MEMBER WITH ADMIN OPTION') END;
     v_existEmajViewer = EXISTS (SELECT 0 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_viewer');
 --
 -- Process emaj_adm.
@@ -930,97 +930,118 @@ $_dblink_open_cnx$
 --          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
 --          -6 error at dblink_connect() call
 --          -7 the dblink user/password from emaj_param has not emaj_adm rights
+--          -8 the installer role has not pg_read_all_settings privileges in an instance only accessible by sockets
 --         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
 -- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
 --   of pg_read_all_settings.
   DECLARE
-    v_function               TEXT;
     v_nbCnx                  INT;
+    v_connectFunction        TEXT;
     v_userPassword           TEXT;
     v_connectString          TEXT;
     v_stmt                   TEXT;
     v_isEmajAdmin            BOOLEAN;
     v_sqlstate               TEXT;
   BEGIN
--- Determine the function to execute to open the dblink connection:
---   dblink_connect() if the installer is superuser, otherwise dblink_connect_u()
-    SELECT CASE WHEN inst_by_superuser THEN 'dblink_connect' ELSE 'dblink_connect_u' END
-      INTO v_function
-      FROM emaj.emaj_install_conf;
 -- Look for the schema holding the dblink functions.
---   (NULL if the dblink_connect_u function is not available, which should not happen)
     SELECT nspname INTO p_schema
       FROM pg_catalog.pg_proc
            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
-      WHERE proname = v_function
+      WHERE proname = 'dblink_connect'
       LIMIT 1;
     IF NOT FOUND THEN
       p_status = -1;                      -- dblink is not installed
-    ELSIF v_function = 'dblink_connect_u' AND
-          NOT pg_catalog.has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'EXECUTE') THEN
-      p_status = -3;                      -- installer role has not the EXECUTE rights on the dblink connection function
-    ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'emaj_verify_all') AND
-          pg_catalog.current_setting('transaction_isolation') <> 'read committed' THEN
-      p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
-                                          --   READ COMMITTED transaction
-    ELSE
+    END IF;
+    IF p_status IS NULL THEN
 -- dblink is usable, so search the requested connection name in dblink connections list.
       EXECUTE format('SELECT 0 WHERE %L = ANY (%I.dblink_get_connections())',
                      p_cnxName, p_schema);
       GET DIAGNOSTICS v_nbCnx = ROW_COUNT;
       IF v_nbCnx > 0 THEN
-        p_status = 0;                       -- the requested connection is already open
+        p_status = 0;                     -- the requested connection is already opened
+      END IF;
+    END IF;
+    IF p_status IS NULL THEN
+-- Determine the function to execute to open the dblink connection:
+--   dblink_connect() if the installer is superuser, otherwise dblink_connect_u()
+      SELECT CASE WHEN inst_by_superuser THEN 'dblink_connect' ELSE 'dblink_connect_u' END
+        INTO v_connectFunction
+        FROM emaj.emaj_install_conf;
+-- Verify that a non superuser installer role can execute the connection function.
+      IF v_connectFunction = 'dblink_connect_u' AND
+          NOT pg_catalog.has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'EXECUTE') THEN
+        p_status = -3;                    -- installer role has not the EXECUTE privileges on the dblink connection function
+      END IF;
+    END IF;
+    IF p_status IS NULL AND
+-- Verify the proper transaction isolation level for E-Maj rollback operations.
+       (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'emaj_verify_all') AND
+       pg_catalog.current_setting('transaction_isolation') <> 'read committed' THEN
+      p_status = -4;                      -- 'rlbk#*' connections (used for rollbacks) must only come from a
+                                          --   READ COMMITTED transaction
+    END IF;
+    IF p_status IS NULL THEN
+-- Read and verify the dblink_user_password parameter exists in emaj_param.
+      SELECT param_value_text
+        INTO v_userPassword
+        FROM emaj.emaj_param
+        WHERE param_key = 'dblink_user_password';
+      IF NOT FOUND THEN
+        p_status = -5;                    -- no 'dblink_user_password' parameter is set in the emaj_param table
+      END IF;
+    END IF;
+    IF p_status IS NULL THEN
+-- Build the connection string.
+      IF pg_catalog.current_setting('listen_addresses') <> '' THEN
+        v_connectString = 'host=localhost';
       ELSE
--- So, get the 'dblink_user_password' parameter if exists, from emaj_param.
-        SELECT param_value_text INTO v_userPassword
-          FROM emaj.emaj_param
-          WHERE param_key = 'dblink_user_password';
-        IF NOT FOUND THEN
-          p_status = -5;                    -- no 'dblink_user_password' parameter is defined in the emaj_param table
+        IF pg_catalog.pg_has_role('pg_read_all_settings', 'usage') THEN
+          v_connectString = 'host=' ||
+                             coalesce(substring(pg_catalog.current_setting('unix_socket_directories') from '(.*?)\s*,'),
+                                      pg_catalog.current_setting('unix_socket_directories'));
         ELSE
--- Build the connect string.
-          v_connectString = 'host='
-                         || CASE
-                              WHEN pg_catalog.current_setting('listen_addresses') = ''
-                                THEN coalesce(substring(pg_catalog.current_setting('unix_socket_directories') from '(.*?)\s*,'),
-                                              pg_catalog.current_setting('unix_socket_directories'))
-                              ELSE 'localhost'
-                            END
-                         || ' port=' || pg_catalog.current_setting('port')
-                         || ' dbname=' || pg_catalog.current_database()
-                         || ' ' || v_userPassword;
+          p_status = -8;                   -- missing "pg_read_all_settings" privilege to examine the needed "unix_socket_directories" GUC
+        END IF;
+      END IF;
+      v_connectString = v_connectString
+                     || ' port=' || pg_catalog.current_setting('port')
+                     || ' dbname=' || pg_catalog.current_database()
+                     || ' ' || v_userPassword;
+    END IF;
+    IF p_status IS NULL THEN
 -- Try to connect.
-          BEGIN
-            EXECUTE format('SELECT %I.%I(%L ,%L)',
-                           p_schema, v_function, p_cnxName, v_connectString);
-            p_status = 1;                   -- the connection is successful
-          EXCEPTION
-            WHEN OTHERS THEN
-              p_status = -6;                -- the connection attempt failed
-              v_sqlstate = SQLSTATE;
-          END;
--- For E-Maj rollback first connections and test connections, check the role from emaj_param is an E-Maj administrator
+      BEGIN
+        EXECUTE format('SELECT %I.%I(%L ,%L)',
+                       p_schema, v_connectFunction, p_cnxName, v_connectString);
+        p_status = 1;                   -- the connection is successful
+      EXCEPTION
+        WHEN OTHERS THEN
+          p_status = -6;                -- the connection attempt failed
+          v_sqlstate = SQLSTATE;
+      END;
+    END IF;
+-- The connection succeeds.
+    IF p_status = 1 THEN
+-- For E-Maj rollback first connections and test connections, check the role from emaj_param is an E-Maj administrator.
 --   i.e. the role is either the installer or a member of emaj_adm.
 --   Error on the statement is trapped because the emaj_adm role may not exist or be unused in this emaj instance.
-          IF p_status = 1 AND (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
-            v_stmt = 'SELECT '
-                        '(SELECT nspowner::regrole::text = current_user FROM pg_catalog.pg_namespace WHERE nspname = ''emaj'') '
-                     'OR '
-                        '(SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'')) '
-                     'AS is_emaj_admin';
-            BEGIN
-              EXECUTE format('SELECT is_emaj_admin FROM %I.dblink(%L, %L) AS (is_emaj_admin BOOLEAN)',
-                             p_schema, p_cnxName, v_stmt)
-                INTO v_isEmajAdmin;
-              IF NOT v_isEmajAdmin THEN
-                p_status = -7;              -- the dblink user/password from emaj_param is not an E-Maj administrator
-              END IF;
-            EXCEPTION
-              WHEN OTHERS THEN
-                p_status = -7;              -- the connection attempt failed
-            END;
+      IF (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
+        v_stmt = 'SELECT '
+                    '(SELECT nspowner::regrole::text = current_user FROM pg_catalog.pg_namespace WHERE nspname = ''emaj'') '
+                 'OR '
+                    '(SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'')) '
+                 'AS is_emaj_admin';
+        BEGIN
+          EXECUTE format('SELECT is_emaj_admin FROM %I.dblink(%L, %L) AS (is_emaj_admin BOOLEAN)',
+                         p_schema, p_cnxName, v_stmt)
+            INTO v_isEmajAdmin;
+          IF NOT v_isEmajAdmin THEN
+            p_status = -7;              -- the dblink user from emaj_param is not an E-Maj administrator
           END IF;
-        END IF;
+        EXCEPTION
+          WHEN OTHERS THEN
+            p_status = -7;              -- the emaj_adm role probably doesn't exist
+        END;
       END IF;
       IF p_status < 0 THEN
 -- Disconnect an opened connection if an error has been detected.
@@ -1028,7 +1049,7 @@ $_dblink_open_cnx$
                        p_schema, p_cnxName, p_cnxName, p_schema);
       END IF;
     END IF;
--- For connections used for rollback operations, record the dblink connection attempt in the emaj_hist table.
+-- For connections used for E-Maj rollback operations, record the dblink connection attempt into the emaj_hist table.
     IF substring(p_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
         VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status ||
@@ -1039,6 +1060,7 @@ $_dblink_open_cnx$
             WHEN -5 THEN ' (missing ''dblink_user_password'' parameter in emaj_param table)'
             WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
             WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not emaj administration rights)'
+            WHEN -8 THEN ' (installer role has not pg_read_all_settings privileges)'
             ELSE ''
           END);
     END IF;
@@ -1816,7 +1838,7 @@ $_check_can_copy_from$
 -- This capability is evaluated by checking the pg_read_server_files rights.
 --   It may be false if the installer role was not a superuser and has not been granted the proper rights.
   BEGIN
-    IF NOT pg_has_role('pg_read_server_files', 'usage') THEN
+    IF NOT pg_catalog.pg_has_role('pg_read_server_files', 'usage') THEN
       RAISE EXCEPTION '_check_can_copy_from: Reading from an external file is not allowed on this emaj instance'
                       ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_read_server_files).';
     END IF;
@@ -1830,7 +1852,7 @@ $_check_can_copy_to$
 -- This capability is evaluated by checking the pg_write_server_files rights.
 --   It may be false if the installer role was not a superuser and has not been granted the proper rights.
   BEGIN
-    IF NOT pg_has_role('pg_write_server_files', 'usage') THEN
+    IF NOT pg_catalog.pg_has_role('pg_write_server_files', 'usage') THEN
       RAISE EXCEPTION '_check_can_copy_to: Writing into an external file is not allowed on this emaj instance'
                       ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).';
     END IF;
@@ -1844,7 +1866,7 @@ $_check_can_exec_program$
 -- This capability is evaluated by checking the pg_execute_server_program rights.
 --   It may be false if the installer role was not a superuser and has not been granted the proper rights.
   BEGIN
-    IF NOT pg_has_role('pg_execute_server_program', 'usage') THEN
+    IF NOT pg_catalog.pg_has_role('pg_execute_server_program', 'usage') THEN
       RAISE EXCEPTION '_check_can_exec_program: Executing an external program is not allowed on this emaj instance'
                       ' (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).';
     END IF;
@@ -13998,15 +14020,17 @@ $emaj_verify_all$
         WHEN -1 THEN
           RETURN NEXT 'Warning: The dblink extension is not installed.';
         WHEN -3 THEN
-          RETURN NEXT 'Warning: While testing the dblink connection, the current role is not granted to execute dblink_connect_u().';
+          RETURN NEXT 'Warning: While testing the dblink connection, the installer role is not allowed to execute dblink_connect_u().';
         WHEN -4 THEN
           RETURN NEXT 'Warning: While testing the dblink connection, the transaction isolation level is not READ COMMITTED.';
         WHEN -5 THEN
           RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set in the emaj_param table.';
         WHEN -6 THEN
-          RETURN NEXT 'Warning: The dblink connection attempt failed. The ''dblink_user_password'' parameter value is probably incorrect.';
+          RETURN NEXT 'Warning: The dblink connection attempt failed. The ''dblink_user_password'' parameter value may be incorrect.';
         WHEN -7 THEN
           RETURN NEXT 'Warning: The role set in the ''dblink_user_password'' parameter has not emaj administration rights.';
+        WHEN -8 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the installer role has not the "pg_read_all_settings" privileges.';
         ELSE
           RETURN NEXT format('Warning: The dblink connection test failed for an unknown reason (status = %s).',
                              v_status::TEXT);
@@ -15201,11 +15225,11 @@ $do$
       v_extraWording = coalesce(v_extraWording || ', ', '') || 'no event triggers';
     END IF;
 -- Warn if the installer role is not allowed to execute COPY TO or COPY FROM statements.
-    IF NOT pg_has_role('pg_read_server_files', 'usage') THEN
+    IF NOT pg_catalog.pg_has_role('pg_read_server_files', 'usage') THEN
       RAISE WARNING 'E-Maj installation: The current user has not been granted pg_read_server_files privileges.';
       v_extraWording = coalesce(v_extraWording || ', ', '') || 'no COPY FROM';
     END IF;
-    IF NOT pg_has_role('pg_write_server_files', 'usage') THEN
+    IF NOT pg_catalog.pg_has_role('pg_write_server_files', 'usage') THEN
       RAISE WARNING 'E-Maj installation: The current user has not been granted pg_write_server_files privileges.';
       v_extraWording = coalesce(v_extraWording || ', ', '') || 'no COPY TO';
     END IF;

@@ -24,9 +24,12 @@ grant create on schema public to _regress_emaj_install;
 -- _regress_emaj_admin2 is another administration role
 create role _regress_emaj_admin2 login password 'admin2';
 
--- needed extension
+-- needed extension and privileges
 create extension dblink;
 grant execute on function dblink_connect_u(text,text) to _regress_emaj_install;
+
+-- uncomment the next line to test on a postgres instance that has not available ip connections
+--grant pg_read_all_settings to _regress_emaj_install;
 
 ------------------------------------------------------------
 -- Create application objects
