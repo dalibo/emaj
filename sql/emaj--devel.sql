@@ -247,8 +247,8 @@ CREATE TABLE emaj.emaj_hist (
   hist_event                   TEXT,                       -- type of event (often BEGIN or END)
   hist_object                  TEXT,                       -- object supporting the event (often the group name)
   hist_wording                 TEXT,                       -- additional comment
-  hist_user                    TEXT
-                               DEFAULT session_user,       -- the user who call the E-Maj function
+  hist_user                    TEXT                        -- the user who calls the E-Maj function (the current_user would not
+                               DEFAULT session_user,       --   report the real user in SECURITY DEFINER functions)
   hist_txid                    BIGINT
                                DEFAULT txid_current(),     -- and its tx_id
   PRIMARY KEY (hist_id)
