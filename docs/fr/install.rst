@@ -88,7 +88,7 @@ Téléchargez la dernière version d’E-Maj par un moyen à votre convenance, e
 
 Le répertoire e-maj-<version> généré contient l’arborescence :doc:`décrite ici <content>`.
 
-La :doc:`création de l’extension <setup>` est alors un peu différente.
+La :ref:`création de l’extension <create_emaj_extension_by_script>` est alors un peu différente.
 
 Installation sous Windows
 *************************

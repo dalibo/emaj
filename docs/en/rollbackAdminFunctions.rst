@@ -57,7 +57,7 @@ If not already present, the *dblink* extension is automatically installed at *em
 
 The declared connection role must have been granted the *emaj_adm* rights (or be a *superuser*).
 
-If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<create_emaj_extension_by_script>` function.
+If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<rollbacks_limits>` function.
 
 Lastly, the main transaction managing the rollback operation must be in a “*read committed*” concurrency mode (the default value).
 

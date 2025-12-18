@@ -15,6 +15,7 @@ Tous les droits attribués à *emaj_viewer* le sont aussi à *emaj_adm*.
 
 Lors de leur création, ces deux rôles ne se sont pas vus attribuer de capacité de connexion (aucun mot de passe et option *NOLOGIN* spécifiés ). Il est recommandé de NE PAS leur attribuer cette capacité de connexion. A la place, il suffit d'attribuer les droits qu'ils possèdent à d'autres rôles par des requêtes SQL de type *GRANT*.
 
+Notons que :ref:`ces deux rôles peuvent ne pas exister<roles_limits>` quand l’extension *emaj* a été installée par un rôle qui ne disposait pas des droits *SUPERUSER*.
 
 Attribution des droits E-Maj
 ----------------------------

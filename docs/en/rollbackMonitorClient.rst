@@ -10,7 +10,7 @@ The provided tool is coded in *perl*. It needs that the **perl** software with t
 
 In order to get detailed information about the in-progress rollback operations, it is necessary to set the :doc:`dblink_user_password<parameters>` parameter.
 
-If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<create_emaj_extension_by_script>` function.
+If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<rollbacks_limits>` function.
 
 Syntax
 ------

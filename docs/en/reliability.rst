@@ -45,3 +45,5 @@ Installing E-Maj also adds an event trigger of type “table_rewrite”:
 It is possible to deactivate and reactivate these event triggers thanks to 2 functions: :ref:`emaj_disable_protection_by_event_triggers() <emaj_disable_protection_by_event_triggers>` and :ref:`emaj_enable_protection_by_event_triggers() <emaj_enable_protection_by_event_triggers>`.
 
 However, the protections do not cover all risks. In particular, they do not prevent any tables or sequences renaming or any schema change. And some other DDL statements altering tables structure do not fire any trigger.
+
+Let us note that these event triggers may not exist when the emaj extension has been :ref:`installed by a non *SUPERUSER* role<event_triggers_limits>`.

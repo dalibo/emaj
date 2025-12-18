@@ -49,14 +49,7 @@ où <répertoire_emaj> est le répertoire issu de l’:ref:`installation du logi
 
 .. caution::
 
-	Il n’est pas indispensable d’avoir le droit super-utilisateur pour exécuter ce script d’installation. Mais si ce n’est pas le cas, le rôle utilisé devra disposer des droits nécessaires pour créer les triggers sur les tables applicatives des futurs groupes de tables.
-
-Dans ce mode d’installation, toutes les optimisations des rollbacks E-Maj ne sont pas disponibles, conduisant à un niveau de performance dégradé sur ces opérations.
-
-Lorsque le rôle qui installe l’extension ne dispose pas du droit *SUPERUSER*, le :ref:`suivi des rollbacks E-Maj<emaj_rollback_activity_prerequisites>` ou la :doc:`soumission des rollbacks E-Maj parallélisés<parallelRollbackClient>` nécessitent d’attribuer à ce rôle (et uniquement à lui) le droit d’exécuter la fonction *dblink_connect_u()*, ce droit n’étant pas attribué par défaut pour cette fonction, pour des raisons de sécurité : ::
-
-    GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO <rôle install>;
-
+	Il n’est pas indispensable d’avoir le droit *SUPERUSER* pour exécuter ce script d’installation. Mais si ce n’est pas le cas, les fonctionnalités  sont limitées et dépendent des droits dont dispose le rôle d’installation. Ces limites et leurs mitigations sont :ref:`détaillées ici<non_superuser_install_limits>`.
 
 Adaptation du fichier de configuration postgresql.conf
 ------------------------------------------------------

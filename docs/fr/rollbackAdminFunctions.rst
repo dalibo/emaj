@@ -60,7 +60,7 @@ Le rôle de connexion déclaré doit disposer des droits *emaj_adm* (ou être su
 
 Enfin, la transaction principale effectuant l'opération de rollback doit avoir un mode de concurrence « *read committed* » (la valeur par défaut).
 
-Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut également que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<create_emaj_extension_by_script>`.
+Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut également que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<rollbacks_limits>`.
 
 Fonction de suivi
 ^^^^^^^^^^^^^^^^^

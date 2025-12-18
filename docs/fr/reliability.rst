@@ -45,3 +45,5 @@ L'installation d'E-Maj inclut aussi la création d'un 3ème trigger sur événem
 Il est possible de désactiver/réactiver ces triggers grâce aux deux fonctions : :ref:`emaj_disable_protection_by_event_triggers() <emaj_disable_protection_by_event_triggers>` et :ref:`emaj_enable_protection_by_event_triggers() <emaj_enable_protection_by_event_triggers>`.
 
 Les protections mises en place ne protègent néanmoins pas contre tous les risques. En particulier, le renommage de tables ou de séquences ou leur changement de schéma d'appartenance ne sont pas couverts ; et certaines requêtes changeant la structure d'une table ne déclenchent aucun trigger.
+
+Notons que ces triggers sur événement peuvent ne pas exister quand l’extension *emaj* a été :ref:`installée par un rôle qui ne disposait pas des droits SUPERUSER<event_triggers_limits>`.

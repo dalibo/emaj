@@ -15,6 +15,7 @@ All rights given to *emaj_viewer* are also given to *emaj_adm*.
 
 When created, these roles have no connection capability (no defined password and *NOLOGIN* option). It is recommended NOT to give them any connection capability. Instead, it is sufficient to give the rights they own to other roles, with *GRANT* SQL verbs.
 
+Let’s note that :ref:`both roles may not exist<roles_limits>` if the role who installed the extension had not the *SUPERUSER* privileges.
 
 Giving E-Maj rights
 -------------------

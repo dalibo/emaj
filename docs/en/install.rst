@@ -88,7 +88,7 @@ Download the latest E-Maj version by any convenient way and decompress it.
 
 The e-maj-<version> directory contains the file tree :doc:`described here <content>`.
 
-The :doc:`extension creation<setup>` will be a little bit different.
+The :ref:`extension creation<create_emaj_extension_by_script>` will be a little bit different.
 
 
 Installation on Windows

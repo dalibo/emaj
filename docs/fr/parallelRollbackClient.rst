@@ -23,7 +23,7 @@ Le rollback de chaque session au sein d'une unique transaction implique l'utilis
 
 Il est également nécessaire de valoriser le paramètre :doc:`dblink_user_password dans la table emaj_param<parameters>`.
 
-Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut aussi que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<create_emaj_extension_by_script>`.
+Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut aussi que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<rollbacks_limits>`.
 
 Syntaxe
 -------

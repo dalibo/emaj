@@ -23,7 +23,7 @@ Rolling back each session on behalf of a unique transaction implies the use of t
 
 It is also necessary to set the :doc:`dblink_user_password parameter into the emaj_param table<parameters>`.
 
-If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<create_emaj_extension_by_script>` function.
+If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<rollbacks_limits>` function.
 
 Syntax
 ------

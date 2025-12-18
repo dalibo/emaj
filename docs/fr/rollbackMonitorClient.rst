@@ -11,7 +11,7 @@ L’outil proposé est codé en *perl*. Il nécessite que le logiciel **perl** a
 
 Pour disposer d’informations précises sur l’avancement des opérations de rollback en cours, il est nécessaire de valoriser le paramètre :doc:`dblink_user_password<parameters>`. :ref:`Plus de détails...<emaj_rollback_activity_prerequisites>`
 
-Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut également que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<create_emaj_extension_by_script>`.
+Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut également que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<rollbacks_limits>`.
 
 Syntaxe
 -------
