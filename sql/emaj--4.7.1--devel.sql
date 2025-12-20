@@ -98,6 +98,7 @@ CREATE TABLE emaj.emaj_install_conf (
   inst_as_extension            BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance has been created as EXTENSION
   inst_by_superuser            BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance has been installed by a
                                                            --   SUPERUSER
+  inst_installer_role          TEXT        NOT NULL,       -- role who installed the extension
   inst_with_emaj_adm           BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance supports the emaj_adm role
   inst_with_emaj_viewer        BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance supports the emaj_viewer role
   inst_with_event_triggers     BOOLEAN     NOT NULL        -- boolean indicating whether this emaj instance supports event triggers
@@ -107,9 +108,9 @@ $$Contains the install configuration characteristics of this emaj instance.$$;
 
 -- All boolean columns are set to TRUE because the initial installation was necessary done by a superuser
 --   (no script being available for an upgrade by a non superuser).
-INSERT INTO emaj.emaj_install_conf (inst_as_extension, inst_by_superuser, inst_with_emaj_adm, inst_with_emaj_viewer,
-                                    inst_with_event_triggers)
-  VALUES (TRUE, TRUE, TRUE, TRUE, TRUE);
+INSERT INTO emaj.emaj_install_conf (inst_as_extension, inst_by_superuser, inst_installer_role,
+                                    inst_with_emaj_adm, inst_with_emaj_viewer, inst_with_event_triggers)
+  VALUES (TRUE, TRUE, current_user, TRUE, TRUE, TRUE);
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE emaj.emaj_install_conf FROM current_user;
 
 --
@@ -184,6 +185,7 @@ $_dblink_open_cnx$
 --   of pg_read_all_settings.
   DECLARE
     v_nbCnx                  INT;
+    v_installedBySuperuser   BOOLEAN;
     v_connectFunction        TEXT;
     v_userPassword           TEXT;
     v_connectString          TEXT;
@@ -212,11 +214,11 @@ $_dblink_open_cnx$
     IF p_status IS NULL THEN
 -- Determine the function to execute to open the dblink connection:
 --   dblink_connect() if the installer is superuser, otherwise dblink_connect_u()
-      SELECT CASE WHEN inst_by_superuser THEN 'dblink_connect' ELSE 'dblink_connect_u' END
-        INTO v_connectFunction
+      SELECT inst_by_superuser, CASE WHEN inst_by_superuser THEN 'dblink_connect' ELSE 'dblink_connect_u' END
+        INTO v_installedBySuperuser, v_connectFunction
         FROM emaj.emaj_install_conf;
 -- Verify that a non superuser installer role can execute the connection function.
-      IF v_connectFunction = 'dblink_connect_u' AND
+      IF NOT v_installedBySuperuser AND
           NOT pg_catalog.has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'EXECUTE') THEN
         p_status = -3;                    -- installer role has not the EXECUTE privileges on the dblink connection function
       END IF;
@@ -275,7 +277,7 @@ $_dblink_open_cnx$
 --   Error on the statement is trapped because the emaj_adm role may not exist or be unused in this emaj instance.
       IF (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
         v_stmt = 'SELECT '
-                    '(SELECT nspowner::regrole::text = current_user FROM pg_catalog.pg_namespace WHERE nspname = ''emaj'') '
+                    '(SELECT inst_installer_role = current_user FROM emaj.emaj_install_conf) '
                  'OR '
                     '(SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'')) '
                  'AS is_emaj_admin';
@@ -1176,6 +1178,116 @@ $emaj_assign_sequences$
 $emaj_assign_sequences$;
 COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Assign sequences on name patterns into a tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._assign_sequences(p_schema TEXT, p_sequences TEXT[], p_group TEXT, p_mark TEXT,
+                                                  p_multiSequence BOOLEAN, p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_assign_sequences$
+-- The function effectively assigns sequences into a tables group.
+-- Inputs: schema, array of sequence names, group name,
+--         mark to set for lonnging groups, a boolean indicating whether several sequences need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of sequences effectively assigned to the tables group
+-- The JSONB v_properties parameter has currenlty only one field '{"priority":...}' the properties being NULL by default
+  DECLARE
+    v_function               TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_list                   TEXT;
+    v_array                  TEXT[];
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_oneSequence            TEXT;
+    v_nbAssignedSeq          INT = 0;
+  BEGIN
+    v_function = CASE WHEN p_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END;
+-- Insert the begin entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check supplied parameters
+-- Check the group name and if ok, get some properties of the group.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE);
+    SELECT group_is_logging INTO v_groupIsLogging
+      FROM emaj.emaj_group
+      WHERE group_name = p_group;
+-- Check the supplied schema exists and is not an E-Maj schema.
+    PERFORM emaj._check_schema(p_schema, TRUE, TRUE);
+-- Check sequences.
+    IF NOT p_arrayFromRegex THEN
+-- Remove duplicates values, NULL and empty strings from the sequence names array supplied by the user.
+      p_sequences = emaj._clean_array(p_sequences);
+-- Check that application sequences exist.
+      SELECT string_agg(quote_ident(sequence_name), ', ' ORDER BY sequence_name)
+        INTO v_list
+        FROM unnest(p_sequences) AS sequence_name
+        WHERE NOT EXISTS
+               (SELECT 0
+                  FROM pg_catalog.pg_class
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                  WHERE nspname = p_schema
+                    AND relname = sequence_name
+                    AND relkind = 'S');
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) do not exist.', quote_ident(p_schema), v_list;
+      END IF;
+    END IF;
+-- Check or discard sequences already assigned to a group.
+    SELECT string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_array
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = ANY(p_sequences)
+        AND upper_inf(rel_time_range);
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) already belong to a group.', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_sequences: Some sequences already belonging to a group (%) are not selected.', v_list;
+        -- remove these sequences from the sequences to process
+        p_sequences = array(SELECT unnest(p_sequences) EXCEPT SELECT unnest(v_array));
+      END IF;
+    END IF;
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(array[p_group], p_mark) INTO v_markName;
+-- OK,
+    IF p_sequences IS NULL OR p_sequences = '{}' THEN
+-- When no sequences are finaly selected, just warn.
+      RAISE WARNING '_assign_sequences: No sequence to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_groupIsLogging THEN
+-- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+-- vacuum operation,
+        PERFORM emaj._lock_groups(ARRAY[p_group], 'ROW EXCLUSIVE', FALSE);
+-- ... and set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+      END IF;
+-- Effectively process each sequence.
+      FOREACH v_oneSequence IN ARRAY p_sequences
+      LOOP
+        PERFORM emaj._add_seq(p_schema, v_oneSequence, p_group, v_groupIsLogging, v_timeId, v_function);
+        v_nbAssignedSeq = v_nbAssignedSeq + 1;
+      END LOOP;
+-- Adjust the group characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_sequence =
+              (SELECT count(*)
+                 FROM emaj.emaj_relation
+                 WHERE rel_group = group_name
+                   AND upper_inf(rel_time_range)
+                   AND rel_kind = 'S'
+              )
+        WHERE group_name = p_group;
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbAssignedSeq || ' sequences assigned to the group ' || p_group);
+--
+    RETURN v_nbAssignedSeq;
+  END;
+$_assign_sequences$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p_sequence TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS

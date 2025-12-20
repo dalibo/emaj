@@ -70,6 +70,7 @@ CREATE TABLE emaj.emaj_install_conf (
   inst_as_extension            BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance has been created as EXTENSION
   inst_by_superuser            BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance has been installed by a
                                                            --   SUPERUSER
+  inst_installer_role          TEXT        NOT NULL,       -- role who installed the extension
   inst_with_emaj_adm           BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance supports the emaj_adm role
   inst_with_emaj_viewer        BOOLEAN     NOT NULL,       -- boolean indicating whether this emaj instance supports the emaj_viewer role
   inst_with_event_triggers     BOOLEAN     NOT NULL        -- boolean indicating whether this emaj instance supports event triggers
@@ -139,9 +140,10 @@ $do$
       DROP FUNCTION emaj._tmp();
     END IF;
 -- Store the installation characteristics into the emaj_install_conf table and protect its content.
-    INSERT INTO emaj.emaj_install_conf (inst_as_extension, inst_by_superuser, inst_with_emaj_adm, inst_with_emaj_viewer,
-                                        inst_with_event_triggers)
-      VALUES (v_createdAsExtension, v_isRoleSuperuser, v_supportEmajAdm, v_supportEmajViewer, v_supportEventTriggers);
+    INSERT INTO emaj.emaj_install_conf (inst_as_extension, inst_by_superuser, inst_installer_role,
+                                        inst_with_emaj_adm, inst_with_emaj_viewer, inst_with_event_triggers)
+      VALUES (v_createdAsExtension, v_isRoleSuperuser, current_user,
+              v_supportEmajAdm, v_supportEmajViewer, v_supportEventTriggers);
     REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE emaj.emaj_install_conf FROM current_user;
 --
     RETURN;
@@ -936,6 +938,7 @@ $_dblink_open_cnx$
 --   of pg_read_all_settings.
   DECLARE
     v_nbCnx                  INT;
+    v_installedBySuperuser   BOOLEAN;
     v_connectFunction        TEXT;
     v_userPassword           TEXT;
     v_connectString          TEXT;
@@ -964,11 +967,11 @@ $_dblink_open_cnx$
     IF p_status IS NULL THEN
 -- Determine the function to execute to open the dblink connection:
 --   dblink_connect() if the installer is superuser, otherwise dblink_connect_u()
-      SELECT CASE WHEN inst_by_superuser THEN 'dblink_connect' ELSE 'dblink_connect_u' END
-        INTO v_connectFunction
+      SELECT inst_by_superuser, CASE WHEN inst_by_superuser THEN 'dblink_connect' ELSE 'dblink_connect_u' END
+        INTO v_installedBySuperuser, v_connectFunction
         FROM emaj.emaj_install_conf;
 -- Verify that a non superuser installer role can execute the connection function.
-      IF v_connectFunction = 'dblink_connect_u' AND
+      IF NOT v_installedBySuperuser AND
           NOT pg_catalog.has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'EXECUTE') THEN
         p_status = -3;                    -- installer role has not the EXECUTE privileges on the dblink connection function
       END IF;
@@ -1027,7 +1030,7 @@ $_dblink_open_cnx$
 --   Error on the statement is trapped because the emaj_adm role may not exist or be unused in this emaj instance.
       IF (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
         v_stmt = 'SELECT '
-                    '(SELECT nspowner::regrole::text = current_user FROM pg_catalog.pg_namespace WHERE nspname = ''emaj'') '
+                    '(SELECT inst_installer_role = current_user FROM emaj.emaj_install_conf) '
                  'OR '
                     '(SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'')) '
                  'AS is_emaj_admin';
@@ -4306,7 +4309,7 @@ $_assign_sequences$
 -- ... and set the mark, using the same time identifier.
         PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
       END IF;
--- Effectively create the log components for each table.
+-- Effectively process each sequence.
       FOREACH v_oneSequence IN ARRAY p_sequences
       LOOP
         PERFORM emaj._add_seq(p_schema, v_oneSequence, p_group, v_groupIsLogging, v_timeId, v_function);

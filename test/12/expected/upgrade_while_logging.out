@@ -192,9 +192,9 @@ select verh_version from emaj.emaj_version_hist order by verh_time_range;
 (16 rows)
 
 select * from emaj.emaj_install_conf;
- inst_as_extension | inst_by_superuser | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
--------------------+-------------------+--------------------+-----------------------+--------------------------
- t                 | t                 | t                  | t                     | t
+ inst_as_extension | inst_by_superuser | inst_installer_role | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
+-------------------+-------------------+---------------------+--------------------+-----------------------+--------------------------
+ t                 | t                 | postgres            | t                  | t                     | t
 (1 row)
 
 select emaj.emaj_get_version();
@@ -350,6 +350,7 @@ Tablespace: "tspemaj"
 --------------------------+---------+-----------+----------+---------
  inst_as_extension        | boolean |           | not null | 
  inst_by_superuser        | boolean |           | not null | 
+ inst_installer_role      | text    |           | not null | 
  inst_with_emaj_adm       | boolean |           | not null | 
  inst_with_emaj_viewer    | boolean |           | not null | 
  inst_with_event_triggers | boolean |           | not null | 
