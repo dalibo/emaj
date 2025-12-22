@@ -26,22 +26,7 @@ grant execute on function dblink_connect_u(text,text) to _regress_emaj_install;
 ------------------------------------------------------------
 -- Create application objects
 ------------------------------------------------------------
-set session_authorization to _regress_emaj_app;
 -- Objects owned by the installer (_regress_emaj_install)
-DROP SCHEMA IF EXISTS appSchema1 CASCADE;
-CREATE SCHEMA appSchema1;
-SET search_path=appSchema1;
-CREATE TABLE myTbl1 (
-  col11       SERIAL           NOT NULL,
-  col12       TEXT             ,
-  PRIMARY KEY (col11)
-);
-CREATE SEQUENCE mySeq1;
-GRANT USAGE ON SCHEMA appSchema1 TO _regress_emaj_install;
-GRANT ALL ON ALL TABLES IN SCHEMA appSchema1 TO _regress_emaj_install;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA appSchema1 TO _regress_emaj_install;
-reset search_path;
--- Objects owned by the another role (_regress_emaj_app)
 set session_authorization to _regress_emaj_install;
 DROP SCHEMA IF EXISTS instSchema1 CASCADE;
 CREATE SCHEMA instSchema1;
@@ -52,19 +37,39 @@ CREATE TABLE myTbl1 (
   PRIMARY KEY (col11)
 );
 reset search_path;
+-- Objects owned by the another role (_regress_emaj_app)
+set session_authorization to _regress_emaj_app;
+DROP SCHEMA IF EXISTS appSchema1 CASCADE;
+CREATE SCHEMA appSchema1;
+SET search_path=appSchema1;
+CREATE TABLE myTbl1 (
+  col11       SERIAL           NOT NULL,
+  col12       TEXT             ,
+  PRIMARY KEY (col11)
+);
+CREATE TABLE myTbl2 (
+  col21       SERIAL           NOT NULL,
+  col22       TEXT             ,
+  PRIMARY KEY (col21)
+);
+CREATE SEQUENCE mySeq1;
+GRANT USAGE ON SCHEMA appSchema1 TO _regress_emaj_install;
+GRANT ALL ON ALL TABLES IN SCHEMA appSchema1 TO _regress_emaj_install;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA appSchema1 TO _regress_emaj_install;
+reset search_path;
 ------------------------------------------------------------
 -- Step 1: the installer role has the minimum rights to use E-Maj
 ------------------------------------------------------------
 set session_authorization to _regress_emaj_install;
 -- install emaj
 \set ECHO errors
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15241: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: emaj_viewer role is not supported.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15353: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: emaj_viewer role is not supported.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_function | hist_event |  hist_object  |                                                    hist_wording                                                    |       hist_user       
@@ -234,66 +239,70 @@ PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) 
 reset session_authorization;
 revoke pg_write_server_files from _regress_emaj_install;
 ------------------------------------------------------------
--- Step 2: assign application objects owned by another role
+-- Step 2: try to assign application objects owned by another role
 ------------------------------------------------------------
 set session_authorization to _regress_emaj_install;
--- build another tables group
-select emaj.emaj_create_group('appGroup1');
- emaj_create_group 
--------------------
-                 1
-(1 row)
-
--- ######### emaj_assign_table needs TO BE FIXED ########
-select emaj.emaj_assign_table('appschema1', 'mytbl1', 'appGroup1');
-ERROR:  must be owner of table mytbl1
-CONTEXT:  SQL statement "ALTER TABLE appschema1.mytbl1 DISABLE TRIGGER emaj_log_trg"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean) line 173 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
-                             p_timeId, p_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 18 at PERFORM
-SQL statement "SELECT emaj._add_tbl(p_schema, v_oneTable, p_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
-                              v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 238 at PERFORM
+-- try to assign tables in group instGroup1
+select emaj.emaj_assign_table('appschema1', 'mytbl1', 'instGroup1');
+ERROR:  _assign_tables: In schema appschema1, the owner of some tables (mytbl1) is not the emaj installer role.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 143 at RAISE
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
-select emaj.emaj_assign_sequence('appschema1', 'myseq1', 'appGroup1');
- emaj_assign_sequence 
-----------------------
-                    1
+select emaj.emaj_assign_tables('appschema1', array['mytbl1', 'mytbl2'], 'instGroup1');
+ERROR:  _assign_tables: In schema appschema1, the owner of some tables (mytbl1, mytbl2) is not the emaj installer role.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 143 at RAISE
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
+select emaj.emaj_assign_tables('appschema1', '.*', '', 'instGroup1');
+WARNING:  _assign_tables: Some tables whose owner is not the emaj installer role (mytbl1, mytbl2) are not selected.
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
 (1 row)
 
--- start the group and perform data changes
-select emaj.emaj_start_group('appGroup1', 'M1');
- emaj_start_group 
-------------------
-                1
+-- try to assign sequences in group instGroup1
+select emaj.emaj_assign_sequence('appschema1', 'myseq1', 'instGroup1');
+ERROR:  _assign_sequences: In schema appschema1, the owner of some sequences (myseq1) is not the emaj installer role.
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 81 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
+select emaj.emaj_assign_sequences('appschema1', array['mytbl1_col11_seq', 'mytbl2_col21_seq'], 'instGroup1');
+ERROR:  _assign_sequences: In schema appschema1, the owner of some sequences (mytbl1_col11_seq, mytbl2_col21_seq) is not the emaj installer role.
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 81 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,text) line 7 at RETURN
+select emaj.emaj_assign_sequences('appschema1', '.*', '', 'instGroup1');
+WARNING:  _assign_sequences: Some sequences whose owner is not the emaj installer role (myseq1, mytbl1_col11_seq, mytbl2_col21_seq) are not selected.
+WARNING:  _assign_sequences: No sequence to process.
+ emaj_assign_sequences 
+-----------------------
+                     0
 (1 row)
 
-insert into appSchema1.mytbl1 (col12) values ('Row 1');
--- set a mark and perform data change
-select emaj.emaj_set_mark_group('appGroup1', 'M2');
- emaj_set_mark_group 
----------------------
-                   1
-(1 row)
-
-update appSchema1.mytbl1 set col12 = 'Modified row 1' where col11 = 1;
-insert into appSchema1.mytbl1 (col12) values ('Row 2');
--- rollback to M2
-select * from emaj.emaj_rollback_group('appGroup1','M2');
- rlbk_severity |              rlbk_message              
----------------+----------------------------------------
- Notice        | Rollback id = 3.
- Notice        | 0 / 1 sequences effectively processed.
+-- try to import groups configuration with tables and sequences having an owner who is not the installer role
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "instGroup1",
+																	 "tables": [ { "schema": "appschema1", "table": "mytbl1" },
+																				 { "schema": "appschema1", "table": "mytbl2" }],
+																	 "sequences": [ { "schema": "appschema1", "sequence": "mytbl1_col11_seq" },
+																			        { "schema": "appschema1", "sequence": "mytbl2_col21_seq" }] } ]}'::json,
+											 null, true);
+WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl1 table owner is not the emaj installer role.
+WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl1_col11_seq sequence owner is not the emaj installer role.
+WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl2 table owner is not the emaj installer role.
+WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl2_col21_seq sequence owner is not the emaj installer role.
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 79 at RAISE
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text,boolean) line 13 at RETURN
+-- change the table/sequence ownership
+reset session_authorization;
+alter table instschema1.mytbl1 owner to _regress_emaj_app;
+set session_authorization to _regress_emaj_install;
+select * from emaj.emaj_verify_all();
+                                                         emaj_verify_all                                                         
+---------------------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "instGroup1", the owner of table instschema1"."mytbl1" is not the emaj extension installer.
+ Error: In tables group "instGroup1", the owner of sequence instschema1"."mytbl1_col11_seq" is not the emaj extension installer.
 (2 rows)
 
--- ok, but no dblink use (not enough rights)
-select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
- hist_object | hist_wording 
--------------+--------------
- rlbk#1      | Status = 1
-(1 row)
-
+reset session_authorization;
+alter table instschema1.mytbl1 owner to _regress_emaj_install;
 ------------------------------------------------------------
 -- Step 3: add grants to perform COPY FROM or TO
 ------------------------------------------------------------
@@ -305,13 +314,13 @@ set session_authorization to _regress_emaj_install;
 select emaj.emaj_export_groups_configuration('/tmp/emaj_test');
  emaj_export_groups_configuration 
 ----------------------------------
-                                2
+                                1
 (1 row)
 
 select emaj.emaj_import_groups_configuration('/tmp/emaj_test', NULL, TRUE);
  emaj_import_groups_configuration 
 ----------------------------------
-                                2
+                                1
 (1 row)
 
 select emaj.emaj_export_parameters_configuration('/tmp/emaj_test');
@@ -349,7 +358,7 @@ select * from emaj.emaj_verify_all();
 select emaj.emaj_stop_groups(emaj.emaj_get_logging_groups());
  emaj_stop_groups 
 ------------------
-                3
+                2
 (1 row)
 
 -- drop the extension
@@ -373,11 +382,11 @@ revoke all on function dblink_connect_u(text,text) from _regress_emaj_install;
 set session_authorization to _regress_emaj_install;
 -- install emaj
 \set ECHO errors
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15241: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: emaj_viewer role is not supported.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15353: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: emaj_viewer role is not supported.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_function | hist_event |  hist_object  |                                       hist_wording                                       |       hist_user       
@@ -416,9 +425,9 @@ ALTER ROLE _regress_emaj_install CREATEROLE;
 set session_authorization to _regress_emaj_install;
 -- install emaj
 \set ECHO errors
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15241: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15353: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_function | hist_event |  hist_object  |                        hist_wording                         |       hist_user       
@@ -511,10 +520,10 @@ drop role emaj_adm, emaj_viewer;
 -- Reinstall emaj
 set session_authorization to _regress_emaj_install;
 \set ECHO errors
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15241: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: emaj_viewer role is not supported.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
-psql:sql/emaj-devel.sql:15241: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15353: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: emaj_viewer role is not supported.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
+psql:sql/emaj-devel.sql:15353: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.

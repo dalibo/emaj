@@ -2453,6 +2453,8 @@ $_assign_tables$
     v_logIdxTsp              TEXT;
     v_ignoredTriggers        TEXT[];
     v_ignoredTrgProfiles     TEXT[];
+    v_installedBySuperuser   BOOLEAN;
+    v_installerRole          TEXT;
     v_list                   TEXT;
     v_array                  TEXT[];
     v_timeId                 BIGINT;
@@ -2559,6 +2561,29 @@ $_assign_tables$
     IF p_properties IS NOT NULL THEN
       SELECT * INTO v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
         FROM emaj._check_json_table_properties(p_properties);
+    END IF;
+-- In non superuser install, check or discard tables whose owner is not the installer role.
+    SELECT inst_by_superuser, inst_installer_role
+      INTO v_installedBySuperuser, v_installerRole
+      FROM emaj.emaj_install_conf;
+    IF NOT v_installedBySuperuser THEN
+      SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+        INTO v_list, v_array
+        FROM pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+        WHERE nspname = p_schema
+          AND relname = ANY(p_tables)
+          AND relowner::regrole::text <> current_user;
+      IF v_list IS NOT NULL THEN
+        IF NOT p_arrayFromRegex THEN
+          RAISE EXCEPTION '_assign_tables: In schema %, the owner of some tables (%) is not the emaj installer role.',
+                          quote_ident(p_schema), v_list;
+        ELSE
+          RAISE WARNING '_assign_tables: Some tables whose owner is not the emaj installer role (%) are not selected.', v_list;
+          -- remove these tables from the tables to process
+          p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
+        END IF;
+      END IF;
     END IF;
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(array[p_group], p_mark) INTO v_markName;
@@ -4248,6 +4273,8 @@ $_assign_sequences$
   DECLARE
     v_function               TEXT;
     v_groupIsLogging         BOOLEAN;
+    v_installedBySuperuser   BOOLEAN;
+    v_installerRole          TEXT;
     v_list                   TEXT;
     v_array                  TEXT[];
     v_timeId                 BIGINT;
@@ -4300,6 +4327,29 @@ $_assign_sequences$
         RAISE WARNING '_assign_sequences: Some sequences already belonging to a group (%) are not selected.', v_list;
         -- remove these sequences from the sequences to process
         p_sequences = array(SELECT unnest(p_sequences) EXCEPT SELECT unnest(v_array));
+      END IF;
+    END IF;
+-- In non superuser install, check or discard sequences whose owner is not the installer role.
+    SELECT inst_by_superuser, inst_installer_role
+      INTO v_installedBySuperuser, v_installerRole
+      FROM emaj.emaj_install_conf;
+    IF NOT v_installedBySuperuser THEN
+      SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+        INTO v_list, v_array
+        FROM pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+        WHERE nspname = p_schema
+          AND relname = ANY(p_sequences)
+          AND relowner::regrole::text <> current_user;
+      IF v_list IS NOT NULL THEN
+        IF NOT p_arrayFromRegex THEN
+          RAISE EXCEPTION '_assign_sequences: In schema %, the owner of some sequences (%) is not the emaj installer role.',
+                          quote_ident(p_schema), v_list;
+        ELSE
+          RAISE WARNING '_assign_sequences: Some sequences whose owner is not the emaj installer role (%) are not selected.', v_list;
+          -- remove these sequences from the sequences to process
+          p_sequences = array(SELECT unnest(p_sequences) EXCEPT SELECT unnest(v_array));
+        END IF;
       END IF;
     END IF;
 -- Check the supplied mark.
@@ -6679,6 +6729,7 @@ $_import_groups_conf_check$
 --  - exist, and only once
 --  - are not located into an E-Maj schema (to protect against an E-Maj recursive use),
 --  - do not already belong to another tables group,
+--  - have the same owner as the installer role in non superuser emaj install,
 -- It also checks that:
 --  - tables are not TEMPORARY
 --  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
@@ -6689,7 +6740,14 @@ $_import_groups_conf_check$
 -- Output: _report_message_type records representing diagnostic messages
 --         the rpt_severity is set to 1 if the error blocks any type group creation or alter,
 --                                 or 2 if the error only blocks ROLLBACKABLE groups creation
+  DECLARE
+    v_installedBySuperuser   BOOLEAN;
+    v_installerRole          TEXT;
   BEGIN
+-- Read some installation characteristics.
+    SELECT inst_by_superuser, inst_installer_role
+      INTO v_installedBySuperuser, v_installerRole
+      FROM emaj.emaj_install_conf;
 -- Check that all application tables listed for the group really exist.
     RETURN QUERY
       SELECT 1, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
@@ -6738,6 +6796,18 @@ $_import_groups_conf_check$
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
         WHERE relkind = 'r' AND relpersistence = 't';
+-- In non superuser emaj install, check that all table owners are the installer role.
+    IF NOT v_installedBySuperuser THEN
+      RETURN QUERY
+        SELECT 6, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+               format('In tables group "%s", the %s.%s table owner is not the emaj installer role.',
+                      tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+          FROM tmp_app_table
+               JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+          WHERE relkind = 'r'
+            AND relowner::regrole::text <> current_user;
+    END IF;
 -- Check that the log data tablespaces for tables exist.
     RETURN QUERY
       SELECT 12, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_dat_tsp, NULL::INT,
@@ -6852,6 +6922,18 @@ $_import_groups_conf_check$
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
         FROM tmp_app_sequence
              JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
+-- In non superuser emaj install, check that all sequence owners are the installer role.
+    IF NOT v_installedBySuperuser THEN
+      RETURN QUERY
+        SELECT 6, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
+               format('In tables group "%s", the %s.%s sequence owner is not the emaj installer role.',
+                      tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
+          FROM tmp_app_sequence
+               JOIN pg_catalog.pg_class ON (relname = tmp_seq_name)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+          WHERE relkind = 'S'
+            AND relowner::regrole::text <> current_user;
+    END IF;
 --
     RETURN;
   END;
@@ -13379,7 +13461,14 @@ $_verify_all_groups$
 -- The function verifies the consistency of all E-Maj groups.
 -- It returns a set of error or warning messages for discovered discrepancies.
 -- If no error is detected, no row is returned.
+  DECLARE
+    v_installedBySuperuser   BOOLEAN;
+    v_installerRole          TEXT;
   BEGIN
+-- Read some installation characteristics.
+    SELECT inst_by_superuser, inst_installer_role
+      INTO v_installedBySuperuser, v_installerRole
+      FROM emaj.emaj_install_conf;
 --
 -- Errors detection.
 --
@@ -13717,6 +13806,30 @@ $_verify_all_groups$
            GROUP BY rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table
            ORDER BY 1,2,3
          ) AS t;
+-- In non superuser emaj install, check that all table owners are the installer role.
+    IF NOT v_installedBySuperuser THEN
+      RETURN QUERY
+        SELECT 'Error: In tables group "' || rel_group || '", the owner of table ' || rel_schema || '"."' || rel_tblseq ||
+               '" is not the emaj extension installer.'
+               AS msg
+          FROM emaj.emaj_relation
+               JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+            WHERE relkind = 'r'
+              AND relowner::regrole::text <> v_installerRole
+          ORDER BY rel_schema, rel_tblseq;
+-- In non superuser emaj install, check that all sequence owners are the installer role.
+      RETURN QUERY
+        SELECT 'Error: In tables group "' || rel_group || '", the owner of sequence ' || rel_schema || '"."' || rel_tblseq ||
+               '" is not the emaj extension installer.'
+               AS msg
+          FROM emaj.emaj_relation
+               JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+            WHERE relkind = 'S'
+              AND relowner::regrole::text <> v_installerRole
+          ORDER BY rel_schema, rel_tblseq;
+    END IF;
 --
 -- Warnings detection.
 --

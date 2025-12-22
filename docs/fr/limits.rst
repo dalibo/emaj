@@ -18,7 +18,12 @@ L'utilisation de l'extension E-Maj présente quelques limitations.
 Limites des installations réalisées sans droit SUPERUSER
 --------------------------------------------------------
 
-L’:ref:`installation de l’extension emaj avec le script psql<create_emaj_extension_by_script>` emaj-<version>.sql par un rôle qui n’a pas les droits *SUPERUSER*, entraîne des limitations supplémentaires. Celles-ci dépendent des droits réels que détient ce rôle, soit au moment de l’installation, soit lors de l’utilisation.
+Un rôle qui n’a pas les droits SUPERUSER peut :ref:`installer l’extension emaj avec le script psql <create_emaj_extension_by_script>` emaj-<version>.sql. Mais dans ce cas, il existe un certain nombre de limitations dans l’utilisation et le fonctionnement de l’extension. Ces limitations dépendent des droits réels que détient ce rôle, soit au moment de l’installation, soit lors de l’utilisation.
+
+Propriétaire des tables et séquences
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+La principale contrainte porte sur le propriétaire des tables et séquences. **Seules des tables et des séquences appartenant au rôle ayant installé emaj peuvent être assignées à un groupe de tables**.
 
 .. _roles_limits:
 
@@ -81,11 +86,3 @@ Un rôle disposant des droits nécessaires peut exécuter les requêtes ::
 Le suivi des rollbacks E-Maj et la soumission de rollbacks parallélisés deviennent possibles dès l’attribution de ces droits, sans qu’il soit nécessaire de ré-installer l’extension.
 
 En outre, dans ce mode d’installation sans droit *SUPERUSER*, toutes les optimisations des rollbacks E-Maj ne sont pas disponibles, conduisant à un niveau de performance dégradé sur ces opérations.
-
-Intégration dans un groupe de tables de tables et séquences appartenant à un autre utilisateur
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Pour assigner à un groupe de tables des tables et séquences n’appartenant pas au rôle d’iinstallation, ce dernier devra disposer des droits :
-
-* de lecture, d’écriture et de création de trigger sur ces tables applicatives (SELECT, INSERT, UPDATE, DELETE, TRIGGER) ;
-* d’accès et de modifications sur ces séquences applicatives (ALL).

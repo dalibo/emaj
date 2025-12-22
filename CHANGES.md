@@ -11,8 +11,8 @@ E-Maj - Change log
       automatically drop the existing groups that are not imported.
   * Let E-Maj work when the extension is installed by a non superuser role
     using the emaj-<version>.sql script:
-    * Do not create and manipulate event triggers when the installer role is
-      not allowed to do it.
+    * Report clear error messages when trying to assign to a tables group
+      tables or sequences whose owner is not the installer role.
     * Do not create and use emaj_adm or emaj_viewer roles when the installer
       role has not the needed rights to do it.
     * Report a clear error message when using functions that read from or write

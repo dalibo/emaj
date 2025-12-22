@@ -18,7 +18,12 @@ The E-Maj extension usage has some limits:
 Limits for installations without SUPERUSER privileges
 -----------------------------------------------------
 
-There are additional limits when a non *SUPERUSER* role :ref:`installs the emaj extension with the psql<create_emaj_extension_by_script>` emaj-<version> script. These limits depend on effective rights owned by the installer role either at installation time or at use time.
+A non SUPERUSER role can :ref:`install the emaj extension with the psql<create_emaj_extension_by_script>` emaj-<version> script. But in this case, there are some limits in the extension use or behaviour. These limits depend on effective rights owned by the installer role either at installation time or at use time.
+
+Tables and sequences ownership
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The main constraint deals with the ownership of tables and sequences assigned to tables groups. **Nothing but tables and sequences owned by the emaj installer role can be assigned to a tables group**.
 
 .. _roles_limits:
 
@@ -80,11 +85,3 @@ A role having enough privileges can execute::
 It is possible to monitor E-Maj rollbacks and submit parallel rollbacks as soon as these rights are granted, without been obliged to reinstall the extension.
 
 Furthermore, in this installation mode without *SUPERUSER* rights, all optimizations regarding E-Maj rollbacks are not available, leading to a decreased performance level of these operations.
-
-Assigning into a tables group tables and sequences owned by another role
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In order to assign into a tables group tables and sequences not owned by the installer role, this role needs to be granted:
-
-* read, write and trigger rights on these application tables (*SELECT*, *INSERT*, *UPDATE*, *DELETE*, *TRIGGER*) ;
-* access and change rights on these application sequences (*ALL*).

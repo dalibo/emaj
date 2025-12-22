@@ -34,30 +34,9 @@ grant execute on function dblink_connect_u(text,text) to _regress_emaj_install;
 ------------------------------------------------------------
 -- Create application objects
 ------------------------------------------------------------
-set session_authorization to _regress_emaj_app;
 
 -- Objects owned by the installer (_regress_emaj_install)
 
-DROP SCHEMA IF EXISTS appSchema1 CASCADE;
-CREATE SCHEMA appSchema1;
-
-SET search_path=appSchema1;
-
-CREATE TABLE myTbl1 (
-  col11       SERIAL           NOT NULL,
-  col12       TEXT             ,
-  PRIMARY KEY (col11)
-);
-
-CREATE SEQUENCE mySeq1;
-
-GRANT USAGE ON SCHEMA appSchema1 TO _regress_emaj_install;
-GRANT ALL ON ALL TABLES IN SCHEMA appSchema1 TO _regress_emaj_install;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA appSchema1 TO _regress_emaj_install;
-
-reset search_path;
-
--- Objects owned by the another role (_regress_emaj_app)
 set session_authorization to _regress_emaj_install;
 
 DROP SCHEMA IF EXISTS instSchema1 CASCADE;
@@ -70,6 +49,34 @@ CREATE TABLE myTbl1 (
   col12       TEXT             ,
   PRIMARY KEY (col11)
 );
+
+reset search_path;
+
+-- Objects owned by the another role (_regress_emaj_app)
+
+set session_authorization to _regress_emaj_app;
+
+DROP SCHEMA IF EXISTS appSchema1 CASCADE;
+CREATE SCHEMA appSchema1;
+
+SET search_path=appSchema1;
+
+CREATE TABLE myTbl1 (
+  col11       SERIAL           NOT NULL,
+  col12       TEXT             ,
+  PRIMARY KEY (col11)
+);
+CREATE TABLE myTbl2 (
+  col21       SERIAL           NOT NULL,
+  col22       TEXT             ,
+  PRIMARY KEY (col21)
+);
+
+CREATE SEQUENCE mySeq1;
+
+GRANT USAGE ON SCHEMA appSchema1 TO _regress_emaj_install;
+GRANT ALL ON ALL TABLES IN SCHEMA appSchema1 TO _regress_emaj_install;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA appSchema1 TO _regress_emaj_install;
 
 reset search_path;
 
@@ -142,31 +149,38 @@ reset session_authorization;
 revoke pg_write_server_files from _regress_emaj_install;
 
 ------------------------------------------------------------
--- Step 2: assign application objects owned by another role
+-- Step 2: try to assign application objects owned by another role
 ------------------------------------------------------------
 
 set session_authorization to _regress_emaj_install;
 
--- build another tables group
-select emaj.emaj_create_group('appGroup1');
--- ######### emaj_assign_table needs TO BE FIXED ########
-select emaj.emaj_assign_table('appschema1', 'mytbl1', 'appGroup1');
-select emaj.emaj_assign_sequence('appschema1', 'myseq1', 'appGroup1');
+-- try to assign tables in group instGroup1
+select emaj.emaj_assign_table('appschema1', 'mytbl1', 'instGroup1');
+select emaj.emaj_assign_tables('appschema1', array['mytbl1', 'mytbl2'], 'instGroup1');
+select emaj.emaj_assign_tables('appschema1', '.*', '', 'instGroup1');
 
--- start the group and perform data changes
-select emaj.emaj_start_group('appGroup1', 'M1');
-insert into appSchema1.mytbl1 (col12) values ('Row 1');
+-- try to assign sequences in group instGroup1
+select emaj.emaj_assign_sequence('appschema1', 'myseq1', 'instGroup1');
+select emaj.emaj_assign_sequences('appschema1', array['mytbl1_col11_seq', 'mytbl2_col21_seq'], 'instGroup1');
+select emaj.emaj_assign_sequences('appschema1', '.*', '', 'instGroup1');
 
--- set a mark and perform data change
-select emaj.emaj_set_mark_group('appGroup1', 'M2');
-update appSchema1.mytbl1 set col12 = 'Modified row 1' where col11 = 1;
-insert into appSchema1.mytbl1 (col12) values ('Row 2');
+-- try to import groups configuration with tables and sequences having an owner who is not the installer role
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "instGroup1",
+																	 "tables": [ { "schema": "appschema1", "table": "mytbl1" },
+																				 { "schema": "appschema1", "table": "mytbl2" }],
+																	 "sequences": [ { "schema": "appschema1", "sequence": "mytbl1_col11_seq" },
+																			        { "schema": "appschema1", "sequence": "mytbl2_col21_seq" }] } ]}'::json,
+											 null, true);
 
--- rollback to M2
-select * from emaj.emaj_rollback_group('appGroup1','M2');
+-- change the table/sequence ownership
+reset session_authorization;
+alter table instschema1.mytbl1 owner to _regress_emaj_app;
 
--- ok, but no dblink use (not enough rights)
-select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
+set session_authorization to _regress_emaj_install;
+select * from emaj.emaj_verify_all();
+
+reset session_authorization;
+alter table instschema1.mytbl1 owner to _regress_emaj_install;
 
 ------------------------------------------------------------
 -- Step 3: add grants to perform COPY FROM or TO

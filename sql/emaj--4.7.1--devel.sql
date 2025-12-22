@@ -504,6 +504,8 @@ $_assign_tables$
     v_logIdxTsp              TEXT;
     v_ignoredTriggers        TEXT[];
     v_ignoredTrgProfiles     TEXT[];
+    v_installedBySuperuser   BOOLEAN;
+    v_installerRole          TEXT;
     v_list                   TEXT;
     v_array                  TEXT[];
     v_timeId                 BIGINT;
@@ -610,6 +612,29 @@ $_assign_tables$
     IF p_properties IS NOT NULL THEN
       SELECT * INTO v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
         FROM emaj._check_json_table_properties(p_properties);
+    END IF;
+-- In non superuser install, check or discard tables whose owner is not the installer role.
+    SELECT inst_by_superuser, inst_installer_role
+      INTO v_installedBySuperuser, v_installerRole
+      FROM emaj.emaj_install_conf;
+    IF NOT v_installedBySuperuser THEN
+      SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+        INTO v_list, v_array
+        FROM pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+        WHERE nspname = p_schema
+          AND relname = ANY(p_tables)
+          AND relowner::regrole::text <> current_user;
+      IF v_list IS NOT NULL THEN
+        IF NOT p_arrayFromRegex THEN
+          RAISE EXCEPTION '_assign_tables: In schema %, the owner of some tables (%) is not the emaj installer role.',
+                          quote_ident(p_schema), v_list;
+        ELSE
+          RAISE WARNING '_assign_tables: Some tables whose owner is not the emaj installer role (%) are not selected.', v_list;
+          -- remove these tables from the tables to process
+          p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
+        END IF;
+      END IF;
     END IF;
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(array[p_group], p_mark) INTO v_markName;
@@ -1192,6 +1217,8 @@ $_assign_sequences$
   DECLARE
     v_function               TEXT;
     v_groupIsLogging         BOOLEAN;
+    v_installedBySuperuser   BOOLEAN;
+    v_installerRole          TEXT;
     v_list                   TEXT;
     v_array                  TEXT[];
     v_timeId                 BIGINT;
@@ -1244,6 +1271,29 @@ $_assign_sequences$
         RAISE WARNING '_assign_sequences: Some sequences already belonging to a group (%) are not selected.', v_list;
         -- remove these sequences from the sequences to process
         p_sequences = array(SELECT unnest(p_sequences) EXCEPT SELECT unnest(v_array));
+      END IF;
+    END IF;
+-- In non superuser install, check or discard sequences whose owner is not the installer role.
+    SELECT inst_by_superuser, inst_installer_role
+      INTO v_installedBySuperuser, v_installerRole
+      FROM emaj.emaj_install_conf;
+    IF NOT v_installedBySuperuser THEN
+      SELECT string_agg(quote_ident(relname), ', ' ORDER BY relname), array_agg(relname)
+        INTO v_list, v_array
+        FROM pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+        WHERE nspname = p_schema
+          AND relname = ANY(p_sequences)
+          AND relowner::regrole::text <> current_user;
+      IF v_list IS NOT NULL THEN
+        IF NOT p_arrayFromRegex THEN
+          RAISE EXCEPTION '_assign_sequences: In schema %, the owner of some sequences (%) is not the emaj installer role.',
+                          quote_ident(p_schema), v_list;
+        ELSE
+          RAISE WARNING '_assign_sequences: Some sequences whose owner is not the emaj installer role (%) are not selected.', v_list;
+          -- remove these sequences from the sequences to process
+          p_sequences = array(SELECT unnest(p_sequences) EXCEPT SELECT unnest(v_array));
+        END IF;
       END IF;
     END IF;
 -- Check the supplied mark.
@@ -2406,6 +2456,7 @@ $_import_groups_conf_check$
 --  - exist, and only once
 --  - are not located into an E-Maj schema (to protect against an E-Maj recursive use),
 --  - do not already belong to another tables group,
+--  - have the same owner as the installer role in non superuser emaj install,
 -- It also checks that:
 --  - tables are not TEMPORARY
 --  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
@@ -2416,7 +2467,14 @@ $_import_groups_conf_check$
 -- Output: _report_message_type records representing diagnostic messages
 --         the rpt_severity is set to 1 if the error blocks any type group creation or alter,
 --                                 or 2 if the error only blocks ROLLBACKABLE groups creation
+  DECLARE
+    v_installedBySuperuser   BOOLEAN;
+    v_installerRole          TEXT;
   BEGIN
+-- Read some installation characteristics.
+    SELECT inst_by_superuser, inst_installer_role
+      INTO v_installedBySuperuser, v_installerRole
+      FROM emaj.emaj_install_conf;
 -- Check that all application tables listed for the group really exist.
     RETURN QUERY
       SELECT 1, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
@@ -2465,6 +2523,18 @@ $_import_groups_conf_check$
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
         WHERE relkind = 'r' AND relpersistence = 't';
+-- In non superuser emaj install, check that all table owners are the installer role.
+    IF NOT v_installedBySuperuser THEN
+      RETURN QUERY
+        SELECT 6, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+               format('In tables group "%s", the %s.%s table owner is not the emaj installer role.',
+                      tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+          FROM tmp_app_table
+               JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+          WHERE relkind = 'r'
+            AND relowner::regrole::text <> current_user;
+    END IF;
 -- Check that the log data tablespaces for tables exist.
     RETURN QUERY
       SELECT 12, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_dat_tsp, NULL::INT,
@@ -2579,6 +2649,18 @@ $_import_groups_conf_check$
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
         FROM tmp_app_sequence
              JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
+-- In non superuser emaj install, check that all sequence owners are the installer role.
+    IF NOT v_installedBySuperuser THEN
+      RETURN QUERY
+        SELECT 6, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
+               format('In tables group "%s", the %s.%s sequence owner is not the emaj installer role.',
+                      tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
+          FROM tmp_app_sequence
+               JOIN pg_catalog.pg_class ON (relname = tmp_seq_name)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
+          WHERE relkind = 'S'
+            AND relowner::regrole::text <> current_user;
+    END IF;
 --
     RETURN;
   END;
@@ -3968,6 +4050,505 @@ $emaj_import_parameters_configuration$
 $emaj_import_parameters_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(TEXT,BOOLEAN) IS
 $$Import E-Maj parameters from a JSON formatted file.$$;
+
+CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
+RETURNS SETOF TEXT LANGUAGE plpgsql AS
+$_verify_all_groups$
+-- The function verifies the consistency of all E-Maj groups.
+-- It returns a set of error or warning messages for discovered discrepancies.
+-- If no error is detected, no row is returned.
+  DECLARE
+    v_installedBySuperuser   BOOLEAN;
+    v_installerRole          TEXT;
+  BEGIN
+-- Read some installation characteristics.
+    SELECT inst_by_superuser, inst_installer_role
+      INTO v_installedBySuperuser, v_installerRole
+      FROM emaj.emaj_install_conf;
+--
+-- Errors detection.
+--
+-- Check that all application schemas referenced in the emaj_relation table still exist.
+    RETURN QUERY
+      SELECT 'Error: The application schema "' || rel_schema || '" does not exist anymore.' AS msg
+        FROM
+          (  SELECT DISTINCT rel_schema
+               FROM emaj.emaj_relation
+               WHERE upper_inf(rel_time_range)
+           EXCEPT
+              SELECT nspname
+                FROM pg_catalog.pg_namespace
+          ) AS t
+        ORDER BY msg;
+-- Check that all application relations referenced in the emaj_relation table still exist.
+    RETURN QUERY
+      SELECT 'Error: In tables group "' || r.rel_group || '", the ' ||
+               CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
+               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
+        FROM                                          -- all expected application relations
+          (  SELECT rel_schema, rel_tblseq, rel_kind
+               FROM emaj.emaj_relation
+               WHERE upper_inf(rel_time_range)
+           EXCEPT                                    -- minus relations known by postgres
+             SELECT nspname, relname, relkind::TEXT
+               FROM pg_catalog.pg_class
+                    JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+               WHERE relkind IN ('r','S')
+          ) AS t
+          JOIN emaj.emaj_relation r ON (t.rel_schema = r.rel_schema AND t.rel_tblseq = r.rel_tblseq AND upper_inf(r.rel_time_range))
+        ORDER BY t.rel_schema, t.rel_tblseq, 1;
+-- Check that the log table for all tables referenced in the emaj_relation table still exist.
+    RETURN QUERY
+      SELECT 'Error: In tables group "' || rel_group || '", the log table "' ||
+               rel_log_schema || '"."' || rel_log_table || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_kind = 'r'
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_log_schema
+                     AND relname = rel_log_table
+                )
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check that the log sequence for all tables referenced in the emaj_relation table still exist.
+    RETURN QUERY
+      SELECT 'Error: In tables group "' || rel_group || '", the log sequence "' ||
+               rel_log_schema || '"."' || rel_log_sequence || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'r'
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                 WHERE nspname = rel_log_schema AND relname = rel_log_sequence
+                )
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check the log function for each table referenced in the emaj_relation table still exist.
+    RETURN QUERY
+      SELECT 'Error: In tables group "' || rel_group || '", the log function "' ||
+               rel_log_schema || '"."' || rel_log_function || '" is not found.'
+             AS msg
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'r'
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_proc
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+                 WHERE nspname = rel_log_schema
+                   AND proname = rel_log_function
+                )
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check log and truncate triggers for all tables referenced in the emaj_relation table still exist.
+-- Start with log triggers.
+    RETURN QUERY
+      SELECT 'Error: In tables group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'r'
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_trigger
+                        JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND tgname = 'emaj_log_trg'
+                )
+                       -- do not issue a row if the application table does not exist,
+                       -- this case has been already detected
+          AND EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                )
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Then truncate triggers.
+    RETURN QUERY
+      SELECT 'Error: In tables group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'r'
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_trigger
+                        JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND tgname = 'emaj_trunc_trg'
+                )
+                       -- do not issue a row if the application table does not exist,
+                       -- this case has been already detected
+          AND EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                )
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check that all log tables have a structure consistent with the application tables they reference
+-- (same columns and same formats). It only returns one row per faulting table.
+    RETURN QUERY
+      SELECT msg FROM
+        (WITH cte_app_tables_columns AS                -- application table's columns
+           (SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+              FROM emaj.emaj_relation
+                   JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                   JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+              WHERE attnum > 0
+                AND attisdropped = FALSE
+                AND upper_inf(rel_time_range)
+                AND rel_kind = 'r'
+           ),
+              cte_log_tables_columns AS                 -- log table's columns
+           (SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+              FROM emaj.emaj_relation
+                   JOIN pg_catalog.pg_class ON (relname = rel_log_table)
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_log_schema)
+                   JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+              WHERE attnum > 0
+                AND attisdropped = FALSE
+                AND attnum < rel_emaj_verb_attnum
+                AND upper_inf(rel_time_range)
+                AND rel_kind = 'r'
+           )
+        SELECT DISTINCT rel_schema, rel_tblseq,
+               'Error: In tables group "' || rel_group || '", the structure of the application table "' ||
+                 rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
+               rel_log_schema || '"."' || rel_log_table || '").' AS msg
+          FROM
+            (                                              -- application table's columns
+              (  SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                   FROM cte_app_tables_columns
+               EXCEPT                                      -- minus log table's columns
+                 SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                   FROM cte_log_tables_columns
+              )
+            UNION                                          -- log table's columns
+              (  SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                   FROM cte_log_tables_columns
+               EXCEPT                                      --  minus application table's columns
+                 SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                   FROM cte_app_tables_columns
+              )
+            ) AS t
+                           -- do not issue a row if the log or application table does not exist,
+                           -- these cases have been already detected
+        WHERE (rel_log_schema, rel_log_table) IN
+              (SELECT nspname, relname
+                 FROM pg_catalog.pg_class
+                      JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+              )
+          AND (rel_schema, rel_tblseq) IN
+              (SELECT nspname, relname
+                 FROM pg_catalog.pg_class
+                      JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+              )
+        ORDER BY 1,2,3
+        ) AS t;
+-- Check that all tables of rollbackable groups have their primary key.
+    RETURN QUERY
+      SELECT 'Error: In the rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has no primary key anymore.' AS msg
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'r'
+          AND group_is_rollbackable
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = pg_class.oid)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND contype = 'p'
+                )
+                       -- do not issue a row if the application table does not exist,
+                       -- this case has been already detected
+          AND EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                )
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- For rollbackable groups, check that no table has been altered as UNLOGGED or dropped and recreated as TEMP table after
+-- tables groups creation.
+    RETURN QUERY
+      SELECT 'Error: In the rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+             JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'r'
+          AND group_is_rollbackable
+          AND relpersistence <> 'p'
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check the primary key structure of all tables belonging to rollbackable groups is unchanged.
+    RETURN QUERY
+      SELECT 'Error: In the rollbackable group "' || rel_group || '", the primary key of the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has changed (' ||
+             registered_pk_columns || ' => ' || current_pk_columns || ').' AS msg
+        FROM
+          (SELECT rel_schema, rel_tblseq, rel_group,
+                  array_to_string(rel_pk_cols, ',') AS registered_pk_columns,
+                  string_agg(attname, ',' ORDER BY array_position(conkey, attnum)) AS current_pk_columns
+             FROM emaj.emaj_relation
+                  JOIN emaj.emaj_group ON (group_name = rel_group)
+                  JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                  JOIN pg_catalog.pg_constraint ON (conrelid = pg_class.oid)
+                  JOIN pg_catalog.pg_attribute ON (attrelid = conrelid)
+             WHERE rel_kind = 'r'
+               AND upper_inf(rel_time_range)
+               AND group_is_rollbackable
+               AND attnum = ANY (conkey)
+               AND contype = 'p'
+             GROUP BY 1,2,3,4
+          ) AS t
+        WHERE registered_pk_columns <> current_pk_columns
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check that the "GENERATED AS expression" columns list of all tables have not changed.
+-- (The expression of virtual generated columns be changed, without generating any trouble)
+    RETURN QUERY
+      SELECT 'Error: In tables group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has changed (' ||
+             registered_gen_columns || ' => ' || current_gen_columns || ').' AS msg
+        FROM
+          (SELECT rel_schema, rel_tblseq, rel_group,
+                  coalesce(array_to_string(rel_gen_expr_cols, ','), '<none>') AS registered_gen_columns,
+                  coalesce(string_agg(attname, ',' ORDER BY attnum), '<none>') AS current_gen_columns
+             FROM emaj.emaj_relation
+                  JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_class.oid)
+             WHERE rel_kind = 'r'
+               AND upper_inf(rel_time_range)
+               AND attgenerated <> ''
+               AND attnum > 0
+               AND NOT attisdropped
+             GROUP BY 1,2,3,4
+          ) AS t
+        WHERE registered_gen_columns <> current_gen_columns
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check the array of triggers to ignore at rollback time only contains existing triggers.
+    RETURN QUERY
+      SELECT 'Error: In tables group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
+          || rel_schema || '"."' || rel_tblseq || '" is missing. '
+          || 'Use the emaj_modify_table() function to adjust the list of application triggers that should not be'
+          || ' automatically disabled at rollback time.'
+             AS msg
+        FROM
+          (SELECT rel_group, rel_schema, rel_tblseq, unnest(rel_ignored_triggers) AS trg_name
+             FROM emaj.emaj_relation
+             WHERE upper_inf(rel_time_range)
+               AND rel_ignored_triggers IS NOT NULL
+          ) AS t
+        WHERE NOT EXISTS
+                 (SELECT NULL
+                    FROM pg_catalog.pg_trigger
+                         JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                         JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                    WHERE nspname = rel_schema
+                      AND relname = rel_tblseq
+                      AND tgname = trg_name
+                 )
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check all log tables have the 6 required technical columns.
+    RETURN QUERY
+      SELECT msg FROM
+        (SELECT DISTINCT rel_schema, rel_tblseq,
+                'Error: In tables group "' || rel_group || '", the log table "' ||
+                rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
+                string_agg(attname,', ') || ').' AS msg
+           FROM
+             (  SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+                  FROM emaj.emaj_relation,
+                       (VALUES ('emaj_verb'), ('emaj_tuple'), ('emaj_gid'), ('emaj_changed'), ('emaj_txid'), ('emaj_user')) AS t(attname)
+                  WHERE rel_kind = 'r'
+                    AND upper_inf(rel_time_range)
+                    AND EXISTS
+                          (SELECT NULL
+                             FROM pg_catalog.pg_namespace
+                                  JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+                             WHERE nspname = rel_log_schema
+                               AND relname = rel_log_table
+                          )
+              EXCEPT
+                SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+                  FROM emaj.emaj_relation
+                       JOIN pg_catalog.pg_class ON (relname = rel_log_table)
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_log_schema)
+                       JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+                  WHERE attnum > 0
+                    AND attisdropped = FALSE
+                    AND attname IN ('emaj_verb', 'emaj_tuple', 'emaj_gid', 'emaj_changed', 'emaj_txid', 'emaj_user')
+                    AND rel_kind = 'r'
+                    AND upper_inf(rel_time_range)
+             ) AS t2
+           GROUP BY rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table
+           ORDER BY 1,2,3
+         ) AS t;
+-- In non superuser emaj install, check that all table owners are the installer role.
+    IF NOT v_installedBySuperuser THEN
+      RETURN QUERY
+        SELECT 'Error: In tables group "' || rel_group || '", the owner of table ' || rel_schema || '"."' || rel_tblseq ||
+               '" is not the emaj extension installer.'
+               AS msg
+          FROM emaj.emaj_relation
+               JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+            WHERE relkind = 'r'
+              AND relowner::regrole::text <> v_installerRole
+          ORDER BY rel_schema, rel_tblseq;
+-- In non superuser emaj install, check that all sequence owners are the installer role.
+      RETURN QUERY
+        SELECT 'Error: In tables group "' || rel_group || '", the owner of sequence ' || rel_schema || '"."' || rel_tblseq ||
+               '" is not the emaj extension installer.'
+               AS msg
+          FROM emaj.emaj_relation
+               JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+            WHERE relkind = 'S'
+              AND relowner::regrole::text <> v_installerRole
+          ORDER BY rel_schema, rel_tblseq;
+    END IF;
+--
+-- Warnings detection.
+--
+-- Detect all sequences associated to a serial or a "generated as identity" column have their related table in the same group.
+    RETURN QUERY
+      SELECT msg FROM
+        (WITH serial_dependencies AS
+           (SELECT rs.rel_group AS seq_group, rs.rel_schema AS seq_schema, rs.rel_tblseq AS seq_name,
+                   rt.rel_group AS tbl_group, nt.nspname AS tbl_schema, ct.relname AS tbl_name
+              FROM emaj.emaj_relation rs
+                   JOIN pg_catalog.pg_class cs ON (cs.relname = rel_tblseq)
+                   JOIN pg_catalog.pg_namespace ns ON (ns.oid = cs.relnamespace AND ns.nspname = rel_schema)
+                   JOIN pg_catalog.pg_depend ON (pg_depend.objid = cs.oid)
+                   JOIN pg_catalog.pg_class ct ON (ct.oid = pg_depend.refobjid)
+                   JOIN pg_catalog.pg_namespace nt ON (nt.oid = ct.relnamespace)
+                   LEFT OUTER JOIN emaj.emaj_relation rt ON (rt.rel_schema = nt.nspname AND rt.rel_tblseq = ct.relname
+                                                             AND (rt.rel_time_range IS NULL OR upper_inf(rt.rel_time_range)))
+              WHERE rs.rel_kind = 'S'
+                AND upper_inf(rs.rel_time_range)
+                AND pg_depend.classid = pg_depend.refclassid             -- the classid et refclassid must be 'pg_class'
+                AND pg_depend.classid =
+                      (SELECT oid
+                         FROM pg_catalog.pg_class
+                         WHERE relname = 'pg_class'
+                      )
+           )
+           SELECT DISTINCT seq_schema, seq_name,
+                  'Warning: In tables group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
+                  '" is linked to the table "' || tbl_schema || '"."' || tbl_name ||
+                  '" but this table does not belong to any tables group.' AS msg
+             FROM serial_dependencies
+             WHERE tbl_group IS NULL
+         UNION ALL
+           SELECT DISTINCT seq_schema, seq_name,
+                  'Warning: In tables group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
+                  '" is linked to the table "' || tbl_schema || '"."' || tbl_name ||
+                  '" but this table belongs to another tables group (' || tbl_group || ').' AS msg
+             FROM serial_dependencies
+             WHERE tbl_group <> seq_group
+           ORDER BY 1,2,3
+        ) AS t;
+-- Detect tables linked by a foreign key but not belonging to the same tables group and inherited FK that cannot be dropped and
+--   recreated at rollback time.
+    RETURN QUERY
+      SELECT msg FROM
+        (WITH fk_dependencies AS             -- all foreign keys that link 2 tables at least one of both belongs to a tables group
+           (SELECT n.nspname AS tbl_schema, t.relname AS tbl_name,
+                   c.conname, c. coninhcount, c.condeferrable, c.confdeltype, c.confupdtype,
+                   nf.nspname AS reftbl_schema, tf.relname AS reftbl_name,
+                   r.rel_group AS tbl_group, g.group_is_rollbackable AS tbl_group_is_rollbackable,
+                   rf.rel_group AS reftbl_group, gf.group_is_rollbackable AS reftbl_group_is_rollbackable
+              FROM pg_catalog.pg_constraint c
+                   JOIN pg_catalog.pg_class t      ON (t.oid = c.conrelid)
+                   JOIN pg_catalog.pg_namespace n  ON (n.oid = t.relnamespace)
+                   JOIN pg_catalog.pg_class tf     ON (tf.oid = c.confrelid)
+                   JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace)
+                   LEFT OUTER JOIN emaj.emaj_relation r ON (r.rel_schema = n.nspname AND r.rel_tblseq = t.relname
+                                                       AND upper_inf(r.rel_time_range))
+                   LEFT OUTER JOIN emaj.emaj_group g ON (g.group_name = r.rel_group)
+                   LEFT OUTER JOIN emaj.emaj_relation rf ON (rf.rel_schema = nf.nspname AND rf.rel_tblseq = tf.relname
+                                                       AND upper_inf(rf.rel_time_range))
+                   LEFT OUTER JOIN emaj.emaj_group gf ON (gf.group_name = rf.rel_group)
+              WHERE contype = 'f'                                         -- FK constraints only
+                AND t.relkind = 'r' AND tf.relkind = 'r'                  -- excluding partitionned tables
+                AND (r.rel_group IS NOT NULL OR rf.rel_group IS NOT NULL) -- at least the table or the referenced table belongs to
+                                                                          -- a tables group
+           )
+-- Referenced table not in a group.
+           SELECT tbl_schema, tbl_name,
+                  'Warning: In tables group "' || tbl_group || '", the foreign key "' || conname ||
+                  '" on "' || tbl_schema || '"."' || tbl_name || '" references the table "' ||
+                  reftbl_schema || '"."' || reftbl_name || '" that does not belong to any group.' AS msg
+             FROM fk_dependencies
+             WHERE tbl_group IS NOT NULL
+               AND tbl_group_is_rollbackable
+               AND reftbl_group IS NULL
+         UNION ALL
+-- Referencing table not in a group.
+           SELECT tbl_schema, tbl_name,
+                  'Warning: In tables group "' || reftbl_group || '", the table "' || reftbl_schema || '"."' || reftbl_name ||
+                  '" is referenced by the foreign key "' || conname || '" on "' ||
+                  tbl_schema || '"."' || tbl_name || '" that does not belong to any group.' AS msg
+             FROM fk_dependencies
+             WHERE reftbl_group IS NOT NULL
+               AND reftbl_group_is_rollbackable
+               AND tbl_group IS NULL
+         UNION ALL
+-- Both tables in different groups.
+           SELECT tbl_schema, tbl_name,
+                  'Warning: In tables group "' || tbl_group || '", the foreign key "' || conname ||
+                  '" on "' || tbl_schema || '"."' || tbl_name || '" references the table "' ||
+                  reftbl_schema || '"."' || reftbl_name || '" that belongs to another group ("' ||
+                  reftbl_group || '")' AS msg
+             FROM fk_dependencies
+             WHERE tbl_group IS NOT NULL
+               AND reftbl_group IS NOT NULL
+               AND tbl_group <> reftbl_group
+               AND (tbl_group_is_rollbackable OR reftbl_group_is_rollbackable)
+-- Inherited FK that cannot be dropped/recreated.
+         UNION ALL
+           SELECT tbl_schema, tbl_name,
+                  'Warning: The foreign key "' || conname || '" on "' || tbl_schema || '"."' || tbl_name || '" is inherited'
+                  ' from a partitionned table and is not deferrable. This could block E-Maj rollbacks.' AS msg
+             FROM fk_dependencies
+             WHERE coninhcount > 0
+               AND NOT condeferrable
+               AND ((tbl_group IS NOT NULL AND tbl_group_is_rollbackable) OR
+                    (reftbl_group IS NOT NULL AND reftbl_group_is_rollbackable))
+         UNION ALL
+           SELECT tbl_schema, tbl_name,
+                  'Warning: The foreign key "' || conname || '" on "' || tbl_schema || '"."' || tbl_name || '" has ON DELETE'
+                  ' / ON UPDATE clauses and is inherited from a partitionned table. This could block E-Maj rollbacks.' AS msg
+             FROM fk_dependencies
+             WHERE coninhcount > 0
+               AND (confdeltype <> 'a' OR confupdtype <> 'a')
+               AND ((tbl_group IS NOT NULL AND tbl_group_is_rollbackable) OR
+                    (reftbl_group IS NOT NULL AND reftbl_group_is_rollbackable))
+           ORDER BY 1,2,3
+        ) AS t;
+--
+    RETURN;
+  END;
+$_verify_all_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS

@@ -49,7 +49,7 @@ où <répertoire_emaj> est le répertoire issu de l’:ref:`installation du logi
 
 .. caution::
 
-	Il n’est pas indispensable d’avoir le droit *SUPERUSER* pour exécuter ce script d’installation. Mais si ce n’est pas le cas, les fonctionnalités  sont limitées et dépendent des droits dont dispose le rôle d’installation. Ces limites et leurs mitigations sont :ref:`détaillées ici<non_superuser_install_limits>`.
+	Il n’est pas indispensable d’avoir le droit *SUPERUSER* pour exécuter ce script d’installation. Mais si ce n’est pas le cas, les fonctionnalités sont limitées et dépendent des droits dont dispose le rôle d’installation. Ces limites et leurs mitigations éventuelles sont :ref:`détaillées ici<non_superuser_install_limits>`.
 
 Adaptation du fichier de configuration postgresql.conf
 ------------------------------------------------------
