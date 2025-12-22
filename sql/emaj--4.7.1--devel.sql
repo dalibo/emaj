@@ -290,7 +290,7 @@ $_dblink_open_cnx$
           END IF;
         EXCEPTION
           WHEN OTHERS THEN
-            p_status = -7;              -- the emaj_adm role probably doesn't exist
+            p_status = -7;              -- the emaj_adm role doesn't exist or the current role is not allowed to access the emaj schema
         END;
       END IF;
       IF p_status < 0 THEN

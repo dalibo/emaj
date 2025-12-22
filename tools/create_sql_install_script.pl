@@ -41,10 +41,11 @@ use warnings; use strict;
     }
     if ($status == 2 && $line =~ /^-- This script must be executed by a role having SUPERUSER privileges\./) {
       print FICOT "-- This script may be executed by a non SUPERUSER role. But in this case:\n";
-      print FICOT "--   - event triggers that protect the E-Maj environment may not be created.\n";
-      print FICOT "--   - functions that read or write external files may be not allowed.\n";
       print FICOT "--   - the installation role must be the owner of application tables and sequences that will be assigned to the\n";
       print FICOT "--     future tables groups,\n";
+      print FICOT "--   - emaj_adm and emaj_viewer roles may not exist,\n";
+      print FICOT "--   - event triggers that protect the E-Maj environment may not be created,\n";
+      print FICOT "--   - functions that read or write external files may be not allowed.\n";
       $status++;
       next;
     }
@@ -71,33 +72,6 @@ use warnings; use strict;
       $status++;
       next;
     }
-    if ($status == 6) {
-# Comment the ALTER EXTENSION verbs
-      if ($line =~ /^\s*ALTER EXTENSION/) {
-        print FICOT "--$line";
-        next;
-      }
-# Remove the comment on event triggers. This curiously fails in Amazon-RDS environment.
-      if ($line =~ /COMMENT ON EVENT TRIGGER (.*?) IS/) {
-        $eventTriggerName = $1;
-        print FICOT "--$line";
-        $line = <FICIN>;
-        print FICOT "--$line";
-        if ($eventTriggerName eq 'emaj_table_rewrite_trg') { $status++; }
-        next;
-      }
-    }
-# Remove the comment setting for internal functions. This curiously fails in Amazon-RDS environment.
-    if ($status == 7 && $line =~ /^-- Set comments for all internal functions,/) {
-      for (my $i = 0; $i <= 22; $i++) { $line = <FICIN>; }
-      $status++;
-	}
-
-# Add final checks and messages
-    if ($status == 8 && $line =~ /^-- Warn if the role is not superuser./) {
-      print FICOT "    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';\n";
-      $status++;
-	}
 
 # Otherwise, copy the source line as is
     print FICOT $line;
@@ -106,7 +80,7 @@ use warnings; use strict;
   print FICOT "--\n";
   print FICOT "COMMIT;\n";
 
-  if ($status != 9) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 9."; }
+  if ($status != 6) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 6."; }
 
 # Close files
   close FICIN;

@@ -7,10 +7,11 @@
 -- Use the "CREATE EXTENSION" syntax when possible.
 --
 -- This script may be executed by a non SUPERUSER role. But in this case:
---   - event triggers that protect the E-Maj environment may not be created.
---   - functions that read or write external files may be not allowed.
 --   - the installation role must be the owner of application tables and sequences that will be assigned to the
 --     future tables groups,
+--   - emaj_adm and emaj_viewer roles may not exist,
+--   - event triggers that protect the E-Maj environment may not be created,
+--   - functions that read or write external files may be not allowed.
 --
 -- The E-Maj technical tables will be installed into the default tablespace.
 -- The user executing the installation may set it to a particular value using a "set default_tablespace to <name>;" statement.
@@ -1053,7 +1054,7 @@ $_dblink_open_cnx$
           END IF;
         EXCEPTION
           WHEN OTHERS THEN
-            p_status = -7;              -- the emaj_adm role probably doesn't exist
+            p_status = -7;              -- the emaj_adm role doesn't exist or the current role is not allowed to access the emaj schema
         END;
       END IF;
       IF p_status < 0 THEN
@@ -14753,8 +14754,8 @@ $_enable_event_triggers$
         ON sql_drop
         WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
         EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
---      COMMENT ON EVENT TRIGGER emaj_protection_trg IS
---      $$Blocks the removal of the emaj extension or schema.$$;
+      COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+      $$Blocks the removal of the emaj extension or schema.$$;
       RAISE WARNING '_enable_event_triggers: the emaj_protection_trg event trigger has been recreated.';
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
         VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS RECREATED', 'emaj_protection_trg');
@@ -15061,12 +15062,12 @@ $do$
         ON sql_drop
         WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
         EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
---      COMMENT ON EVENT TRIGGER emaj_protection_trg IS
---      $$Blocks the removal of the emaj extension or schema.$$;
+      COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+      $$Blocks the removal of the emaj extension or schema.$$;
 -- remove both event trigger components from the extension, so that they can fire the "DROP EXTENSION emaj".
       IF v_isExtension THEN
---        ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
---        ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
+        ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
+        ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
       END IF;
 --
 -- emaj_sql_drop_trg.
@@ -15074,15 +15075,15 @@ $do$
         ON sql_drop
         WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','ALTER TABLE','DROP TRIGGER')
         EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
---      COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
---      $$Controls the removal of E-Maj components.$$;
+      COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
+      $$Controls the removal of E-Maj components.$$;
 --
 -- emaj_table_rewrite_trg.
       CREATE EVENT TRIGGER emaj_table_rewrite_trg
         ON table_rewrite
         EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
---      COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
---      $$Controls some changes in E-Maj tables structure.$$;
+      COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
+      $$Controls some changes in E-Maj tables structure.$$;
     END IF;
   END;
 $do$;
@@ -15292,21 +15293,49 @@ $do$;
 -- Insert the emaj schema into the emaj_schema table.
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 
--- Perform final checks and messages report.
+-- Add a comment to internal functions. Perform final checks and messages report.
 DO LANGUAGE plpgsql
 $do$
   DECLARE
-    v_extraWording           TEXT;
+    v_isExtension            BOOLEAN;
     v_installedBySuperuser   BOOLEAN;
     v_supportEmajAdm         BOOLEAN;
     v_supportEmajViewer      BOOLEAN;
     v_supportEventTriggers   BOOLEAN;
+    v_extraWording           TEXT;
   BEGIN
 -- Get the installation configuration data.
-    SELECT inst_by_superuser, inst_with_emaj_adm, inst_with_emaj_viewer, inst_with_event_triggers
-      INTO STRICT v_installedBySuperuser, v_supportEmajAdm, v_supportEmajViewer, v_supportEventTriggers
+    SELECT inst_as_extension, inst_by_superuser, inst_with_emaj_adm, inst_with_emaj_viewer, inst_with_event_triggers
+      INTO STRICT v_isExtension, v_installedBySuperuser, v_supportEmajAdm, v_supportEmajViewer, v_supportEventTriggers
       FROM emaj.emaj_install_conf;
-    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';
+-- Set comments for all internal functions, by directly inserting a row in the pg_description table for all emaj functions that do not
+-- have yet a recorded comment. This is performed by superuser only.
+    IF v_installedBySuperuser THEN
+      INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
+        SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
+          FROM pg_catalog.pg_proc
+               CROSS JOIN pg_catalog.pg_class
+          WHERE pg_class.relname = 'pg_proc'
+            AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
+              (SELECT pg_proc.oid
+                 FROM pg_catalog.pg_proc
+                      JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+                      LEFT OUTER JOIN pg_catalog.pg_description ON (pg_description.objoid = pg_proc.oid
+                                            AND classoid =
+                                                 (SELECT oid
+                                                    FROM pg_catalog.pg_class
+                                                    WHERE relname = 'pg_proc'
+                                                 )
+                                            AND objsubid = 0)
+                 WHERE nspname = 'emaj'
+                   AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
+                   AND pg_description.description IS NULL
+              );
+    END IF;
+-- Raise a final message when emaj is not an EXTENSION.
+    IF NOT v_isExtension THEN
+      RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';
+    END IF;
 -- Warn if the role is not superuser.
     IF NOT v_installedBySuperuser THEN
       RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser.', current_user;
