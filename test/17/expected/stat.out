@@ -4,6 +4,8 @@
 --   emaj_sequence_stat_group() and emaj_sequence_stat_groups()
 --   _get_sequences_last_value()
 --
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
 -- set sequence restart value
 select public.handle_emaj_sequences(5000);
  handle_emaj_sequences 
@@ -83,153 +85,33 @@ alter sequence myschema2.myseq1 MAXVALUE 2000;
 -- group is unknown
 select * from emaj.emaj_log_stat_group(null,null,null);
 ERROR:  _check_group_names: No group to process.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 27 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 19 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_rows
-        FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['unknownGroup'],null,null);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 19 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_rows
-        FROM emaj._log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group(null,null,null);
 ERROR:  _check_group_names: No group to process.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 27 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_role, stat_verb, stat_rows
-        FROM emaj._detailed_log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],null,null);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_role, stat_verb, stat_rows
-        FROM emaj._detailed_log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2',null,null);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 16 at RAISE
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) checked"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_rows
-        FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_group('myGroup2','',null);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 16 at RAISE
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) checked"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_rows
-        FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',null);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 19 at SQL statement
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) checked"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_rows
-        FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_group('myGroup2','Mark22','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 33 at SQL statement
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) checked"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_rows
-        FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',null);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 19 at SQL statement
-SQL statement "SELECT *
-                                                                                                                                              FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 34 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_role, stat_verb, stat_rows
-        FROM emaj._detailed_log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 33 at SQL statement
-SQL statement "SELECT *
-                                                                                                                                              FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 34 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_role, stat_verb, stat_rows
-        FROM emaj._detailed_log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],null,null);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 16 at RAISE
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) checked"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_rows
-        FROM emaj._log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 63 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 33 at SQL statement
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) checked"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_rows
-        FROM emaj._log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],null,null);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 16 at RAISE
-SQL statement "SELECT *
-                                                                                                                                              FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 34 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_role, stat_verb, stat_rows
-        FROM emaj._detailed_log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 63 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 33 at SQL statement
-SQL statement "SELECT *
-                                                                                                                                              FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 34 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_role, stat_verb, stat_rows
-        FROM emaj._detailed_log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 -- start mark > end mark
 -- original test (uncomment for unit test)
 --  select * from emaj.emaj_log_stat_group('myGroup2','Mark23','Mark22');
@@ -523,52 +405,14 @@ WARNING:  Since mark "myGroup4_start", the tables group "myGroup4" has not been 
 -- group is unknown
 select * from emaj.emaj_sequence_stat_group('dummy', null, null);
 ERROR:  _check_group_names: The group "dummy" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._sequence_stat_groups(text[],boolean,text,text) line 18 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_increments, stat_has_structure_changed
-        FROM emaj._sequence_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_sequence_stat_group(text,text,text) line 7 at RETURN QUERY
 -- start mark is null or unknown
 select * from emaj.emaj_sequence_stat_group('myGroup1', null, null);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 16 at RAISE
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark,
-                                     p_checkLogSession := FALSE) AS checked"
-PL/pgSQL function emaj._sequence_stat_groups(text[],boolean,text,text) line 22 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_increments, stat_has_structure_changed
-        FROM emaj._sequence_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_sequence_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_sequence_stat_groups(ARRAY['myGroup1'], 'dummy', null);
 ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 19 at SQL statement
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark,
-                                     p_checkLogSession := FALSE) AS checked"
-PL/pgSQL function emaj._sequence_stat_groups(text[],boolean,text,text) line 22 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_increments, stat_has_structure_changed
-        FROM emaj._sequence_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_sequence_stat_groups(text[],text,text) line 7 at RETURN QUERY
 -- end mark is unknown
 select * from emaj.emaj_sequence_stat_group('myGroup1', 'EMAJ_LAST_MARK', 'dummy');
 ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean,boolean) line 33 at SQL statement
-SQL statement "SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
-                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark,
-                                     p_checkLogSession := FALSE) AS checked"
-PL/pgSQL function emaj._sequence_stat_groups(text[],boolean,text,text) line 22 at SQL statement
-SQL statement "SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
-             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_increments, stat_has_structure_changed
-        FROM emaj._sequence_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj.emaj_sequence_stat_group(text,text,text) line 7 at RETURN QUERY
 -- end mark is prior start mark (not tested as this is the same piece of code as for emaj_log_stat_group()
 -- empty group
 select * from emaj.emaj_sequence_stat_group('emptyGroup','SM2',null);
@@ -657,85 +501,47 @@ select emaj.emaj_set_mark_group('myGroup2', 'before_log_stat_tblseq');
 -- schema is unknown
 select * from emaj.emaj_log_stat_table('dummy', 'mytbl1');
 ERROR:  emaj_log_stat_table: The table dummy.mytbl1 is not known by E-Maj.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_table(text,text,timestamp with time zone,timestamp with time zone) line 22 at RAISE
 select * from emaj.emaj_log_stat_sequence('dummy', 'mytbl1');
 ERROR:  emaj_log_stat_sequence: The sequence dummy.mytbl1 is not known by E-Maj.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,timestamp with time zone,timestamp with time zone) line 23 at RAISE
 -- table/sequence is unknown
 select * from emaj.emaj_log_stat_table('myschema2', null);
 ERROR:  emaj_log_stat_table: The table myschema2.<NULL> is not known by E-Maj.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_table(text,text,timestamp with time zone,timestamp with time zone) line 22 at RAISE
 select * from emaj.emaj_log_stat_table('myschema2', 'dummy', 'myGroup1', 'M1');
 ERROR:  emaj_log_stat_table: Table myschema2.dummy is not known by E-Maj.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 20 at RAISE
 select * from emaj.emaj_log_stat_sequence('myschema2', null);
 ERROR:  emaj_log_stat_sequence: The sequence myschema2.<NULL> is not known by E-Maj.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,timestamp with time zone,timestamp with time zone) line 23 at RAISE
 select * from emaj.emaj_log_stat_sequence('myschema2', 'dummy', 'myGroup1', 'M1');
 ERROR:  emaj_log_stat_sequence: Sequence myschema2.dummy is not known by E-Maj.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text,text) line 21 at RAISE
 -- bad timestamp or marks interval
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', '2030/01/01'::TIMESTAMPTZ, '2020/01/01'::TIMESTAMPTZ);
 ERROR:  emaj_log_stat_table: The start timestamp is greater than the end timestamp.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_table(text,text,timestamp with time zone,timestamp with time zone) line 26 at RAISE
 select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', '2030/01/01'::TIMESTAMPTZ, '2020/01/01'::TIMESTAMPTZ);
 ERROR:  emaj_log_stat_sequence: The start timestamp is greater than the end timestamp.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,timestamp with time zone,timestamp with time zone) line 27 at RAISE
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark23', 'myGroup2', 'Mark22');
 ERROR:  emaj_log_stat_table: The start mark has been set after the end mark.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 44 at RAISE
 select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark23', 'myGroup2', 'Mark22');
 ERROR:  emaj_log_stat_sequence: The start mark has been set after the end mark.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text,text) line 45 at RAISE
 -- bad group or mark names
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'dummy_group', 'M1', 'myGroup2', 'M3');
 ERROR:  _check_group_names: The group "dummy_group" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_startGroup], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 24 at PERFORM
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'dummy_mark', 'myGroup2', 'M3');
 ERROR:  _check_mark_name: The mark "dummy_mark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark)"
-PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 25 at SQL statement
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', null);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark)"
-PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 25 at SQL statement
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'M1', 'dummy_group', 'M3');
 ERROR:  _check_mark_name: The mark "M1" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark)"
-PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 25 at SQL statement
 select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'M1', 'myGroup2', 'dummy_mark');
 ERROR:  _check_mark_name: The mark "M1" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark)"
-PL/pgSQL function emaj.emaj_log_stat_table(text,text,text,text,text,text) line 25 at SQL statement
 select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'dummy_group', 'M1', 'myGroup2', 'M3');
 ERROR:  _check_group_names: The group "dummy_group" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_startGroup], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text,text) line 25 at PERFORM
 select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'dummy_mark', 'myGroup2', 'M3');
 ERROR:  _check_mark_name: The mark "dummy_mark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark)"
-PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text,text) line 26 at SQL statement
 select * from emaj.emaj_log_stat_sequence('myschema2', 'mytbl1', 'myGroup2', null);
 ERROR:  emaj_log_stat_sequence: Sequence myschema2.mytbl1 is not known by E-Maj.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text,text) line 21 at RAISE
 select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'M1', 'dummy_group', 'M3');
 ERROR:  _check_mark_name: The mark "M1" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark)"
-PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text,text) line 26 at SQL statement
 select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'M1', 'myGroup2', 'dummy_mark');
 ERROR:  _check_mark_name: The mark "M1" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark)"
-PL/pgSQL function emaj.emaj_log_stat_sequence(text,text,text,text,text,text) line 26 at SQL statement
 -- Should be OK
 -- no bounds
 select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks

@@ -5,6 +5,9 @@
 --                emaj_consolidate_rollback_group() and emaj_get_consolidable_rollbacks() functions.
 --
 
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 -- set sequence restart value
 select public.handle_emaj_sequences(4000);
 

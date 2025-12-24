@@ -2,6 +2,9 @@
 --              as well as recovery from user errors
 --
 
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 -- set sequence restart value
 select public.handle_emaj_sequences(7000);
 

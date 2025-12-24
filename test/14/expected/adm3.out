@@ -1,6 +1,8 @@
 -- adm3.sql : complex scenario executed by an emaj_adm role. 
 --            Follows adm1.sql and adm2.sql
 --
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
 -- set sequence restart value
 select public.handle_emaj_sequences(17000);
  handle_emaj_sequences 
@@ -354,14 +356,6 @@ select col1, col2, col3, col4, emaj_verb, emaj_tuple, emaj_gid from emaj_myschem
 set session_authorization to _regress_emaj_adm2;
 select * from emaj_rollback_group('myGroup4','Start');
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function _rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function _rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function _rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-SQL statement "SELECT *
-        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
-PL/pgSQL function emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj_rollback_group('myGroup4','Start',true);
  rlbk_severity |                                             regexp_replace                                              
@@ -643,10 +637,6 @@ set session_authorization to _regress_emaj_adm2;
 begin;
   select emaj_set_mark_group('phil''s group#3",','should fails');
 ERROR:  _verify_groups (1): In tables group "phil's group#3",", the table "phil's schema"3"."my"tbl4" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
-SQL statement "SELECT 0
-      FROM emaj._verify_groups(array[p_groupName], TRUE)"
-PL/pgSQL function emaj_set_mark_group(text,text,text) line 18 at PERFORM
 rollback;
 select emaj_remove_table('phil''s schema"3','my"tbl4','remove_the_dropped_table');
 WARNING:  _check_tblseqs_array: In schema "phil's schema"3", some tables ("my""tbl4") do not exist.
@@ -665,9 +655,7 @@ WARNING:  _check_tblseqs_array: In schema "phil's schema"3", some sequences ("ph
 
 -- check that the log table does not exist anymore
 select count(*) from "emaj_phil's schema3"."my""tbl4_log";
-ERROR:  relation "emaj_phil's schema3.my"tbl4_log" does not exist
-LINE 1: select count(*) from "emaj_phil's schema3"."my""tbl4_log";
-                             ^
+ERROR:  relation "emaj_phil's schema3.my"tbl4_log" does not exist at character 22
 -- revert the changes
 reset session_authorization;
 alter table "phil's schema""3".mytbl4_sav rename to "my""tbl4";
@@ -1225,14 +1213,6 @@ select emaj_modify_tables('phil''s schema"3','.*tbl1','','{"priority":null,"log_
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3', false);
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function _rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function _rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function _rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-SQL statement "SELECT *
-        FROM emaj._rlbk_groups(p_groupNames, p_mark, FALSE, TRUE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
-PL/pgSQL function emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3',true);
  rlbk_severity |                                                          regexp_replace                                                          
@@ -1322,31 +1302,6 @@ select * from emaj_verify_all() as t(msg) where msg not like '%foreign key%';
 --     a removal while the group is LOGGING fails
 select emaj_remove_table('phil''s schema"3','my"tbl4');
 ERROR:  relation "emaj_phil's schema"3.my"tbl4_log_seq" does not exist
-CONTEXT:  SQL statement "SELECT pg_catalog.pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
-PL/pgSQL function emaj._get_log_sequence_last_value(text,text) line 12 at SQL statement
-SQL expression "(SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence))
-           -- the log sequence last value at begin time id
-        - (SELECT tbl_log_seq_last_val
-             FROM emaj.emaj_table
-             WHERE tbl_schema = r_rel.rel_schema
-               AND tbl_name = r_rel.rel_tblseq
-               AND tbl_time_id = p_beginTimeId)
-           -- sum of hole from the begin time to now
-        - (SELECT coalesce(sum(sqhl_hole_size),0)
-             FROM emaj.emaj_seq_hole
-             WHERE sqhl_schema = r_rel.rel_schema
-               AND sqhl_table = r_rel.rel_tblseq
-               AND sqhl_begin_time_id >= p_beginTimeId)"
-PL/pgSQL function _log_stat_tbl(emaj_relation,bigint,bigint) line 13 at RETURN
-SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
-                                     FROM emaj.emaj_relation
-          WHERE rel_group = v_group
-            AND rel_kind = 'r'
-            AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 75 at SQL statement
-SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, FALSE, TRUE, NULL, v_timeId)"
-PL/pgSQL function _remove_tables(text,text[],text,boolean,boolean) line 47 at PERFORM
-PL/pgSQL function emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj_force_stop_group('grp_tmp');
  emaj_force_stop_group 
 -----------------------
@@ -2936,15 +2891,8 @@ select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
 -----------------------------
 select emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj_get_previous_mark_group(text,text) line 9 at PERFORM
 select emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 18 at SQL statement
-PL/pgSQL function emaj_estimate_rollback_groups(text[],text,boolean) line 7 at RETURN
 select * from emaj_rollback_activity();
  rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_comment | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_start_datetime | rlbk_planning_duration | rlbk_locking_duration | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
 ---------+-------------+-----------+--------------------+----------------+-----------------------------+--------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+---------------------+------------------------+-----------------------+-------------+----------------+---------------------

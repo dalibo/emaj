@@ -3,6 +3,8 @@
 -- It follows alter.sql that tests the same functions but with groups in IDLE state.
 -- It uses the same tables and groups, and the same sequences range
 -- It includes the final checks for both alter.sql and alterLogging.sql scenarios
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
 -- set sequence restart value
 select public.handle_emaj_sequences(9000);
  handle_emaj_sequences 
@@ -41,10 +43,6 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_c
 -- bad mark (duplicate name)
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "Mk1".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 53 at SQL statement
-PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- change the priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,'Priority Changed');
  emaj_modify_table 
@@ -364,10 +362,6 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMP
 \! grep myseq2 $EMAJTESTTMPDIR/myFile
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile',array['myschema2.myseq2']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.myseq2) did not belong to any of the selected tables groups at start mark time.
-CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 29 at RAISE
-SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 54 at SQL statement
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/myFile
 -- testing mark deletions
 begin;
@@ -1248,10 +1242,6 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
 
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema2.mytbl7']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.mytbl7) did not belong to any of the selected tables groups at start mark time.
-CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 29 at RAISE
-SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 54 at SQL statement
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/script.sql
 rm: cannot remove '/tmp/emaj_17/alter_logging/script.sql': No such file or directory
 -- testing mark deletions
@@ -2195,24 +2185,8 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) o
 -- execute rollbacks crossing alter group operations
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-SQL statement "SELECT *
-        FROM emaj._rlbk_groups(p_groupNames, p_mark, TRUE, TRUE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
-PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-SQL statement "SELECT *
-        FROM emaj._rlbk_groups(p_groupNames, p_mark, TRUE, TRUE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
-PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean,text) line 12 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
  rlbk_severity |                                                     regexp_replace                                                     
@@ -2537,27 +2511,11 @@ begin;
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
     from emaj.emaj_rollback_group('myGroup1','before move',false);
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-SQL statement "SELECT *
-        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 rollback;
 begin;
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
     from emaj.emaj_rollback_group('myGroup2','before move',false);
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-SQL statement "SELECT *
-        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 rollback;
 begin;
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -2736,10 +2694,6 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script2.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at start mark time.
-CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 29 at RAISE
-SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 54 at SQL statement
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script3.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
  emaj_gen_sql_groups 
@@ -2760,8 +2714,6 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_c
 WARNING:  _import_groups_conf (2): In tables group "myGroup2", the table myschema2."myTbl3" is already assigned to the group ""myGroup1"".
 WARNING:  _import_groups_conf (2): In tables group "myGroup2", the sequence myschema2."myTbl3_col31_seq" is already assigned to the group "myGroup1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 79 at RAISE
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 33 at RETURN
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
  emaj_import_groups_configuration 
 ----------------------------------
@@ -2872,16 +2824,8 @@ commit;
 -- remove tables and sequences with bad marks
 select emaj.emaj_remove_table('myschema2','mytbl1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 32 at SQL statement
-PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','myseq1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 31 at SQL statement
-PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- alter a table in a logging group
 select emaj.emaj_remove_table('myschema1','mytbl4');
  emaj_remove_table 
@@ -2993,14 +2937,6 @@ begin;
 -- the rollback should fail at FK check
   select * from emaj.emaj_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1','Remove_mytbl4'),true);
 ERROR:  update or delete on table "mytbl2" violates foreign key constraint "mytbl4_col43_fkey" on table "mytbl4"
-DETAIL:  Key (col21)=(1000) is still referenced from table "mytbl4".
-CONTEXT:  SQL statement "SET CONSTRAINTS myschema1.mytbl4_col43_fkey IMMEDIATE"
-PL/pgSQL function emaj._rlbk_session_exec(integer,integer) line 119 at EXECUTE
-SQL statement "SELECT emaj._rlbk_session_exec(v_rlbkId, 1)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 32 at PERFORM
-SQL statement "SELECT *
-        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 rollback;
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
  rlbk_severity |              rlbk_message              
@@ -3029,16 +2965,8 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup1','MOVE_SEQ_idle_to
 -- bad mark
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 56 at SQL statement
-PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 11 at RETURN
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 50 at SQL statement
-PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 11 at RETURN
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
  emaj_move_tables 

@@ -2,6 +2,10 @@
 -- The E-Maj version is changed while groups are in logging state
 -- This script is the part of operations performed after the upgrade
 --
+
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 -- Revoke rights granted before the upgrade.
 revoke all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   from _regress_emaj_adm1, _regress_emaj_adm2;

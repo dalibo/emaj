@@ -4,6 +4,9 @@
 --      emaj_modify_table() and emaj_modify_tables() functions
 --
 
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 -- define the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/alter'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`

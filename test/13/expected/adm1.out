@@ -1,5 +1,7 @@
 -- adm1.sql : complex scenarios executed by an emaj_adm role
 --
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
 SET datestyle TO ymd;
 -- set sequence restart value
 select public.handle_emaj_sequences(12000);
@@ -369,9 +371,6 @@ select emaj.emaj_create_group('emptyGroup');
 -- try to rename the last mark for a group that has no mark
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','new_mark_name');
 ERROR:  _check_mark_name: The group "myGroup2" has no mark.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 24 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
-PL/pgSQL function emaj.emaj_rename_mark_group(text,text,text) line 14 at SQL statement
 -- force a purge of the history, the alter and the rollback tables
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
 select pg_sleep(0.2);

@@ -1,6 +1,7 @@
 -- setup.sql: Create and setup all application objects that will be needed for regression tests
 --            Also perform some checks about emaj functions rights and commments
 --
+
 SET client_min_messages TO WARNING;
 
 ------------------------------------------------------------

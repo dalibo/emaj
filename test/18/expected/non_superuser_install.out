@@ -2,6 +2,8 @@
 --     single script to test emaj installed with psql by a non superuser role.
 --     various use case are tested, giving more and more capabilities to the installer role
 --
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
 SET client_min_messages TO WARNING;
 ------------------------------------------------------------
 -- Setup objects needed for the whole test scenario by the superuser
@@ -182,60 +184,29 @@ WARNING:  emaj_enable_protection_by_event_triggers: This emaj extension does not
 -- missing pg_read_server_files grant
 select emaj.emaj_import_groups_configuration('/tmp/emaj_test');
 ERROR:  _check_can_copy_from: Reading from an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_read_server_files).
-CONTEXT:  PL/pgSQL function emaj._check_can_copy_from() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_copy_from()"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text,boolean) line 17 at PERFORM
 select emaj.emaj_import_parameters_configuration('/tmp/emaj_test');
 ERROR:  _check_can_copy_from: Reading from an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_read_server_files).
-CONTEXT:  PL/pgSQL function emaj._check_can_copy_from() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_copy_from()"
-PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 19 at PERFORM
 -- missing pg_write_server_files grant
 select emaj.emaj_export_groups_configuration('/tmp/emaj_test');
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
-CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_copy_to()"
-PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 11 at PERFORM
 select emaj.emaj_export_parameters_configuration('/tmp/emaj_test');
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
-CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_copy_to()"
-PL/pgSQL function emaj.emaj_export_parameters_configuration(text) line 10 at PERFORM
 select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/emaj_test');
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
-CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_copy_to()"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 39 at PERFORM
 select emaj.emaj_dump_changes_group('instGroup1', 'M1', NULL, '', NULL, '/tmp');
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
-CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_copy_to()"
-PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 39 at PERFORM
 select emaj.emaj_snap_group('instGroup1', '/tmp', NULL);
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
-CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_copy_to()"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 35 at PERFORM
 select emaj.emaj_gen_sql_group('instGroup1', 'M1', NULL, '/tmp');
 ERROR:  _check_can_copy_to: Writing into an external file is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_write_server_files).
-CONTEXT:  PL/pgSQL function emaj._check_can_copy_to() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_copy_to()"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 42 at PERFORM
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 -- missing pg_execute_server_program grant
 reset session_authorization;
 grant pg_write_server_files to _regress_emaj_install;
 set session_authorization to _regress_emaj_install;
 select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/emaj_test');
 ERROR:  _check_can_exec_program: Executing an external program is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).
-CONTEXT:  PL/pgSQL function emaj._check_can_exec_program() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_exec_program()"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 40 at PERFORM
 select emaj.emaj_dump_changes_group('instGroup1', 'M1', NULL, '', NULL, '/tmp');
 ERROR:  _check_can_exec_program: Executing an external program is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).
-CONTEXT:  PL/pgSQL function emaj._check_can_exec_program() line 7 at RAISE
-SQL statement "SELECT emaj._check_can_exec_program()"
-PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 40 at PERFORM
 reset session_authorization;
 revoke pg_write_server_files from _regress_emaj_install;
 ------------------------------------------------------------
@@ -245,12 +216,8 @@ set session_authorization to _regress_emaj_install;
 -- try to assign tables in group instGroup1
 select emaj.emaj_assign_table('appschema1', 'mytbl1', 'instGroup1');
 ERROR:  _assign_tables: In schema appschema1, the owner of some tables (mytbl1) is not the emaj installer role.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 143 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_tables('appschema1', array['mytbl1', 'mytbl2'], 'instGroup1');
 ERROR:  _assign_tables: In schema appschema1, the owner of some tables (mytbl1, mytbl2) is not the emaj installer role.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 143 at RAISE
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_tables('appschema1', '.*', '', 'instGroup1');
 WARNING:  _assign_tables: Some tables whose owner is not the emaj installer role (mytbl1, mytbl2) are not selected.
 WARNING:  _assign_tables: No table to process.
@@ -262,12 +229,8 @@ WARNING:  _assign_tables: No table to process.
 -- try to assign sequences in group instGroup1
 select emaj.emaj_assign_sequence('appschema1', 'myseq1', 'instGroup1');
 ERROR:  _assign_sequences: In schema appschema1, the owner of some sequences (myseq1) is not the emaj installer role.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 81 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 select emaj.emaj_assign_sequences('appschema1', array['mytbl1_col11_seq', 'mytbl2_col21_seq'], 'instGroup1');
 ERROR:  _assign_sequences: In schema appschema1, the owner of some sequences (mytbl1_col11_seq, mytbl2_col21_seq) is not the emaj installer role.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 81 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,text) line 7 at RETURN
 select emaj.emaj_assign_sequences('appschema1', '.*', '', 'instGroup1');
 WARNING:  _assign_sequences: Some sequences whose owner is not the emaj installer role (myseq1, mytbl1_col11_seq, mytbl2_col21_seq) are not selected.
 WARNING:  _assign_sequences: No sequence to process.
@@ -288,8 +251,6 @@ WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.
 WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl2 table owner is not the emaj installer role.
 WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl2_col21_seq sequence owner is not the emaj installer role.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 79 at RAISE
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text,boolean) line 13 at RETURN
 -- change the table/sequence ownership
 reset session_authorization;
 alter table instschema1.mytbl1 owner to _regress_emaj_app;

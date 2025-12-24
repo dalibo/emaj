@@ -5,6 +5,9 @@
 -- emaj_drop_group() and emaj_force_drop_group() functions
 --
 
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 -- define and create the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/create_drop'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`

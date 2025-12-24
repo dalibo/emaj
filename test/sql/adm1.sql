@@ -1,5 +1,9 @@
 -- adm1.sql : complex scenarios executed by an emaj_adm role
 --
+
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 SET datestyle TO ymd;
 
 -- set sequence restart value

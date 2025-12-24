@@ -2,6 +2,9 @@
 --            Follows adm1.sql and adm2.sql
 --
 
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 -- set sequence restart value
 select public.handle_emaj_sequences(17000);
 

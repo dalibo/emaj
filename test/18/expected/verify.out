@@ -1,6 +1,8 @@
 -- verify.sql : test emaj_verify_all(), event_trigger management functions
 --              as well as recovery from user errors
 --
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
 -- set sequence restart value
 select public.handle_emaj_sequences(7000);
  handle_emaj_sequences 
@@ -283,13 +285,6 @@ rollback;
 begin;
   drop schema myschema1 cascade;
 NOTICE:  drop cascades to 7 other objects
-DETAIL:  drop cascades to table myschema1.mytbl1
-drop cascades to table myschema1.mytbl2
-drop cascades to table myschema1."myTbl3"
-drop cascades to table myschema1.mytbl4
-drop cascades to table myschema1.mytbl2b
-drop cascades to function myschema1.mytbl2trgfct1()
-drop cascades to function myschema1.mytbl2trgfct2()
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                                    msg                                                   
 ---------------------------------------------------------------------------------------------------------
@@ -328,26 +323,6 @@ rollback;
 begin;
   drop schema emaj_myschema1 cascade;
 NOTICE:  drop cascades to 20 other objects
-DETAIL:  drop cascades to table emaj_myschema1."myTbl3_log"
-drop cascades to sequence emaj_myschema1."myTbl3_log_seq"
-drop cascades to function emaj_myschema1."myTbl3_log_fnct"()
-drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
-drop cascades to table emaj_myschema1.mytbl1_log
-drop cascades to sequence emaj_myschema1.mytbl1_log_seq
-drop cascades to function emaj_myschema1.mytbl1_log_fnct()
-drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
-drop cascades to table emaj_myschema1.mytbl4_log
-drop cascades to sequence emaj_myschema1.mytbl4_log_seq
-drop cascades to function emaj_myschema1.mytbl4_log_fnct()
-drop cascades to trigger emaj_log_trg on table myschema1.mytbl4
-drop cascades to table emaj_myschema1.mytbl2_log
-drop cascades to sequence emaj_myschema1.mytbl2_log_seq
-drop cascades to function emaj_myschema1.mytbl2_log_fnct()
-drop cascades to trigger emaj_log_trg on table myschema1.mytbl2
-drop cascades to table emaj_myschema1.mytbl2b_log
-drop cascades to sequence emaj_myschema1.mytbl2b_log_seq
-drop cascades to function emaj_myschema1.mytbl2b_log_fnct()
-drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                                       msg                                                       
 ----------------------------------------------------------------------------------------------------------------
@@ -581,22 +556,9 @@ begin;
 -- setting a mark or rollbacking fails
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
 ERROR:  _verify_groups (6): In tables group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
-SQL statement "SELECT 0
-      FROM emaj._verify_groups(array[p_groupName], TRUE)"
-PL/pgSQL function emaj.emaj_set_mark_group(text,text,text) line 18 at PERFORM
   rollback to savepoint sp1;
     select * from emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_groups (6): In tables group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
-SQL statement "SELECT 0
-        FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 28 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-SQL statement "SELECT *
-        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
   rollback to savepoint sp1;
 -- but it is possible to stop, drop and recreate the group
   select emaj.emaj_stop_group('myGroup2');
@@ -640,8 +602,6 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist anymore.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 99 at RAISE
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- just removing the table solves the issue
   select emaj.emaj_remove_table('myschema2','mytbl4');
@@ -667,31 +627,10 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist anymore.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 113 at RAISE
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- reimporting the group configuration fails if the group is in logging state
     select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
 ERROR:  _repair_tbl: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state. Remove first the table from its group.
-CONTEXT:  PL/pgSQL function emaj._repair_tbl(text,text,text,boolean,bigint,text) line 9 at RAISE
-SQL statement "SELECT emaj._repair_tbl(rel_schema, rel_tblseq, rel_group, group_is_logging, p_timeId, 'IMPORT_GROUPS')
-      FROM (
-        SELECT rel_schema, rel_tblseq, rel_group, group_is_logging
-          FROM                                   -- all damaged or out of sync tables
-            (SELECT DISTINCT ver_schema, ver_tblseq
-               FROM emaj._verify_groups(p_groupNames, FALSE)
-            ) AS t
-            JOIN emaj.emaj_relation ON (rel_schema = ver_schema AND rel_tblseq = ver_tblseq AND upper_inf(rel_time_range))
-            JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
-            JOIN emaj.emaj_group ON (group_name = rel_group)
-          WHERE rel_group = ANY (p_groupNames)
-          ORDER BY rel_priority, rel_schema, rel_tblseq
-           ) AS t"
-PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint,text[]) line 52 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId, v_groupsToDrop)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text,boolean) line 90 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text,boolean) line 82 at RETURN
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text,boolean) line 13 at RETURN
   rollback to savepoint sp1;
 -- removing and re-assigning the table solves the issue 
   select emaj.emaj_remove_table('myschema2','mytbl4');
@@ -723,8 +662,6 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist anymore.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 126 at RAISE
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- removing and re-assigning the table solves the issue 
   select emaj.emaj_remove_table('myschema2','mytbl4');
@@ -756,60 +693,10 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
-CONTEXT:  SQL statement "SELECT pg_catalog.pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
-PL/pgSQL function emaj._get_log_sequence_last_value(text,text) line 12 at SQL statement
-PL/pgSQL expression "(SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence))
-           -- the log sequence last value at begin time id
-        - (SELECT tbl_log_seq_last_val
-             FROM emaj.emaj_table
-             WHERE tbl_schema = r_rel.rel_schema
-               AND tbl_name = r_rel.rel_tblseq
-               AND tbl_time_id = p_beginTimeId)
-           -- sum of hole from the begin time to now
-        - (SELECT coalesce(sum(sqhl_hole_size),0)
-             FROM emaj.emaj_seq_hole
-             WHERE sqhl_schema = r_rel.rel_schema
-               AND sqhl_table = r_rel.rel_tblseq
-               AND sqhl_begin_time_id >= p_beginTimeId)"
-PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 13 at RETURN
-SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
-                                     FROM emaj.emaj_relation
-          WHERE rel_group = v_group
-            AND rel_kind = 'r'
-            AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 75 at SQL statement
-SQL statement "SELECT emaj._set_mark_groups(p_groupNames, v_markName, NULL, p_multiGroup, TRUE, NULL, v_timeId)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 136 at PERFORM
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- removing the table fails also
   select emaj.emaj_remove_table('myschema2','mytbl4');
 ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
-CONTEXT:  SQL statement "SELECT pg_catalog.pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
-PL/pgSQL function emaj._get_log_sequence_last_value(text,text) line 12 at SQL statement
-PL/pgSQL expression "(SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence))
-           -- the log sequence last value at begin time id
-        - (SELECT tbl_log_seq_last_val
-             FROM emaj.emaj_table
-             WHERE tbl_schema = r_rel.rel_schema
-               AND tbl_name = r_rel.rel_tblseq
-               AND tbl_time_id = p_beginTimeId)
-           -- sum of hole from the begin time to now
-        - (SELECT coalesce(sum(sqhl_hole_size),0)
-             FROM emaj.emaj_seq_hole
-             WHERE sqhl_schema = r_rel.rel_schema
-               AND sqhl_table = r_rel.rel_tblseq
-               AND sqhl_begin_time_id >= p_beginTimeId)"
-PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 13 at RETURN
-SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
-                                     FROM emaj.emaj_relation
-          WHERE rel_group = v_group
-            AND rel_kind = 'r'
-            AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 75 at SQL statement
-SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, FALSE, TRUE, NULL, v_timeId)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 47 at PERFORM
-PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop before removing/reassigning the table
   select emaj.emaj_force_stop_group('myGroup2');
@@ -869,8 +756,6 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The schema "myschema2" does not exist anymore.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 76 at RAISE
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop and drop the group
   select emaj.emaj_force_stop_group('myGroup2');
@@ -917,11 +802,6 @@ begin;
 -- dropping group fails at log schema drop step
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
-CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 35 at RAISE
-SQL statement "SELECT emaj._drop_log_schemas(v_function, p_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 20 at PERFORM
-SQL statement "SELECT emaj._drop_group(p_groupName, FALSE)"
-PL/pgSQL function emaj.emaj_drop_group(text) line 15 at SQL statement
   rollback to savepoint sp1;
 -- use emaj_verify_all() to understand the problem
   select * from emaj.emaj_verify_all();
@@ -979,18 +859,15 @@ begin;
   drop table myschema1.mytbl1 cascade;
 NOTICE:  drop cascades to constraint mytbl4_col44_fkey on table myschema1.mytbl4
 ERROR:  E-Maj event trigger: Attempting to drop the application table "myschema1.mytbl1". But it belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 52 at RAISE
 rollback;
 begin;
   drop sequence myschema2.mySeq1;
 ERROR:  E-Maj event trigger: Attempting to drop the application sequence "myschema2.myseq1". But it belongs to the active tables group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 76 at RAISE
 rollback;
 SET client_min_messages TO WARNING;
 begin;
   drop schema myschema1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application schema "myschema1". But it belongs to the active tables groups "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 29 at RAISE
 rollback;
 RESET client_min_messages;
 -- drop primary keys
@@ -998,7 +875,6 @@ RESET client_min_messages;
 begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
 ERROR:  E-Maj event trigger: Attempting to drop the primary key for the application table "myschema1.mytbl4". But it belongs to the rollbackable tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 137 at RAISE
 rollback;
 -- drop a primary key for a table belonging to an audit_only tables group (should not fail)
 begin;
@@ -1009,34 +885,28 @@ rollback;
 begin;
   drop table emaj_myschema1."myTbl3_log";
 ERROR:  E-Maj event trigger: Attempting to drop the log table "emaj_myschema1.myTbl3_log". But dropping an E-Maj log table is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 62 at RAISE
 rollback;
 begin;
   drop sequence emaj_myschema1.mytbl1_log_seq;
 ERROR:  E-Maj event trigger: Attempting to drop the log sequence "emaj_myschema1.mytbl1_log_seq". But dropping an E-Maj sequence is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 86 at RAISE
 rollback;
 begin;
   drop function emaj_myschema1."myTbl3_log_fnct"() cascade;
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 ERROR:  E-Maj event trigger: Attempting to drop the log function "emaj_myschema1."myTbl3_log_fnct"()". But dropping an E-Maj log function is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 97 at RAISE
 rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
 ERROR:  E-Maj event trigger: Attempting to drop the "emaj_log_trg on myschema1.mytbl1" E-Maj trigger. But dropping an E-Maj trigger is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 111 at RAISE
 rollback;
 SET client_min_messages TO WARNING;
 begin;
   drop schema emaj cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj". Please execute the emaj.emaj_drop_extension() function if you really want to remove all E-Maj components.
-CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 17 at RAISE
 rollback;
 begin;
   drop schema emaj_myschema1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj_myschema1". But dropping an E-Maj schema is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 38 at RAISE
 rollback;
 RESET client_min_messages;
 -- dropping the extension in tested by the install sql script because it depends on the way the extension is created
@@ -1044,12 +914,10 @@ RESET client_min_messages;
 begin;
   alter table myschema1.mytbl1 alter column col13 type varchar(10);
 ERROR:  E-Maj event trigger: Attempting to change the application table "myschema1.mytbl1" structure. But the table belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_table_rewrite_fnct() line 27 at RAISE
 rollback;
 begin;
   alter table emaj_myschema1.mytbl1_log alter column col13 type varchar(10);
 ERROR:  E-Maj event trigger: Attempting to change the log table "emaj_myschema1.mytbl1_log" structure. But the table belongs to the tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_table_rewrite_fnct() line 37 at RAISE
 rollback;
 -- rename a table and/or change its schema (not covered by event triggers)
 begin;
@@ -1078,7 +946,6 @@ rollback;
 drop function public._emaj_protection_event_trigger_fnct() CASCADE;
 NOTICE:  drop cascades to event trigger emaj_protection_trg
 ERROR:  E-Maj event trigger: Attempting to drop the public._emaj_protection_event_trigger_fnct() function. But dropping this E-Maj technical function is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 102 at RAISE
 -- missing event triggers
 begin;
   drop event trigger emaj_protection_trg;

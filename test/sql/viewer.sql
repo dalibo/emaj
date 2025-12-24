@@ -1,6 +1,9 @@
 -- viewer.sql : test emaj data access and functions calls by an emaj_viewer role
 --
 
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 -- set sequence restart value
 select public.handle_emaj_sequences(11000);
 

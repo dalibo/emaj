@@ -2,6 +2,10 @@
 --     single script to test emaj installed with psql by a non superuser role.
 --     various use case are tested, giving more and more capabilities to the installer role
 --
+
+-- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+\set VERBOSITY terse
+
 SET client_min_messages TO WARNING;
 
 ------------------------------------------------------------
