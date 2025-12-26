@@ -6766,7 +6766,7 @@ $_import_groups_conf_check$
 -- In non superuser emaj install, check that all sequence owners are the installer role.
     IF NOT v_installedBySuperuser THEN
       RETURN QUERY
-        SELECT 6, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
+        SELECT 34, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
                format('In tables group "%s", the %s.%s sequence owner is not the emaj installer role.',
                       tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
           FROM tmp_app_sequence

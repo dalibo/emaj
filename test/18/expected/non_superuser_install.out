@@ -247,8 +247,8 @@ select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "i
 																			        { "schema": "appschema1", "sequence": "mytbl2_col21_seq" }] } ]}'::json,
 											 null, true);
 WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl1 table owner is not the emaj installer role.
-WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl1_col11_seq sequence owner is not the emaj installer role.
 WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl2 table owner is not the emaj installer role.
+WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl1_col11_seq sequence owner is not the emaj installer role.
 WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl2_col21_seq sequence owner is not the emaj installer role.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 -- change the table/sequence ownership
