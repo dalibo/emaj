@@ -70,6 +70,10 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- Call emajParallelRollback.pl
 --------------------------------------------
+
+-- parallel rollback attempt with an unauthorized role
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_viewer -W viewer -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
@@ -149,8 +153,12 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 \! ${EMAJ_DIR}/client/emajRollbackMonitor.php -d regression -U _regress_emaj_viewer -W viewer -i 0.1 -n 2 -l 2 -a 12 -v -r
 
 --------------------------------------------
--- call emajRollbackMonitor.pl using an emaj_viewer role
+-- call emajRollbackMonitor.pl
 --------------------------------------------
+-- call emajRollbackMonitor.pl using an unauthorized role
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_anonym -W anonym -i 0.1 -n 2 -l 2 -a 12 -v -r
+
+-- call emajRollbackMonitor.pl using an emaj_viewer role
 \! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_viewer -W viewer -i 0.1 -n 2 -l 2 -a 12 -v -r
 
 --------------------------------------------------------------
@@ -158,6 +166,9 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 -- emajStat client
 --
 --------------------------------------------------------------
+-- call emajStat.pl using an unauthorized role
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_anonym -W anonym --regression-test --no-cls --interval 0.1 --iter 2
+
 -- Rename the latest mark of myGroup2 for output stability
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','latest_mark');
 

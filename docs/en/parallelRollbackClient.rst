@@ -53,7 +53,7 @@ To replace some or all these parameters, the usual *PGDATABASE*, *PGPORT*, *PGHO
 
 To specify a list of tables groups in the -g parameter, separate the name of each group by a comma.
 
-The supplied connection role must be either a superuser or a role having *emaj_adm* rights.
+The supplied connection role must have the :doc:`E-Maj administration rights<accessPolicy>`.
 
 For safety reasons, it is not recommended to use the -W option to supply a password. It is rather advisable to use the *.pgpass* file (see PostgreSQL documentation).
 

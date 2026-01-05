@@ -149,6 +149,14 @@ set session_authorization to _regress_emaj_install;
 select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/emaj_test');
 select emaj.emaj_dump_changes_group('instGroup1', 'M1', NULL, '', NULL, '/tmp');
 
+-- use perl clients
+
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_install -W install -g "instGroup1" -m M2 -s 2
+
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_install -W install -i 0.1 -n 2 -l 2 -a 12 -v -r
+
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_install -W install --regression-test --no-cls --interval 0.1 --iter 2
+
 reset session_authorization;
 revoke pg_write_server_files from _regress_emaj_install;
 

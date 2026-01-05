@@ -207,6 +207,54 @@ select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/em
 ERROR:  _check_can_exec_program: Executing an external program is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).
 select emaj.emaj_dump_changes_group('instGroup1', 'M1', NULL, '', NULL, '/tmp');
 ERROR:  _check_can_exec_program: Executing an external program is not allowed on this emaj instance (the installer role had not SUPERUSER rights at install time and has not been granted pg_execute_server_program).
+-- use perl clients
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_install -W install -g "instGroup1" -m M2 -s 2
+ E-Maj (version <devel>) - launching parallel rollbacks
+-----------------------------------------------------------
+==> Rollback to mark 'M2' is now in progress with 2 sessions...
+    Its rollback identifier is 3. It can be monitored using the emajRollbackMonitor client or Emaj_web.
+==> Rollback completed.
+    Notice: Rollback id = 3.
+    Notice: 0 / 1 tables effectively processed.
+    Notice: 1 / 1 sequences effectively processed.
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_install -W install -i 0.1 -n 2 -l 2 -a 12 -v -r
+ E-Maj (version <devel>) - Monitoring rollbacks activity
+-----------------------------------------------------------
+[current date and time]
+** rollback 2 started at [rollback start time] for groups {instGroup1} 
+   status: COMMITTED ; ended at [rollback end time] 
+   rollback to mark: "M2" set at [mark time]
+   1 session(s) to process 1/1 table(s) and 1/1 sequence(s)
+** rollback 3 started at [rollback start time] for groups {instGroup1} 
+   status: COMMITTED ; ended at [rollback end time] 
+   rollback to mark: "M2" set at [mark time]
+   2 session(s) to process 0/1 table(s) and 1/1 sequence(s)
+[current date and time]
+** rollback 2 started at [rollback start time] for groups {instGroup1} 
+   status: COMMITTED ; ended at [rollback end time] 
+   rollback to mark: "M2" set at [mark time]
+   1 session(s) to process 1/1 table(s) and 1/1 sequence(s)
+** rollback 3 started at [rollback start time] for groups {instGroup1} 
+   status: COMMITTED ; ended at [rollback end time] 
+   rollback to mark: "M2" set at [mark time]
+   2 session(s) to process 0/1 table(s) and 1/1 sequence(s)
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_install -W install --regression-test --no-cls --interval 0.1 --iter 2
+ E-Maj (version <devel>) - Monitoring logged changes on database regression (@127.0.0.1:5418)
+----------------------------------------------------------------------------------------------
+[current date and time] - Logging: groups=1/1 tables=1/1 sequences=1/1 -
+  Group name   + Latest mark              + Changes since mark + Changes since prev.
+    instGroup1 | M2 ([latest mark date and time]) | 5 ([cps])
+  Table name           + Group      + Changes since mark + Changes since prev.
+    instschema1.mytbl1 | instGroup1 | 5 ([cps])
+  Sequence name                  + Group      + Changes since mark + Changes since prev.
+    instschema1.mytbl1_col11_seq | instGroup1 | 0 ([cps])
+[current date and time] - Logging: groups=1/1 tables=1/1 sequences=1/1 - Changes since [refresh duration] sec: 0 ([global cps] c/s)
+  Group name   + Latest mark              + Changes since mark + Changes since prev.
+    instGroup1 | M2 ([latest mark date and time]) | 5 ([cps]) | 0 ([cps])
+  Table name           + Group      + Changes since mark + Changes since prev.
+    instschema1.mytbl1 | instGroup1 | 5 ([cps]) | 0 ([cps])
+  Sequence name                  + Group      + Changes since mark + Changes since prev.
+    instschema1.mytbl1_col11_seq | instGroup1 | 0 ([cps]) | 0 ([cps])
 reset session_authorization;
 revoke pg_write_server_files from _regress_emaj_install;
 ------------------------------------------------------------

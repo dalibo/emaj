@@ -53,7 +53,7 @@ Pour remplacer tout ou partie des paramètres de connexion, les variables habitu
 
 Pour spécifier une liste de groupes de tables dans le paramètre -g, séparer le nom de chaque groupe par une virgule.
 
-Le rôle de connexion fourni doit être soit un super-utilisateur, soit un rôle ayant les droits *emaj_adm*.
+Le rôle de connexion fourni doit avoir les :doc:`droits d’administration E-Maj<accessPolicy>`.
 
 Pour des raisons de sécurité, il n'est pas recommandé d'utiliser l'option -W pour fournir un mot de passe. Il est préférable d'utiliser le fichier *.pgpass* (voir la documentation de PostgreSQL).
 

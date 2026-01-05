@@ -9,7 +9,7 @@ Les rôles E-Maj
 Pour utiliser E-Maj, on peut se connecter en tant que super-utilisateur. Mais pour des raisons de sécurité, il est préférable de tirer profit des deux rôles créés par la procédure d'installation :
 
 * **emaj_adm** sert de rôle d'administration ; il peut exécuter toutes les fonctions  et accéder à toutes les tables d'E-Maj, en lecture comme en mise à jour ; *emaj_adm* est le propriétaire de tous les objets de log (schémas, tables, séquences, fonctions),
-* **emaj_viewer** sert pour des accès limités à de la consultation ; il ne peut exécuter que des fonctions de type statistique et n'accède aux tables d'E-Maj qu'en lecture.
+* **emaj_viewer** sert pour des accès limités à de la consultation ; il ne peut exécuter que des fonctions de type informative ou statistique et n'accède aux tables d'E-Maj qu'en lecture.
 
 Tous les droits attribués à *emaj_viewer* le sont aussi à *emaj_adm*.
 

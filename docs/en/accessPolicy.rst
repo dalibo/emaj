@@ -9,7 +9,7 @@ E-Maj roles
 To use E-Maj, it is possible to log on as *superuser*. But for safety reasons, it is preferable to take advantage of both roles created by the installation script:
 
 * **emaj_adm** is used as the administration role ; it can execute all functions and access to all E-Maj tables, with reading and writing rights ; *emaj_adm* is the owner of all log objects (schemas, tables, sequences, functions),
-* **emaj_viewer** is used for read only purpose ; it can only execute statistics functions and can only read E-Maj tables.
+* **emaj_viewer** is used for read only purpose ; it can only execute informative or statistics functions and can only read E-Maj tables.
 
 All rights given to *emaj_viewer* are also given to *emaj_adm*.
 

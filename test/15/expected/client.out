@@ -104,6 +104,11 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- Call emajParallelRollback.pl
 --------------------------------------------
+-- parallel rollback attempt with an unauthorized role
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_viewer -W viewer -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+Error: the user is not an E-Maj administrator.
+ E-Maj (version <devel>) - launching parallel rollbacks
+-----------------------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
@@ -255,8 +260,14 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
    1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 Warning: this php version of emajRollbackMonitor is deprecated. No functional improvement will be added in the future and it may be removed in a future version. It is strongly advisable to use emajRollbackMonitor.pl instead, which has the same features and parameters.
 --------------------------------------------
--- call emajRollbackMonitor.pl using an emaj_viewer role
+-- call emajRollbackMonitor.pl
 --------------------------------------------
+-- call emajRollbackMonitor.pl using an unauthorized role
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_anonym -W anonym -i 0.1 -n 2 -l 2 -a 12 -v -r
+Error: the user is not allowed to look at E-Maj data.
+ E-Maj (version <devel>) - Monitoring rollbacks activity
+-----------------------------------------------------------
+-- call emajRollbackMonitor.pl using an emaj_viewer role
 \! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_viewer -W viewer -i 0.1 -n 2 -l 2 -a 12 -v -r
  E-Maj (version <devel>) - Monitoring rollbacks activity
 -----------------------------------------------------------
@@ -307,6 +318,9 @@ Warning: this php version of emajRollbackMonitor is deprecated. No functional im
 -- emajStat client
 --
 --------------------------------------------------------------
+-- call emajStat.pl using an unauthorized role
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_anonym -W anonym --regression-test --no-cls --interval 0.1 --iter 2
+Error: the user is not allowed to look at E-Maj data.
 -- Rename the latest mark of myGroup2 for output stability
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','latest_mark');
  emaj_rename_mark_group 

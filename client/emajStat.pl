@@ -332,14 +332,16 @@ sub dbLogon {
 	$dbh->selectrow_array($sql)
 		or die("Error: the emaj extension does not exist in the $currentDb database.\n");
 
-	# Check that the user has emaj_viewer rights.
+	# Check that the user has emaj_viewer rights, by verifying he is allowed to call the _get_sequences_last_value() function.
 	$sql = qq(
-		SELECT CASE WHEN pg_catalog.pg_has_role('emaj_viewer','USAGE') THEN 1 ELSE 0 END AS is_emaj_viewer
+		SELECT CASE WHEN pg_catalog.has_schema_privilege('emaj', 'USAGE')
+					 AND pg_catalog.has_function_privilege('emaj._get_sequences_last_value(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT)', 'EXECUTE')
+						THEN 1 ELSE 0 END AS is_emaj_viewer
 			);
 	my ($isEmajViewer) = $dbh->selectrow_array($sql)
 		or die("Error while checking the emaj_viewer rights.$DBI::errstr \n\n");
 	if (!$isEmajViewer) {
-		die "Error: the user has not been granted emaj_viewer rights.\n";
+		die "Error: the user is not allowed to look at E-Maj data.\n";
 	}
 
 	# Set the application_name.

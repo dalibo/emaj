@@ -125,14 +125,16 @@ $stmt[1] = qq(
 $dbh[1]->selectrow_array($stmt[1])
 	or die("Error: the emaj extension does not exist in the database.\n");
 
-# Check on the first session that the user has emaj_adm rights.
+# Check on the first session that the user has E-Maj administration rights, by verifying he is allowed to call the _rlbk_init() function.
 $stmt[1] = qq(
-	SELECT CASE WHEN pg_catalog.pg_has_role('emaj_adm','USAGE') THEN 1 ELSE 0 END AS is_emaj_adm
+	SELECT CASE WHEN pg_catalog.has_schema_privilege('emaj', 'USAGE')
+				 AND pg_catalog.has_function_privilege('emaj._rlbk_init(TEXT[], TEXT, BOOLEAN, INT, BOOLEAN, BOOLEAN, TEXT)','EXECUTE')
+					THEN 1 ELSE 0 END AS is_emaj_admin
 		);
-my ($isEmajAdm) = $dbh[1]->selectrow_array($stmt[1])
-	or die("Error while checking the emaj_adm rights.$DBI::errstr \n\n");
-if (!$isEmajAdm) {
-	die "Error: the user has not been granted emaj_adm rights.\n";
+my ($isEmajAdmin) = $dbh[1]->selectrow_array($stmt[1])
+	or die("Error while checking the E-Maj administration rights.$DBI::errstr \n\n");
+if (!$isEmajAdmin) {
+	die "Error: the user is not an E-Maj administrator.\n";
 }
 
 # Check that the max_prepared_transactions GUC has a nonzero value.

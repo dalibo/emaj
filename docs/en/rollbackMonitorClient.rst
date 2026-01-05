@@ -38,7 +38,7 @@ The connection options are:
 
 To replace some or all these parameters, the usual *PGDATABASE*, *PGPORT*, *PGHOST* and/or *PGUSER* environment variables can be used.
 
-The supplied connection role must either be a *superuser* or have *emaj_adm* or *emaj_viewer* rights.
+The supplied connection role must be allowed to :doc:`look at E-Maj data<accessPolicy>`.
 
 For security reasons, it is not recommended to use the -W option to supply a password. Rather, it is advisable to use the *.pgpass* file (see PostgreSQL documentation).
 
