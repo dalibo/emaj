@@ -250,7 +250,7 @@ CREATE TABLE "my""tbl4" (
   PRIMARY KEY (col41),
   CONSTRAINT "my""tbl4_col44_fkey" FOREIGN KEY (col44,col45) REFERENCES "phil's tbl1" ("phil's col11","phil's col12") ON DELETE CASCADE ON UPDATE SET NULL
 );
-ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey FOREIGN KEY (col21) REFERENCES "my""tbl4" (col41);
+ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey FOREIGN KEY (col21) REFERENCES "my""tbl4" (col41) NOT VALID;
 
 CREATE SEQUENCE "phil's""seq\1" MINVALUE 1000 MAXVALUE 2000 CYCLE;
 
