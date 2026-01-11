@@ -430,7 +430,7 @@ rollback;
 begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;                   -- table from a rollbackable group
   alter table "phil's schema""3"."my""tbl4" drop constraint "my""tbl4_pkey" cascade;    -- table from an audit_only group
-NOTICE:  drop cascades to constraint mytbl2_col21_fkey on table "phil's schema""3"."myTbl2\"
+NOTICE:  drop cascades to constraint mytbl2_col21_fkey_nv on table "phil's schema""3"."myTbl2\"
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                                    msg                                                   
 ---------------------------------------------------------------------------------------------------------

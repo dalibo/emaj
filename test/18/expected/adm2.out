@@ -634,7 +634,8 @@ select emaj.emaj_assign_sequences('phil''s schema"3','.*',null,'phil''s group#3"
 (1 row)
 
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey_ne" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey_nv" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema"3.phil's tbl1" is referenced by the foreign key "my"tbl4_col44_fkey" on the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
 ------------------
@@ -1759,7 +1760,8 @@ select emaj.emaj_assign_table('phil''s schema"3', 'table_with_very_loooooooooooo
 
 -- use the table and its group
 select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey_ne" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey_nv" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema"3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "my"tbl4_col44_fkey" on the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
 ------------------
