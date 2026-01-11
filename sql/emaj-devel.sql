@@ -14939,7 +14939,7 @@ $emaj_drop_extension$
           EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_adm';
         END IF;
 -- ... and drop the role.
-        DROP ROLE emaj_viewer;
+        DROP ROLE emaj_adm;
         RAISE WARNING 'emaj_drop_extension: the emaj_adm role has been dropped.';
       ELSE
         RAISE WARNING 'emaj_drop_extension: For these reasons, emaj_adm has not been dropped by this script.';
