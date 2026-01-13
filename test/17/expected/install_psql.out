@@ -863,7 +863,7 @@ $$
     FROM unnest(p_array) AS element
     WHERE element IS NOT NULL AND element <> '';
 $$;
-CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
+CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, p_rollback_checks BOOLEAN, OUT p_status INT, OUT p_schema TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_dblink_open_cnx$
@@ -876,6 +876,7 @@ $_dblink_open_cnx$
 -- The connection is performed by calling dblink_connect() when the installer role is superuser, or dblink_connect_u() in other cases.
 -- The function is directly called by Emaj_web.
 -- Input:  connection name
+--         boolean indicating whether specific rollback conditions must be checked
 -- Output: integer status return.
 --           1 successful connection
 --           0 already opened connection
@@ -930,9 +931,8 @@ $_dblink_open_cnx$
         p_status = -3;                    -- installer role has not the EXECUTE privileges on the dblink connection function
       END IF;
     END IF;
-    IF p_status IS NULL AND
+    IF p_status IS NULL AND p_rollback_checks AND
 -- Verify the proper transaction isolation level for E-Maj rollback operations.
-       (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'emaj_verify_all') AND
        pg_catalog.current_setting('transaction_isolation') <> 'read committed' THEN
       p_status = -4;                      -- 'rlbk#*' connections (used for rollbacks) must only come from a
                                           --   READ COMMITTED transaction
@@ -982,7 +982,7 @@ $_dblink_open_cnx$
 -- For E-Maj rollback first connections and test connections, check the role from emaj_param is an E-Maj administrator.
 --   i.e. the role is either the installer or a member of emaj_adm.
 --   Error on the statement is trapped because the emaj_adm role may not exist or be unused in this emaj instance.
-      IF (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
+      IF p_rollback_checks THEN
         v_stmt = 'SELECT '
                     '(SELECT inst_installer_role = current_user FROM emaj.emaj_install_conf) '
                  'OR '
@@ -8625,7 +8625,7 @@ $_rlbk_async$
 -- If dblink is used (which should always be true), try to open the first session connection (no error is issued if it is already opened).
     IF v_isDblinkUsed THEN
       SELECT p_status INTO v_dbLinkCnxStatus
-        FROM emaj._dblink_open_cnx('rlbk#1');
+        FROM emaj._dblink_open_cnx('rlbk#1', TRUE);
       IF v_dbLinkCnxStatus < 0 THEN
         RAISE EXCEPTION '_rlbk_async: Error while opening the dblink session #1 (Status of the dblink connection attempt = %'
                         ' - see E-Maj documentation).',
@@ -8696,7 +8696,7 @@ $_rlbk_init$
 -- First try to open a dblink connection.
       SELECT p_status, (p_status >= 0), CASE WHEN p_status >= 0 THEN p_schema ELSE NULL END
         INTO v_dbLinkCnxStatus, v_isDblinkUsed, v_dbLinkSchema
-        FROM emaj._dblink_open_cnx('rlbk#1');
+        FROM emaj._dblink_open_cnx('rlbk#1', TRUE);
 -- For parallel rollback (i.e. when nb sessions > 1), the dblink connection must be ok.
       IF p_nbSession > 1 AND NOT v_isDblinkUsed THEN
         RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink'
@@ -9608,7 +9608,7 @@ $_rlbk_session_lock$
 -- For dblink session > 1, open the connection (the session 1 is already opened).
     IF p_session > 1 THEN
       SELECT p_status INTO v_dbLinkCnxStatus
-        FROM emaj._dblink_open_cnx('rlbk#' || p_session);
+        FROM emaj._dblink_open_cnx('rlbk#' || p_session, FALSE);
       IF v_dbLinkCnxStatus < 0 THEN
         RAISE EXCEPTION '_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
                         ' - see E-Maj documentation).',
@@ -13886,9 +13886,9 @@ $emaj_verify_all$
                          v_paramList);
     END IF;
 -- Report a warning if dblink connections are not operational.
-    IF has_function_privilege('emaj._dblink_open_cnx(text)', 'execute') THEN
+    IF has_function_privilege('emaj._dblink_open_cnx(text, boolean)', 'execute') THEN
       SELECT p_status, p_schema INTO v_status, v_schema
-        FROM emaj._dblink_open_cnx('emaj_verify_all');
+        FROM emaj._dblink_open_cnx('emaj_verify_all', TRUE);
       CASE v_status
         WHEN 0, 1 THEN
           PERFORM emaj._dblink_close_cnx('emaj_verify_all', v_schema);
