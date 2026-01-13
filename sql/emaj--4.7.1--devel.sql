@@ -4831,7 +4831,7 @@ $emaj_drop_extension$
 -- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
 -- - or with the alternate psql script.
   DECLARE
-    v_createdAsExtension     BOOLEAN;
+    v_isEmajExtension        BOOLEAN;
     v_supportEmajAdm         BOOLEAN;
     v_supportEmajViewer      BOOLEAN;
     v_isSuperuser            BOOLEAN;
@@ -4846,8 +4846,9 @@ $emaj_drop_extension$
     r_object                 RECORD;
   BEGIN
 -- Read some installation characteristics.
-    SELECT inst_as_extension, inst_with_emaj_adm, inst_with_emaj_viewer
-      INTO STRICT v_createdAsExtension, v_supportEmajAdm, v_supportEmajViewer
+    v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
+    SELECT inst_with_emaj_adm, inst_with_emaj_viewer
+      INTO STRICT v_supportEmajAdm, v_supportEmajViewer
       FROM emaj.emaj_install_conf;
 -- Perform some checks to verify that the conditions to execute the function are met.
 --
@@ -4855,7 +4856,7 @@ $emaj_drop_extension$
     SELECT rolsuper, rolcreaterole INTO v_isSuperuser, v_isRoleCreaterole
       FROM pg_catalog.pg_roles
       WHERE rolname = current_user;
-    IF v_createdAsExtension THEN
+    IF v_isEmajExtension THEN
       IF NOT v_isSuperuser THEN
         RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
       END IF;

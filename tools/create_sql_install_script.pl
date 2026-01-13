@@ -66,12 +66,6 @@ use warnings; use strict;
       print FICOT "CREATE EXTENSION IF NOT EXISTS btree_gist;\n";
       $status++;
     }
-# Modify the inst_as_extension boolean constant
-    if ($status == 5 && $line =~ /v_createdAsExtension     CONSTANT BOOLEAN = TRUE/) {
-      print FICOT "    v_createdAsExtension     CONSTANT BOOLEAN = FALSE;\n";
-      $status++;
-      next;
-    }
 
 # Otherwise, copy the source line as is
     print FICOT $line;
@@ -80,7 +74,7 @@ use warnings; use strict;
   print FICOT "--\n";
   print FICOT "COMMIT;\n";
 
-  if ($status != 6) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 6."; }
+  if ($status != 5) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 5."; }
 
 # Close files
   close FICIN;
