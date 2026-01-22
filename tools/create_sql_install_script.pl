@@ -55,15 +55,20 @@ use warnings; use strict;
       $status++;
       next;
     }
-# Add a BEGIN TRANSACTION statement and recreate the emaj schema
+# Add a BEGIN TRANSACTION statement, recreate the emaj schema, create the btree_gist extension, and the dblink extension, if allowed
     if ($status == 4 && $line =~ /^COMMENT ON SCHEMA emaj IS/) {
       print FICOT "BEGIN TRANSACTION;\n";
       print FICOT "\n";
       print FICOT "DROP SCHEMA IF EXISTS emaj CASCADE;\n";
       print FICOT "CREATE SCHEMA emaj;\n";
       print FICOT "\n";
-      print FICOT "CREATE EXTENSION IF NOT EXISTS dblink;\n";
       print FICOT "CREATE EXTENSION IF NOT EXISTS btree_gist;\n";
+      print FICOT "DO LANGUAGE plpgsql \$do\$\n";
+      print FICOT "BEGIN\n";
+      print FICOT "  CREATE EXTENSION IF NOT EXISTS dblink;\n";
+      print FICOT "EXCEPTION WHEN OTHERS THEN NULL;\n";
+      print FICOT "END;\n";
+      print FICOT "\$do\$;\n";
       $status++;
     }
 

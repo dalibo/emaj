@@ -28,13 +28,6 @@ grant create on schema public to _regress_emaj_install;
 -- _regress_emaj_admin2 is another administration role
 create role _regress_emaj_admin2 login password 'admin2';
 
--- needed extension and privileges
-create extension dblink;
-grant execute on function dblink_connect_u(text,text) to _regress_emaj_install;
-
--- uncomment the next line to test on a postgres instance that has not available ip connections
---grant pg_read_all_settings to _regress_emaj_install;
-
 ------------------------------------------------------------
 -- Create application objects
 ------------------------------------------------------------
@@ -115,14 +108,8 @@ select emaj.emaj_set_mark_group('instGroup1', 'M2');
 update instSchema1.mytbl1 set col12 = 'Modified row 1' where col11 = 1;
 insert into instSchema1.mytbl1 (col12) values ('Row 2');
 
--- logged rollback to M2 without dblink connection
+-- logged rollback to M2 (without dblink connection)
 select * from emaj.emaj_logged_rollback_group('instGroup1','M2');
-select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
-
--- rollback to M2 with dblink connection
-insert into emaj.emaj_param (param_key, param_value_text) 
-  values ('dblink_user_password','user=_regress_emaj_install password=install');
-select * from emaj.emaj_rollback_group('instGroup1','M2');
 select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
 
 -- test inoperative or forbidden function calls
@@ -149,22 +136,42 @@ set session_authorization to _regress_emaj_install;
 select emaj.emaj_gen_sql_dump_changes_group(NULL, 'M1', NULL, '', NULL, '/tmp/emaj_test');
 select emaj.emaj_dump_changes_group('instGroup1', 'M1', NULL, '', NULL, '/tmp');
 
--- use perl clients
-
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_install -W install -g "instGroup1" -m M2 -s 2
-
-\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_install -W install -i 0.1 -n 2 -l 2 -a 12 -v -r
-
-\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_install -W install --regression-test --no-cls --interval 0.1 --iter 2
-
 reset session_authorization;
 revoke pg_write_server_files from _regress_emaj_install;
 
+set session_authorization to _regress_emaj_install;
+
+-- use perl clients
+
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_install -W install --regression-test --no-cls --interval 0.1 --iter 2
+
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_install -W install -i 0.1 -n 2 -l 2 -a 12 -v -r
+
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_install -W install -g "instGroup1" -m M2 -s 2
+
 ------------------------------------------------------------
--- Step 2: try to assign application objects owned by another role
+-- Step 2: install dblink and perform rollback (no reinstall)
 ------------------------------------------------------------
 
+reset session_authorization;
+
+create extension dblink;
+grant execute on function dblink_connect_u(text,text) to _regress_emaj_install;
+
 set session_authorization to _regress_emaj_install;
+
+-- rollback to M2 with dblink connection
+insert into emaj.emaj_param (param_key, param_value_text) 
+  values ('dblink_user_password','user=_regress_emaj_install password=install');
+select * from emaj.emaj_rollback_group('instGroup1','M2');
+select hist_object, hist_wording from emaj.emaj_hist where hist_function = 'DBLINK_OPEN_CNX' order by hist_id desc limit 1;
+
+-- parallel rollback
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_install -W install -g "instGroup1" -m M2 -s 2
+
+------------------------------------------------------------
+-- Step 3: try to assign application objects owned by another role (no reinstall)
+------------------------------------------------------------
 
 -- try to assign tables in group instGroup1
 select emaj.emaj_assign_table('appschema1', 'mytbl1', 'instGroup1');
@@ -195,7 +202,7 @@ reset session_authorization;
 alter table instschema1.mytbl1 owner to _regress_emaj_install;
 
 ------------------------------------------------------------
--- Step 3: add grants to perform COPY FROM or TO
+-- Step 4: add grants to perform COPY FROM or TO (no reinstall)
 ------------------------------------------------------------
 reset session_authorization;
 
@@ -213,7 +220,7 @@ select emaj.emaj_gen_sql_dump_changes_group('instGroup1', 'M1', 'M2', '', NULL, 
 \! rm /tmp/emaj_test
 
 ------------------------------------------------------------
--- Step 4: let another role perform emaj administration tasks
+-- Step 5: let another role perform emaj administration tasks (no reinstall)
 ------------------------------------------------------------
 reset session_authorization;
 grant _regress_emaj_install to _regress_emaj_admin2;

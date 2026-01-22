@@ -5,13 +5,6 @@
 -----------------------------
 \i sql/emaj-devel.sql
 
--- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
-begin;
-  drop extension dblink;
-  select * from emaj.emaj_verify_all();
-  rollback;
-end;
-
 -----------------------------
 -- check installation
 -----------------------------

@@ -45,8 +45,13 @@ BEGIN TRANSACTION;
 DROP SCHEMA IF EXISTS emaj CASCADE;
 psql:sql/emaj-devel.sql:44: NOTICE:  schema "emaj" does not exist, skipping
 CREATE SCHEMA emaj;
-CREATE EXTENSION IF NOT EXISTS dblink;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
+DO LANGUAGE plpgsql $do$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS dblink;
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+$do$;
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 ----------------------------------------------------------------
@@ -15107,7 +15112,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:15384: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:15389: NOTICE:  E-Maj installation: E-Maj successfully installed.
 -- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
 WITH start_time_data AS (
   SELECT clock_timestamp() - lower(verh_time_range) AS duration
@@ -15119,19 +15124,6 @@ WITH start_time_data AS (
     FROM start_time_data;
 --
 COMMIT;
--- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
-begin;
-  drop extension dblink;
-  select * from emaj.emaj_verify_all();
-                 emaj_verify_all                 
--------------------------------------------------
- Warning: The dblink extension is not installed.
- No error detected
-(2 rows)
-
-  rollback;
-end;
-WARNING:  there is no transaction in progress
 -----------------------------
 -- check installation
 -----------------------------
