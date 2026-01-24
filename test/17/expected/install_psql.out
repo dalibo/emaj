@@ -1954,13 +1954,16 @@ $_check_mark_name$
     RETURN v_markName;
   END;
 $_check_mark_name$;
-CREATE OR REPLACE FUNCTION emaj._check_new_mark(p_groupNames TEXT[], p_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj._check_new_mark(p_groupNames TEXT[], p_mark TEXT, p_check_exists BOOLEAN DEFAULT TRUE)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_new_mark$
 -- This function verifies that a new mark name supplied the user is valid.
 -- It processes the possible NULL mark value and the replacement of % wild characters.
--- It also checks that the mark name do not already exist for any group.
--- Input: array of group names, name of the mark to set
+-- It also checks that the mark name do not already exist for any group, this check been optional.
+-- The mark existence is not checked when the function is called by emaj_start_group() and all existing marks will be deleted later.
+-- Input: array of group names,
+--        name of the mark to set,
+--        boolean indicating whether the mark name existence must be checked or not
 -- Output: internal name of the mark
   DECLARE
     v_markName               TEXT = p_mark;
@@ -1977,16 +1980,18 @@ $_check_new_mark$
     END IF;
 -- Process % wild characters in mark name.
     v_markName = replace(v_markName, '%', substring(to_char(clock_timestamp(), 'HH24.MI.SS.US') from 1 for 13));
--- Check that the mark does not exist for any groups.
-    SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*) INTO v_groupList, v_count
-      FROM emaj.emaj_mark
-      WHERE mark_name = v_markName
-        AND mark_group = ANY(p_groupNames);
-    IF v_count > 0 THEN
-      IF v_count = 1 THEN
-        RAISE EXCEPTION '_check_new_mark: The group "%" already contains a mark named "%".', v_groupList, v_markName;
-      ELSE
-        RAISE EXCEPTION '_check_new_mark: The groups "%" already contain a mark named "%".', v_groupList, v_markName;
+-- When requested, check that the mark does not exist for any groups.
+    IF p_check_exists THEN
+      SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*) INTO v_groupList, v_count
+        FROM emaj.emaj_mark
+        WHERE mark_name = v_markName
+          AND mark_group = ANY(p_groupNames);
+      IF v_count > 0 THEN
+        IF v_count = 1 THEN
+          RAISE EXCEPTION '_check_new_mark: The group "%" already contains a mark named "%".', v_groupList, v_markName;
+        ELSE
+          RAISE EXCEPTION '_check_new_mark: The groups "%" already contain a mark named "%".', v_groupList, v_markName;
+        END IF;
       END IF;
     END IF;
 --
@@ -7199,7 +7204,7 @@ $_start_groups$
       IF p_mark IS NULL OR p_mark = '' THEN
         p_mark = 'START_%';
       END IF;
-      SELECT emaj._check_new_mark(p_groupNames, p_mark) INTO v_markName;
+      SELECT emaj._check_new_mark(p_groupNames, p_mark, NOT p_resetLog) INTO v_markName;
 -- OK, lock all tables to get a stable point.
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
 --   risk of deadlock.
@@ -15112,7 +15117,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:15389: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:15394: NOTICE:  E-Maj installation: E-Maj successfully installed.
 -- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
 WITH start_time_data AS (
   SELECT clock_timestamp() - lower(verh_time_range) AS duration
