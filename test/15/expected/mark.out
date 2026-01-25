@@ -203,7 +203,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo','comment re
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |          mark_comment          | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+------------------------+--------------------------------+---------------------------+------------------------------
- phil's group#3", | Mark3          |         2004 | f                      |                                |                           | 
+ phil's group#3", | Mark3          |         2003 | f                      |                                |                           | 
  myGroup1         | Mark1          |         3000 | f                      |                                |                         0 | 
  myGroup2         | Mark2          |         3001 | f                      |                                |                         0 | 
  emptyGroup       | MarkInit       |         3002 | f                      |                                |                         0 | 
@@ -251,8 +251,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
    sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -----------------+-------------------+--------------+---------------+----------------
- phil's schema"3 | myTbl2\_col21_seq |         2004 |             1 | f
- phil's schema"3 | phil's"seq\1      |         2004 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         2003 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         2003 |          1000 | f
  myschema1       | myTbl3_col31_seq  |         3000 |             1 | f
  myschema1       | mytbl2b_col20_seq |         3000 |             1 | f
  myschema2       | myTbl3_col31_seq  |         3001 |             1 | f
@@ -296,8 +296,8 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
    tbl_schema    |  tbl_name   | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
 -----------------+-------------+-------------+------------+-----------+----------------------
- phil's schema"3 | myTbl2\     |        2004 |         -1 |         0 |                    0
- phil's schema"3 | phil's tbl1 |        2004 |         -1 |         0 |                    0
+ phil's schema"3 | myTbl2\     |        2003 |         -1 |         0 |                    0
+ phil's schema"3 | phil's tbl1 |        2003 |         -1 |         0 |                    0
  myschema1       | myTbl3      |        3000 |         -1 |         0 |                    0
  myschema1       | mytbl1      |        3000 |         -1 |         0 |                    0
  myschema1       | mytbl2      |        3000 |         -1 |         0 |                    0
@@ -698,7 +698,7 @@ select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
- phil's group#3", | Mark3          |         2004 | f                      |                                        |                           | 
+ phil's group#3", | Mark3          |         2003 | f                      |                                        |                           | 
  myGroup1         | First Mark     |         3000 | f                      |                                        |                         0 | 
  myGroup2         | Mark2          |         3001 | f                      |                                        |                         0 | 
  emptyGroup       | MarkInit       |         3002 | f                      |                                        |                         0 | 
@@ -725,8 +725,8 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
    sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -----------------+-------------------+--------------+---------------+----------------
- phil's schema"3 | myTbl2\_col21_seq |         2004 |             1 | f
- phil's schema"3 | phil's"seq\1      |         2004 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         2003 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         2003 |          1000 | f
  myschema1       | myTbl3_col31_seq  |         3000 |             1 | f
  myschema1       | mytbl2b_col20_seq |         3000 |             1 | f
  myschema2       | myTbl3_col31_seq  |         3001 |             1 | f
@@ -770,8 +770,8 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
    tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
 -----------------+-------------+-------------+----------------------
- phil's schema"3 | myTbl2\     |        2004 |                    0
- phil's schema"3 | phil's tbl1 |        2004 |                    0
+ phil's schema"3 | myTbl2\     |        2003 |                    0
+ phil's schema"3 | phil's tbl1 |        2003 |                    0
  myschema1       | myTbl3      |        3000 |                    0
  myschema1       | mytbl1      |        3000 |                    0
  myschema1       | mytbl2      |        3000 |                    0
@@ -1394,7 +1394,7 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
  emptyGroup       | [3002,)         |          4 |             0
  myGroup1         | [3000,3601)     |         10 |             0
  myGroup2         | [3001,3602)     |         11 |             0
- phil's group#3", | [2004,)         |          3 |             0
+ phil's group#3", | [2003,)         |          3 |             0
 (4 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3600 order by time_id;

@@ -550,9 +550,9 @@ select hist_function, hist_event, hist_object,
 --------------------+-------------------+-------------------+-------------------------------------------------------------------------------------------------------------------+--------------------
  START_GROUP        | BEGIN             | myGroup1          | With log reset                                                                                                    | _regress_emaj_adm2
  START_GROUP        | TIME STAMP SET    | 12016             |                                                                                                                   | _regress_emaj_adm2
- PURGE_HISTORIES    |                   |                   | 56 emaj_hist rows deleted ; 1 group history rows deleted ; 8 relation changes deleted ; 0 rollback events deleted | _regress_emaj_adm2
  LOCK_GROUP         | BEGIN             | myGroup1          |                                                                                                                   | _regress_emaj_adm2
  LOCK_GROUP         | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                    | _regress_emaj_adm2
+ PURGE_HISTORIES    |                   |                   | 56 emaj_hist rows deleted ; 1 group history rows deleted ; 8 relation changes deleted ; 0 rollback events deleted | _regress_emaj_adm2
  SET_MARK_GROUP     | BEGIN             | myGroup1          | M1                                                                                                                | _regress_emaj_adm2
  SET_MARK_GROUP     | END               | myGroup1          | M1                                                                                                                | _regress_emaj_adm2
  START_GROUP        | END               | myGroup1          | 7 tables/sequences processed                                                                                      | _regress_emaj_adm2
