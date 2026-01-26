@@ -597,7 +597,7 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist anymore.
+ERROR:  _stop_groups_exec: The table "myschema2.mytbl4" does not exist anymore.
   rollback to savepoint sp1;
 -- just removing the table solves the issue
   select emaj.emaj_remove_table('myschema2','mytbl4');
@@ -622,7 +622,7 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist anymore.
+ERROR:  _stop_groups_exec: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist anymore.
   rollback to savepoint sp1;
 -- reimporting the group configuration fails if the group is in logging state
     select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
@@ -657,7 +657,7 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist anymore.
+ERROR:  _stop_groups_exec: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist anymore.
   rollback to savepoint sp1;
 -- removing and re-assigning the table solves the issue 
   select emaj.emaj_remove_table('myschema2','mytbl4');
@@ -751,19 +751,19 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The schema "myschema2" does not exist anymore.
+ERROR:  _stop_groups_exec: The schema "myschema2" does not exist anymore.
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop and drop the group
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The schema "myschema2" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl1" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl2" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl5" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl6" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl7" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl8" does not exist anymore.
+WARNING:  _stop_groups_exec: The schema "myschema2" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.myTbl3" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl1" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl2" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl4" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl5" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl6" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl7" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl8" does not exist anymore.
  emaj_force_stop_group 
 -----------------------
                     10

@@ -536,7 +536,7 @@ ERROR:  _check_new_mark: The group "phil's group#3"," already contains a mark na
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist anymore.
+ERROR:  _stop_groups_exec: The table "myschema2.myTbl3" does not exist anymore.
 rollback;
 -- should be OK
 select emaj.emaj_stop_group('myGroup1');
@@ -560,14 +560,14 @@ select emaj.emaj_stop_group('myGroup2','Stop mark');
 
 -- warning, already stopped
 select emaj.emaj_stop_group('myGroup2');
-WARNING:  _stop_groups: The group "myGroup2" is already in IDLE state.
+WARNING:  _stop_groups_init: The group "myGroup2" is already in IDLE state.
  emaj_stop_group 
 -----------------
                0
 (1 row)
 
 select emaj.emaj_stop_group('myGroup2','Stop mark 2');
-WARNING:  _stop_groups: The group "myGroup2" is already in IDLE state.
+WARNING:  _stop_groups_init: The group "myGroup2" is already in IDLE state.
  emaj_stop_group 
 -----------------
                0
@@ -729,7 +729,7 @@ select public.handle_emaj_sequences(2400);
 -- emaj_start_groups() tests
 -----------------------------
 select emaj.emaj_stop_group('myGroup1',NULL);
-WARNING:  _stop_groups: The group "myGroup1" is already in IDLE state.
+WARNING:  _stop_groups_init: The group "myGroup1" is already in IDLE state.
  emaj_stop_group 
 -----------------
                0
@@ -891,7 +891,7 @@ ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
-ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist anymore.
+ERROR:  _stop_groups_exec: The table "myschema2.myTbl3" does not exist anymore.
 rollback;
 -- should be OK
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
@@ -914,7 +914,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 
 -- with warning about group names array content
 select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1']);
-WARNING:  _stop_groups: The groups "myGroup1, myGroup2" are already in IDLE state.
+WARNING:  _stop_groups_init: The groups "myGroup1, myGroup2" are already in IDLE state.
  emaj_stop_groups 
 ------------------
                 0
@@ -940,15 +940,15 @@ SET client_min_messages TO WARNING;
 begin;
   drop schema mySchema2 cascade;
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The schema "myschema2" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl1" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl2" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl5" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl6" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl7" does not exist anymore.
-WARNING:  _stop_groups: The table "myschema2.mytbl8" does not exist anymore.
+WARNING:  _stop_groups_exec: The schema "myschema2" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.myTbl3" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl1" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl2" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl4" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl5" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl6" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl7" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.mytbl8" does not exist anymore.
  emaj_force_stop_group 
 -----------------------
                     10
@@ -960,7 +960,7 @@ RESET client_min_messages;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist anymore.
+WARNING:  _stop_groups_exec: The table "myschema2.myTbl3" does not exist anymore.
  emaj_force_stop_group 
 -----------------------
                     10
@@ -971,7 +971,7 @@ rollback;
 begin;
   drop trigger emaj_log_trg on myschema2.mytbl4;
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist anymore.
+WARNING:  _stop_groups_exec: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist anymore.
  emaj_force_stop_group 
 -----------------------
                     10
@@ -982,7 +982,7 @@ rollback;
 begin;
   drop trigger emaj_trunc_trg on myschema2.mytbl4;
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist anymore.
+WARNING:  _stop_groups_exec: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist anymore.
  emaj_force_stop_group 
 -----------------------
                     10
@@ -1004,7 +1004,7 @@ select emaj.emaj_force_stop_group('myGroup1');
 
 -- warning, already stopped
 select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The group "myGroup2" is already in IDLE state.
+WARNING:  _stop_groups_init: The group "myGroup2" is already in IDLE state.
  emaj_force_stop_group 
 -----------------------
                      0
