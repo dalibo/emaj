@@ -620,12 +620,12 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 9100 order by hist_id;
      hist_function      |    hist_event    |   hist_object    |                                               regexp_replace                                               | hist_user 
 ------------------------+------------------+------------------+------------------------------------------------------------------------------------------------------------+-----------
- SET_MARK_GROUP         | BEGIN            | myGroup2         |                                                                                                            | postgres
+ SET_MARK_GROUP         | BEGIN            | myGroup2         | ADD_SEQ test                                                                                               | postgres
  LOCK_GROUP             | BEGIN            | myGroup2         |                                                                                                            | postgres
  LOCK_GROUP             | END              | myGroup2         | 6 tables locked, 0 deadlock(s)                                                                             | postgres
  SET_MARK_GROUP         | TIME STAMP SET   | 9100             |                                                                                                            | postgres
  SET_MARK_GROUP         | END              | myGroup2         | ADD_SEQ test                                                                                               | postgres
- SET_MARK_GROUP         | BEGIN            | myGroup2         |                                                                                                            | postgres
+ SET_MARK_GROUP         | BEGIN            | myGroup2         | Before ADD_SEQ                                                                                             | postgres
  LOCK_GROUP             | BEGIN            | myGroup2         |                                                                                                            | postgres
  LOCK_GROUP             | END              | myGroup2         | 6 tables locked, 0 deadlock(s)                                                                             | postgres
  SET_MARK_GROUP         | TIME STAMP SET   | 9101             |                                                                                                            | postgres
@@ -638,7 +638,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | END              | myGroup2         | Add myseq2                                                                                                 | postgres
  ASSIGN_SEQUENCE        | SEQUENCE ADDED   | myschema2.myseq2 | To the logging group myGroup2                                                                              | postgres
  ASSIGN_SEQUENCE        | END              |                  | 1 sequences assigned to the group myGroup2                                                                 | postgres
- SET_MARK_GROUP         | BEGIN            | myGroup2         |                                                                                                            | postgres
+ SET_MARK_GROUP         | BEGIN            | myGroup2         | After ADD_SEQ                                                                                              | postgres
  LOCK_GROUP             | BEGIN            | myGroup2         |                                                                                                            | postgres
  LOCK_GROUP             | END              | myGroup2         | 6 tables locked, 0 deadlock(s)                                                                             | postgres
  SET_MARK_GROUP         | TIME STAMP SET   | 9103             |                                                                                                            | postgres
@@ -1024,13 +1024,13 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 9300 order by hist_id;
    hist_function    |    hist_event    |         hist_object          |                                   regexp_replace                                    | hist_user 
 --------------------+------------------+------------------------------+-------------------------------------------------------------------------------------+-----------
- SET_MARK_GROUP     | BEGIN            | myGroup1                     |                                                                                     | postgres
+ SET_MARK_GROUP     | BEGIN            | myGroup1                     | Mk2b                                                                                | postgres
  LOCK_GROUP         | BEGIN            | myGroup1                     |                                                                                     | postgres
  LOCK_GROUP         | END              | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                      | postgres
  SET_MARK_GROUP     | TIME STAMP SET   | 9300                         |                                                                                     | postgres
  CLEANUP_RLBK_STATE |                  | Rollback id 9102             | set to COMMITTED                                                                    | postgres
  SET_MARK_GROUP     | END              | myGroup1                     | Mk2b                                                                                | postgres
- SET_MARK_GROUP     | BEGIN            | myGroup1                     |                                                                                     | postgres
+ SET_MARK_GROUP     | BEGIN            | myGroup1                     | Before_remove                                                                       | postgres
  LOCK_GROUP         | BEGIN            | myGroup1                     |                                                                                     | postgres
  LOCK_GROUP         | END              | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                      | postgres
  SET_MARK_GROUP     | TIME STAMP SET   | 9301                         |                                                                                     | postgres
@@ -1045,7 +1045,7 @@ select hist_function, hist_event, hist_object,
  REMOVE_SEQUENCE    | END              |                              | 1 sequences removed from their groups                                               | postgres
  SNAP_GROUP         | BEGIN            | myGroup1                     | /tmp/emaj_17/alter_logging/snap                                                     | postgres
  SNAP_GROUP         | END              | myGroup1                     | 6 tables/sequences processed                                                        | postgres
- SET_MARK_GROUP     | BEGIN            | myGroup1                     |                                                                                     | postgres
+ SET_MARK_GROUP     | BEGIN            | myGroup1                     | After_remove                                                                        | postgres
  LOCK_GROUP         | BEGIN            | myGroup1                     |                                                                                     | postgres
  LOCK_GROUP         | END              | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                      | postgres
  SET_MARK_GROUP     | TIME STAMP SET   | 9303                         |                                                                                     | postgres
@@ -1583,12 +1583,12 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 9500 order by hist_id;
      hist_function      |   hist_event   |   hist_object    |                                          regexp_replace                                           | hist_user 
 ------------------------+----------------+------------------+---------------------------------------------------------------------------------------------------+-----------
- SET_MARK_GROUP         | BEGIN          | myGroup2         |                                                                                                   | postgres
+ SET_MARK_GROUP         | BEGIN          | myGroup2         | ADD_TBL test                                                                                      | postgres
  LOCK_GROUP             | BEGIN          | myGroup2         |                                                                                                   | postgres
  LOCK_GROUP             | END            | myGroup2         | 6 tables locked, 0 deadlock(s)                                                                    | postgres
  SET_MARK_GROUP         | TIME STAMP SET | 9500             |                                                                                                   | postgres
  SET_MARK_GROUP         | END            | myGroup2         | ADD_TBL test                                                                                      | postgres
- SET_MARK_GROUP         | BEGIN          | myGroup2         |                                                                                                   | postgres
+ SET_MARK_GROUP         | BEGIN          | myGroup2         | Before ADD_TBL                                                                                    | postgres
  LOCK_GROUP             | BEGIN          | myGroup2         |                                                                                                   | postgres
  LOCK_GROUP             | END            | myGroup2         | 6 tables locked, 0 deadlock(s)                                                                    | postgres
  SET_MARK_GROUP         | TIME STAMP SET | 9501             |                                                                                                   | postgres
@@ -1601,12 +1601,12 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | END            | myGroup2         | Add mytbl7                                                                                        | postgres
  ASSIGN_TABLE           | TABLE ADDED    | myschema2.mytbl7 | To the logging group myGroup2                                                                     | postgres
  ASSIGN_TABLE           | END            |                  | 1 tables assigned to the group myGroup2                                                           | postgres
- SET_MARK_GROUP         | BEGIN          | myGroup2         |                                                                                                   | postgres
+ SET_MARK_GROUP         | BEGIN          | myGroup2         | Just after ADD_TBL                                                                                | postgres
  LOCK_GROUP             | BEGIN          | myGroup2         |                                                                                                   | postgres
  LOCK_GROUP             | END            | myGroup2         | 7 tables locked, 0 deadlock(s)                                                                    | postgres
  SET_MARK_GROUP         | TIME STAMP SET | 9504             |                                                                                                   | postgres
  SET_MARK_GROUP         | END            | myGroup2         | Just after ADD_TBL                                                                                | postgres
- SET_MARK_GROUP         | BEGIN          | myGroup2         |                                                                                                   | postgres
+ SET_MARK_GROUP         | BEGIN          | myGroup2         | After ADD_TBL                                                                                     | postgres
  LOCK_GROUP             | BEGIN          | myGroup2         |                                                                                                   | postgres
  LOCK_GROUP             | END            | myGroup2         | 7 tables locked, 0 deadlock(s)                                                                    | postgres
  SET_MARK_GROUP         | TIME STAMP SET | 9505             |                                                                                                   | postgres
@@ -2264,7 +2264,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 9700 order by hist_id;
      hist_function      |   hist_event   |         hist_object          |                                                     regexp_replace                                                     | hist_user 
 ------------------------+----------------+------------------------------+------------------------------------------------------------------------------------------------------------------------+-----------
- SET_MARK_GROUP         | BEGIN          | myGroup1                     |                                                                                                                        | postgres
+ SET_MARK_GROUP         | BEGIN          | myGroup1                     | Mk2c                                                                                                                   | postgres
  LOCK_GROUP             | BEGIN          | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP             | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP         | TIME STAMP SET | 9700                         |                                                                                                                        | postgres
@@ -2281,7 +2281,7 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES          | END            |                              | 2 tables removed from their groups                                                                                     | postgres
  SNAP_GROUP             | BEGIN          | myGroup1                     | /tmp/emaj_17/alter_logging/snap                                                                                        | postgres
  SNAP_GROUP             | END            | myGroup1                     | 5 tables/sequences processed                                                                                           | postgres
- SET_MARK_GROUP         | BEGIN          | myGroup1                     |                                                                                                                        | postgres
+ SET_MARK_GROUP         | BEGIN          | myGroup1                     | After_2_tables_removed                                                                                                 | postgres
  LOCK_GROUP             | BEGIN          | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP             | END            | myGroup1                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP         | TIME STAMP SET | 9703                         |                                                                                                                        | postgres

@@ -451,22 +451,22 @@ select hist_id, hist_function, hist_event, hist_object,
     3018 | SET_MARK_GROUP  | BEGIN          | emptyGroup        | MarkInit                        | postgres
     3019 | SET_MARK_GROUP  | END            | emptyGroup        | MarkInit                        | postgres
     3020 | START_GROUP     | END            | emptyGroup        | 0 tables/sequences processed    | postgres
-    3024 | SET_MARK_GROUP  | BEGIN          | myGroup1          |                                 | postgres
+    3024 | SET_MARK_GROUP  | BEGIN          | myGroup1          | SM1                             | postgres
     3025 | LOCK_GROUP      | BEGIN          | myGroup1          |                                 | postgres
     3026 | LOCK_GROUP      | END            | myGroup1          | 5 tables locked, 0 deadlock(s)  | postgres
     3027 | SET_MARK_GROUP  | TIME STAMP SET | 3003              |                                 | postgres
     3028 | SET_MARK_GROUP  | END            | myGroup1          | SM1                             | postgres
-    3029 | SET_MARK_GROUP  | BEGIN          | myGroup2          |                                 | postgres
+    3029 | SET_MARK_GROUP  | BEGIN          | myGroup2          | SM1                             | postgres
     3030 | LOCK_GROUP      | BEGIN          | myGroup2          |                                 | postgres
     3031 | LOCK_GROUP      | END            | myGroup2          | 8 tables locked, 0 deadlock(s)  | postgres
     3032 | SET_MARK_GROUP  | TIME STAMP SET | 3004              |                                 | postgres
     3033 | SET_MARK_GROUP  | END            | myGroup2          | SM1                             | postgres
-    3034 | SET_MARK_GROUP  | BEGIN          | myGroup2          |                                 | postgres
+    3034 | SET_MARK_GROUP  | BEGIN          | myGroup2          | phil's mark #1                  | postgres
     3035 | LOCK_GROUP      | BEGIN          | myGroup2          |                                 | postgres
     3036 | LOCK_GROUP      | END            | myGroup2          | 8 tables locked, 0 deadlock(s)  | postgres
     3037 | SET_MARK_GROUP  | TIME STAMP SET | 3005              |                                 | postgres
     3038 | SET_MARK_GROUP  | END            | myGroup2          | phil's mark #1                  | postgres
-    3039 | SET_MARK_GROUP  | BEGIN          | emptyGroup        |                                 | postgres
+    3039 | SET_MARK_GROUP  | BEGIN          | emptyGroup        | SM1                             | postgres
     3040 | LOCK_GROUP      | BEGIN          | emptyGroup        |                                 | postgres
     3041 | LOCK_GROUP      | END            | emptyGroup        | 0 tables locked, 0 deadlock(s)  | postgres
     3042 | SET_MARK_GROUP  | TIME STAMP SET | 3006              |                                 | postgres
@@ -486,7 +486,7 @@ select hist_id, hist_function, hist_event, hist_object,
     3057 | LOCK_GROUP      | END            | myGroup2          | 8 tables locked, 0 deadlock(s)  | postgres
     3058 | SET_MARK_GROUP  | TIME STAMP SET | 3009              |                                 | postgres
     3059 | SET_MARK_GROUP  | END            | myGroup2          | MARK_%                          | postgres
-    3060 | SET_MARK_GROUP  | BEGIN          | myGroup1          |                                 | postgres
+    3060 | SET_MARK_GROUP  | BEGIN          | myGroup1          | Foo%Bar                         | postgres
     3061 | LOCK_GROUP      | BEGIN          | myGroup1          |                                 | postgres
     3062 | LOCK_GROUP      | END            | myGroup1          | 5 tables locked, 0 deadlock(s)  | postgres
     3063 | SET_MARK_GROUP  | TIME STAMP SET | 3010              |                                 | postgres
@@ -502,17 +502,17 @@ select hist_id, hist_function, hist_event, hist_object,
     3076 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
     3077 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
     3078 | SET_MARK_GROUPS | TIME STAMP SET | 3012              |                                 | postgres
-    3079 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 |                                 | postgres
+    3079 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | MARK_%                          | postgres
     3080 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 |                                 | postgres
     3081 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
     3082 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
     3083 | SET_MARK_GROUPS | TIME STAMP SET | 3013              |                                 | postgres
-    3084 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 |                                 | postgres
+    3084 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | MARK_%                          | postgres
     3085 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 |                                 | postgres
     3086 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
     3087 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
     3088 | SET_MARK_GROUPS | TIME STAMP SET | 3014              |                                 | postgres
-    3089 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 |                                 | postgres
+    3089 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | MARK_%                          | postgres
     3090 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | Bar%Foo                         | postgres
     3091 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
     3092 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
@@ -1128,12 +1128,12 @@ select hist_id, hist_function, hist_event, hist_object,
     3430 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1          | 0 marks deleted ; SM3 is now the initial mark            | postgres
     3431 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                           | postgres
     3432 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1          | 0 marks deleted ; SM3 is now the initial mark            | postgres
-    3433 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                          | postgres
+    3433 | SET_MARK_GROUP           | BEGIN              | emptyGroup        | EGM3                                                     | postgres
     3434 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                          | postgres
     3435 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                           | postgres
     3436 | SET_MARK_GROUP           | TIME STAMP SET     | 3400              |                                                          | postgres
     3437 | SET_MARK_GROUP           | END                | emptyGroup        | EGM3                                                     | postgres
-    3438 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                          | postgres
+    3438 | SET_MARK_GROUP           | BEGIN              | emptyGroup        | EGM4                                                     | postgres
     3439 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                          | postgres
     3440 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                           | postgres
     3441 | SET_MARK_GROUP           | TIME STAMP SET     | 3401              |                                                          | postgres
@@ -1143,12 +1143,12 @@ select hist_id, hist_function, hist_event, hist_object,
     3445 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup2          | SM2                                                      | postgres
     3446 | DELETE_BEFORE_MARK_GROUP | END                | myGroup2          | 8 marks deleted ; SM2 is now the initial mark            | postgres
     3447 |                          | INSERTED PARAMETER | history_retention | @ 0                                                      | postgres
-    3448 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  |                                                          | postgres
+    3448 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  | Mark4                                                    | postgres
     3449 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                          | postgres
     3450 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                           | postgres
     3451 | SET_MARK_GROUP           | TIME STAMP SET     | 3402              |                                                          | postgres
     3452 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark4                                                    | postgres
-    3453 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  |                                                          | postgres
+    3453 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  | Mark5                                                    | postgres
     3454 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                          | postgres
     3455 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                           | postgres
     3456 | SET_MARK_GROUP           | TIME STAMP SET     | 3403              |                                                          | postgres

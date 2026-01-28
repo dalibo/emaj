@@ -339,7 +339,7 @@ select hist_id, hist_function, hist_event, hist_object,
   from (select * from emaj.emaj_hist where hist_id >= 5200 order by hist_id) as t;
  hist_id |   hist_function    |     hist_event     |         hist_object          |         regexp_replace         | hist_user 
 ---------+--------------------+--------------------+------------------------------+--------------------------------+-----------
-    5227 | SET_MARK_GROUP     | BEGIN              | myGroup1                     |                                | postgres
+    5227 | SET_MARK_GROUP     | BEGIN              | myGroup1                     | Mark21                         | postgres
     5228 | LOCK_GROUP         | BEGIN              | myGroup1                     |                                | postgres
     5229 | LOCK_GROUP         | END                | myGroup1                     | 5 tables locked, 0 deadlock(s) | postgres
     5230 | SET_MARK_GROUP     | TIME STAMP SET     | 5202                         |                                | postgres
@@ -1389,22 +1389,22 @@ select hist_id, hist_function, hist_event, hist_object,
     5413 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup2                     | 2 generated SQL statements                                                                       | postgres
     5414 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_18/misc/sql_script                                  | postgres
     5415 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup2                     | 2 generated SQL statements                                                                       | postgres
-    5416 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                                  | postgres
+    5416 | SET_MARK_GROUP             | BEGIN          | myGroup1                     | Dump_changes_tests_M1                                                                            | postgres
     5417 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                                  | postgres
     5418 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
     5419 | SET_MARK_GROUP             | TIME STAMP SET | 5400                         |                                                                                                  | postgres
     5420 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M1                                                                            | postgres
-    5421 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                                  | postgres
+    5421 | SET_MARK_GROUP             | BEGIN          | myGroup1                     | Dump_changes_tests_M2                                                                            | postgres
     5422 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                                  | postgres
     5423 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
     5424 | SET_MARK_GROUP             | TIME STAMP SET | 5401                         |                                                                                                  | postgres
     5425 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M2                                                                            | postgres
-    5426 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                                  | postgres
+    5426 | SET_MARK_GROUP             | BEGIN          | myGroup1                     | Dump_changes_tests_M3                                                                            | postgres
     5427 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                                  | postgres
     5428 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
     5429 | SET_MARK_GROUP             | TIME STAMP SET | 5402                         |                                                                                                  | postgres
     5430 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M3                                                                            | postgres
-    5431 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                                  | postgres
+    5431 | SET_MARK_GROUP             | BEGIN          | myGroup1                     | Dump_changes_tests_M4                                                                            | postgres
     5432 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                                  | postgres
     5433 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
     5434 | SET_MARK_GROUP             | TIME STAMP SET | 5403                         |                                                                                                  | postgres

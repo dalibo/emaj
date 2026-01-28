@@ -2596,7 +2596,7 @@ $_assign_tables$
 --   vacuum operation.
         PERFORM emaj._lock_groups(ARRAY[p_group], 'ROW EXCLUSIVE', FALSE);
 --   And set the mark, using the same time identifier.
-        PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+        PERFORM emaj._set_mark_groups_exec(ARRAY[p_group], v_markName, NULL, FALSE, v_timeId);
       END IF;
 -- Create the new log schema, if it doesn't exist yet.
       v_logSchema = 'emaj_' || p_schema;
@@ -2853,7 +2853,7 @@ $_remove_tables$
 --  vacuum operation.
         PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
 -- And set the mark, using the same time identifier.
-        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+        PERFORM emaj._set_mark_groups_exec(v_loggingGroups, v_markName, NULL, FALSE, v_timeId);
       END IF;
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
@@ -3025,7 +3025,7 @@ $_move_tables$
 --  vacuum operation.
         PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
 -- ... and set the mark, using the same time identifier.
-        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, TRUE, TRUE, NULL, v_timeId);
+        PERFORM emaj._set_mark_groups_exec(v_loggingGroups, v_markName, NULL, TRUE, v_timeId);
       END IF;
 -- Effectively move each table.
       FOREACH v_oneTable IN ARRAY p_tables
@@ -3181,7 +3181,7 @@ $_modify_tables$
 --  vacuum operation.
         PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
 -- And set the mark, using the same time identifier.
-        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, TRUE, TRUE, NULL, v_timeId);
+        PERFORM emaj._set_mark_groups_exec(v_loggingGroups, v_markName, NULL, TRUE, v_timeId);
       END IF;
 -- Build the SQL conditions to use in order to build the array of "triggers to ignore at rollback time" for each table.
       IF v_ignoredTriggers IS NOT NULL OR v_ignoredTrgProfiles IS NOT NULL THEN
@@ -4363,7 +4363,7 @@ $_assign_sequences$
 -- vacuum operation,
         PERFORM emaj._lock_groups(ARRAY[p_group], 'ROW EXCLUSIVE', FALSE);
 -- ... and set the mark, using the same time identifier.
-        PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+        PERFORM emaj._set_mark_groups_exec(ARRAY[p_group], v_markName, NULL, FALSE, v_timeId);
       END IF;
 -- Effectively process each sequence.
       FOREACH v_oneSequence IN ARRAY p_sequences
@@ -4520,7 +4520,7 @@ $_remove_sequences$
 -- vacuum operation,
         PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
 -- ... and set the mark, using the same time identifier.
-        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, FALSE, TRUE, NULL, v_timeId);
+        PERFORM emaj._set_mark_groups_exec(v_loggingGroups, v_markName, NULL, FALSE, v_timeId);
       END IF;
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
@@ -4671,7 +4671,7 @@ $_move_sequences$
 -- vacuum operation,
         PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
 -- ... and set the mark, using the same time identifier.
-        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, TRUE, TRUE, NULL, v_timeId);
+        PERFORM emaj._set_mark_groups_exec(v_loggingGroups, v_markName, NULL, TRUE, v_timeId);
       END IF;
 -- Effectively move each sequence.
       FOREACH v_oneSequence IN ARRAY p_sequences
@@ -7024,7 +7024,7 @@ $_import_groups_conf_exec$
 -- vacuum operation.
       PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', TRUE);
 -- And set the mark, using the same time identifier.
-      PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, TRUE, TRUE, NULL, v_timeId);
+      PERFORM emaj._set_mark_groups_exec(v_loggingGroups, v_markName, NULL, TRUE, v_timeId);
     END IF;
 -- Process the tmp_app_table and tmp_app_sequence content change.
     PERFORM emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId, v_groupsToDrop);
@@ -7442,7 +7442,7 @@ $_start_groups_exec$
         WHERE grph_group = ANY (p_groupNames)
           AND upper_inf(grph_time_range);
 -- Set the first mark for each group.
-      PERFORM emaj._set_mark_groups(p_groupNames, p_mark, NULL, p_multiGroup, TRUE, NULL, p_timeId);
+      PERFORM emaj._set_mark_groups_exec(p_groupNames, p_mark, NULL, p_multiGroup, p_timeId);
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -7701,7 +7701,7 @@ $_stop_groups_exec$
       END LOOP;
       IF NOT p_isForced THEN
 -- If the function is not called by emaj_force_stop_group(), set the stop mark for each group,
-        PERFORM emaj._set_mark_groups(p_groupNames, p_mark, NULL, p_multiGroup, TRUE, NULL, p_timeId);
+        PERFORM emaj._set_mark_groups_exec(p_groupNames, p_mark, NULL, p_multiGroup, p_timeId);
 -- and set the number of log rows to 0 for these marks.
         UPDATE emaj.emaj_mark m
           SET mark_log_rows_before_next = 0
@@ -7848,31 +7848,17 @@ $emaj_set_mark_group$
 -- '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
 -- if omitted or if null or '', the mark is set to 'MARK_%', % representing the current timestamp,
   DECLARE
-    v_markName               TEXT;
-    v_nbRel                  INT;
+    v_groupNames             TEXT[] = ARRAY[p_groupName];
+    v_timeId                 BIGINT;
   BEGIN
--- Insert a BEGIN event into the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('SET_MARK_GROUP', 'BEGIN', p_groupName, v_markName);
--- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                    p_checkLogging := TRUE);
--- Check if the emaj group is OK.
-    PERFORM 0
-      FROM emaj._verify_groups(array[p_groupName], TRUE);
--- Check and process the supplied mark name.
-    SELECT emaj._check_new_mark(array[p_groupName], p_mark) INTO v_markName;
--- OK, lock all tables to get a stable point.
--- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
--- vacuum operation.
-    PERFORM emaj._lock_groups(array[p_groupName],'ROW EXCLUSIVE',FALSE);
--- Effectively set the mark using the internal _set_mark_groups() function.
-    SELECT emaj._set_mark_groups(array[p_groupName], v_markName, p_comment, FALSE, FALSE) INTO v_nbRel;
--- Insert a END event into the history.
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('SET_MARK_GROUP', 'END', p_groupName, v_markName);
---
-    RETURN v_nbRel;
+-- Initialize the set mark group operation.
+    SELECT * FROM emaj._set_mark_groups_init(v_groupNames, p_mark, FALSE)
+      INTO v_groupNames, p_mark;
+-- Perform the groups lock step.
+    SELECT emaj._set_mark_groups_lock(v_groupNames, FALSE)
+      INTO v_timeId;
+-- Execute the mark set operation.
+    RETURN emaj._set_mark_groups_exec(v_groupNames, p_mark, p_comment, FALSE, v_timeId, FALSE);
   END;
 $emaj_set_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_set_mark_group(TEXT,TEXT,TEXT) IS
@@ -7887,14 +7873,36 @@ $emaj_set_mark_groups$
 -- '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
 -- if omitted or if null or '', the mark is set to 'MARK_%', % representing the current timestamp
   DECLARE
-    v_markName               TEXT;
-    v_nbTblseq               INT = 0;
+    v_timeId                 BIGINT;
+  BEGIN
+-- Initialize the set mark groups operation.
+    SELECT * FROM emaj._set_mark_groups_init(p_groupNames, p_mark, TRUE)
+      INTO p_groupNames, p_mark;
+-- Perform the groups lock step.
+    SELECT emaj._set_mark_groups_lock(p_groupNames, TRUE)
+      INTO v_timeId;
+-- Execute the mark set operation.
+    RETURN emaj._set_mark_groups_exec(p_groupNames, p_mark, p_comment, TRUE, v_timeId, FALSE);
+  END;
+$emaj_set_mark_groups$;
+COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT,TEXT) IS
+$$Sets a mark on several E-Maj groups.$$;
+
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups_init(INOUT p_groupNames TEXT[], INOUT p_mark TEXT, p_multiGroup BOOLEAN)
+LANGUAGE plpgsql AS
+$_set_mark_groups_init$
+-- This function performs the initial step of emaj_set_mark_group() and emaj_set_mark_groups() functions.
+-- It checks that every conditions to set a mark are met.
+-- Input: array of group names, name of the mark to set, boolean indicating whether the function is called by a multi group function
+-- Output: adjusted group names array and adjusted mark name
   BEGIN
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(p_groupNames,','), p_mark);
+      VALUES (CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS'
+                   ELSE 'SET_MARK_GROUP' END,
+              'BEGIN', array_to_string(p_groupNames,','), p_mark);
 -- Check the group names.
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := TRUE, p_lockGroups := TRUE, p_checkLogging := TRUE)
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkLogging := TRUE)
       INTO p_groupNames;
 -- Process the groups.
     IF p_groupNames IS NOT NULL THEN
@@ -7902,151 +7910,156 @@ $emaj_set_mark_groups$
       PERFORM 0
         FROM emaj._verify_groups(p_groupNames, TRUE);
 -- Check and process the supplied mark name.
-      SELECT emaj._check_new_mark(p_groupNames, p_mark) INTO v_markName;
--- OK, lock all tables to get a stable point.
--- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
--- vacuum operation.
-      PERFORM emaj._lock_groups(p_groupNames,'ROW EXCLUSIVE',TRUE);
--- Effectively set the mark using the internal _set_mark_groups() function.
-      SELECT emaj._set_mark_groups(p_groupNames, v_markName, p_comment, TRUE, FALSE) INTO v_nbTblseq;
+      SELECT emaj._check_new_mark(p_groupNames, p_mark) INTO p_mark;
     END IF;
--- Insert a END event into the history.
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('SET_MARK_GROUPS', 'END', array_to_string(p_groupNames,','), p_mark);
---
-    RETURN v_nbTblseq;
+    RETURN;
   END;
-$emaj_set_mark_groups$;
-COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT,TEXT) IS
-$$Sets a mark on several E-Maj groups.$$;
+$_set_mark_groups_init$;
 
-CREATE OR REPLACE FUNCTION emaj._set_mark_groups(p_groupNames TEXT[], p_mark TEXT, p_comment TEXT, p_multiGroup BOOLEAN,
-                                                 p_eventToRecord BOOLEAN, p_loggedRlbkTargetMark TEXT DEFAULT NULL,
-                                                 p_timeId BIGINT DEFAULT NULL, p_dblinkSchema TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups_lock(p_groupNames TEXT[], p_multiGroup BOOLEAN)
+RETURNS BIGINT
+LANGUAGE plpgsql AS
+$_set_mark_groups_lock$
+-- This function materializes a stable point for the operation. It locks all tables of processed groups and set an E-Maj time-stamp.
+-- One sets the locks at the beginning of the operation to decrease the risk of deadlock.
+-- Input: array of group names, boolean indicating whether the function is called by a multi group function,
+-- Output: timeId of the mark set
+  DECLARE
+    v_timeId                 BIGINT;
+  BEGIN
+    IF p_groupNames IS NOT NULL THEN
+-- Lock all tables to get a stable point.
+      PERFORM emaj._lock_groups(p_groupNames, 'ROW EXCLUSIVE', p_multiGroup);
+-- Get a time stamp id of type 'M' for the operation.
+      SELECT emaj._set_time_stamp(CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END,
+                                  'M') INTO v_timeId;
+    END IF;
+    RETURN v_timeId;
+  END;
+$_set_mark_groups_lock$;
+
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups_exec(p_groupNames TEXT[], p_mark TEXT, p_comment TEXT, p_multiGroup BOOLEAN,
+                                                 p_timeId BIGINT, p_beginEventToRecord BOOLEAN DEFAULT TRUE,
+                                                 p_dblinkSchema TEXT DEFAULT NULL, p_loggedRlbkTargetMark TEXT DEFAULT NULL)
 RETURNS INT LANGUAGE plpgsql AS
-$_set_mark_groups$
--- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
+$_set_mark_groups_exec$
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the groups array.
 -- It also updates 1) the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into
 -- all log tables between this previous mark and the new mark and 2) the current log session.
+-- The function also cleans up the rollbacks state.
 -- The function is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks,
 -- like functions that start, stop or rollback groups.
 -- Input: group names array, mark to set, comment,
 --        boolean indicating whether the function is called by a multi group function
---        boolean indicating whether the event has to be recorded into the emaj_hist table
---        name of the rollback target mark when this mark is created by the logged_rollback functions (NULL by default)
---        time stamp identifier to reuse (NULL by default) (this parameter is set when the mark is a rollback start mark)
+--        time stamp identifier
+--        boolean indicating whether the BEGIN event has to be recorded into the emaj_hist table (TRUE by default)
 --        dblink schema when the mark is set by a rollback operation and dblink connection are used (NULL by default)
+--        name of the rollback target mark when this mark is created by the logged_rollback functions (NULL by default)
 -- Output: number of processed tables and sequences
--- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
     v_function               TEXT;
-    v_nbSeq                  INT;
+    v_nbSeq                  INT = 0;
+    v_nbTbl                  INT = 0;
     v_group                  TEXT;
     v_lsesTimeRange          INT8RANGE;
     v_latestMarkTimeId       BIGINT;
     v_nbChanges              BIGINT;
-    v_nbTbl                  INT;
     v_stmt                   TEXT;
     r_seq                    RECORD;
     r_currSeq                emaj.emaj_sequence%ROWTYPE;
   BEGIN
     v_function = CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END;
 -- If requested by the calling function, record the set mark begin in emaj_hist.
-    IF p_eventToRecord THEN
+    IF p_beginEventToRecord THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES (v_function, 'BEGIN', array_to_string(p_groupNames,','), p_mark);
     END IF;
--- Get the time stamp of the operation, if not supplied as input parameter.
-    IF p_timeId IS NULL THEN
-      SELECT emaj._set_time_stamp(v_function, 'M') INTO p_timeId;
-    END IF;
+    IF p_groupNames IS NOT NULL THEN
 -- Record sequences state as early as possible (no lock protects them from other transactions activity).
 -- The join on pg_namespace and pg_class filters the potentially dropped application sequences.
-    v_nbSeq = 0;
-    FOR r_seq IN
-      SELECT rel_schema, rel_tblseq
-        FROM emaj.emaj_relation
-             JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
-             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
-        WHERE upper_inf(rel_time_range)
-          AND rel_kind = 'S'
-          AND rel_group = ANY (p_groupNames)
-    LOOP
-      r_currSeq = emaj._get_current_seq(r_seq.rel_schema, r_seq.rel_tblseq, p_timeId);
-      INSERT INTO emaj.emaj_sequence VALUES (r_currSeq.*);
-      v_nbSeq = v_nbSeq + 1;
-    END LOOP;
+      FOR r_seq IN
+        SELECT rel_schema, rel_tblseq
+          FROM emaj.emaj_relation
+               JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+          WHERE upper_inf(rel_time_range)
+            AND rel_kind = 'S'
+            AND rel_group = ANY (p_groupNames)
+      LOOP
+        r_currSeq = emaj._get_current_seq(r_seq.rel_schema, r_seq.rel_tblseq, p_timeId);
+        INSERT INTO emaj.emaj_sequence VALUES (r_currSeq.*);
+        v_nbSeq = v_nbSeq + 1;
+      END LOOP;
 -- Record the number of log rows for the previous last mark of each selected group.
-    FOREACH v_group IN ARRAY p_groupNames
-    LOOP
+      FOREACH v_group IN ARRAY p_groupNames
+      LOOP
 -- Get the latest log session of the tables group.
-      SELECT lses_time_range
-        INTO v_lsesTimeRange
-        FROM emaj.emaj_log_session
-        WHERE lses_group = v_group
-        ORDER BY lses_time_range DESC
-        LIMIT 1;
-      IF p_timeId > lower(v_lsesTimeRange) OR lower(v_lsesTimeRange) IS NULL THEN
+        SELECT lses_time_range
+          INTO v_lsesTimeRange
+          FROM emaj.emaj_log_session
+          WHERE lses_group = v_group
+          ORDER BY lses_time_range DESC
+          LIMIT 1;
+        IF p_timeId > lower(v_lsesTimeRange) OR lower(v_lsesTimeRange) IS NULL THEN
 -- This condition excludes marks set at start_group time, for which there is nothing to do.
 --   The lower bound may be null when the log session has been created by the emaj version upgrade processing and the last start_group
 --   call has not been found into the history.
 -- Get the latest mark for the tables group.
-        SELECT mark_time_id
-          INTO v_latestMarkTimeId
-          FROM emaj.emaj_mark
-          WHERE mark_group = v_group
-          ORDER BY mark_time_id DESC
-          LIMIT 1;
+          SELECT mark_time_id
+            INTO v_latestMarkTimeId
+            FROM emaj.emaj_mark
+            WHERE mark_group = v_group
+            ORDER BY mark_time_id DESC
+            LIMIT 1;
 -- Compute the number of changes for tables since this latest mark
-        SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
-          INTO v_nbChanges
-          FROM emaj.emaj_relation
-          WHERE rel_group = v_group
-            AND rel_kind = 'r'
-            AND upper_inf(rel_time_range);
+          SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
+            INTO v_nbChanges
+            FROM emaj.emaj_relation
+            WHERE rel_group = v_group
+              AND rel_kind = 'r'
+              AND upper_inf(rel_time_range);
 -- Update the latest mark statistics.
-        UPDATE emaj.emaj_mark
-          SET mark_log_rows_before_next = v_nbChanges
-          WHERE mark_group = v_group
-            AND mark_time_id = v_latestMarkTimeId;
+          UPDATE emaj.emaj_mark
+            SET mark_log_rows_before_next = v_nbChanges
+            WHERE mark_group = v_group
+              AND mark_time_id = v_latestMarkTimeId;
 -- Update the current log session statistics.
-        UPDATE emaj.emaj_log_session
-          SET lses_marks = lses_marks + 1,
-              lses_log_rows = lses_log_rows + v_nbChanges
-          WHERE lses_group = v_group
-            AND lses_time_range = v_lsesTimeRange;
-      END IF;
-    END LOOP;
+          UPDATE emaj.emaj_log_session
+            SET lses_marks = lses_marks + 1,
+                lses_log_rows = lses_log_rows + v_nbChanges
+            WHERE lses_group = v_group
+              AND lses_time_range = v_lsesTimeRange;
+        END IF;
+      END LOOP;
 -- For tables currently belonging to the groups, record their state and their log sequence last_value.
-    INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
-      SELECT rel_schema, rel_tblseq, p_timeId, reltuples, relpages, last_value
-        FROM emaj.emaj_relation
-             LEFT OUTER JOIN pg_catalog.pg_namespace ON (nspname = rel_schema)
-             LEFT OUTER JOIN pg_catalog.pg_class ON (relname = rel_tblseq AND relnamespace = pg_namespace.oid),
-             LATERAL emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence) AS last_value
-        WHERE upper_inf(rel_time_range)
-          AND rel_group = ANY (p_groupNames)
-          AND rel_kind = 'r';
-    GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
+      INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
+        SELECT rel_schema, rel_tblseq, p_timeId, reltuples, relpages, last_value
+          FROM emaj.emaj_relation
+               LEFT OUTER JOIN pg_catalog.pg_namespace ON (nspname = rel_schema)
+               LEFT OUTER JOIN pg_catalog.pg_class ON (relname = rel_tblseq AND relnamespace = pg_namespace.oid),
+               LATERAL emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence) AS last_value
+          WHERE upper_inf(rel_time_range)
+            AND rel_group = ANY (p_groupNames)
+            AND rel_kind = 'r';
+      GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
 -- Record the mark for each group into the emaj_mark table.
-    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_rlbk_protected, mark_comment, mark_logged_rlbk_target_mark)
-      SELECT group_name, p_mark, p_timeId, FALSE, p_comment, p_loggedRlbkTargetMark
-        FROM emaj.emaj_group
-        WHERE group_name = ANY(p_groupNames)
-        ORDER BY group_name;
+      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_rlbk_protected, mark_comment, mark_logged_rlbk_target_mark)
+        SELECT group_name, p_mark, p_timeId, FALSE, p_comment, p_loggedRlbkTargetMark
+          FROM emaj.emaj_group
+          WHERE group_name = ANY(p_groupNames)
+          ORDER BY group_name;
 -- Before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table.
 -- It uses a dblink connection when the mark to set comes from a rollback operation that uses dblink connections.
-    v_stmt = 'SELECT emaj._cleanup_rollback_state()';
-    PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, p_dblinkSchema);
--- If requested by the calling function, record the set mark end into emaj_hist.
-    IF p_eventToRecord THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES (v_function, 'END', array_to_string(p_groupNames,','), p_mark);
+      v_stmt = 'SELECT emaj._cleanup_rollback_state()';
+      PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, p_dblinkSchema);
     END IF;
+-- Record the set mark end into emaj_hist.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'END', array_to_string(p_groupNames,','), p_mark);
 --
     RETURN v_nbSeq + v_nbTbl;
   END;
-$_set_mark_groups$;
+$_set_mark_groups_exec$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT)
 RETURNS BOOLEAN LANGUAGE SQL STABLE AS
@@ -10085,7 +10098,7 @@ $_rlbk_start_mark$
 -- If the rollback is "logged", set a mark named with the pattern: 'RLBK_<rollback_id>_START'.
       v_markName = 'RLBK_' || p_rlbkId::text || '_START';
       v_markComment = 'Automatically set at rollback to mark ' || v_mark || ' start';
-      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_markComment, p_multiGroup, TRUE, NULL, v_timeId, v_dblinkSchema);
+      PERFORM emaj._set_mark_groups_exec(v_groupNames, v_markName, v_markComment, p_multiGroup, v_timeId, TRUE, v_dblinkSchema);
     END IF;
 --
     RETURN;
@@ -10507,7 +10520,7 @@ $_rlbk_end$
       v_stmt = 'SELECT emaj._set_time_stamp(''' || v_function || ''', ''M'')';
       SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_timeId;
 --   ... and effectively set the mark.
-      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_markComment, p_multiGroup, TRUE, v_mark, v_timeId, v_dblinkSchema);
+      PERFORM emaj._set_mark_groups_exec(v_groupNames, v_markName, v_markComment, p_multiGroup, v_timeId, TRUE, v_dblinkSchema, v_mark);
     END IF;
 -- Return and trace the execution report
     FOREACH v_msg IN ARRAY v_messages

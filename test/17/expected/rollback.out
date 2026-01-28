@@ -2894,12 +2894,12 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4030 | SET_MARK_GROUP         | BEGIN                      | myGroup2                     | Mark21                                                                     | postgres
     4031 | SET_MARK_GROUP         | END                        | myGroup2                     | Mark21                                                                     | postgres
     4032 | START_GROUP            | END                        | myGroup2                     | 10 tables/sequences processed                                              | postgres
-    4033 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                            | postgres
+    4033 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Different_Mark                                                             | postgres
     4034 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                            | postgres
     4035 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
     4036 | SET_MARK_GROUP         | TIME STAMP SET             | 4005                         |                                                                            | postgres
     4037 | SET_MARK_GROUP         | END                        | myGroup1                     | Different_Mark                                                             | postgres
-    4038 | SET_MARK_GROUP         | BEGIN                      | myGroup2                     |                                                                            | postgres
+    4038 | SET_MARK_GROUP         | BEGIN                      | myGroup2                     | Different_Mark                                                             | postgres
     4039 | LOCK_GROUP             | BEGIN                      | myGroup2                     |                                                                            | postgres
     4040 | LOCK_GROUP             | END                        | myGroup2                     | 8 tables locked, 0 deadlock(s)                                             | postgres
     4041 | SET_MARK_GROUP         | TIME STAMP SET             | 4006                         |                                                                            | postgres
@@ -3018,12 +3018,12 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4209 | SET_MARK_GROUP         | BEGIN                      | myGroup2                     | Mark21                                                                     | postgres
     4210 | SET_MARK_GROUP         | END                        | myGroup2                     | Mark21                                                                     | postgres
     4211 | START_GROUP            | END                        | myGroup2                     | 10 tables/sequences processed                                              | postgres
-    4212 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                            | postgres
+    4212 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Mark12                                                                     | postgres
     4213 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                            | postgres
     4214 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
     4215 | SET_MARK_GROUP         | TIME STAMP SET             | 4030                         |                                                                            | postgres
     4216 | SET_MARK_GROUP         | END                        | myGroup1                     | Mark12                                                                     | postgres
-    4217 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                            | postgres
+    4217 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Mark13                                                                     | postgres
     4218 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                            | postgres
     4219 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
     4220 | SET_MARK_GROUP         | TIME STAMP SET             | 4031                         |                                                                            | postgres
@@ -3078,12 +3078,12 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4269 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Mark11                                                                     | postgres
     4270 | SET_MARK_GROUP         | END                        | myGroup1                     | Mark11                                                                     | postgres
     4271 | START_GROUP            | END                        | myGroup1                     | 7 tables/sequences processed                                               | postgres
-    4272 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                            | postgres
+    4272 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Mark12                                                                     | postgres
     4273 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                            | postgres
     4274 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
     4275 | SET_MARK_GROUP         | TIME STAMP SET             | 4036                         |                                                                            | postgres
     4276 | SET_MARK_GROUP         | END                        | myGroup1                     | Mark12                                                                     | postgres
-    4277 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                            | postgres
+    4277 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Mark13                                                                     | postgres
     4278 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                            | postgres
     4279 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
     4280 | SET_MARK_GROUP         | TIME STAMP SET             | 4037                         |                                                                            | postgres
@@ -3199,7 +3199,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4390 | CLEANUP_RLBK_STATE     |                            | Rollback id 4015             | set to COMMITTED                                                           | postgres
     4391 | SET_MARK_GROUP         | END                        | myGroup4                     | myGroup4_start                                                             | postgres
     4392 | START_GROUP            | END                        | myGroup4                     | 7 tables/sequences processed                                               | postgres
-    4393 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     |                                                                            | postgres
+    4393 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | mark1                                                                      | postgres
     4394 | LOCK_GROUP             | BEGIN                      | myGroup4                     |                                                                            | postgres
     4395 | LOCK_GROUP             | END                        | myGroup4                     | 7 tables locked, 0 deadlock(s)                                             | postgres
     4396 | SET_MARK_GROUP         | TIME STAMP SET             | 4048                         |                                                                            | postgres
@@ -3262,7 +3262,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4457 | COMMENT_ROLLBACK       |                            | 4000                         |                                                                            | postgres
     4458 | COMMENT_ROLLBACK       |                            | 4000                         |                                                                            | postgres
     4459 | COMMENT_ROLLBACK       |                            | 4000                         |                                                                            | postgres
-    4461 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                            | postgres
+    4461 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Conso_M1                                                                   | postgres
     4462 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                            | postgres
     4463 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
     4464 | SET_MARK_GROUP         | TIME STAMP SET             | 4052                         |                                                                            | postgres
@@ -3286,13 +3286,13 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4482 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4020                                                           | postgres
     4483 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Conso_M1 and RLBK_4020_DONE                        | postgres
     4484 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted                       | postgres
-    4485 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                            | postgres
+    4485 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Conso_M2                                                                   | postgres
     4486 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                            | postgres
     4487 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
     4488 | SET_MARK_GROUP         | TIME STAMP SET             | 4055                         |                                                                            | postgres
     4489 | CLEANUP_RLBK_STATE     |                            | Rollback id 4020             | set to COMMITTED                                                           | postgres
     4490 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M2                                                                   | postgres
-    4491 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                            | postgres
+    4491 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | Conso_M3                                                                   | postgres
     4492 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                            | postgres
     4493 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
     4494 | SET_MARK_GROUP         | TIME STAMP SET             | 4056                         |                                                                            | postgres

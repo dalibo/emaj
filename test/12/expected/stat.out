@@ -1092,7 +1092,7 @@ select hist_id, hist_function, hist_event, hist_object,
     5002 | LOCK_GROUPS       | END            | myGroup1,myGroup2            | 13 tables locked, 0 deadlock(s)                                                                  | postgres
     5003 | SET_MARK_GROUPS   | TIME STAMP SET | 5000                         |                                                                                                  | postgres
     5004 | SET_MARK_GROUPS   | END            | myGroup1,myGroup2            | Multi-1                                                                                          | postgres
-    5005 | SET_MARK_GROUP    | BEGIN          | myGroup2                     |                                                                                                  | postgres
+    5005 | SET_MARK_GROUP    | BEGIN          | myGroup2                     | Mark22                                                                                           | postgres
     5006 | LOCK_GROUP        | BEGIN          | myGroup2                     |                                                                                                  | postgres
     5007 | LOCK_GROUP        | END            | myGroup2                     | 8 tables locked, 0 deadlock(s)                                                                   | postgres
     5008 | SET_MARK_GROUP    | TIME STAMP SET | 5001                         |                                                                                                  | postgres
@@ -1102,7 +1102,7 @@ select hist_id, hist_function, hist_event, hist_object,
     5012 | LOCK_GROUPS       | END            | myGroup1,myGroup2            | 13 tables locked, 0 deadlock(s)                                                                  | postgres
     5013 | SET_MARK_GROUPS   | TIME STAMP SET | 5002                         |                                                                                                  | postgres
     5014 | SET_MARK_GROUPS   | END            | myGroup1,myGroup2            | Multi-2                                                                                          | postgres
-    5015 | SET_MARK_GROUP    | BEGIN          | myGroup2                     |                                                                                                  | postgres
+    5015 | SET_MARK_GROUP    | BEGIN          | myGroup2                     | Mark23                                                                                           | postgres
     5016 | LOCK_GROUP        | BEGIN          | myGroup2                     |                                                                                                  | postgres
     5017 | LOCK_GROUP        | END            | myGroup2                     | 8 tables locked, 0 deadlock(s)                                                                   | postgres
     5018 | SET_MARK_GROUP    | TIME STAMP SET | 5003                         |                                                                                                  | postgres
@@ -1126,17 +1126,17 @@ select hist_id, hist_function, hist_event, hist_object,
     5036 | SET_MARK_GROUP    | BEGIN          | myGroup4                     | myGroup4_restart                                                                                 | postgres
     5037 | SET_MARK_GROUP    | END            | myGroup4                     | myGroup4_restart                                                                                 | postgres
     5038 | START_GROUP       | END            | myGroup4                     | 8 tables/sequences processed                                                                     | postgres
-    5039 | SET_MARK_GROUP    | BEGIN          | myGroup2                     |                                                                                                  | postgres
+    5039 | SET_MARK_GROUP    | BEGIN          | myGroup2                     | before_log_stat_tblseq                                                                           | postgres
     5040 | LOCK_GROUP        | BEGIN          | myGroup2                     |                                                                                                  | postgres
     5041 | LOCK_GROUP        | END            | myGroup2                     | 8 tables locked, 0 deadlock(s)                                                                   | postgres
     5042 | SET_MARK_GROUP    | TIME STAMP SET | 5007                         |                                                                                                  | postgres
     5043 | SET_MARK_GROUP    | END            | myGroup2                     | before_log_stat_tblseq                                                                           | postgres
-    5044 | SET_MARK_GROUP    | BEGIN          | emptyGroup                   |                                                                                                  | postgres
+    5044 | SET_MARK_GROUP    | BEGIN          | emptyGroup                   | log_stat_1                                                                                       | postgres
     5045 | LOCK_GROUP        | BEGIN          | emptyGroup                   |                                                                                                  | postgres
     5046 | LOCK_GROUP        | END            | emptyGroup                   | 0 tables locked, 0 deadlock(s)                                                                   | postgres
     5047 | SET_MARK_GROUP    | TIME STAMP SET | 5008                         |                                                                                                  | postgres
     5048 | SET_MARK_GROUP    | END            | emptyGroup                   | log_stat_1                                                                                       | postgres
-    5049 | SET_MARK_GROUP    | BEGIN          | myGroup2                     |                                                                                                  | postgres
+    5049 | SET_MARK_GROUP    | BEGIN          | myGroup2                     | tmp_mark                                                                                         | postgres
     5050 | LOCK_GROUP        | BEGIN          | myGroup2                     |                                                                                                  | postgres
     5051 | LOCK_GROUP        | END            | myGroup2                     | 8 tables locked, 0 deadlock(s)                                                                   | postgres
     5052 | SET_MARK_GROUP    | TIME STAMP SET | 5009                         |                                                                                                  | postgres

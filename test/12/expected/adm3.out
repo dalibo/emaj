@@ -192,12 +192,12 @@ select hist_function, hist_event, hist_object,
  CLEANUP_RLBK_STATE |                    | Rollback id 14708   | set to COMMITTED                        | _regress_emaj_adm1
  SET_MARK_GROUP     | END                | myGroup4            | M1                                      | _regress_emaj_adm1
  START_GROUP        | END                | myGroup4            | 8 tables/sequences processed            | _regress_emaj_adm1
- SET_MARK_GROUP     | BEGIN              | myGroup4            |                                         | _regress_emaj_adm1
+ SET_MARK_GROUP     | BEGIN              | myGroup4            | M2                                      | _regress_emaj_adm1
  LOCK_GROUP         | BEGIN              | myGroup4            |                                         | _regress_emaj_adm1
  LOCK_GROUP         | END                | myGroup4            | 8 tables locked, 0 deadlock(s)          | _regress_emaj_adm1
  SET_MARK_GROUP     | TIME STAMP SET     | 17103               |                                         | _regress_emaj_adm1
  SET_MARK_GROUP     | END                | myGroup4            | M2                                      | _regress_emaj_adm1
- SET_MARK_GROUP     | BEGIN              | myGroup4            |                                         | _regress_emaj_adm1
+ SET_MARK_GROUP     | BEGIN              | myGroup4            | M3                                      | _regress_emaj_adm1
  LOCK_GROUP         | BEGIN              | myGroup4            |                                         | _regress_emaj_adm1
  LOCK_GROUP         | END                | myGroup4            | 8 tables locked, 0 deadlock(s)          | _regress_emaj_adm1
  SET_MARK_GROUP     | TIME STAMP SET     | 17104               |                                         | _regress_emaj_adm1
@@ -410,7 +410,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | Start                                                                                                   | _regress_emaj_adm2
  SET_MARK_GROUP     | END                | myGroup4                  | Start                                                                                                   | _regress_emaj_adm2
  START_GROUP        | END                | myGroup4                  | 8 tables/sequences processed                                                                            | _regress_emaj_adm2
- SET_MARK_GROUP     | BEGIN              | myGroup4                  |                                                                                                         | postgres
+ SET_MARK_GROUP     | BEGIN              | myGroup4                  | M1                                                                                                      | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
  LOCK_GROUP         | END                | myGroup4                  | 8 tables locked, 0 deadlock(s)                                                                          | postgres
  SET_MARK_GROUP     | TIME STAMP SET     | 17201                     |                                                                                                         | postgres
@@ -1852,7 +1852,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | BEGIN                       | grp_tmp_3                              |                                                                                                                                  | _regress_emaj_adm2
  DROP_GROUP               | TIME STAMP SET              | 17636                                  |                                                                                                                                  | _regress_emaj_adm2
  DROP_GROUP               | END                         | grp_tmp_3                              | 5 tables/sequences processed                                                                                                     | _regress_emaj_adm2
- SET_MARK_GROUP           | BEGIN                       | grp_tmp_4                              |                                                                                                                                  | _regress_emaj_adm2
+ SET_MARK_GROUP           | BEGIN                       | grp_tmp_4                              | Last_mark                                                                                                                        | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN                       | grp_tmp_4                              |                                                                                                                                  | _regress_emaj_adm2
  LOCK_GROUP               | END                         | grp_tmp_4                              | 7 tables locked, 0 deadlock(s)                                                                                                   | _regress_emaj_adm2
  SET_MARK_GROUP           | TIME STAMP SET              | 17637                                  |                                                                                                                                  | _regress_emaj_adm2
@@ -2772,7 +2772,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP             | BEGIN              | truncateTestGroup                | M1                                                                                                 | _regress_emaj_adm2
  SET_MARK_GROUP             | END                | truncateTestGroup                | M1                                                                                                 | _regress_emaj_adm2
  START_GROUP                | END                | truncateTestGroup                | 10 tables/sequences processed                                                                      | _regress_emaj_adm2
- SET_MARK_GROUP             | BEGIN              | truncateTestGroup                |                                                                                                    | _regress_emaj_adm2
+ SET_MARK_GROUP             | BEGIN              | truncateTestGroup                | M2                                                                                                 | _regress_emaj_adm2
  LOCK_GROUP                 | BEGIN              | truncateTestGroup                |                                                                                                    | _regress_emaj_adm2
  LOCK_GROUP                 | END                | truncateTestGroup                | 10 tables locked, 0 deadlock(s)                                                                    | _regress_emaj_adm2
  SET_MARK_GROUP             | TIME STAMP SET     | 18004                            |                                                                                                    | _regress_emaj_adm2
