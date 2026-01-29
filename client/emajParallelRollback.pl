@@ -57,9 +57,9 @@ my $isLogged = 'false';                   # -l flag for logged rollback mode
 my $isAlterGroupAllowed = 'false';        # -a flag to allow the rollback to reach a mark set before alter group operations
 my $verbose = 0;                          # -v flag for verbose mode
 
-my  $conn_string = '';
-my  $multiGroup = 'false';
-my  $msgRlbk = 'Rollback';
+my $conn_string = "application_name=$APPNAME;";
+my $multiGroup = 'false';
+my $msgRlbk = 'Rollback';
 
 # Get supplied options.
 GetOptions(
@@ -145,12 +145,6 @@ my ($isMaxPreparedTransactionOk) = $dbh[1]->selectrow_array($stmt[1])
 	or die("Error while checking the max_prepared_transactions GUC value.$DBI::errstr \n\n");
 if (!$isMaxPreparedTransactionOk) {
 	die "Error: the max_prepared_transactions postgres parameter is zero. No parallel rollback is possible.\n";
-}
-
-# Set the application_name.
-for (my $i = 1 ; $i <= $nbSession; $i++) {
-  $dbh[$i]->do("SET application_name to '$APPNAME'")
-    or die("Setting the application_name for session #$i failed.\n$DBI::errstr\n");
 }
 
 # For each session, start a transaction.

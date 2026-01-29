@@ -53,7 +53,7 @@ my $maxIter = 1;                          # -n number of iterations (default=1)
 my $verbose = 0;                          # -v flag for verbose mode
 my $regressTest = 0;                      # -r regression test flag (doesn't display real timestamp)
 
-my $conn_string = '';
+my $conn_string = "application_name=$APPNAME;";
 
 # Get supplied options.
 GetOptions(
@@ -114,10 +114,6 @@ my ($isEmajViewer) = $dbh->selectrow_array($stmt)
 if (!$isEmajViewer) {
 	die "Error: the user is not allowed to look at E-Maj data.\n";
 }
-
-# Set the application_name
-$dbh->do("SET application_name to '$APPNAME'")
-  or die("Setting the application_name failed.\n$DBI::errstr\n");
 
 # Perform the monitoring.
 my $nbIter = 0;

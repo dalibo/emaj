@@ -28,7 +28,7 @@ my $sql;
 my $sth;
 my $row;
 
-my $conn_string = '';
+my $conn_string = "application_name=$APPNAME;";
 my $currentDb;
 my $serverAddr;
 my $serverPort;
@@ -343,10 +343,6 @@ sub dbLogon {
 	if (!$isEmajViewer) {
 		die "Error: the user is not allowed to look at E-Maj data.\n";
 	}
-
-	# Set the application_name.
-	$dbh->do("SET application_name to '$APPNAME'")
-		or die("Error while setting the application_name.\n$DBI::errstr$DBI::errstr \n\n");
 
 	# Quote filters.
 	$groupsIncludeFilter = $dbh->quote($groupsIncludeFilter);
