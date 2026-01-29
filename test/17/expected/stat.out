@@ -1113,16 +1113,16 @@ select hist_id, hist_function, hist_event, hist_object,
     5023 | SET_MARK_GROUPS   | TIME STAMP SET | 5004                         |                                                              | postgres
     5024 | SET_MARK_GROUPS   | END            | myGroup1,myGroup2            | Multi-3                                                      | postgres
     5025 | STOP_GROUP        | BEGIN          | myGroup4                     |                                                              | postgres
-    5026 | STOP_GROUP        | TIME STAMP SET | 5005                         |                                                              | postgres
-    5027 | LOCK_GROUP        | BEGIN          | myGroup4                     |                                                              | postgres
-    5028 | LOCK_GROUP        | END            | myGroup4                     | 8 tables locked, 0 deadlock(s)                               | postgres
+    5026 | LOCK_GROUP        | BEGIN          | myGroup4                     |                                                              | postgres
+    5027 | LOCK_GROUP        | END            | myGroup4                     | 8 tables locked, 0 deadlock(s)                               | postgres
+    5028 | STOP_GROUP        | TIME STAMP SET | 5005                         |                                                              | postgres
     5029 | SET_MARK_GROUP    | BEGIN          | myGroup4                     | myGroup4_stop                                                | postgres
     5030 | SET_MARK_GROUP    | END            | myGroup4                     | myGroup4_stop                                                | postgres
     5031 | STOP_GROUP        | END            | myGroup4                     | 8 tables/sequences processed                                 | postgres
     5032 | START_GROUP       | BEGIN          | myGroup4                     | Without log reset                                            | postgres
-    5033 | START_GROUP       | TIME STAMP SET | 5006                         |                                                              | postgres
-    5034 | LOCK_GROUP        | BEGIN          | myGroup4                     |                                                              | postgres
-    5035 | LOCK_GROUP        | END            | myGroup4                     | 8 tables locked, 0 deadlock(s)                               | postgres
+    5033 | LOCK_GROUP        | BEGIN          | myGroup4                     |                                                              | postgres
+    5034 | LOCK_GROUP        | END            | myGroup4                     | 8 tables locked, 0 deadlock(s)                               | postgres
+    5035 | START_GROUP       | TIME STAMP SET | 5006                         |                                                              | postgres
     5036 | SET_MARK_GROUP    | BEGIN          | myGroup4                     | myGroup4_restart                                             | postgres
     5037 | SET_MARK_GROUP    | END            | myGroup4                     | myGroup4_restart                                             | postgres
     5038 | START_GROUP       | END            | myGroup4                     | 8 tables/sequences processed                                 | postgres

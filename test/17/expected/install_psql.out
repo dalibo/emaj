@@ -7220,11 +7220,11 @@ $_start_groups_lock$
     v_timeId                 BIGINT;
   BEGIN
     IF p_groupNames IS NOT NULL THEN
+-- Lock all tables to get a stable point.
+      PERFORM emaj._lock_groups(p_groupNames, 'SHARE ROW EXCLUSIVE', p_multiGroup);
 -- Get a time stamp id of type 'S' for the operation.
       SELECT emaj._set_time_stamp(CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END,
                                   'S') INTO v_timeId;
--- Lock all tables to get a stable point.
-      PERFORM emaj._lock_groups(p_groupNames, 'SHARE ROW EXCLUSIVE', p_multiGroup);
     END IF;
     RETURN v_timeId;
   END;
@@ -7439,12 +7439,12 @@ $_stop_groups_lock$
     v_timeId                 BIGINT;
   BEGIN
     IF p_groupNames IS NOT NULL THEN
+-- Lock all tables to get a stable point.
+      PERFORM emaj._lock_groups(p_groupNames, 'SHARE ROW EXCLUSIVE', p_multiGroup);
 -- Get a time stamp id of type 'X' for the operation.
       SELECT emaj._set_time_stamp(CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
                                     WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
                                     ELSE 'FORCE_STOP_GROUP' END, 'X') INTO v_timeId;
--- Lock all tables to get a stable point.
-      PERFORM emaj._lock_groups(p_groupNames, 'SHARE ROW EXCLUSIVE', p_multiGroup);
     END IF;
     RETURN v_timeId;
   END;

@@ -149,9 +149,9 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES      | TABLE REMOVED                | myschema2.mytbl8   | From the idle group myGroup2                                  | postgres
  REMOVE_TABLES      | END                          |                    | 2 tables removed from their groups                            | postgres
  START_GROUPS       | BEGIN                        | myGroup1,myGroup2  | With log reset                                                | postgres
- START_GROUPS       | TIME STAMP SET               | 9001               |                                                               | postgres
  LOCK_GROUPS        | BEGIN                        | myGroup1,myGroup2  |                                                               | postgres
  LOCK_GROUPS        | END                          | myGroup1,myGroup2  | 11 tables locked, 0 deadlock(s)                               | postgres
+ START_GROUPS       | TIME STAMP SET               | 9001               |                                                               | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2  | Mk1                                                           | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2  | Mk1                                                           | postgres
  START_GROUPS       | END                          | myGroup1,myGroup2  | 15 tables/sequences processed                                 | postgres
@@ -3414,9 +3414,9 @@ select hist_function, hist_event, hist_object,
  GEN_SQL_GROUPS     | BEGIN                        | myGroup1,myGroup2            | From mark before move to current state with tables/sequences filtering                                                 | postgres
  GEN_SQL_GROUPS     | END                          | myGroup1,myGroup2            | 3 generated statements - script exported into /tmp/emaj_16/alter_logging/script3.sql                                   | postgres
  STOP_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
- STOP_GROUP         | TIME STAMP SET               | 10014                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup2                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
+ STOP_GROUP         | TIME STAMP SET               | 10014                        |                                                                                                                        | postgres
  SET_MARK_GROUP     | BEGIN                        | myGroup2                     | STOP_%                                                                                                                 | postgres
  CLEANUP_RLBK_STATE |                              | Rollback id 10002            | set to COMMITTED                                                                                                       | postgres
  CLEANUP_RLBK_STATE |                              | Rollback id 10003            | set to COMMITTED                                                                                                       | postgres
@@ -3435,9 +3435,9 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS      | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup1 to the idle group myGroup2                                                             | postgres
  IMPORT_GROUPS      | END                          |                              | 2 created or altered tables groups                                                                                     | postgres
  START_GROUP        | BEGIN                        | myGroup2                     | With log reset                                                                                                         | postgres
- START_GROUP        | TIME STAMP SET               | 10016                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
+ START_GROUP        | TIME STAMP SET               | 10016                        |                                                                                                                        | postgres
  SET_MARK_GROUP     | BEGIN                        | myGroup2                     | Start                                                                                                                  | postgres
  SET_MARK_GROUP     | END                          | myGroup2                     | Start                                                                                                                  | postgres
  START_GROUP        | END                          | myGroup2                     | 8 tables/sequences processed                                                                                           | postgres
@@ -3703,16 +3703,16 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLE       | TABLE ADDED                  | myschema1.mytbl1             | To the logging group myGroup1                                                                                          | postgres
  ASSIGN_TABLE       | END                          |                              | 1 tables assigned to the group myGroup1                                                                                | postgres
  STOP_GROUP         | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
- STOP_GROUP         | TIME STAMP SET               | 10047                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
+ STOP_GROUP         | TIME STAMP SET               | 10047                        |                                                                                                                        | postgres
  SET_MARK_GROUP     | BEGIN                        | myGroup1                     | STOP_%                                                                                                                 | postgres
  SET_MARK_GROUP     | END                          | myGroup1                     | STOP_%                                                                                                                 | postgres
  STOP_GROUP         | END                          | myGroup1                     | 7 tables/sequences processed                                                                                           | postgres
  STOP_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
- STOP_GROUP         | TIME STAMP SET               | 10048                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
+ STOP_GROUP         | TIME STAMP SET               | 10048                        |                                                                                                                        | postgres
  SET_MARK_GROUP     | BEGIN                        | myGroup2                     | STOP_%                                                                                                                 | postgres
  SET_MARK_GROUP     | END                          | myGroup2                     | STOP_%                                                                                                                 | postgres
  STOP_GROUP         | END                          | myGroup2                     | 6 tables/sequences processed                                                                                           | postgres

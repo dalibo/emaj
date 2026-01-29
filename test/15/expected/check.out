@@ -42,11 +42,9 @@ select pg_proc.proname
                      and objsubid=0)
   where nspname = 'emaj' and proname like E'emaj\\_%' and 
         pg_description.description = 'E-Maj internal function';
-             proname              
-----------------------------------
- emaj_get_assigned_group_table
- emaj_get_assigned_group_sequence
-(2 rows)
+ proname 
+---------
+(0 rows)
 
 -----------------------------
 -- perform various consistency checks on technical tables

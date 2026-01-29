@@ -431,23 +431,23 @@ select hist_id, hist_function, hist_event, hist_object,
  hist_id |  hist_function  |   hist_event   |    hist_object    |         regexp_replace          | hist_user 
 ---------+-----------------+----------------+-------------------+---------------------------------+-----------
     3000 | START_GROUP     | BEGIN          | myGroup1          | With log reset                  | postgres
-    3001 | START_GROUP     | TIME STAMP SET | 3000              |                                 | postgres
-    3002 | LOCK_GROUP      | BEGIN          | myGroup1          |                                 | postgres
-    3003 | LOCK_GROUP      | END            | myGroup1          | 5 tables locked, 0 deadlock(s)  | postgres
+    3001 | LOCK_GROUP      | BEGIN          | myGroup1          |                                 | postgres
+    3002 | LOCK_GROUP      | END            | myGroup1          | 5 tables locked, 0 deadlock(s)  | postgres
+    3003 | START_GROUP     | TIME STAMP SET | 3000              |                                 | postgres
     3004 | SET_MARK_GROUP  | BEGIN          | myGroup1          | Mark1                           | postgres
     3005 | SET_MARK_GROUP  | END            | myGroup1          | Mark1                           | postgres
     3006 | START_GROUP     | END            | myGroup1          | 7 tables/sequences processed    | postgres
     3007 | START_GROUP     | BEGIN          | myGroup2          | With log reset                  | postgres
-    3008 | START_GROUP     | TIME STAMP SET | 3001              |                                 | postgres
-    3009 | LOCK_GROUP      | BEGIN          | myGroup2          |                                 | postgres
-    3010 | LOCK_GROUP      | END            | myGroup2          | 8 tables locked, 0 deadlock(s)  | postgres
+    3008 | LOCK_GROUP      | BEGIN          | myGroup2          |                                 | postgres
+    3009 | LOCK_GROUP      | END            | myGroup2          | 8 tables locked, 0 deadlock(s)  | postgres
+    3010 | START_GROUP     | TIME STAMP SET | 3001              |                                 | postgres
     3011 | SET_MARK_GROUP  | BEGIN          | myGroup2          | Mark2                           | postgres
     3012 | SET_MARK_GROUP  | END            | myGroup2          | Mark2                           | postgres
     3013 | START_GROUP     | END            | myGroup2          | 10 tables/sequences processed   | postgres
     3014 | START_GROUP     | BEGIN          | emptyGroup        | With log reset                  | postgres
-    3015 | START_GROUP     | TIME STAMP SET | 3002              |                                 | postgres
-    3016 | LOCK_GROUP      | BEGIN          | emptyGroup        |                                 | postgres
-    3017 | LOCK_GROUP      | END            | emptyGroup        | 0 tables locked, 0 deadlock(s)  | postgres
+    3015 | LOCK_GROUP      | BEGIN          | emptyGroup        |                                 | postgres
+    3016 | LOCK_GROUP      | END            | emptyGroup        | 0 tables locked, 0 deadlock(s)  | postgres
+    3017 | START_GROUP     | TIME STAMP SET | 3002              |                                 | postgres
     3018 | SET_MARK_GROUP  | BEGIN          | emptyGroup        | MarkInit                        | postgres
     3019 | SET_MARK_GROUP  | END            | emptyGroup        | MarkInit                        | postgres
     3020 | START_GROUP     | END            | emptyGroup        | 0 tables/sequences processed    | postgres
@@ -1416,16 +1416,16 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     3605 | UNPROTECT_MARK_GROUP |                | myGroup1       | Mark SM3 ; status 0            | postgres
     3606 | PROTECT_MARK_GROUP   |                | myGroup1       | Mark SM3 ; status 1            | postgres
     3607 | STOP_GROUP           | BEGIN          | myGroup1       |                                | postgres
-    3608 | STOP_GROUP           | TIME STAMP SET | 3600           |                                | postgres
-    3609 | LOCK_GROUP           | BEGIN          | myGroup1       |                                | postgres
-    3610 | LOCK_GROUP           | END            | myGroup1       | 5 tables locked, 0 deadlock(s) | postgres
+    3608 | LOCK_GROUP           | BEGIN          | myGroup1       |                                | postgres
+    3609 | LOCK_GROUP           | END            | myGroup1       | 5 tables locked, 0 deadlock(s) | postgres
+    3610 | STOP_GROUP           | TIME STAMP SET | 3600           |                                | postgres
     3611 | SET_MARK_GROUP       | BEGIN          | myGroup1       | STOP_%                         | postgres
     3612 | SET_MARK_GROUP       | END            | myGroup1       | STOP_%                         | postgres
     3613 | STOP_GROUP           | END            | myGroup1       | 7 tables/sequences processed   | postgres
     3614 | STOP_GROUP           | BEGIN          | myGroup2       |                                | postgres
-    3615 | STOP_GROUP           | TIME STAMP SET | 3601           |                                | postgres
-    3616 | LOCK_GROUP           | BEGIN          | myGroup2       |                                | postgres
-    3617 | LOCK_GROUP           | END            | myGroup2       | 8 tables locked, 0 deadlock(s) | postgres
+    3615 | LOCK_GROUP           | BEGIN          | myGroup2       |                                | postgres
+    3616 | LOCK_GROUP           | END            | myGroup2       | 8 tables locked, 0 deadlock(s) | postgres
+    3617 | STOP_GROUP           | TIME STAMP SET | 3601           |                                | postgres
     3618 | SET_MARK_GROUP       | BEGIN          | myGroup2       | STOP_%                         | postgres
     3619 | SET_MARK_GROUP       | END            | myGroup2       | STOP_%                         | postgres
     3620 | STOP_GROUP           | END            | myGroup2       | 10 tables/sequences processed  | postgres
