@@ -193,7 +193,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_session_exec                        |    86
  _rlbk_session_lock                        |    88
  _rlbk_set_batch_number                    |   245
- _rlbk_start_mark                          |    84
+ _rlbk_start                               |    84
  _rlbk_tbl                                 |   153
  _rollback_activity                        |    17
  _sequence_stat_groups                     |    16

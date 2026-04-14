@@ -8918,7 +8918,7 @@ $_rlbk_groups$
 -- Lock all tables.
     PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
 -- Set a rollback start mark if logged rollback.
-    PERFORM emaj._rlbk_start_mark(v_rlbkId, p_multiGroup);
+    PERFORM emaj._rlbk_start(v_rlbkId, p_multiGroup);
 -- Execute the rollback planning.
     PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
 -- Process sequences, complete the rollback operation and return the execution report.
@@ -8957,7 +8957,7 @@ $_rlbk_async$
     END IF;
 -- Simply chain the internal functions.
     PERFORM emaj._rlbk_session_lock(p_rlbkId, 1);
-    PERFORM emaj._rlbk_start_mark(p_rlbkId, p_multiGroup);
+    PERFORM emaj._rlbk_start(p_rlbkId, p_multiGroup);
     PERFORM emaj._rlbk_session_exec(p_rlbkId, 1);
     RETURN QUERY
       SELECT *
@@ -10016,9 +10016,9 @@ $_rlbk_session_lock$
   END;
 $_rlbk_session_lock$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_start_mark(p_rlbkId INT, p_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_start(p_rlbkId INT, p_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
-$_rlbk_start_mark$
+$_rlbk_start$
 -- For logged rollback, it sets a mark that materialize the point in time just before the tables rollback.
 -- All concerned tables are already locked.
 -- Before setting the mark, it checks no update has been recorded between the planning step and the locks set
@@ -10092,7 +10092,7 @@ $_rlbk_start_mark$
       v_errorMsg = 'the rollback operation has been cancelled due to concurrent activity at E-Maj rollback planning time on tables'
                    ' to process.';
       PERFORM emaj._rlbk_error(p_rlbkId, v_errorMsg, 'rlbk#1');
-      RAISE EXCEPTION '_rlbk_start_mark: % Please retry.', v_errorMsg;
+      RAISE EXCEPTION '_rlbk_start: % Please retry.', v_errorMsg;
     END IF;
     IF v_isLoggedRlbk THEN
 -- If the rollback is "logged", set a mark named with the pattern: 'RLBK_<rollback_id>_START'.
@@ -10107,10 +10107,10 @@ $_rlbk_start_mark$
     WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
       RAISE;
     WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
-      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_start_mark(): ' || SQLERRM, 'rlbk#1');
+      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_start(): ' || SQLERRM, 'rlbk#1');
       RAISE;
   END;
-$_rlbk_start_mark$;
+$_rlbk_start$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(p_rlbkId INT, p_session INT)
 RETURNS VOID LANGUAGE plpgsql
@@ -14289,7 +14289,7 @@ $emaj_verify_all$
       END CASE;
     ELSE
       RETURN NEXT 'Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).';
-    END If;
+    END IF;
 -- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks.
     IF pg_catalog.current_setting('max_prepared_transactions')::INT <= 1 THEN
       RETURN NEXT format('Warning: The max_prepared_transactions parameter value (%s) on this cluster is too low to launch parallel '

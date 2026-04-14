@@ -173,11 +173,11 @@ for (my $i = 1 ; $i <= $nbSession; $i++) {
     or die("Calling the _rlbk_session_lock() function for #$i failed.\n$DBI::errstr\n"); 
 }
 
-# Call _rlbk_start_mark() on first session.
+# Call _rlbk_start() on first session.
 # This sets a rollback start mark if logged rollback.
-print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_start_mark() ...\n") if ($verbose);
-$dbh[1]->do("SELECT emaj._rlbk_start_mark($rlbkId, $multiGroup)")
-  or die("Calling the _rlbk_start_mark() function failed.\n$DBI::errstr\n");
+print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_start() ...\n") if ($verbose);
+$dbh[1]->do("SELECT emaj._rlbk_start($rlbkId, $multiGroup)")
+  or die("Calling the _rlbk_start() function failed.\n$DBI::errstr\n");
 
 # For each session, asynchronously call _rlbk_exec() to start the planned steps execution.
 for (my $i = 1 ; $i <= $nbSession; $i++) {

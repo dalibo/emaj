@@ -159,13 +159,13 @@
     }
   pg_free_result($result);
 
-// Call _rlbk_start_mark() on first session
+// Call _rlbk_start() on first session
 // This sets a rollback start mark if logged rollback
 
-  $query = "SELECT emaj._rlbk_start_mark($rlbkId, $multiGroup)";
-  if ($verbose) echo date("d/m/Y - H:i:s")." Call _rlbk_start_mark()...\n";
+  $query = "SELECT emaj._rlbk_start($rlbkId, $multiGroup)";
+  if ($verbose) echo date("d/m/Y - H:i:s")." Call _rlbk_start()...\n";
   $result = pg_query($dbconn[1], $query)
-      or abort("Calling the _rlbk_start_mark() function failed.\n" . pg_last_error() . "\n");
+      or abort("Calling the _rlbk_start() function failed.\n" . pg_last_error() . "\n");
   pg_free_result($result);
 
 // For each session, asynchronously call _rlbk_exec() to start the planned steps execution

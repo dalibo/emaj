@@ -167,7 +167,7 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".'
-       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_start_mark: % Please retry.'
+       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_start: % Please retry.'
                             # error messages containing timestamp
                             # (as they are not stable though test executions, these cases are tested in the misc.sql script but without displaying the error messages)
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).'
