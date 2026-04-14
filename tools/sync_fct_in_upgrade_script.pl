@@ -42,6 +42,8 @@ use warnings; use strict;
   my $status = 0;                # search status
   my $line;
   my $fnctSignature;             # signature of function = schema + name + arguments
+  my $fullFnctName;              # schema qualified function name
+  my $fnctArguments;             # function arguments
   my $cleanSignature;            # function signature once cleanup (without default clauses, IN clause and useless spaces)
   my $shortSignature;            # function signature once cleanup and after variable names removed
   my $startFnctMark = '';
@@ -265,9 +267,13 @@ use warnings; use strict;
     # Pattern $$; that ends the comment.
     if ($status == 3 && $line =~ /\$\$;\s*$/) {
       $status = 0;
-      $shortSignature = $fnctSignature;
-      $shortSignature =~ s/(p|v|r)_\S*\s//gi;    # remove variable names
-      $shortSignature =~ s/ //g;                 # remove spaces
+      # Extract the function name (before parenthesis) and the parameters list (between parenthesis).
+      $fnctSignature =~ /(\S*)\s*\(\s*(.*)\)/ || die "Internal error 2\n";
+      $fullFnctName = $1;
+      $fnctArguments = $2;
+      $fnctArguments =~ s/(p|v|r)_\S*\s//gi;    # remove variable names
+      $fnctArguments =~ s/ //g;                 # remove spaces
+      $shortSignature = "$fullFnctName($fnctArguments)";
       $currComments{$shortSignature} = $comment;
     }
   }

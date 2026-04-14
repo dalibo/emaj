@@ -1179,6 +1179,8 @@ $emaj_get_assigned_group_table$
     RETURN v_group;
   END;
 $emaj_get_assigned_group_table$;
+COMMENT ON FUNCTION emaj.emaj_get_assigned_group_table(TEXT, TEXT) IS
+$$Returns the tables group a table is assigned to.$$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tables(p_schema TEXT, p_tables TEXT[], p_mark TEXT, p_multiTable BOOLEAN,
                                                p_arrayFromRegex BOOLEAN)
@@ -2337,6 +2339,8 @@ $emaj_get_assigned_group_sequence$
     RETURN v_group;
   END;
 $emaj_get_assigned_group_sequence$;
+COMMENT ON FUNCTION emaj.emaj_get_assigned_group_sequence(TEXT, TEXT) IS
+$$Returns the tables group a sequence is assigned to.$$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_sequences(p_schema TEXT, p_sequences TEXT[], p_mark TEXT, p_multiSequence BOOLEAN,
                                                   p_arrayFromRegex BOOLEAN)
@@ -4864,6 +4868,8 @@ $emaj_stop_group$
     RETURN emaj._stop_groups_exec(v_groupNames, p_mark, FALSE, FALSE, v_timeId);
   END;
 $emaj_stop_group$;
+COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT, TEXT) IS
+$$Stops an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_stop_groups(p_groupNames TEXT[], p_mark TEXT DEFAULT 'STOP_%')
 RETURNS INT LANGUAGE plpgsql AS
@@ -4885,6 +4891,8 @@ $emaj_stop_groups$
     RETURN emaj._stop_groups_exec(p_groupNames, p_mark, TRUE, FALSE, v_timeId);
   END;
 $emaj_stop_groups$;
+COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[], TEXT) IS
+$$Stops several E-Maj groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_force_stop_group(p_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -7675,6 +7683,8 @@ $emaj_gen_sql_dump_changes_group$
     RETURN format('%s SQL statements have been written into the "%s" file', v_nbStmt, p_scriptLocation);
   END;
 $emaj_gen_sql_dump_changes_group$;
+COMMENT ON FUNCTION emaj.emaj_gen_sql_dump_changes_group(TEXT, TEXT, TEXT, TEXT, TEXT[], TEXT) IS
+$$Generate SQL statements into a file to dump recorded changes between two marks for application tables and sequences of an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT, p_optionsList TEXT,
                                                         p_tblseqs TEXT[], p_dir TEXT)
@@ -7788,6 +7798,8 @@ $emaj_dump_changes_group$
     RETURN format('%s files have been created in %s', v_nbFile, p_dir);
   END;
 $emaj_dump_changes_group$;
+COMMENT ON FUNCTION emaj.emaj_dump_changes_group(TEXT, TEXT, TEXT, TEXT, TEXT[], TEXT) IS
+$$Dump recorded changes between two marks for application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, INOUT p_lastMark TEXT,
                                                             p_optionsList TEXT, p_tblseqs TEXT[], p_genSqlOnly BOOLEAN,
@@ -8465,6 +8477,8 @@ $emaj_snap_group$
     RETURN v_nbRel;
   END;
 $emaj_snap_group$;
+COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT, TEXT, TEXT) IS
+$$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT,
                                                 p_location TEXT, p_tblseqs TEXT[], p_currentUser TEXT)
