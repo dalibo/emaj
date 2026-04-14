@@ -101,8 +101,8 @@ Cette fonction *emaj_force_drop_group()* effectue le même traitement que la fon
 
 .. _emaj_exist_state_mark_group:
 
-Connaitre l’existence ou l’état de groupe de tables ou de marques
------------------------------------------------------------------
+Connaitre l’existence ou l’état d'un groupe de tables ou d'une marque
+---------------------------------------------------------------------
 
 L’administrateur E-Maj souhaitant :ref:`écrire des scripts SQL idempotents pour administrer ses groupes de tables<idempotent_groups_content>` dispose de quelques fonctions utiles : *emaj_does_exist_group()*, *emaj_is_logging_group()* et *emaj_does_exist_mark_group()*. ::
 
