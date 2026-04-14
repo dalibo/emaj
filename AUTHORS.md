@@ -6,6 +6,7 @@ Philippe Beaudoin
 Thibaud Walkowiak
 
 **Many thanks** (for their patches, comments, suggestions, help in translation, etc) to:
+* Emmanuel Bezagu and its team at DGFiP (French Ministry of Finance)
 * Djamel Haddadi
 * Damien Cazeil, for the logo design
 * Marie-Claude Quidoz and the DRBD organization at CNRS
