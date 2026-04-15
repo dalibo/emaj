@@ -42,8 +42,8 @@ select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel
 -----------------------------
 -- get test coverage data just before cleanup
 -----------------------------
--- wait to let the statistics collector aggregate the latest stats
-select pg_sleep(1.5);
+-- look at pg_stat_activity to force the statistics collector aggregate the latest stats
+select 0 from pg_stat_activity limit 1;
 
 -- display the functions that are not called by any regression test script
 --   (_build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics
