@@ -892,7 +892,7 @@ $_dblink_open_cnx$
 --          -4 the transaction isolation level is not READ COMMITTED
 --          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
 --          -6 error at dblink_connect() call
---          -7 the dblink user/password from emaj_param has not emaj_adm rights
+--          -7 the dblink user/password from emaj_param has not E-Maj administration rights
 --          -8 the installer role has not pg_read_all_settings privileges in an instance only accessible by sockets
 --         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
 -- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
@@ -985,26 +985,18 @@ $_dblink_open_cnx$
     END IF;
 -- The connection succeeds.
     IF p_status = 1 THEN
--- For E-Maj rollback first connections and test connections, check the role from emaj_param is an E-Maj administrator.
---   i.e. the role is either the installer or a member of emaj_adm.
---   Error on the statement is trapped because the emaj_adm role may not exist or be unused in this emaj instance.
+-- For E-Maj rollback first connections and test connections, check the role from emaj_param is an E-Maj administrator
+--   by checking that he is allowed to execute the emaj._rlbk_init() function.
       IF p_rollback_checks THEN
-        v_stmt = 'SELECT '
-                    '(SELECT inst_installer_role = current_user FROM emaj.emaj_install_conf) '
-                 'OR '
-                    '(SELECT pg_catalog.pg_has_role(''emaj_adm'', ''MEMBER'')) '
-                 'AS is_emaj_admin';
-        BEGIN
-          EXECUTE format('SELECT is_emaj_admin FROM %I.dblink(%L, %L) AS (is_emaj_admin BOOLEAN)',
-                         p_schema, p_cnxName, v_stmt)
-            INTO v_isEmajAdmin;
-          IF NOT v_isEmajAdmin THEN
-            p_status = -7;              -- the dblink user from emaj_param is not an E-Maj administrator
-          END IF;
-        EXCEPTION
-          WHEN OTHERS THEN
-            p_status = -7;              -- the emaj_adm role doesn't exist or the current role is not allowed to access the emaj schema
-        END;
+        v_stmt = 'SELECT pg_catalog.has_schema_privilege(''emaj'', ''USAGE'') AND '
+                        'pg_catalog.has_function_privilege(''emaj._rlbk_init(TEXT[], TEXT, BOOLEAN, INT, BOOLEAN, BOOLEAN, TEXT)'', '
+                                                          '''EXECUTE'') AS is_emaj_admin';
+        EXECUTE format('SELECT is_emaj_admin FROM %I.dblink(%L, %L) AS (is_emaj_admin BOOLEAN)',
+                       p_schema, p_cnxName, v_stmt)
+          INTO v_isEmajAdmin;
+        IF NOT v_isEmajAdmin THEN
+          p_status = -7;                -- the dblink user from emaj_param is not an E-Maj administrator
+        END IF;
       END IF;
       IF p_status < 0 THEN
 -- Disconnect an opened connection if an error has been detected.
@@ -15240,7 +15232,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:15524: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:15516: NOTICE:  E-Maj installation: E-Maj successfully installed.
 -- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
 WITH start_time_data AS (
   SELECT clock_timestamp() - lower(verh_time_range) AS duration
