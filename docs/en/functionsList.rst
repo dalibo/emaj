@@ -395,11 +395,11 @@ General purpose functions
 | :ref:`emaj_export_groups_configuration           | | file.path TEXT,             | #.groups INT                          |
 | <export_groups_conf>`                            | | [groups.array TEXT[]]       |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_export_parameters_configuration       |                               | parameters JSON                       |
+| :ref:`emaj_export_parameters_configuration       | [include.default BOOLEAN]     | parameters JSON                       |
 | <export_param_conf>`                             |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_export_parameters_configuration       | file.path TEXT                | #.parameters INT                      |
-| <export_param_conf>`                             |                               |                                       |
+| :ref:`emaj_export_parameters_configuration       | | file.path TEXT,             | #.parameters INT                      |
+| <export_param_conf>`                             | | [include.default BOOLEAN]   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
 | <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
@@ -422,16 +422,19 @@ General purpose functions
 |                                                  | | [drop.other.groups BOOLEAN] |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_parameters_configuration       | | parameters JSON,            | #.parameters INT                      |
-| <import_param_conf>`                             | | [delete.conf BOOLEAN)]      |                                       |
+| <import_param_conf>`                             | | [reset.others BOOLEAN)]     |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_parameters_configuration       | | file.path TEXT,             | #.parameters INT                      |
-| <import_param_conf>`                             | | [delete.conf BOOLEAN)]      |                                       |
+| <import_param_conf>`                             | | [reset.others BOOLEAN)]     |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_purge_histories                       | retention.delay INTERVAL      |                                       |
 | <emaj_purge_histories>`                          |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
 | <emaj_rollback_activity>` (V)                    |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_set_param                             | | key TEXT,                   | #.modified.parameters INT             |
+| <emaj_set_param>`                                | | value TEXT                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_verify_all                            |                               | SETOF TEXT                            |
 | <emaj_verify_all>` (V)                           |                               |                                       |

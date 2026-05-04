@@ -52,13 +52,15 @@ Si la version E-Maj installée est antérieure à 3.3.0, ces fonctions d’expor
 
 Comme à partir de E-Maj 4.0, la configuration des groupes de tables n’utilise plus l’ancienne table *emaj_group_def*,  la reconstruction des groupes de tables après mise à jour de la version E-Maj nécessitera soit la constitution manuelle d’un fichier JSON de configuration des groupes de tables, soit l’utilisation des fonctions d’assignation des tables et séquences.
 
-Si la table *emaj_param* contient des paramètres spécifiques, elle peut être sauvegardée sur un fichier par une commande *copy*. On peut aussi la dupliquer en dehors du schéma *emaj*.
+Si la table *emaj_param* contient des paramètres spécifiques, elle peut être dupliquée en dehors du schéma *emaj*. ::
+
+   CREATE TABLE public.sav_param AS
+       SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
 
 Si la version E-Maj installée est une version 3.1.0 ou supérieure, et si l’administrateur E-Maj a enregistré des triggers applicatifs comme "ne devant pas être automatiquement désactivés lors des opérations de rollback E-Maj", on peut également sauver la table  *emaj_ignored_app_trigger*. ::
 
-   CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
-
-   CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
+   CREATE TABLE public.sav_ignored_app_trigger AS
+       SELECT * FROM emaj.emaj_ignored_app_trigger;
 
 Suppression et réinstallation d'E-Maj
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -83,11 +85,15 @@ Les configurations de groupes de tables et de paramètres exportées peuvent êt
 
 **Version précédente installée < 3.3**
 
-Les éventuelles configurations de paramètres et de triggers applicatifs sauvegardées peuvent être par exemple rechargées avec des requêtes de type INSERT SELECT. ::
+Les éventuelles configurations de paramètres et de triggers applicatifs sauvegardées peuvent être rechargées par des requêtes du type ::
 
-   INSERT INTO emaj.emaj_ignored_app_trigger SELECT * FROM public.sav_ignored_app_trigger;
+   SELECT emaj.emaj_set_param(param_key,
+                              coalesce(param_value_text, param_value_numeric::TEXT,
+                                       param_value_boolean::TEXT, param_value_interval::TEXT))
+       FROM public.sav_param;
 
-   INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
+   INSERT INTO emaj.emaj_ignored_app_trigger
+       SELECT * FROM public.sav_ignored_app_trigger;
 
 Les groupes de tables doivent également être recréés par les :doc:`moyens disponibles<groupsCreationFunctions>` dans la nouvelle version.
 

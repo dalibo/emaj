@@ -21,7 +21,7 @@ The provided tool is coded in *perl*. It needs that the **perl** software with t
 
 Rolling back each session on behalf of a unique transaction implies the use of two phase commit. As a consequence, the **max_prepared_transactions** parameter of the *postgresql.conf* file must be adjusted. As the default value of this parameter equals 0, it must be modified by specifying a value at least equal to the maximum number of *sessions* that will be used.
 
-It is also necessary to set the :doc:`dblink_user_password parameter into the emaj_param table<parameters>`.
+It is also necessary to set the E-Maj :doc:`dblink_user_password parameter<parameters>`.
 
 If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<rollbacks_limits>` function.
 
@@ -61,7 +61,7 @@ To allow the rollback operation to work, the tables group or groups must be in *
 
 The *'EMAJ_LAST_MARK'* keyword can be used as mark name, meaning the last set mark.
 
-It is possible to monitor the multi-session rollback operations with the same tools as for mono-session rollbacks: :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function, the :doc:`emajRollbackMonitor<rollbackMonitorClient>` command or the Emaj_web rollback monitor page. As for mono-session rollbacks, the :doc:`dblink_user_password<parameters>` parameter must be set in order to get detailed status of the operations progress.
+It is possible to monitor the multi-session rollback operations with the same tools as for mono-session rollbacks: :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function, the :doc:`emajRollbackMonitor<rollbackMonitorClient>` command or the Emaj_web rollback monitor page. 
 
 In order to test the *emajParallelRollback* client, the E-Maj extension supplies a test script, *emaj_prepare_parallel_rollback_test.sql*. It prepares an environment with two tables groups containing some tables and sequences, on which some updates have been performed, with intermediate marks. Once this script has been executed under *psql*, the command displayed at the end of the script can be simply run.
 

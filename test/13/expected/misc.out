@@ -1,4 +1,5 @@
 -- misc.sql : test miscellaneous functions
+--   emaj_set_param(),
 --   emaj_reset_group(), 
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
@@ -23,6 +24,43 @@ select public.handle_emaj_sequences(5200);
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
    
+-----------------------------
+-- emaj_set_param() test
+-----------------------------
+-- illegal key
+select emaj.emaj_set_param('A key', 'a value');
+ERROR:  emaj_set_param: The "a key" key is unknown.
+-- invalid interval format
+select emaj.emaj_set_param('history_retention', 'not an interval value');
+ERROR:  emaj_set_param: The "history_retention" value ("not an interval value") is not a valid time interval.
+-- update a key with a real value change
+select emaj.emaj_set_param('history_retention', '1 MONTHS');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
+-- update a key with the same value
+select emaj.emaj_set_param('history_retention', '1 MONTHS');
+ emaj_set_param 
+----------------
+              0
+(1 row)
+
+-- reset a key (here in upper case) to its default value
+select emaj.emaj_set_param('HISTORY_RETENTION', NULL);
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
+-- reset a key with no change
+select emaj.emaj_set_param('history_retention', NULL);
+ emaj_set_param 
+----------------
+              0
+(1 row)
+
 -----------------------------
 -- emaj_reset_group() test
 -----------------------------
@@ -166,8 +204,13 @@ select emaj.emaj_estimate_rollback_group('emptyGroup','EGM4',TRUE);
  @ 0
 (1 row)
 
--- insert 1 timing parameters (=> so use 3 default values)
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_step_rollback_duration','2.5 millisecond'::interval);
+-- insert 1 timing parameters (=> so use 5 default values)
+select emaj.emaj_set_param('fixed_step_rollback_duration','2.5 millisecond');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 -- analyze tables to get proper reltuples statistics
 vacuum analyze myschema2.mytbl4;
 select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid and relname = 'mytbl4' and nspname = 'myschema2';
@@ -193,7 +236,12 @@ begin;
                        1
 (1 row)
 
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1.4 millisecond'::interval);
+  select emaj.emaj_set_param('fixed_table_rollback_duration','1.4 millisecond');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
   select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
@@ -223,11 +271,36 @@ select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
 -- should return 1.4086 sec (or 1.4291 sec is emaj is not an extension)
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','150 microsecond'::interval);
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','12 microsecond'::interval);
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','27 microsecond'::interval);
-  UPDATE emaj.emaj_param SET param_value_interval = '7 millisecond'::interval WHERE param_key = 'fixed_step_rollback_duration';
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','2.5 millisecond'::interval);
+  select emaj.emaj_set_param('avg_row_rollback_duration','150 microsecond');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
+  select emaj.emaj_set_param('avg_row_delete_log_duration','12 microsecond');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
+  select emaj.emaj_set_param('avg_fkey_check_duration','27 microsecond');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
+  select emaj.emaj_set_param('fixed_step_rollback_duration', '7 millisecond');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
+  select emaj.emaj_set_param('fixed_dblink_rollback_duration','2.5 millisecond');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
  emaj_estimate_rollback_groups 
 -------------------------------
@@ -337,18 +410,20 @@ alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.e
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
   from (select * from emaj.emaj_hist where hist_id >= 5200 order by hist_id) as t;
- hist_id |   hist_function    |     hist_event     |         hist_object          |         regexp_replace         | hist_user 
----------+--------------------+--------------------+------------------------------+--------------------------------+-----------
-    5227 | SET_MARK_GROUP     | BEGIN              | myGroup1                     | Mark21                         | postgres
-    5228 | LOCK_GROUP         | BEGIN              | myGroup1                     |                                | postgres
-    5229 | LOCK_GROUP         | END                | myGroup1                     | 5 tables locked, 0 deadlock(s) | postgres
-    5230 | SET_MARK_GROUP     | TIME STAMP SET     | 5202                         |                                | postgres
-    5231 | CLEANUP_RLBK_STATE |                    | Rollback id 5000             | set to COMMITTED               | postgres
-    5232 | CLEANUP_RLBK_STATE |                    | Rollback id 5001             | set to COMMITTED               | postgres
-    5233 | CLEANUP_RLBK_STATE |                    | Rollback id 5002             | set to COMMITTED               | postgres
-    5234 | SET_MARK_GROUP     | END                | myGroup1                     | Mark21                         | postgres
-    5242 |                    | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                  | postgres
-(9 rows)
+ hist_id |   hist_function    |     hist_event     |         hist_object          |          regexp_replace          | hist_user 
+---------+--------------------+--------------------+------------------------------+----------------------------------+-----------
+    5200 | SET_PARAM          | INSERTED PARAMETER | history_retention            | From: 1 year to: 1 MONTHS        | postgres
+    5201 | SET_PARAM          | DELETED PARAMETER  | history_retention            | From: 1 MONTHS to: 1 year        | postgres
+    5229 | SET_MARK_GROUP     | BEGIN              | myGroup1                     | Mark21                           | postgres
+    5230 | LOCK_GROUP         | BEGIN              | myGroup1                     |                                  | postgres
+    5231 | LOCK_GROUP         | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)   | postgres
+    5232 | SET_MARK_GROUP     | TIME STAMP SET     | 5202                         |                                  | postgres
+    5233 | CLEANUP_RLBK_STATE |                    | Rollback id 5000             | set to COMMITTED                 | postgres
+    5234 | CLEANUP_RLBK_STATE |                    | Rollback id 5001             | set to COMMITTED                 | postgres
+    5235 | CLEANUP_RLBK_STATE |                    | Rollback id 5002             | set to COMMITTED                 | postgres
+    5236 | SET_MARK_GROUP     | END                | myGroup1                     | Mark21                           | postgres
+    5244 | SET_PARAM          | INSERTED PARAMETER | fixed_step_rollback_duration | From: 2.5 ms to: 2.5 millisecond | postgres
+(11 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(5300);
@@ -1744,19 +1819,33 @@ select public.handle_emaj_sequences(5600);
 cluster emaj_myschema1.mytbl1_log;
 vacuum full emaj_myschema1.mytbl1_log;
 -----------------------------
--- try forbiden actions on emaj_param
+-- try forbiden actions on parameters tables
 -----------------------------
 truncate emaj.emaj_param;
-ERROR:  _emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed. Use DELETE instead.
+ERROR:  emaj_param_before_stmt_trg: Modifying the emaj_param table is not allowed. Use the emaj_set_param() function instead.
+truncate emaj.emaj_default_param;
+ERROR:  emaj_default_param_before_stmt_trg: Modifying the emaj_default_param table is not allowed.
 -----------------------------
 -- emaj_export_parameters_configuration() and emaj_import_parameters_configuration() tests
 -----------------------------
+select emaj.emaj_set_param('fixed_step_rollback_duration','3.5 millisecond');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 -- direct export
 --   ok
 select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
  json_array_length 
 -------------------
                  2
+(1 row)
+
+select json_array_length(emaj.emaj_export_parameters_configuration(true)->'parameters');
+ json_array_length 
+-------------------
+                 9
 (1 row)
 
 -- export in file
@@ -1774,7 +1863,7 @@ select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
 15 /tmp/emaj_13/misc/orig_param_config
 \! grep -v ', at ' $EMAJTESTTMPDIR/orig_param_config
 {
-  "_help": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), fixed_table_rollback_duration (default = 00:00:00.001) and fixed_dblink_rollback_duration (default = 00:00:00.004).",
+  "_help": "Known parameter keys: history_retention (default = 1 year), dblink_user_password, alter_log_table, avg_row_rollback_duration (default = 100 us), avg_row_delete_log_duration (default = 10 us), avg_fkey_check_duration (default = 20 us), fixed_step_rollback_duration (default = 2.5 ms), fixed_table_rollback_duration (default = 1 ms), fixed_dblink_rollback_duration (default = 4 ms)",
   "parameters": [
     {
       "key": "dblink_user_password",
@@ -1782,7 +1871,7 @@ select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
     },
     {
       "key": "fixed_step_rollback_duration",
-      "value": "@ 0.0025 secs"
+      "value": "3.5 millisecond"
     }
   ]
 }
@@ -1813,8 +1902,20 @@ ERROR:  _import_param_conf: One or several errors have been detected in the supp
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention" }, { "key": "history_retention" } ] }'::json);
 WARNING:  _import_param_conf : The JSON structure references several times the parameter "history_retention".
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
+--     bad interval format
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "not an interval" } ] }'::json);
+WARNING:  _import_param_conf : For key "history_retention", the value ("not an interval") is not a valid time interval.
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 --   ok
+--     new local value
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "1 day"} ] }'::json);
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    1
+(1 row)
+
+--     modified local value
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "2 days"} ] }'::json);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     1
@@ -1837,8 +1938,38 @@ select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "hi
 select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
  json_array_length 
 -------------------
-                 2
+                 3
 (1 row)
+
+--   reset other parameters
+select emaj.emaj_set_param('history_retention', '1 day');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ ] }'::json, false);
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    0
+(1 row)
+
+select * from emaj.emaj_param where param_key = 'history_retention';
+     param_key     | param_value 
+-------------------+-------------
+ history_retention | 1 day
+(1 row)
+
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ ] }'::json, true);
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    0
+(1 row)
+
+select * from emaj.emaj_param where param_key = 'history_retention';
+ param_key | param_value 
+-----------+-------------
+(0 rows)
 
 -- import from file
 --   error
@@ -1895,29 +2026,36 @@ select hist_id, hist_function, hist_event, hist_object,
   from (select * from emaj.emaj_hist where hist_id >= 5600 order by hist_id) as t;
  hist_id |   hist_function   |     hist_event     |         hist_object          |                  regexp_replace                   | hist_user 
 ---------+-------------------+--------------------+------------------------------+---------------------------------------------------+-----------
-    5606 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
-    5607 |                   | INSERTED PARAMETER | history_retention            | @ 1 day                                           | postgres
-    5608 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                             | postgres
-    5609 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
-    5610 |                   | DELETED PARAMETER  | history_retention            |                                                   | postgres
-    5611 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                             | postgres
-    5612 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
-    5613 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                             | postgres
-    5618 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/emaj_13/misc/orig_param_config' | postgres
-    5619 |                   | DELETED PARAMETER  | dblink_user_password         |                                                   | postgres
-    5620 |                   | DELETED PARAMETER  | fixed_step_rollback_duration |                                                   | postgres
-    5621 |                   | INSERTED PARAMETER | dblink_user_password         | <masked data>                                     | postgres
-    5622 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                     | postgres
-    5623 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                             | postgres
-    5624 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/emaj_13/misc/orig_param_config' | postgres
-    5625 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                     | postgres
-    5626 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                     | postgres
-    5627 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                             | postgres
-    5628 | PURGE_HISTORIES   | BEGIN              |                              |                                                   | postgres
-    5629 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
-    5630 | PURGE_HISTORIES   | BEGIN              |                              | Retention delay @ 0                               | postgres
-    5631 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
-(22 rows)
+    5600 | SET_PARAM         | UPDATED PARAMETER  | fixed_step_rollback_duration | From: 2.5 millisecond to: 3.5 millisecond         | postgres
+    5608 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5609 | IMPORT_PARAMETERS | INSERTED PARAMETER | history_retention            | From: 1 year to: 1 day                            | postgres
+    5610 | IMPORT_PARAMETERS | END                |                              | 1 imported parameters, 1 modified parameters      | postgres
+    5611 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5612 | IMPORT_PARAMETERS | UPDATED PARAMETER  | history_retention            | From: 1 day to: 2 days                            | postgres
+    5613 | IMPORT_PARAMETERS | END                |                              | 1 imported parameters, 1 modified parameters      | postgres
+    5614 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5615 | IMPORT_PARAMETERS | END                |                              | 1 imported parameters, 0 modified parameters      | postgres
+    5616 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5617 | IMPORT_PARAMETERS | END                |                              | 1 imported parameters, 0 modified parameters      | postgres
+    5618 | SET_PARAM         | UPDATED PARAMETER  | history_retention            | From: 2 days to: 1 day                            | postgres
+    5619 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5620 | IMPORT_PARAMETERS | END                |                              | 0 imported parameters, 0 modified parameters      | postgres
+    5621 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5622 | IMPORT_PARAMETERS | DELETED PARAMETER  | history_retention            | From: 1 day to: 1 year                            | postgres
+    5623 | IMPORT_PARAMETERS | DELETED PARAMETER  | dblink_user_password         | <masked data>                                     | postgres
+    5624 | IMPORT_PARAMETERS | DELETED PARAMETER  | fixed_step_rollback_duration | From: 3.5 millisecond to: 2.5 ms                  | postgres
+    5625 | IMPORT_PARAMETERS | END                |                              | 0 imported parameters, 3 modified parameters      | postgres
+    5630 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/emaj_13/misc/orig_param_config' | postgres
+    5631 | IMPORT_PARAMETERS | INSERTED PARAMETER | dblink_user_password         | <masked data>                                     | postgres
+    5632 | IMPORT_PARAMETERS | INSERTED PARAMETER | fixed_step_rollback_duration | From: 2.5 ms to: 3.5 millisecond                  | postgres
+    5633 | IMPORT_PARAMETERS | END                |                              | 2 imported parameters, 2 modified parameters      | postgres
+    5634 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/emaj_13/misc/orig_param_config' | postgres
+    5635 | IMPORT_PARAMETERS | END                |                              | 2 imported parameters, 0 modified parameters      | postgres
+    5636 | PURGE_HISTORIES   | BEGIN              |                              |                                                   | postgres
+    5637 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
+    5638 | PURGE_HISTORIES   | BEGIN              |                              | Retention delay @ 0                               | postgres
+    5639 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
+(29 rows)
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

@@ -63,4 +63,5 @@ select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
 -- Check the changes specific to this version upgrade
 -----------------------------
 
-select rel_schema, rel_tblseq, rel_time_range, rel_pk_cols from emaj.emaj_relation order by 1,2,3;
+select * from emaj.emaj_param order by param_key;
+select * from emaj.emaj_all_param order by param_rank;

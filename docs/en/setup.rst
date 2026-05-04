@@ -68,7 +68,7 @@ Several parameters have an influence on the E-Maj behaviour. They are presented 
 
 The parameters setting step is optional. E-Maj works well with the default parameter values.
 
-However, if the E-Maj administrator wishes to take benefit from the :ref:`rollback operations monitoring capabilities<emaj_rollback_activity_prerequisites>`, it is necessary to set the **dblink_user_password** parameter into the :ref:`emaj_param <emaj_param>` table.
+However, if the E-Maj administrator wishes to take benefit from the :ref:`rollback operations monitoring capabilities<emaj_rollback_activity>`, or execute :doc:`parallel E-Maj rollbacks<parallelRollbackClient>`, it is necessary to set the **dblink_user_password** parameter.
 
 Test and demonstration
 ----------------------

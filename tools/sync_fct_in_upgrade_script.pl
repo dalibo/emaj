@@ -75,9 +75,9 @@ use warnings; use strict;
 
       # Convert into upper case and remove the default clause if exists.
       $param = uc $param;
-      $param =~ s/DEFAULT.*//;
+      $param =~ s/\sDEFAULT.*/ /;
       # Remove the word IN (which is the default argument mode).
-      $param =~ s/IN\s//;
+      $param =~ s/\sIN\s/ /;
       # Remove the redundant spaces
       $param =~ s/^\s+//;
       $param =~ s/\s+$//;

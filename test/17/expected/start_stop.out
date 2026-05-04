@@ -159,7 +159,12 @@ ERROR:  _verify_groups (12): In tables group "myGroup1", the log table "emaj_mys
 rollback;
 -- should be OK
 -- use the first correct emaj_start_group() function call to test the emaj_hist purge
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
+select emaj.emaj_set_param('history_retention', '0.1 second');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 select pg_sleep(0.2);
  pg_sleep 
 ----------
@@ -190,14 +195,24 @@ select hist_function, hist_event, hist_object,
 (8 rows)
 
 -- test the smallest history_retention value that means infinity
-update emaj.emaj_param set param_value_interval = '100 years'::interval where param_key = 'history_retention';
+select emaj.emaj_set_param('history_retention', '100 years');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 select emaj.emaj_start_group('myGroup2','Mark2',true);
  emaj_start_group 
 ------------------
                10
 (1 row)
 
-delete from emaj.emaj_param where param_key = 'history_retention';
+select emaj.emaj_set_param('history_retention', NULL);
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 select emaj.emaj_start_group('phil''s group#3",','Mark3',false);
  emaj_start_group 
 ------------------
@@ -455,7 +470,7 @@ select hist_id, hist_function, hist_event, hist_object,
     2053 | SET_MARK_GROUP  | BEGIN             | myGroup1          | Mark1                                                                                                                                                   | postgres
     2054 | SET_MARK_GROUP  | END               | myGroup1          | Mark1                                                                                                                                                   | postgres
     2055 | START_GROUP     | END               | myGroup1          | 7 tables/sequences processed                                                                                                                            | postgres
-    2056 |                 | UPDATED PARAMETER | history_retention | @ 100 years                                                                                                                                             | postgres
+    2056 | SET_PARAM       | UPDATED PARAMETER | history_retention | From: 0.1 second to: 100 years                                                                                                                          | postgres
     2057 | START_GROUP     | BEGIN             | myGroup2          | With log reset                                                                                                                                          | postgres
     2058 | LOCK_GROUP      | BEGIN             | myGroup2          |                                                                                                                                                         | postgres
     2059 | LOCK_GROUP      | END               | myGroup2          | 8 tables locked, 0 deadlock(s)                                                                                                                          | postgres
@@ -463,7 +478,7 @@ select hist_id, hist_function, hist_event, hist_object,
     2061 | SET_MARK_GROUP  | BEGIN             | myGroup2          | Mark2                                                                                                                                                   | postgres
     2062 | SET_MARK_GROUP  | END               | myGroup2          | Mark2                                                                                                                                                   | postgres
     2063 | START_GROUP     | END               | myGroup2          | 10 tables/sequences processed                                                                                                                           | postgres
-    2064 |                 | DELETED PARAMETER | history_retention |                                                                                                                                                         | postgres
+    2064 | SET_PARAM       | DELETED PARAMETER | history_retention | From: 100 years to: 1 year                                                                                                                              | postgres
     2065 | START_GROUP     | BEGIN             | phil's group#3",  | Without log reset                                                                                                                                       | postgres
     2066 | LOCK_GROUP      | BEGIN             | phil's group#3",  |                                                                                                                                                         | postgres
     2067 | LOCK_GROUP      | END               | phil's group#3",  | 2 tables locked, 0 deadlock(s)                                                                                                                          | postgres

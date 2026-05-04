@@ -24,11 +24,11 @@ This duration estimate is approximative. It takes into account:
 
 * the number of updates in log tables to process, as returned by the :ref:`emaj_log_stat_group() <emaj_log_stat_group>` function,
 * recorded duration of already performed rollbacks for the same tables,  
-* 6 generic :doc:`parameters <parameters>` that are used as default values when no statistics have been already recorded for the tables to process.
+* 6 generic :doc:`parameters<parameters>` that are used as default values when no statistics have been already recorded for the tables to process.
 
 The precision of the result cannot be high. The first reason is that, *INSERT*, *UPDATE* and *DELETE* having not the same cost, the part of each SQL type may vary. The second reason is that the load of the server at rollback time can be very different from one run to another. However, if there is a time constraint, the order of magnitude delivered by the function can be helpful to determine of the rollback operation can be performed in the available time interval.
 
-If no statistics on previous rollbacks are available and if the results quality is poor, it is possible to adjust the generic :doc:`parameters <parameters>`. It is also possible to manually change the *emaj.emaj_rlbk_stat* table's content that keep a trace of the previous rollback durations, for instance by deleting rows corresponding to rollback operations performed in unusual load conditions.
+If no statistics on previous rollbacks are available and if the results quality is poor, it is possible to adjust the generic :doc:`parameters<parameters>`. It is also possible to manually change the *emaj.emaj_rlbk_stat* table's content that keep a trace of the previous rollback durations, for instance by deleting rows corresponding to rollback operations performed in unusual load conditions.
 
 Using the *emaj_estimate_rollback_groups()* function, it is possible to estimate the duration of a rollback operation on several groups::
 
@@ -50,14 +50,13 @@ Prerequisite
 
 To allow E-Maj administrators to monitor the progress of a rollback operation, the activated functions update several technical tables as the process progresses. To ensure that these updates are visible while the transaction managing the rollback is in progress, they are performed through a *dblink* connection.
 
-If not already present, the *dblink* extension is automatically installed at *emaj* extension creation. But monitoring rollback operations also requires to insert a connection identifier usable by *dblink* into the :ref:`emaj_param <emaj_param>` table. ::
+If not already present, the *dblink* extension is automatically installed at *emaj* extension creation. But monitoring rollback operations also requires to set the :ref:`'dblink_user_password'<emaj_param>` extension parameter with connection identifiers usable by *dblink*. ::
 
-   INSERT INTO emaj.emaj_param (param_key, param_value_text) 
-   VALUES ('dblink_user_password','user=<user> password=<password>');
+   SELECT emaj.emaj_set_param('dblink_user_password','user=<user> password=<password>');
 
-The declared connection role must have been granted the *emaj_adm* rights (or be a *superuser*).
+The declared connection role must have been granted the *emaj_adm* privilege (or be a *superuser*).
 
-If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the right to execute the dblink_connect_u(text,text)<rollbacks_limits>` function.
+If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the privilege to execute the dblink_connect_u(text,text)<rollbacks_limits>` function.
 
 Lastly, the main transaction managing the rollback operation must be in a “*read committed*” concurrency mode (the default value).
 
@@ -142,7 +141,7 @@ If the comment parameter is set to NULL, the existing comment, if any, is delete
 
 The function does not return any data.
 
-The comment can be added, modified or deleted when the operation is completed, but also when it is in progress if it is visible, i.e. if the *dblink_user_password* parameter is set into the :ref:`emaj_param <emaj_param>` table.
+The comment can be added, modified or deleted when the operation is completed, but also when it is in progress if it is visible, i.e. if the :ref:`'dblink_user_password'<emaj_param>` E-Maj parameter is set.
 
 .. _emaj_consolidate_rollback_group:
 

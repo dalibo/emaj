@@ -129,7 +129,7 @@ rollback;
 
 -- should be OK
 -- use the first correct emaj_start_group() function call to test the emaj_hist purge
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
+select emaj.emaj_set_param('history_retention', '0.1 second');
 select pg_sleep(0.2);
 
 select emaj.emaj_start_group('myGroup1','Mark1');
@@ -140,10 +140,10 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist order by hist_id;
 
 -- test the smallest history_retention value that means infinity
-update emaj.emaj_param set param_value_interval = '100 years'::interval where param_key = 'history_retention';
+select emaj.emaj_set_param('history_retention', '100 years');
 select emaj.emaj_start_group('myGroup2','Mark2',true);
 
-delete from emaj.emaj_param where param_key = 'history_retention';
+select emaj.emaj_set_param('history_retention', NULL);
 select emaj.emaj_start_group('phil''s group#3",','Mark3',false);
 select emaj.emaj_start_group('emptyGroup','Mark1');
 

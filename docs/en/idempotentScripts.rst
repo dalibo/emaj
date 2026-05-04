@@ -13,7 +13,7 @@ Two working approaches exist.
 Global parameters configuration management
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It deals with loading a :ref:`parameters set<emaj_param>` in *JSON* format, read from a flat file or a table column, using the :ref:`emaj_import_parameters_configuration()<import_param_conf>` function with the second parameter set to *TRUE* to remove any pre-existing parameter value not in the *JSON* description. ::
+It deals with loading a :ref:`parameters set<emaj_param>` in *JSON* format, read from a flat file or a table column, using the :ref:`emaj_import_parameters_configuration()<import_param_conf>` function with the second parameter set to *TRUE* to reset any E-Maj parameter not in the *JSON* description. ::
 
    SELECT emaj.emaj_import_parameters_configuration (JSON.configuration, TRUE);
 
@@ -22,15 +22,12 @@ The JSON configuration may have been build manually or using the :ref:`emaj_expo
 Unitary management
 ^^^^^^^^^^^^^^^^^^
 
-It is also possible to execute a script that chains in a single transaction::
+It is also possible to execute a script that sets :doc:`all E-Maj parameters<parameters>` in a single transaction, a *NULL* value been used for parameters keeping their default value::
 
    BEGIN;
-      TRUNCATE emaj.emaj_param;
-      INSERT INTO emaj.emaj_param (param_key, param_value_<type>)
-         VALUES (parameter.key 1, parameter.value 1);
-      INSERT INTO emaj.emaj_param (param_key, param_value_<type>)
-         VALUES (parameter.key 2, parameter.value 2);
-      …
+     SELECT emaj.emaj_set_param(parameter.key 1, parameter.value 1);
+     SELECT emaj.emaj_set_param(parameter.key 2, parameter.value 2);      …
+     ...
    COMMIT;
 
 .. _idempotent_groups_content:

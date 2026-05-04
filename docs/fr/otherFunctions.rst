@@ -35,7 +35,6 @@ La fonction retourne également des avertissements quand :
 * une séquence associée à une colonne est assignée à un groupe de tables mais la table associée ne fait pas partie de ce groupe de tables,
 * une table d’un groupe est liée à une autre table par une clé étrangère, mais la table associée ne fait pas partie du même groupe de tables,
 * une clé étrangère est héritée d’une table partitionnées mais soit n’est pas *DEFERRABLE* soit porte une clause *ON DELETE* ou *ON UPDATE*, empêchant dans les deux cas sa suppression/recréation éventuelle lors d’une opération de rollback E-Maj,
-* des :doc:`paramètres de la table emaj_param<parameters>` sont inconnus,
 * la connexion dblink n’est pas opérationnelle,
 * des event triggers de protection E-Maj sont manquants ou désactivés.
 
@@ -72,7 +71,7 @@ E-Maj historise certaines données : traces globales de fonctionnement, détail
 
    SELECT emaj.emaj_purge_histories('<délai.rétention>');
 
-La paramètre <délai.rétention> est de type *INTERVAL*. Il surcharge le paramètre *'history_retention'* de la table *emaj_param*.
+La paramètre <délai.rétention> est de type *INTERVAL*. Il surcharge le paramètre E-Maj *'history_retention'*.
 
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:

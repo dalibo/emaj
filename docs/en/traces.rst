@@ -139,6 +139,8 @@ The *hist_function* column can take the following values:
 +----------------------------------+----------------------------------------------------------------------------+
 | SET_MARK_GROUPS                  | mark set on several tables groups                                          |
 +----------------------------------+----------------------------------------------------------------------------+
+| SET_PARAM                        | parameter value change                                                     |
++----------------------------------+----------------------------------------------------------------------------+
 | SNAP_GROUP                       | snap all tables and sequences for a group                                  |
 +----------------------------------+----------------------------------------------------------------------------+
 | SNAP_LOG_GROUP                   | snap all log tables for a group                                            |
@@ -238,9 +240,9 @@ When a tables group is started with reset (:ref:`emaj_start_group() <emaj_start_
 * the oldest mark,
 * and the oldest uncompleted rollback operation.
 
-By default, the retention delay for events equals 1 year. But this value can be modified at any time by inserting the *history_retention* parameter into the :ref:`emaj_param <emaj_param>` table with a SQL statement. If the *history_retention* parameter is set to 100 years or more, no histories purge is executed.
+By default, the retention delay for events equals 1 year. But this value can be modified at any time by changing the *history_retention* :ref:`E-Maj parameter<emaj_param>` value. If the *history_retention* parameter is set to 100 years or more, no histories purge attempt is executed.
 
-The obsolete traces purge can also be initiated by explicitely calling the :ref:`emaj_purge_histories() <emaj_purge_histories>` function. The input parameter of the function defines a retention delay that overloads the *history_retention* parameter of the *emaj_param* table.
+The obsolete traces purge can also be initiated by explicitely calling the :ref:`emaj_purge_histories() <emaj_purge_histories>` function. The input parameter of the function defines a retention delay that overloads the *history_retention* E-Maj parameter.
 
 In order to schedule purges periodically, it is possible to:
 

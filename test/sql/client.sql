@@ -30,10 +30,9 @@ alter sequence mySchema2.mySeq1 restart 9999;
 -- Call emajParallelRollback.php
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
-delete from emaj.emaj_param where param_key = 'dblink_user_password';
+select emaj.emaj_set_param('dblink_user_password', NULL);
 \! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
-insert into emaj.emaj_param (param_key, param_value_text) 
-  values ('dblink_user_password','user=postgres password=postgres');
+select emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
 
 -- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
 select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
@@ -75,10 +74,9 @@ alter sequence mySchema2.mySeq1 restart 9999;
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_viewer -W viewer -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 
 -- parallel rollback, but with disabled dblink connection
-delete from emaj.emaj_param where param_key = 'dblink_user_password';
+select emaj.emaj_set_param('dblink_user_password', NULL);
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
-insert into emaj.emaj_param (param_key, param_value_text) 
-  values ('dblink_user_password','user=postgres password=postgres');
+select emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
 
 -- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
 select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);

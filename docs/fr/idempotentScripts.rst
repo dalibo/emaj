@@ -13,7 +13,7 @@ Deux approches sont possibles.
 Gestion d’une configuration globale du jeu de paramètres
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Il s’agit de charger un :ref:`jeu de paramètres<emaj_param>` en format *JSON*, stocké dans un fichier ou dans une colonne de tables, en utilisant la fonction :ref:`emaj_import_parameters_configuration()<import_param_conf>`, avec le second paramètre valorisé à *TRUE* pour supprimer d’éventuels paramètres pré-existants mais absents de la configuration. ::
+Il s’agit de charger un :ref:`jeu de paramètres<emaj_param>` en format *JSON*, stocké dans un fichier ou dans une colonne de tables, en utilisant la fonction :ref:`emaj_import_parameters_configuration()<import_param_conf>`, avec le second paramètre valorisé à *TRUE* pour réinitialiser d’éventuels paramètres E-Maj absents de la configuration *JSON*. ::
 
    SELECT emaj.emaj_import_parameters_configuration (configuration.JSON, TRUE);
 
@@ -22,15 +22,12 @@ La configuration *JSON* à charger peut avoir été construite manuellement ou �
 Gestion unitaire des paramètres
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Il est également possible d’exécuter un script SQL qui enchaine dans une même transaction ::
+Il est également possible d’exécuter un script SQL qui enchaine, dans une même transaction, la valorisation de tous :doc:`les paramètres E-Maj<parameters>`, une valeur *NULL* étant fournie pour les paramètres gardant leur valeur par défaut ::
 
    BEGIN;
-       TRUNCATE emaj.emaj_param;
-       INSERT INTO emaj.emaj_param (param_key, param_value_<type>)
-       		VALUES (clé.paramètre 1, valeur.paramètre 1);
-       INSERT INTO emaj.emaj_param (param_key, param_value_<type>)
-       		VALUES (clé.paramètre 2, valeur.paramètre 2);
-       ...
+     SELECT emaj.emaj_set_param(clé.paramètre 1, valeur.paramètre 1);
+     SELECT emaj.emaj_set_param(clé.paramètre 2, valeur.paramètre 2);
+     ...
    COMMIT;
 
 .. _idempotent_groups_content:

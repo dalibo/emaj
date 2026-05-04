@@ -45,17 +45,20 @@ select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel
 -- look at pg_stat_activity to force the statistics collector aggregate the latest stats
 select 0 from pg_stat_activity limit 1;
 
--- display the functions that are not called by any regression test script
---   (_build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics
---    emaj_drop_extension() is not called by the standart test scenarios, but a dedicated scenario tests it)
-select nspname, proname from pg_proc, pg_namespace
+-- display the functions that are not called by any regression test script.
+-- some functions are excluded:
+--   _emaj_param_before_stmt_fnct and _emaj_default_param_before_stmt_fnct are called by triggers but always raise an exception
+--       (and thus are not listed in pg_stat_user_functions for PG14- versions),
+--   _build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics,
+--   emaj_drop_extension() is not called by the standart test scenarios, but a dedicated scenario tests it.
+select proname from pg_proc, pg_namespace
   where pronamespace = pg_namespace.oid
     and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%')
-    and proname not in ('_build_path_name', 'emaj_drop_extension')
+    and proname not in ('_emaj_default_param_before_stmt_fnct', '_emaj_param_before_stmt_fnct', '_build_path_name', 'emaj_drop_extension')
 except
-select schemaname, funcname from pg_stat_user_functions
+select funcname from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
-order by 1,2;
+order by 1;
 
 -- display the number of calls for each emaj function
 --   (_verify_groups(), _log_stat_tbl() and _get_log_sequence_last_value() functions are excluded as their number of calls is not stable.

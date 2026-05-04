@@ -44,6 +44,7 @@ Bienvenue dans la documentation E-Maj !
    statFunctions
    changesDumpFunctions
    changesReplayFunctions
+   parameters
    exportImportFunctions
    otherFunctions
    multiGroupsFunctions
@@ -55,7 +56,6 @@ Bienvenue dans la documentation E-Maj !
    :maxdepth: 1
    :caption: Considérations diverses :
 
-   parameters
    idempotentScripts
    logTables
    reliability

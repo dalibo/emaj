@@ -1,4 +1,5 @@
 -- misc.sql : test miscellaneous functions
+--   emaj_set_param(),
 --   emaj_reset_group(), 
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
@@ -21,6 +22,24 @@ select public.handle_emaj_sequences(5200);
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
    
+-----------------------------
+-- emaj_set_param() test
+-----------------------------
+-- illegal key
+select emaj.emaj_set_param('A key', 'a value');
+
+-- invalid interval format
+select emaj.emaj_set_param('history_retention', 'not an interval value');
+
+-- update a key with a real value change
+select emaj.emaj_set_param('history_retention', '1 MONTHS');
+-- update a key with the same value
+select emaj.emaj_set_param('history_retention', '1 MONTHS');
+-- reset a key (here in upper case) to its default value
+select emaj.emaj_set_param('HISTORY_RETENTION', NULL);
+-- reset a key with no change
+select emaj.emaj_set_param('history_retention', NULL);
+
 -----------------------------
 -- emaj_reset_group() test
 -----------------------------
@@ -82,8 +101,9 @@ rollback;
 -- estimate a rollback of an empty group
 select emaj.emaj_estimate_rollback_group('emptyGroup','EGM4',TRUE);
 
--- insert 1 timing parameters (=> so use 3 default values)
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_step_rollback_duration','2.5 millisecond'::interval);
+-- insert 1 timing parameters (=> so use 5 default values)
+
+select emaj.emaj_set_param('fixed_step_rollback_duration','2.5 millisecond');
 
 -- analyze tables to get proper reltuples statistics
 vacuum analyze myschema2.mytbl4;
@@ -97,7 +117,7 @@ delete from emaj.emaj_rlbk_stat;
 begin;
   select emaj.emaj_protect_group('myGroup2');
   select emaj.emaj_protect_mark_group('myGroup2','EMAJ_LAST_MARK');
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1.4 millisecond'::interval);
+  select emaj.emaj_set_param('fixed_table_rollback_duration','1.4 millisecond');
   select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
 -- should return 0.0205 sec
   select emaj.emaj_unprotect_mark_group('myGroup2','EMAJ_LAST_MARK');
@@ -109,11 +129,11 @@ select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
 
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','150 microsecond'::interval);
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','12 microsecond'::interval);
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','27 microsecond'::interval);
-  UPDATE emaj.emaj_param SET param_value_interval = '7 millisecond'::interval WHERE param_key = 'fixed_step_rollback_duration';
-  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','2.5 millisecond'::interval);
+  select emaj.emaj_set_param('avg_row_rollback_duration','150 microsecond');
+  select emaj.emaj_set_param('avg_row_delete_log_duration','12 microsecond');
+  select emaj.emaj_set_param('avg_fkey_check_duration','27 microsecond');
+  select emaj.emaj_set_param('fixed_step_rollback_duration', '7 millisecond');
+  select emaj.emaj_set_param('fixed_dblink_rollback_duration','2.5 millisecond');
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
 -- should return 1.814 sec (or 1.8285 sec is emaj is not an extension)
 rollback;
@@ -642,16 +662,20 @@ cluster emaj_myschema1.mytbl1_log;
 vacuum full emaj_myschema1.mytbl1_log;
 
 -----------------------------
--- try forbiden actions on emaj_param
+-- try forbiden actions on parameters tables
 -----------------------------
 truncate emaj.emaj_param;
+truncate emaj.emaj_default_param;
 
 -----------------------------
 -- emaj_export_parameters_configuration() and emaj_import_parameters_configuration() tests
 -----------------------------
+select emaj.emaj_set_param('fixed_step_rollback_duration','3.5 millisecond');
+
 -- direct export
 --   ok
 select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+select json_array_length(emaj.emaj_export_parameters_configuration(true)->'parameters');
 
 -- export in file
 --   error
@@ -674,14 +698,25 @@ select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": nul
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "unknown_param" } ] }'::json);
 --     duplicate key
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention" }, { "key": "history_retention" } ] }'::json);
+--     bad interval format
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "not an interval" } ] }'::json);
 
 --   ok
+--     new local value
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "1 day"} ] }'::json);
+--     modified local value
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "2 days"} ] }'::json);
 --     "null" "value" attribute
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": null} ] }'::json);
 --     missing "value" attribute
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention"} ] }'::json);
 select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+--   reset other parameters
+select emaj.emaj_set_param('history_retention', '1 day');
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ ] }'::json, false);
+select * from emaj.emaj_param where param_key = 'history_retention';
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ ] }'::json, true);
+select * from emaj.emaj_param where param_key = 'history_retention';
 
 -- import from file
 --   error

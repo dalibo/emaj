@@ -19,7 +19,7 @@ select * from emaj.emaj_verify_all();
                                                                                  emaj_verify_all                                                                                  
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
- Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+ Warning: The 'dblink_user_password' parameter value is not set.
  No error detected
 (3 rows)
 
@@ -633,11 +633,13 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | BEGIN              | myGroup6                                                          | STOP_%                                                                                        | _regress_emaj_adm1
  SET_MARK_GROUP           | END                | myGroup6                                                          | STOP_%                                                                                        | _regress_emaj_adm1
  STOP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | _regress_emaj_adm1
+                          | INSERTED PARAMETER | history_retention                                                 | @ 1 day                                                                                       | _regress_emaj_adm1
+                          | INSERTED PARAMETER | unknown_key                                                       | unknown_value                                                                                 | _regress_emaj_adm1
  EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 4.7.1 started                                                                    | postgres
  EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 4.7.1 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                                                          | Status 1                                                                                      | _regress_emaj_adm2
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | Unlogged rollback to mark Common (timestamp)                                                  | _regress_emaj_adm2
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                    | _regress_emaj_adm2
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 ('dblink_user_password' parameter not set)                                        | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN              | myGroup1,myGroup2                                                 | Rollback session #1                                                                           | _regress_emaj_adm2
  LOCK_GROUP               | END                | myGroup1,myGroup2                                                 | Rollback session #1: 8 tables locked, 0 deadlock(s)                                           | _regress_emaj_adm2
  ROLLBACK_GROUPS          | TIME STAMP SET     | 32                                                                |                                                                                               | _regress_emaj_adm2
@@ -649,7 +651,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS          | END                | myGroup1,myGroup2                                                 | Rollback_id 5                                                                                 | _regress_emaj_adm2
  UNPROTECT_MARK_GROUP     |                    | myGroup1                                                          | Mark M3 ; status 1                                                                            | _regress_emaj_adm2
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Logged rollback to mark M2 (timestamp)                                                        | _regress_emaj_adm2
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                    | _regress_emaj_adm2
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 ('dblink_user_password' parameter not set)                                        | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | _regress_emaj_adm2
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | _regress_emaj_adm2
  ROLLBACK_GROUP           | TIME STAMP SET     | 33                                                                |                                                                                               | _regress_emaj_adm2
@@ -687,7 +689,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | TIME STAMP SET     | 37                                                                |                                                                                               | _regress_emaj_adm2
  SET_MARK_GROUP           | END                | myGroup1                                                          | M6                                                                                            | _regress_emaj_adm2
  ROLLBACK_GROUP           | BEGIN              | myGroup2                                                          | Logged rollback to mark M2 (timestamp)                                                        | _regress_emaj_adm2
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                    | _regress_emaj_adm2
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 ('dblink_user_password' parameter not set)                                        | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN              | myGroup2                                                          | Rollback session #1                                                                           | _regress_emaj_adm2
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | _regress_emaj_adm2
  ROLLBACK_GROUP           | TIME STAMP SET     | 38                                                                |                                                                                               | _regress_emaj_adm2
@@ -704,7 +706,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 7                                                     | 1 / 2 sequences effectively processed.                                                        | _regress_emaj_adm2
  ROLLBACK_GROUP           | END                | myGroup2                                                          | Rollback_id 7                                                                                 | _regress_emaj_adm2
  ROLLBACK_GROUP           | BEGIN              | myGroup2                                                          | Unlogged rollback to mark M3 (timestamp)                                                      | _regress_emaj_adm2
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                    | _regress_emaj_adm2
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 ('dblink_user_password' parameter not set)                                        | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN              | myGroup2                                                          | Rollback session #1                                                                           | _regress_emaj_adm2
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | _regress_emaj_adm2
  ROLLBACK_GROUP           | TIME STAMP SET     | 40                                                                |                                                                                               | _regress_emaj_adm2
@@ -723,7 +725,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 8                                                     | 1 / 2 sequences effectively processed.                                                        | _regress_emaj_adm2
  ROLLBACK_GROUP           | END                | myGroup2                                                          | Rollback_id 8                                                                                 | _regress_emaj_adm2
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Unlogged rollback to mark M5 (timestamp)                                                      | _regress_emaj_adm2
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                    | _regress_emaj_adm2
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 ('dblink_user_password' parameter not set)                                        | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | _regress_emaj_adm2
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | _regress_emaj_adm2
  ROLLBACK_GROUP           | TIME STAMP SET     | 41                                                                |                                                                                               | _regress_emaj_adm2
@@ -739,7 +741,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 9                                                     | 0 / 1 sequences effectively processed.                                                        | _regress_emaj_adm2
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 9                                                                                 | _regress_emaj_adm2
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Logged rollback to mark M4 (timestamp)                                                        | _regress_emaj_adm2
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                    | _regress_emaj_adm2
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 ('dblink_user_password' parameter not set)                                        | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | _regress_emaj_adm2
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | _regress_emaj_adm2
  ROLLBACK_GROUP           | TIME STAMP SET     | 42                                                                |                                                                                               | _regress_emaj_adm2
@@ -776,7 +778,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | END                | myGroup6                                                          | Start G6                                                                                      | _regress_emaj_adm2
  START_GROUP              | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | _regress_emaj_adm2
  ROLLBACK_GROUP           | BEGIN              | myGroup6                                                          | Unlogged rollback to mark Start G6 (timestamp)                                                | _regress_emaj_adm2
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 (missing 'dblink_user_password' parameter in emaj_param table)                    | _regress_emaj_adm2
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 ('dblink_user_password' parameter not set)                                        | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN              | myGroup6                                                          | Rollback session #1                                                                           | _regress_emaj_adm2
  LOCK_GROUP               | END                | myGroup6                                                          | Rollback session #1: 3 tables locked, 0 deadlock(s)                                           | _regress_emaj_adm2
  ROLLBACK_GROUP           | TIME STAMP SET     | 45                                                                |                                                                                               | _regress_emaj_adm2
@@ -796,7 +798,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | TIME STAMP SET     | 47                                                                |                                                                                               | _regress_emaj_adm2
  DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | _regress_emaj_adm2
  DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | _regress_emaj_adm2
-(364 rows)
+(366 rows)
 
 --
 -- set sequence restart value

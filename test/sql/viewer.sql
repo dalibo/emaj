@@ -88,11 +88,12 @@ select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
 select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Start','Start',NULL,NULL);
 
 -----------------------------
--- forbiden table accesses
+-- forbiden tables or views accesses
 -----------------------------
 delete from emaj.emaj_version_hist;
-select count(*) from emaj.emaj_param;
-delete from emaj.emaj_param;
+delete from emaj.emaj_default_param;
+select * from emaj.emaj_param;
+select * from emaj.emaj_all_param;
 delete from emaj.emaj_hist;
 delete from emaj.emaj_group;
 delete from emaj.emaj_relation;

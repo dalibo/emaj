@@ -372,124 +372,121 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 14000 order by hist_id;
-      hist_function       |    hist_event     |         hist_object          |                                                             regexp_replace                                                             |     hist_user      
---------------------------+-------------------+------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+--------------------
- IMPORT_PARAMETERS        | BEGIN             |                              |                                                                                                                                        | _regress_emaj_adm1
-                          | UPDATED PARAMETER | dblink_user_password         | <masked data>                                                                                                                          | _regress_emaj_adm1
-                          | UPDATED PARAMETER | alter_log_table              | ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), ADD COLUMN extra_col_appname TEXT DEFAULT current_setting('application_name') | _regress_emaj_adm1
-                          | UPDATED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                                                                                                          | _regress_emaj_adm1
- IMPORT_PARAMETERS        | END               |                              | 3 parameters imported                                                                                                                  | _regress_emaj_adm1
- STOP_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | _regress_emaj_adm1
- LOCK_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | _regress_emaj_adm1
- LOCK_GROUPS              | END               | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                                        | _regress_emaj_adm1
- STOP_GROUPS              | TIME STAMP SET    | 14000                        |                                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | STOP_%                                                                                                                                 | _regress_emaj_adm1
- CLEANUP_RLBK_STATE       |                   | Rollback id 12701            | set to COMMITTED                                                                                                                       | _regress_emaj_adm1
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | STOP_%                                                                                                                                 | _regress_emaj_adm1
- STOP_GROUPS              | END               | myGroup1,myGroup2            | 15 tables/sequences processed                                                                                                          | _regress_emaj_adm1
- START_GROUPS             | BEGIN             | myGroup1,myGroup2            | Without log reset                                                                                                                      | _regress_emaj_adm1
- LOCK_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | _regress_emaj_adm1
- LOCK_GROUPS              | END               | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                                        | _regress_emaj_adm1
- START_GROUPS             | TIME STAMP SET    | 14001                        |                                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | Multi-1                                                                                                                                | _regress_emaj_adm1
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | Multi-1                                                                                                                                | _regress_emaj_adm1
- START_GROUPS             | END               | myGroup1,myGroup2            | 15 tables/sequences processed                                                                                                          | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | Multi-2                                                                                                                                | _regress_emaj_adm1
- LOCK_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | _regress_emaj_adm1
- LOCK_GROUPS              | END               | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | TIME STAMP SET    | 14002                        |                                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | Multi-2                                                                                                                                | _regress_emaj_adm1
- ROLLBACK_GROUPS          | BEGIN             | myGroup1,myGroup2            | Logged rollback to mark Multi-1 (timestamp)                                                                                            | _regress_emaj_adm1
- DBLINK_OPEN_CNX          |                   | rlbk#1                       | Status = 1                                                                                                                             | _regress_emaj_adm1
- LOCK_GROUP               | BEGIN             | myGroup1,myGroup2            | Rollback session #1                                                                                                                    | _regress_emaj_adm1
- LOCK_GROUP               | END               | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | TIME STAMP SET    | 14003                        |                                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | RLBK_14000_START                                                                                                                       | _regress_emaj_adm1
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | RLBK_14000_START                                                                                                                       | _regress_emaj_adm1
- ROLLBACK_GROUPS          | TIME STAMP SET    | 14004                        |                                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | RLBK_14000_DONE                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | RLBK_14000_DONE                                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14000            | Rollback id = 14000.                                                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14000            | 0 / 11 tables effectively processed.                                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14000            | 0 / 4 sequences effectively processed.                                                                                                 | _regress_emaj_adm1
- DBLINK_CLOSE_CNX         |                   | rlbk#1                       |                                                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUPS          | END               | myGroup1,myGroup2            | Rollback_id 14000                                                                                                                      | _regress_emaj_adm1
- ROLLBACK_GROUPS          | BEGIN             | myGroup1,myGroup2            | Unlogged rollback to mark Multi-2 (timestamp)                                                                                          | _regress_emaj_adm1
- DBLINK_OPEN_CNX          |                   | rlbk#1                       | Status = 1                                                                                                                             | _regress_emaj_adm1
- LOCK_GROUP               | BEGIN             | myGroup1,myGroup2            | Rollback session #1                                                                                                                    | _regress_emaj_adm1
- LOCK_GROUP               | END               | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | TIME STAMP SET    | 14005                        |                                                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup1                     | mark RLBK_14000_START is deleted                                                                                                       | _regress_emaj_adm1
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup2                     | mark RLBK_14000_START is deleted                                                                                                       | _regress_emaj_adm1
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup1                     | mark RLBK_14000_DONE is deleted                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup2                     | mark RLBK_14000_DONE is deleted                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14001            | Rollback id = 14001.                                                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14001            | 0 / 11 tables effectively processed.                                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14001            | 0 / 4 sequences effectively processed.                                                                                                 | _regress_emaj_adm1
- DBLINK_CLOSE_CNX         |                   | rlbk#1                       |                                                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUPS          | END               | myGroup1,myGroup2            | Rollback_id 14001                                                                                                                      | _regress_emaj_adm1
- ROLLBACK_GROUPS          | BEGIN             | myGroup1,myGroup2            | Unlogged rollback to mark Multi-1 (timestamp)                                                                                          | _regress_emaj_adm1
- DBLINK_OPEN_CNX          |                   | rlbk#1                       | Status = 1                                                                                                                             | _regress_emaj_adm1
- LOCK_GROUP               | BEGIN             | myGroup1,myGroup2            | Rollback session #1                                                                                                                    | _regress_emaj_adm1
- LOCK_GROUP               | END               | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | TIME STAMP SET    | 14006                        |                                                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup1                     | mark Multi-2 is deleted                                                                                                                | _regress_emaj_adm1
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup2                     | mark Multi-2 is deleted                                                                                                                | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14002            | Rollback id = 14002.                                                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14002            | 0 / 11 tables effectively processed.                                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUPS          | NOTICE            | Rollback id 14002            | 0 / 4 sequences effectively processed.                                                                                                 | _regress_emaj_adm1
- DBLINK_CLOSE_CNX         |                   | rlbk#1                       |                                                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUPS          | END               | myGroup1,myGroup2            | Rollback_id 14002                                                                                                                      | _regress_emaj_adm1
- STOP_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | _regress_emaj_adm1
- LOCK_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | _regress_emaj_adm1
- LOCK_GROUPS              | END               | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                                        | _regress_emaj_adm1
- STOP_GROUPS              | TIME STAMP SET    | 14007                        |                                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | Stop after rollback                                                                                                                    | _regress_emaj_adm1
- CLEANUP_RLBK_STATE       |                   | Rollback id 14000            | set to COMMITTED                                                                                                                       | _regress_emaj_adm1
- CLEANUP_RLBK_STATE       |                   | Rollback id 14001            | set to COMMITTED                                                                                                                       | _regress_emaj_adm1
- CLEANUP_RLBK_STATE       |                   | Rollback id 14002            | set to COMMITTED                                                                                                                       | _regress_emaj_adm1
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | Stop after rollback                                                                                                                    | _regress_emaj_adm1
- STOP_GROUPS              | END               | myGroup1,myGroup2            | 15 tables/sequences processed                                                                                                          | _regress_emaj_adm1
- START_GROUPS             | BEGIN             | myGroup1,myGroup2            | Without log reset                                                                                                                      | _regress_emaj_adm1
- LOCK_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | _regress_emaj_adm1
- LOCK_GROUPS              | END               | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                                        | _regress_emaj_adm1
- START_GROUPS             | TIME STAMP SET    | 14008                        |                                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | Multi-1b                                                                                                                               | _regress_emaj_adm1
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | Multi-1b                                                                                                                               | _regress_emaj_adm1
- START_GROUPS             | END               | myGroup1,myGroup2            | 15 tables/sequences processed                                                                                                          | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | Multi-2                                                                                                                                | _regress_emaj_adm1
- LOCK_GROUPS              | BEGIN             | myGroup1,myGroup2            |                                                                                                                                        | _regress_emaj_adm1
- LOCK_GROUPS              | END               | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | TIME STAMP SET    | 14009                        |                                                                                                                                        | _regress_emaj_adm1
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | Multi-2                                                                                                                                | _regress_emaj_adm1
- DELETE_MARK_GROUP        | BEGIN             | myGroup1                     | Multi-2                                                                                                                                | _regress_emaj_adm1
- DELETE_MARK_GROUP        | END               | myGroup1                     | Multi-2                                                                                                                                | _regress_emaj_adm1
- ROLLBACK_GROUP           | BEGIN             | myGroup2                     | Unlogged rollback to mark Multi-2 (timestamp)                                                                                          | _regress_emaj_adm1
- DBLINK_OPEN_CNX          |                   | rlbk#1                       | Status = 1                                                                                                                             | _regress_emaj_adm1
- LOCK_GROUP               | BEGIN             | myGroup2                     | Rollback session #1                                                                                                                    | _regress_emaj_adm1
- LOCK_GROUP               | END               | myGroup2                     | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                                                    | _regress_emaj_adm1
- ROLLBACK_GROUP           | TIME STAMP SET    | 14010                        |                                                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUP           | NOTICE            | Rollback id 14003            | Rollback id = 14003.                                                                                                                   | _regress_emaj_adm1
- ROLLBACK_GROUP           | NOTICE            | Rollback id 14003            | 0 / 6 tables effectively processed.                                                                                                    | _regress_emaj_adm1
- ROLLBACK_GROUP           | NOTICE            | Rollback id 14003            | 0 / 2 sequences effectively processed.                                                                                                 | _regress_emaj_adm1
- DBLINK_CLOSE_CNX         |                   | rlbk#1                       |                                                                                                                                        | _regress_emaj_adm1
- ROLLBACK_GROUP           | END               | myGroup2                     | Rollback_id 14003                                                                                                                      | _regress_emaj_adm1
- DELETE_MARK_GROUP        | BEGIN             | myGroup2                     | Multi-2                                                                                                                                | _regress_emaj_adm1
- DELETE_MARK_GROUP        | END               | myGroup2                     | Multi-2                                                                                                                                | _regress_emaj_adm1
- DELETE_MARK_GROUP        | BEGIN             | myGroup1                     | Multi-1                                                                                                                                | _regress_emaj_adm1
- DELETE_MARK_GROUP        | END               | myGroup1                     | Multi-1                                                                                                                                | _regress_emaj_adm1
- DELETE_MARK_GROUP        | BEGIN             | myGroup2                     | Multi-1                                                                                                                                | _regress_emaj_adm1
- DELETE_MARK_GROUP        | END               | myGroup2                     | Multi-1                                                                                                                                | _regress_emaj_adm1
- RENAME_MARK_GROUP        | BEGIN             | myGroup1                     | Multi-1b                                                                                                                               | _regress_emaj_adm1
- RENAME_MARK_GROUP        | END               | myGroup1                     | Multi-1b renamed Multi-1                                                                                                               | _regress_emaj_adm1
- RENAME_MARK_GROUP        | BEGIN             | myGroup2                     | Multi-1b                                                                                                                               | _regress_emaj_adm1
- RENAME_MARK_GROUP        | END               | myGroup2                     | Multi-1b renamed Multi-1                                                                                                               | _regress_emaj_adm1
- RENAME_MARK_GROUP        | BEGIN             | myGroup2                     | M2                                                                                                                                     | _regress_emaj_adm1
- RENAME_MARK_GROUP        | END               | myGroup2                     | M2 renamed Deleted M2                                                                                                                  | _regress_emaj_adm1
- DELETE_BEFORE_MARK_GROUP | BEGIN             | myGroup2                     | M3                                                                                                                                     | _regress_emaj_adm1
- DELETE_BEFORE_MARK_GROUP | END               | myGroup2                     | 2 marks deleted ; M3 is now the initial mark                                                                                           | _regress_emaj_adm1
- COMMENT_MARK_GROUP       |                   | myGroup2                     | Mark M3                                                                                                                                | _regress_emaj_adm1
-(115 rows)
+      hist_function       |   hist_event   |    hist_object    |                    regexp_replace                    |     hist_user      
+--------------------------+----------------+-------------------+------------------------------------------------------+--------------------
+ IMPORT_PARAMETERS        | BEGIN          |                   |                                                      | _regress_emaj_adm1
+ IMPORT_PARAMETERS        | END            |                   | 3 imported parameters, 0 modified parameters         | _regress_emaj_adm1
+ STOP_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
+ LOCK_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
+ LOCK_GROUPS              | END            | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                      | _regress_emaj_adm1
+ STOP_GROUPS              | TIME STAMP SET | 14000             |                                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | STOP_%                                               | _regress_emaj_adm1
+ CLEANUP_RLBK_STATE       |                | Rollback id 12701 | set to COMMITTED                                     | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | STOP_%                                               | _regress_emaj_adm1
+ STOP_GROUPS              | END            | myGroup1,myGroup2 | 15 tables/sequences processed                        | _regress_emaj_adm1
+ START_GROUPS             | BEGIN          | myGroup1,myGroup2 | Without log reset                                    | _regress_emaj_adm1
+ LOCK_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
+ LOCK_GROUPS              | END            | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                      | _regress_emaj_adm1
+ START_GROUPS             | TIME STAMP SET | 14001             |                                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Multi-1                                              | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | Multi-1                                              | _regress_emaj_adm1
+ START_GROUPS             | END            | myGroup1,myGroup2 | 15 tables/sequences processed                        | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Multi-2                                              | _regress_emaj_adm1
+ LOCK_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
+ LOCK_GROUPS              | END            | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | TIME STAMP SET | 14002             |                                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | Multi-2                                              | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Logged rollback to mark Multi-1 (timestamp)          | _regress_emaj_adm1
+ DBLINK_OPEN_CNX          |                | rlbk#1            | Status = 1                                           | _regress_emaj_adm1
+ LOCK_GROUP               | BEGIN          | myGroup1,myGroup2 | Rollback session #1                                  | _regress_emaj_adm1
+ LOCK_GROUP               | END            | myGroup1,myGroup2 | Rollback session #1: 11 tables locked, 0 deadlock(s) | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | TIME STAMP SET | 14003             |                                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | RLBK_14000_START                                     | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | RLBK_14000_START                                     | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | TIME STAMP SET | 14004             |                                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | RLBK_14000_DONE                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | RLBK_14000_DONE                                      | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14000 | Rollback id = 14000.                                 | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14000 | 0 / 11 tables effectively processed.                 | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14000 | 0 / 4 sequences effectively processed.               | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX         |                | rlbk#1            |                                                      | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | END            | myGroup1,myGroup2 | Rollback_id 14000                                    | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Unlogged rollback to mark Multi-2 (timestamp)        | _regress_emaj_adm1
+ DBLINK_OPEN_CNX          |                | rlbk#1            | Status = 1                                           | _regress_emaj_adm1
+ LOCK_GROUP               | BEGIN          | myGroup1,myGroup2 | Rollback session #1                                  | _regress_emaj_adm1
+ LOCK_GROUP               | END            | myGroup1,myGroup2 | Rollback session #1: 11 tables locked, 0 deadlock(s) | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | TIME STAMP SET | 14005             |                                                      | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | MARK DELETED   | myGroup1          | mark RLBK_14000_START is deleted                     | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | MARK DELETED   | myGroup2          | mark RLBK_14000_START is deleted                     | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | MARK DELETED   | myGroup1          | mark RLBK_14000_DONE is deleted                      | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | MARK DELETED   | myGroup2          | mark RLBK_14000_DONE is deleted                      | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14001 | Rollback id = 14001.                                 | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14001 | 0 / 11 tables effectively processed.                 | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14001 | 0 / 4 sequences effectively processed.               | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX         |                | rlbk#1            |                                                      | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | END            | myGroup1,myGroup2 | Rollback_id 14001                                    | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Unlogged rollback to mark Multi-1 (timestamp)        | _regress_emaj_adm1
+ DBLINK_OPEN_CNX          |                | rlbk#1            | Status = 1                                           | _regress_emaj_adm1
+ LOCK_GROUP               | BEGIN          | myGroup1,myGroup2 | Rollback session #1                                  | _regress_emaj_adm1
+ LOCK_GROUP               | END            | myGroup1,myGroup2 | Rollback session #1: 11 tables locked, 0 deadlock(s) | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | TIME STAMP SET | 14006             |                                                      | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | MARK DELETED   | myGroup1          | mark Multi-2 is deleted                              | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | MARK DELETED   | myGroup2          | mark Multi-2 is deleted                              | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14002 | Rollback id = 14002.                                 | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14002 | 0 / 11 tables effectively processed.                 | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | NOTICE         | Rollback id 14002 | 0 / 4 sequences effectively processed.               | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX         |                | rlbk#1            |                                                      | _regress_emaj_adm1
+ ROLLBACK_GROUPS          | END            | myGroup1,myGroup2 | Rollback_id 14002                                    | _regress_emaj_adm1
+ STOP_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
+ LOCK_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
+ LOCK_GROUPS              | END            | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                      | _regress_emaj_adm1
+ STOP_GROUPS              | TIME STAMP SET | 14007             |                                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Stop after rollback                                  | _regress_emaj_adm1
+ CLEANUP_RLBK_STATE       |                | Rollback id 14000 | set to COMMITTED                                     | _regress_emaj_adm1
+ CLEANUP_RLBK_STATE       |                | Rollback id 14001 | set to COMMITTED                                     | _regress_emaj_adm1
+ CLEANUP_RLBK_STATE       |                | Rollback id 14002 | set to COMMITTED                                     | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | Stop after rollback                                  | _regress_emaj_adm1
+ STOP_GROUPS              | END            | myGroup1,myGroup2 | 15 tables/sequences processed                        | _regress_emaj_adm1
+ START_GROUPS             | BEGIN          | myGroup1,myGroup2 | Without log reset                                    | _regress_emaj_adm1
+ LOCK_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
+ LOCK_GROUPS              | END            | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                      | _regress_emaj_adm1
+ START_GROUPS             | TIME STAMP SET | 14008             |                                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Multi-1b                                             | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | Multi-1b                                             | _regress_emaj_adm1
+ START_GROUPS             | END            | myGroup1,myGroup2 | 15 tables/sequences processed                        | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Multi-2                                              | _regress_emaj_adm1
+ LOCK_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
+ LOCK_GROUPS              | END            | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | TIME STAMP SET | 14009             |                                                      | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | Multi-2                                              | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | BEGIN          | myGroup1          | Multi-2                                              | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | END            | myGroup1          | Multi-2                                              | _regress_emaj_adm1
+ ROLLBACK_GROUP           | BEGIN          | myGroup2          | Unlogged rollback to mark Multi-2 (timestamp)        | _regress_emaj_adm1
+ DBLINK_OPEN_CNX          |                | rlbk#1            | Status = 1                                           | _regress_emaj_adm1
+ LOCK_GROUP               | BEGIN          | myGroup2          | Rollback session #1                                  | _regress_emaj_adm1
+ LOCK_GROUP               | END            | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)  | _regress_emaj_adm1
+ ROLLBACK_GROUP           | TIME STAMP SET | 14010             |                                                      | _regress_emaj_adm1
+ ROLLBACK_GROUP           | NOTICE         | Rollback id 14003 | Rollback id = 14003.                                 | _regress_emaj_adm1
+ ROLLBACK_GROUP           | NOTICE         | Rollback id 14003 | 0 / 6 tables effectively processed.                  | _regress_emaj_adm1
+ ROLLBACK_GROUP           | NOTICE         | Rollback id 14003 | 0 / 2 sequences effectively processed.               | _regress_emaj_adm1
+ DBLINK_CLOSE_CNX         |                | rlbk#1            |                                                      | _regress_emaj_adm1
+ ROLLBACK_GROUP           | END            | myGroup2          | Rollback_id 14003                                    | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | BEGIN          | myGroup2          | Multi-2                                              | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | END            | myGroup2          | Multi-2                                              | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | BEGIN          | myGroup1          | Multi-1                                              | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | END            | myGroup1          | Multi-1                                              | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | BEGIN          | myGroup2          | Multi-1                                              | _regress_emaj_adm1
+ DELETE_MARK_GROUP        | END            | myGroup2          | Multi-1                                              | _regress_emaj_adm1
+ RENAME_MARK_GROUP        | BEGIN          | myGroup1          | Multi-1b                                             | _regress_emaj_adm1
+ RENAME_MARK_GROUP        | END            | myGroup1          | Multi-1b renamed Multi-1                             | _regress_emaj_adm1
+ RENAME_MARK_GROUP        | BEGIN          | myGroup2          | Multi-1b                                             | _regress_emaj_adm1
+ RENAME_MARK_GROUP        | END            | myGroup2          | Multi-1b renamed Multi-1                             | _regress_emaj_adm1
+ RENAME_MARK_GROUP        | BEGIN          | myGroup2          | M2                                                   | _regress_emaj_adm1
+ RENAME_MARK_GROUP        | END            | myGroup2          | M2 renamed Deleted M2                                | _regress_emaj_adm1
+ DELETE_BEFORE_MARK_GROUP | BEGIN          | myGroup2          | M3                                                   | _regress_emaj_adm1
+ DELETE_BEFORE_MARK_GROUP | END            | myGroup2          | 2 marks deleted ; M3 is now the initial mark         | _regress_emaj_adm1
+ COMMENT_MARK_GROUP       |                | myGroup2          | Mark M3                                              | _regress_emaj_adm1
+(112 rows)
 
 -- log tables
 reset session_authorization;

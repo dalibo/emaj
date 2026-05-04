@@ -134,7 +134,7 @@ rollback;
 
 -- bad alter_log_table parameter
 begin;
-  insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_table','dummmy content');
+  select emaj.emaj_set_param('alter_log_table','dummmy content');
   select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
 rollback;
 

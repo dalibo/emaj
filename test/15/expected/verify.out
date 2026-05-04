@@ -30,20 +30,6 @@ select * from emaj.emaj_verify_all();
 (2 rows)
 
 --
--- Unknown emaj_param parameter key
---
-begin;
-  insert into emaj.emaj_param (param_key) VALUES ('dummy_2'), ('dummy_1');
-  select * from emaj.emaj_verify_all();
-                                                           emaj_verify_all                                                           
--------------------------------------------------------------------------------------------------------------------------------------
- Warning: the emaj_param table contains unknown parameters (dummy_1, dummy_2).
- Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- No error detected
-(3 rows)
-
-rollback;
---
 -- dblink connection tests
 --
 -- The "dblink not installed" and "lack of execute right on dblink_connect_u()" tests are located into the non_superuser_install.sql script
@@ -60,11 +46,16 @@ begin transaction isolation level REPEATABLE READ;
 rollback;
 -- Test the lack of dblink_user_password parameter
 begin;
-  delete from emaj.emaj_param where param_key = 'dblink_user_password';
+  select emaj.emaj_set_param('dblink_user_password', NULL);
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
   select * from emaj.emaj_verify_all();
                                                            emaj_verify_all                                                           
 -------------------------------------------------------------------------------------------------------------------------------------
- Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+ Warning: The 'dblink_user_password' parameter value is not set.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
 (3 rows)
@@ -72,7 +63,12 @@ begin;
 rollback;
 -- Test a bad dblink_user_password parameter content
 begin;
-  update emaj.emaj_param set param_value_text = 'bad_content' where param_key = 'dblink_user_password';
+  select emaj.emaj_set_param('dblink_user_password', 'bad_content');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
   select * from emaj.emaj_verify_all();
                                                            emaj_verify_all                                                           
 -------------------------------------------------------------------------------------------------------------------------------------
@@ -84,12 +80,16 @@ begin;
 rollback;
 -- Test a dblink_user_password without emaj_adm rights
 begin;
-  update emaj.emaj_param set param_value_text = 'user=_regress_emaj_viewer password=viewer' 
-    where param_key = 'dblink_user_password';
+  select emaj.emaj_set_param('dblink_user_password', 'user=_regress_emaj_viewer password=viewer');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
   select * from emaj.emaj_verify_all();
                                                            emaj_verify_all                                                           
 -------------------------------------------------------------------------------------------------------------------------------------
- Warning: The role set in the 'dblink_user_password' parameter has not emaj administration rights.
+ Warning: The role set in the 'dblink_user_password' parameter has not E-Maj administration rights.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
 (3 rows)

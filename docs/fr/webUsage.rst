@@ -371,7 +371,7 @@ Ensuite sont affichés : la place disque occupée par E-Maj (tables de log, tabl
 
 Puis l'intégrité de l'environnement est testé ; le résultat de l'exécution de la fonction :ref:`emaj_verify_all() <emaj_verify_all>` est affiché.
 
-Enfin sont listés les paramètres de fonctionnement de l’extension emaj, qu’ils soient présents dans la table *emaj_param* ou valorisés par défaut.
+Enfin sont listés tous les paramètres de l’extension emaj.
 
 Deux boutons en bas de page permettent d’exporter ou d’importer une configuration de paramètres vers ou à partir d’un fichier local.
 

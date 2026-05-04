@@ -21,7 +21,7 @@ L’outil proposé est codé en *perl*. Il nécessite que le logiciel **perl** a
 
 Le rollback de chaque session au sein d'une unique transaction implique l'utilisation de commit à deux phases. En conséquence, le paramètre **max_prepared_transactions** du fichier *postgresql.conf* doit être ajusté. La valeur par défaut du paramètre est 0. Il faut donc la modifier en spécifiant une valeur au moins égale au nombre maximum de *sessions* qui seront utilisées.
 
-Il est également nécessaire de valoriser le paramètre :doc:`dblink_user_password dans la table emaj_param<parameters>`.
+Il est également nécessaire de valoriser le paramètre E-Maj :doc:`dblink_user_password<parameters>`.
 
 Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut aussi que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<rollbacks_limits>`.
 
@@ -61,7 +61,7 @@ Pour que l'opération de rollback puisse être exécutée, le ou les groupes de 
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé pour référencer la dernière marque du ou des groupes de tables.
 
-Il est possible de suivre l'avancement des opérations de rollback multi-sessions de la même manière que celui des opérations de rollbacks mono-session : fonction :ref:`emaj_rollback_activity()<emaj_rollback_activity>`, client en ligne de commande :doc:`emajRollbackMonitor<rollbackMonitorClient>` ou la page de suivi des rollbacks d’Emaj_web. Comme pour les rollbacks mono-session, le suivi détaillé de l’avancement de l’opération nécessite la valorisation du paramètre :doc:`dblink_user_password<parameters>`.
+Il est possible de suivre l'avancement des opérations de rollback multi-sessions de la même manière que celui des opérations de rollbacks mono-session : fonction :ref:`emaj_rollback_activity()<emaj_rollback_activity>`, client en ligne de commande :doc:`emajRollbackMonitor<rollbackMonitorClient>` ou la page de suivi des rollbacks d’Emaj_web.
 
 Pour tester le client **emajParallelRollback**, E-Maj fournit un script, *emaj_prepare_parallel_rollback_test.sql*. Il prépare un environnement avec deux groupes de tables contenant quelques tables et séquences, sur lesquelles des mises à jour ont été effectuées, entrecoupées de marques. Suite à l'exécution de ce script sous *psql*, on peut lancer la commande telle qu'indiquée dans le message de fin d'exécution du script.
 

@@ -8,14 +8,14 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-   215
+   217
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname like E'emaj\\_%';
  count 
 -------
-    94
+    95
 (1 row)
 
 -----------------------------
@@ -65,19 +65,22 @@ select 0 from pg_stat_activity limit 1;
         0
 (1 row)
 
--- display the functions that are not called by any regression test script
---   (_build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics
---    emaj_drop_extension() is not called by the standart test scenarios, but a dedicated scenario tests it)
-select nspname, proname from pg_proc, pg_namespace
+-- display the functions that are not called by any regression test script.
+-- some functions are excluded:
+--   _emaj_param_before_stmt_fnct and _emaj_default_param_before_stmt_fnct are called by triggers but always raise an exception
+--       (and thus are not listed in pg_stat_user_functions for PG14- versions),
+--   _build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics,
+--   emaj_drop_extension() is not called by the standart test scenarios, but a dedicated scenario tests it.
+select proname from pg_proc, pg_namespace
   where pronamespace = pg_namespace.oid
     and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%')
-    and proname not in ('_build_path_name', 'emaj_drop_extension')
+    and proname not in ('_emaj_default_param_before_stmt_fnct', '_emaj_param_before_stmt_fnct', '_build_path_name', 'emaj_drop_extension')
 except
-select schemaname, funcname from pg_stat_user_functions
+select funcname from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
-order by 1,2;
- nspname | proname 
----------+---------
+order by 1;
+ proname 
+---------
 (0 rows)
 
 -- display the number of calls for each emaj function
@@ -111,7 +114,7 @@ select funcname, calls from pg_stat_user_functions
  _check_fk_groups                          |    96
  _check_group_names                        |  1240
  _check_json_groups_conf                   |    54
- _check_json_param_conf                    |    15
+ _check_json_param_conf                    |    19
  _check_json_table_properties              |    45
  _check_mark_name                          |   618
  _check_marks_range                        |   181
@@ -125,7 +128,7 @@ select funcname, calls from pg_stat_user_functions
  _create_log_schemas                       |    22
  _create_seq                               |    48
  _create_tbl                               |   176
- _dblink_close_cnx                         |   125
+ _dblink_close_cnx                         |   124
  _dblink_open_cnx                          |   149
  _dblink_sql_exec                          |  2407
  _delete_before_mark_group                 |    24
@@ -139,14 +142,13 @@ select funcname, calls from pg_stat_user_functions
  _drop_log_schemas                         |   132
  _drop_seq                                 |    73
  _drop_tbl                                 |   231
- _emaj_param_change_fnct                   |    49
  _enable_event_triggers                    |   293
  _estimate_rlbk_step_duration              |   820
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   212
  _event_trigger_table_rewrite_fnct         |     4
  _export_groups_conf                       |    11
- _export_param_conf                        |     7
+ _export_param_conf                        |     8
  _gen_sql_dump_changes_group               |    49
  _gen_sql_dump_changes_seq                 |    64
  _gen_sql_dump_changes_tbl                 |   227
@@ -164,7 +166,7 @@ select funcname, calls from pg_stat_user_functions
  _import_groups_conf_check                 |    33
  _import_groups_conf_exec                  |    21
  _import_groups_conf_prepare               |    40
- _import_param_conf                        |     7
+ _import_param_conf                        |    10
  _lock_groups                              |   324
  _log_stat_groups                          |    31
  _log_stat_sequence                        |    25
@@ -174,7 +176,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    24
  _move_tbl                                 |    50
- _pg_version_num                           |    21
+ _pg_version_num                           |    22
  _purge_histories                          |    80
  _remove_seq                               |    15
  _remove_sequences                         |    20
@@ -237,7 +239,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_estimate_rollback_groups             |     4
  emaj_export_groups_configuration          |     4
  emaj_export_groups_configuration          |     6
- emaj_export_parameters_configuration      |     4
+ emaj_export_parameters_configuration      |     5
  emaj_export_parameters_configuration      |     2
  emaj_force_drop_group                     |     6
  emaj_force_stop_group                     |    13
@@ -255,10 +257,10 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_logging_groups                   |     6
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |    11
- emaj_get_version                          |    20
+ emaj_get_version                          |    22
  emaj_import_groups_configuration          |     4
  emaj_import_groups_configuration          |    17
- emaj_import_parameters_configuration      |     4
+ emaj_import_parameters_configuration      |     7
  emaj_import_parameters_configuration      |     3
  emaj_is_logging_group                     |     7
  emaj_log_stat_group                       |    25
@@ -296,6 +298,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_sequence_stat_groups                 |     3
  emaj_set_mark_group                       |    82
  emaj_set_mark_groups                      |    25
+ emaj_set_param                            |    36
  emaj_snap_group                           |    14
  emaj_start_group                          |    46
  emaj_start_groups                         |    10
@@ -310,7 +313,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1212
+ 1254
 (1 row)
 
 -----------------------------

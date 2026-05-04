@@ -139,6 +139,8 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | SET_MARK_GROUPS                  | pose d'une marque pour plusieurs groupes de tables                                    |
 +----------------------------------+---------------------------------------------------------------------------------------+
+| SET_PARAM                        | changement de valeur d’un paramètre E-Maj                                             |
++----------------------------------+---------------------------------------------------------------------------------------+
 | SNAP_GROUP                       | vidage des tables et séquences d'un groupe                                            |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | SNAP_LOG_GROUP                   | vidage des tables de log d'un groupe                                                  |
@@ -236,9 +238,9 @@ Quand un groupe de tables est démarré avec réinitialisation (fonction :ref:`e
 * à la pose de la plus ancienne marque,
 * et à la plus ancienne opération de rollback non terminée.
 
-Par défaut, la durée de rétention des événements est de 1 an. Mais cette valeur peut être modifiée à tout moment en insérant par une requête SQL le paramètre *history_retention* dans la table :ref:`emaj_param <emaj_param>`. Si le paramètre *history_retention* a une valeur supérieure ou égale à 100 ans, aucune purge des historiques n’est appliquée.
+Par défaut, la durée de rétention des événements est de 1 an. Mais cette valeur peut être modifiée à tout moment en changeant la valeur du :ref:`paramètre E-Maj<emaj_param>` *history_retention*. Si le paramètre *history_retention* a une valeur supérieure ou égale à 100 ans, aucune tentative de purge des historiques n’est effectuée.
 
-La purge des données périmées peut également être initiée par l’appel explicite de la fonction :ref:`emaj_purge_histories() <emaj_purge_histories>` . La paramètre en entrée de cette fonction définit un délai de rétention qui surcharge le paramètre *history_retention* de la table *emaj_param*.
+La purge des données périmées peut également être initiée par l’appel explicite de la fonction :ref:`emaj_purge_histories() <emaj_purge_histories>` . La paramètre en entrée de cette fonction définit un délai de rétention qui surcharge le paramètre E-Maj *history_retention*.
 
 Pour planifier des purges régulières, il est donc possible de :
 

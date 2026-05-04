@@ -370,7 +370,7 @@ Then the disk space used by E-Maj (log tables, technical tables and their indexe
 
 Next, the environment integrity is checked; the result of the :ref:`emaj_verify_all() <emaj_verify_all>` function execution is displayed.
 
-The page ends with a list of the extension parameters value, be they present in the *emaj_param table* or set to their default value.
+The page ends with the list of all extension parameters.
 
 Two buttons allow to export and import parameters configurations to or from a local file.
 

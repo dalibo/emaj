@@ -1,7 +1,7 @@
 Exporter et importer la configuration E-Maj
 ===========================================
 
-Une configuration E-Maj comprend l’ensemble des paramètres stockés dans la :ref:`table emaj_param<emaj_param>` et la configuration des groupes de tables.
+Une configuration E-Maj comprend l’ensemble des :ref:`paramètres E-Maj<emaj_param>` et la configuration des groupes de tables.
 
 Des fonctions permettent de les importer ou de les exporter sur un support externe, sous la forme de structure JSON. Elles peuvent être utiles notamment pour :
 
@@ -108,22 +108,24 @@ La structure JSON exportée comprent l’attribut :ref:`"tables_groups"<tables_g
 .. _export_param_conf:
 
 Exporter une configuration de paramètres
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------
 
-Deux versions de la fonction *emaj_export_parameters_configuration()* exportent sous forme de structure JSON l’ensemble des paramètres de la configuration présents dans :ref:`la table emaj_param<emaj_param>`.
+Deux versions de la fonction *emaj_export_parameters_configuration()* exportent sous forme de structure JSON l’ensemble des paramètres de l'extension.
 
 On peut écrire dans un fichier les données de paramétrage par ::
 
-   SELECT emaj_export_parameters_configuration('<chemin.fichier>');
+   SELECT emaj_export_parameters_configuration('<chemin.fichier>' [, <inclure.défaut?>]);
 
 Le chemin du fichier doit être accessible en écriture par l’instance PostgreSQL.
+
+Le second paramètre de la fonction, optionnel, indique si les paramètres E-Maj dont la valeur égale leur valeur par défaut doivent également être exportés. Par défaut, seuls les paramètres dont la valeur est différente de leur valeur par défaut sont exportés.
 
 La fonction retourne le nombre de paramètres exportés.
 
 Si le chemin du fichier n’est pas renseigné ou est valorisé à *NULL*, la fonction retourne directement la structure JSON contenant les valeurs de paramètres. Ceci permet de visualiser la structure ou de la stocker dans une colonne de table relationnelle. Par exemple : ::
 
    INSERT INTO ma_table (mes_parametres_json)
-       VALUES ( emaj_export_parameters_configuration() );
+       VALUES ( emaj_export_parameters_configuration([<inclure.défaut?>]) );
 
 La structure JSON exportée comprent l’attribut :ref:`"parameters"<parameters_json>` décrit ci-dessus, précédé de deux attributs *"_comment"* et *"_help"*. ::
 
@@ -142,7 +144,7 @@ La structure JSON exportée comprent l’attribut :ref:`"parameters"<parameters_
 .. _import_groups_conf:
 
 Importer une configuration de groupes de tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------------
 
 Deux versions de la fonction *emaj_import_groups_configuration()* importent des groupes de tables décrits sous la forme de structure JSON.
 
@@ -182,31 +184,31 @@ Cette structure peut provenir d’une colonne de table relationnelle : ::
 .. _import_param_conf:
 
 Importer une configuration de paramètres
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------
 
-Deux versions de la fonction *emaj_import_parameters_configuration()* importent des paramètres sous forme de structure JSON dans la table :ref:`emaj_param<emaj_param>`.
+Deux versions de la fonction *emaj_import_parameters_configuration()* importent des :ref:`paramètres E-Maj<emaj_param>` sous forme de structure JSON.
 
 On peut charger les paramètres depuis un fichier par ::
 
    SELECT emaj_import_parameters_configuration('<chemin.fichier>' [,
-               <suppression.configuration.courante?> ]);
+               <réinitialiser.autres.paramètres?> ]);
 
 Le chemin du fichier doit être accessible en lecture par l’instance PostgreSQL.
 
 Le fichier doit contenir une structure JSON ayant un attribut nommé :ref:`"parameters"<parameters_json>`, de type tableau, et contenant des sous-structures avec les attributs *"key"* et *"value"*.
 
-Si un paramètre n’a pas d’attribut *"value"* ou si cet attribut est valorisé à *NULL*, le paramètre n’est pas inséré dans la table *emaj_param*, et est supprimé s’il existait déjà dans la table. En conséquence, la valeur par défaut du paramètre sera utilisée par l’extension *emaj*.
+Si un paramètre n’a pas d’attribut *"value"* ou si cet attribut est valorisé à *NULL*, le paramètre est valorisé avec sa valeur par défaut.
 
 La fonction peut directement charger un fichier généré par la fonction :ref:`emaj_export_parameters_configuration()<export_param_conf>`.
 
-Le second paramètre, de type booléen, est optionnel. Il indique si l’ensemble de la configuration présente doit être supprimée avant le chargement. La valeur *FALSE*, sa valeur par défaut, indique que les clés présentes dans la table *emaj_param* mais absentes de la structure JSON sont conservées (chargement en mode différentiel). Si la valeur du second paramètre est positionnée à *TRUE*, la fonction effectue un remplacement complet de la configuration de paramétrage (chargement en mode complet).
+Le second paramètre, de type booléen, est optionnel. Il indique si les paramètres absents de la structure JSON doivent être réinitialisés. Par défaut, les clés absentes de la structure JSON sont conservées (chargement en mode différentiel). Si la valeur du second paramètre est positionnée à *TRUE*, la fonction effectue donc un remplacement complet de la configuration de paramétrage (chargement en mode complet).
 
 La fonction retourne le nombre de paramètres importés.
 
 Dans la seconde version de la fonction, le premier paramètre en entrée contient directement la structure JSON des valeurs à charger : ::
 
    SELECT emaj_import_parameters_configuration('<structure.JSON>' [,
-               <suppression.configuration.courante?> ]);
+               <réinitialiser.autres.paramètres?> ]);
 
 Cette structure peut provenir d’une colonne de table ralationnelle : ::
 

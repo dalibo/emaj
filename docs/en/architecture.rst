@@ -57,8 +57,6 @@ To let E-Maj work, some **other technical objects** are also created at extensio
 * 2 roles acting as groups (NOLOGIN): *emaj_adm* to manage E-Maj components, and *emaj_viewer* to only look at E-Maj components
 * 3 event triggers.
 
-Some technical tables, whose structure is interesting to know, are described in details: :ref:`emaj_param <emaj_param>` and :ref:`emaj_hist <emaj_hist>`.
-
 The *emaj_adm* role is the owner of all log schemas, tables, sequences and functions.
 
 Schemas

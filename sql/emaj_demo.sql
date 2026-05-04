@@ -74,7 +74,7 @@ $emaj_demo_cleanup$;
 \echo '---'
 \echo '--- Get the E-Maj version installed in the current database.'
 \echo '---'
-SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
+SELECT emaj.emaj_get_version();
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'

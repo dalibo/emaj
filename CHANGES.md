@@ -18,6 +18,11 @@ E-Maj - Change log
     * Report a clear error message when using functions that read from or write
       to external files and the emaj installer role has not the appropriate
       rights.
+  * A new emaj_set_param() function sets, changes or resets an E-maj parameter,
+    avoiding the user to directly access the emaj_param table. The emaj_param
+    table is also restructured.
+  * The emaj_export_parameters_configuration() functions now have an additional
+    option to also export parameters whose value is their default value.
   * Use the dblink_connect() function when emaj is installed by a superuser,
       avoiding to grant rights to dblink_connect_u() in most cases.
   * Improve the initial comment of the JSON output produced by

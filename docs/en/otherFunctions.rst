@@ -36,7 +36,6 @@ The function also returns warnings when:
 * a sequence linked to a column belongs to a tables group, but the associated table does not belong to the same tables group,
 * a table of a tables group is linked to another table by a foreign key, but the associated table does not belong to the same tables group,
 * a foreign key is inheritated from a partitionned table but either is not *DEFERRABLE* or holds an *ON DELETE* or *ON UPDATE* clause, blocking its potential drop / recreation during an E-Maj rollback in both cases,
-* :doc:`parameters in the emaj_param<parameters>` table are unknown,
 * the dblink connection is not operationnal,
 * event triggers protecting E-Maj are missing or are disabled.
 
@@ -73,7 +72,7 @@ E-Maj keeps some historical data: traces of elementary operations, E-Maj rollbac
 
    SELECT emaj.emaj_purge_histories('<retention.delay>');
 
-The *<retention.delay>* parameter is of type *INTERVAL*. It overloads the *'history_retention'* parameter of the *emaj_param* table.
+The *<retention.delay>* parameter is of type *INTERVAL*. It overloads the *'history_retention'* E-Maj parameter.
 
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:

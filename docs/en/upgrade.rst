@@ -51,13 +51,15 @@ If the installed E-Maj version is prior 3.3.0, these export functions are not av
 
 As starting from E-Maj 4.0 the tables groups configuration doesn’t use the *emaj_group_def* table anymore, rebuilding the tables groups after the E-Maj version upgrade will need either to edit a JSON configuration file to import or to execute a set of tables/sequences assignment functions.
 
-If the emaj_param tables contains specific parameters, it can be saved on file with a *copy* command, or duplicated ouside the *emaj* schema.
+If the emaj_param tables contains specific parameters, it can be duplicated ouside the *emaj* schema::
+
+   CREATE TABLE public.sav_param AS
+       SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
 
 If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as "not to be automatically disabled at E-Maj rollback time", the *emaj_ignored_app_trigger* table can also be saved::
 
-  CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
-
-  CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
+   CREATE TABLE public.sav_ignored_app_trigger AS
+       SELECT * FROM emaj.emaj_ignored_app_trigger;
 
 E-Maj deletion and re-installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -81,11 +83,15 @@ The exported tables groups and parameters configurations can be reloaded with::
 
 **Previous version < 3.3**
 
-The saved parameters and application triggers configurations can be reloaded for instance with *INSERT SELECT* statements::
+The saved parameters and application triggers configurations can be reloaded with statements like::
 
-   INSERT INTO emaj.emaj_ignored_app_trigger SELECT * FROM public.sav_ignored_app_trigger;
+   SELECT emaj.emaj_set_param(param_key,
+                              coalesce(param_value_text, param_value_numeric::TEXT,
+                                       param_value_boolean::TEXT, param_value_interval::TEXT))
+       FROM public.sav_param;
 
-   INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
+   INSERT INTO emaj.emaj_ignored_app_trigger
+       SELECT * FROM public.sav_ignored_app_trigger;
 
 The tables groups need to be rebuilt using the :doc:`standard methods<groupsCreationFunctions>` of the new version.
 

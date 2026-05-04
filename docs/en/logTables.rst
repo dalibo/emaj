@@ -24,17 +24,17 @@ Adding technical columns
 
 It is possible to add one or several technical columns to enrich the traces. These columns value must be set as a default value (a *DEFAULT* clause) associated to a function (so that the log triggers are not impacted).
 
-To add one or several technical columns, a parameter of key *alter_log_table* must be inserted into the :ref:`emaj_param<emaj_param>` table. The associated text value must contain an *ALTER TABLE* clause. At the log table creation time, if the parameter exists, an *ALTER TABLE* statement with this parameter is executed.
+To add one or several technical columns, the *alter_log_table* :ref:`E-Maj parameter<emaj_param>` must be set. The associated text value must contain an *ALTER TABLE* clause. At log table creation time, an *ALTER TABLE* statement with this parameter is executed if it is not empty.
 
 For instance, one can add to log tables a column to record the value of the *application_name* connection field with::
 
-   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
-     'ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
+   SELECT emaj.emaj_set_param ('alter_log_table',
+       'ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
 
 Several *ADD COLUMN* directives may be concatenated, separated by a comma. For instance, to create columns recording the ip adress and port of the connected client::
 
-   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
-	'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(),
-	 ADD COLUMN emaj_user_port INT DEFAULT inet_client_port()');
+   SELECT emaj.emaj_set_param ('alter_log_table',
+       'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), '
+       'ADD COLUMN emaj_user_port INT DEFAULT inet_client_port()');
 
 To change the structure of existing log tables once the *alter_log_table* parameter has been set, the tables groups must be dropped and then recreated.

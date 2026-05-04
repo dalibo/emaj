@@ -244,17 +244,26 @@ $$Global sequence to identifiy all rows of emaj log tables.$$;
 --                                                            --
 ----------------------------------------------------------------
 
--- Table containing E-maj parameters.
+-- Table containing E-maj default parameters.
+CREATE TABLE emaj.emaj_default_param (
+  param_key                    TEXT        NOT NULL,       -- parameter key
+  param_default                TEXT,                       -- parameter default value
+  param_cast                   TEXT,                       -- the data type the parameter will be casted to when used
+                                                           --   (NULL if there is no need to cast the data)
+  param_rank                   INT,                        -- display rank
+  PRIMARY KEY (param_key)
+  );
+COMMENT ON TABLE emaj.emaj_default_param IS
+$$Contains E-Maj default parameters.$$;
+
+-- Table containing modified E-maj parameters.
 CREATE TABLE emaj.emaj_param (
   param_key                    TEXT        NOT NULL,       -- parameter key
-  param_value_text             TEXT,                       -- value if type is text, otherwise NULL
-  param_value_numeric          NUMERIC,                    -- value if type is numeric, otherwise NULL
-  param_value_boolean          BOOLEAN,                    -- value if type is boolean, otherwise NULL
-  param_value_interval         INTERVAL,                   -- value if type is interval, otherwise NULL
+  param_value                  TEXT,                       -- parameter value
   PRIMARY KEY (param_key)
   );
 COMMENT ON TABLE emaj.emaj_param IS
-$$Contains E-Maj parameters.$$;
+$$Contains modified E-Maj parameters.$$;
 
 -- Table containing the history of all E-Maj events.
 CREATE TABLE emaj.emaj_hist (
@@ -798,43 +807,39 @@ $$Represents a generic notice, warning or error message structure that can be tr
 --                                                            --
 ----------------------------------------------------------------
 
--- All parameters are optional. They may be set by E-Maj administrators, if needed.
+-- Insert parameters with their default value.
+INSERT INTO emaj.emaj_default_param(param_key, param_default, param_cast, param_rank) VALUES
+-- General purpose parameters
+  ('history_retention', '1 year', 'INTERVAL', 1),              -- Retention delay for historical internal tables content
+  ('dblink_user_password', '', NULL, 2),                       -- Piece of connection string defining the role and password, if any, to
+                                                               --   establish a dblink connection for rollback operations monitoring,
+                                                               --   typically 'user=<user> password=<password>'
+  ('alter_log_table', '', NULL, 3),                            -- Piece of ALTER TABLE statement adding columns to log tables, typically
+                                                               --   'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), ADD COLUMN
+                                                               --    emaj_appname TEXT DEFAULT
+                                                               --           pg_catalog.current_setting(''application_name'')'
+-- Rollback duration estimates parameters
+  ('avg_row_rollback_duration', '100 us', 'INTERVAL', 4),      -- The average duration needed to rollback a row
+  ('avg_row_delete_log_duration', '10 us', 'INTERVAL', 5),     -- The average duration needed to delete a log row
+  ('avg_fkey_check_duration', '20 us', 'INTERVAL', 6),         -- The average duration needed to check a foreign key
+  ('fixed_step_rollback_duration', '2.5 ms', 'INTERVAL', 7),   -- The fixed cost for any elementary rollback step
+  ('fixed_table_rollback_duration', '1 ms', 'INTERVAL', 8),    -- The fixed rollback cost for any table or sequence
+  ('fixed_dblink_rollback_duration', '4 ms', 'INTERVAL', 9)    -- The fixed cost of dblink use for any rollback step
+;
 
--- The 'dblink_user_password' parameter defines the role and its associated password, if any, to establish a dblink
--- connection for the monitoring of rollback operations.
---   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('dblink_user_password', 'user=<user> password=<password>');
-
--- The 'history_retention' parameter defines the time interval when a row remains in the emaj history and rollback tables
---   default = 1 year.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention', '1 year'::INTERVAL);
-
--- The 'alter_log_table' parameter allows to adjust the log tables content by adding extra information column.
---   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
---     'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(),
---      ADD COLUMN emaj_appname TEXT DEFAULT pg_catalog.current_setting(''application_name'')');
-
--- 6 parameters are used by the emaj_estimate_rollback_group(s) and the rollback functions as default values to compute the approximate
--- duration of a rollback operation.
--- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration', '100 microsecond'::INTERVAL);
--- The avg_row_delete_log_duration parameter defines the average duration needed to delete log rows.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration', '10 microsecond'::INTERVAL);
--- The avg_fkey_check_duration parameter defines the average duration needed to check a foreign key.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration', '20 microsecond'::INTERVAL);
--- The fixed_step_rollback_duration parameter defines the fixed cost for any elementary rollback step.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_step_rollback_duration', '2.5 millisecond'::INTERVAL);
--- The fixed_table_rollback_duration parameter defines the fixed rollback cost for any table or sequence belonging to a group.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration', '1 millisecond'::INTERVAL);
--- The fixed_dblink_rollback_duration parameter defines the fixed cost of dblink use for any rollback step.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration', '4 millisecond'::INTERVAL);
+-- View that matches emaj_default_param and emaj_param tables to offer a global vision of parameters.
+CREATE VIEW emaj.emaj_all_param AS
+  SELECT emaj_default_param.param_key, coalesce(param_value, param_default) AS param_value, param_default, param_cast, param_rank
+  FROM emaj.emaj_default_param
+       LEFT OUTER JOIN emaj.emaj_param ON (emaj_default_param.param_key = emaj_param.param_key);
 
 -- View readable by emaj_viewer role. It hides the 'dblink_user_password' parameter's value.
 CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
   SELECT param_key,
          CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>'
-                                                      ELSE param_value_text END AS param_value_text,
-         param_value_numeric, param_value_boolean, param_value_interval
-    FROM emaj.emaj_param;
+                                                      ELSE param_value END AS param_value,
+         param_default, param_rank
+    FROM emaj.emaj_all_param;
 
 ----------------------------------------------------------------
 --                                                            --
@@ -842,48 +847,36 @@ CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
 --                                                            --
 ----------------------------------------------------------------
 
--- Triggers for changes and truncate on the emaj_param table.
--- It traces changes into the emaj_hist table, masking the 'dblink_user_password' parameter value, if concerned.
--- TRUNCATE verb are blocked to allow the tracing of deleted parameters.
+-- The emaj_default_param_before_stmt_trg trigger and the associated _emaj_default_param_before_stmt_fnct() function
+--   blocks any attempt to modify the emaj_default_param table.
 
-CREATE OR REPLACE FUNCTION emaj._emaj_param_change_fnct()
+CREATE OR REPLACE FUNCTION emaj._emaj_default_param_before_stmt_fnct()
 RETURNS TRIGGER LANGUAGE plpgsql AS
-$_emaj_param_change_fnct$
+$_emaj_default_param_before_stmt_fnct$
   BEGIN
-    IF TG_OP = 'DELETE' THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-        VALUES ('', 'DELETED PARAMETER', OLD.param_key);
-      RETURN OLD;
-    ELSIF TG_OP = 'UPDATE' THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('', 'UPDATED PARAMETER', NEW.param_key,
-                CASE WHEN NEW.param_key = 'dblink_user_password' THEN '<masked data>'
-                     ELSE coalesce(NEW.param_value_text, NEW.param_value_numeric::TEXT,
-                          NEW.param_value_boolean::TEXT, NEW.param_value_interval::TEXT)
-                END);
-      RETURN NEW;
-    ELSIF TG_OP = 'INSERT' THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('', 'INSERTED PARAMETER', NEW.param_key,
-                CASE WHEN NEW.param_key = 'dblink_user_password' THEN '<masked data>'
-                     ELSE coalesce(NEW.param_value_text, NEW.param_value_numeric::TEXT,
-                          NEW.param_value_boolean::TEXT, NEW.param_value_interval::TEXT)
-                END);
-      RETURN NEW;
-    ELSIF TG_OP = 'TRUNCATE' THEN
-      RAISE EXCEPTION '_emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed. Use DELETE instead.';
-    END IF;
-    RETURN NULL;
+    RAISE EXCEPTION 'emaj_default_param_before_stmt_trg: Modifying the emaj_default_param table is not allowed.';
   END;
-$_emaj_param_change_fnct$;
+$_emaj_default_param_before_stmt_fnct$;
 
-CREATE TRIGGER emaj_param_change_trg
-  AFTER INSERT OR UPDATE OR DELETE  ON emaj.emaj_param
-  FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_param_change_fnct();
+CREATE TRIGGER emaj_default_param_before_stmt_trg
+  BEFORE INSERT OR UPDATE OR DELETE OR TRUNCATE ON emaj.emaj_default_param
+  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_default_param_before_stmt_fnct();
 
-CREATE TRIGGER emaj_param_truncate_trg
-  BEFORE TRUNCATE ON emaj.emaj_param
-  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_param_change_fnct();
+-- The emaj_param_before_stmt_trg trigger and the associated _emaj_param_before_stmt_fnct() function
+--   blocks any attempt to directly modify the emaj_param table, forcing the use of the the emaj_set_param() function instead.
+
+CREATE OR REPLACE FUNCTION emaj._emaj_param_before_stmt_fnct()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+$_emaj_param_before_stmt_fnct$
+  BEGIN
+    RAISE EXCEPTION 'emaj_param_before_stmt_trg: Modifying the emaj_param table is not allowed. Use the emaj_set_param()'
+                    ' function instead.';
+  END;
+$_emaj_param_before_stmt_fnct$;
+
+CREATE TRIGGER emaj_param_before_stmt_trg
+  BEFORE INSERT OR UPDATE OR DELETE OR TRUNCATE ON emaj.emaj_param
+  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_param_before_stmt_fnct();
 
 ----------------------------------------------------------------
 --                                                            --
@@ -932,9 +925,8 @@ SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_dblink_open_cnx$
 -- This function tries to open a named dblink connection.
 -- It uses as target: the current cluster (port), the current database and a role defined in the emaj_param table.
--- This connection role must be defined in the emaj_param table with a row having:
---   - param_key = 'dblink_user_password',
---   - param_value_text = 'user=<user> password=<password>' with the rules that apply to usual libPQ connect strings.
+-- This connection role must be defined by:
+--   SELECT emaj.emaj_set_param('dblink_user_password', 'user=<user> password=<password>');
 -- The password can be omited if the connection doesn't require it.
 -- The connection is performed by calling dblink_connect() when the installer role is superuser, or dblink_connect_u() in other cases.
 -- The function is directly called by Emaj_web.
@@ -947,7 +939,7 @@ $_dblink_open_cnx$
 --          -2 dblink functions are not visible for the session (obsolete)
 --          -3 dblink functions execution is not granted to the role
 --          -4 the transaction isolation level is not READ COMMITTED
---          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
+--          -5 no 'dblink_user_password' parameter is set
 --          -6 error at dblink_connect() call
 --          -7 the dblink user/password from emaj_param has not E-Maj administration rights
 --          -8 the installer role has not pg_read_all_settings privileges in an instance only accessible by sockets
@@ -1001,13 +993,13 @@ $_dblink_open_cnx$
                                           --   READ COMMITTED transaction
     END IF;
     IF p_status IS NULL THEN
--- Read and verify the dblink_user_password parameter exists in emaj_param.
-      SELECT param_value_text
+-- Read and verify the dblink_user_password parameter is set in emaj_param.
+      SELECT param_value
         INTO v_userPassword
         FROM emaj.emaj_param
         WHERE param_key = 'dblink_user_password';
-      IF NOT FOUND THEN
-        p_status = -5;                    -- no 'dblink_user_password' parameter is set in the emaj_param table
+      IF v_userPassword IS NULL OR v_userPassword = '' THEN
+        p_status = -5;                    -- no 'dblink_user_password' parameter is set
       END IF;
     END IF;
     IF p_status IS NULL THEN
@@ -1069,9 +1061,9 @@ $_dblink_open_cnx$
             WHEN -1 THEN ' (dblink extension not installed)'
             WHEN -3 THEN ' (installer role not allowed to EXECUTE dblink_connect_u())'
             WHEN -4 THEN ' (transaction isolation level not READ COMMITTED)'
-            WHEN -5 THEN ' (missing ''dblink_user_password'' parameter in emaj_param table)'
+            WHEN -5 THEN ' (''dblink_user_password'' parameter not set)'
             WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
-            WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not emaj administration rights)'
+            WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not E-Maj administration rights)'
             WHEN -8 THEN ' (installer role has not pg_read_all_settings privileges)'
             ELSE ''
           END);
@@ -1578,6 +1570,7 @@ $_check_json_param_conf$
     v_parameters             JSON;
     v_paramNumber            INT;
     v_key                    TEXT;
+    v_value                  TEXT;
     r_param                  RECORD;
   BEGIN
 -- Extract the "parameters" json path and check that the attribute exists.
@@ -1620,6 +1613,19 @@ $_check_json_param_conf$
             VALUES (104, 1, v_key, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
                  format('"%s" is not a known E-Maj parameter.',
                         v_key));
+        END IF;
+-- Check that parameters of type interval have valid value.
+        IF v_key IN ('history_retention', 'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
+                     'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
+          v_value = r_param.param ->> 'value';
+          BEGIN
+            PERFORM v_value::INTERVAL;
+          EXCEPTION WHEN OTHERS THEN
+            RETURN QUERY
+              VALUES (106, 1, v_key, v_value, NULL::TEXT, NULL::TEXT, NULL::INT,
+                   format('For key "%s", the value ("%s") is not a valid time interval.',
+                          v_key, v_value));
+          END;
         END IF;
       END LOOP;
 -- Check that parameters are not configured more than once in the JSON structure.
@@ -3346,7 +3352,7 @@ $_create_tbl$
     v_genPkConditions        TEXT;
     v_nbGenAlwaysIdentCol    INTEGER;
     v_attnum                 SMALLINT;
-    v_alter_log_table_param  TEXT;
+    v_alterLogTableParam     TEXT;
     v_stmt                   TEXT;
     v_supportEmajAdm         BOOLEAN;
     v_supportEmajViewer      BOOLEAN;
@@ -3412,12 +3418,13 @@ $_create_tbl$
         AND relname = v_baseLogTableName
         AND attname = 'emaj_verb';
 -- Adjust the log table structure with the alter_log_table parameter, if set.
-    SELECT param_value_text INTO v_alter_log_table_param
+    SELECT param_value
+      INTO v_alterLogTableParam
       FROM emaj.emaj_param
-      WHERE param_key = ('alter_log_table');
-    IF v_alter_log_table_param IS NOT NULL AND v_alter_log_table_param <> '' THEN
+      WHERE param_key = 'alter_log_table';
+    IF v_alterLogTableParam IS NOT NULL AND v_alterLogTableParam <> '' THEN
       EXECUTE format('ALTER TABLE %s %s',
-                     v_logTableName, v_alter_log_table_param);
+                     v_logTableName, v_alterLogTableParam);
     END IF;
 -- Set the index associated to the primary key as cluster index (It may be useful for CLUSTER command).
     EXECUTE format('ALTER TABLE ONLY %s CLUSTER ON %s',
@@ -9191,21 +9198,14 @@ $_rlbk_planning$
       FROM emaj.emaj_mark
       WHERE mark_group = v_groupNames[1]
         AND mark_name = v_mark;
--- Get all duration parameters that will be needed later from the emaj_param table, or get default values for rows
--- that are not present in emaj_param table.
-    SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_row_rollback_duration'), '100 microsecond'::INTERVAL),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_row_delete_log_duration'), '10 microsecond'::INTERVAL),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_fkey_check_duration'), '5 microsecond'::INTERVAL),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_step_rollback_duration'), '2.5 millisecond'::INTERVAL),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_dblink_rollback_duration'), '4 millisecond'::INTERVAL),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_table_rollback_duration'), '1 millisecond'::INTERVAL)
-           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk, v_fixed_dblink_rlbk, v_fixed_table_rlbk;
+-- Get all duration parameters that will be needed later from the emaj_all_param table.
+    SELECT (SELECT param_value::INTERVAL FROM emaj.emaj_all_param WHERE param_key = 'avg_row_rollback_duration'),
+           (SELECT param_value::INTERVAL FROM emaj.emaj_all_param WHERE param_key = 'avg_row_delete_log_duration'),
+           (SELECT param_value::INTERVAL FROM emaj.emaj_all_param WHERE param_key = 'avg_fkey_check_duration'),
+           (SELECT param_value::INTERVAL FROM emaj.emaj_all_param WHERE param_key = 'fixed_step_rollback_duration'),
+           (SELECT param_value::INTERVAL FROM emaj.emaj_all_param WHERE param_key = 'fixed_dblink_rollback_duration'),
+           (SELECT param_value::INTERVAL FROM emaj.emaj_all_param WHERE param_key = 'fixed_table_rollback_duration')
+      INTO STRICT v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk, v_fixed_dblink_rlbk, v_fixed_table_rlbk;
 -- Process the sequences, if any in the tables groups.
     IF v_nbSequence > 0 THEN
 -- Compute the cost for each RLBK_SEQUENCES step and keep it for later.
@@ -10704,12 +10704,11 @@ $_estimate_rollback_groups$
     EXCEPTION
       WHEN RAISE_EXCEPTION THEN                 -- catch the raised exception and continue
     END;
--- Get the "fixed_table_rollback_duration" parameter from the emaj_param table.
-    SELECT coalesce(
-             (SELECT param_value_interval
-                FROM emaj.emaj_param
-                WHERE param_key = 'fixed_table_rollback_duration'
-             ), '1 millisecond'::INTERVAL) INTO v_fixed_table_rlbk;
+-- Get the "fixed_table_rollback_duration" parameter from the emaj_all_param table.
+    SELECT param_value::INTERVAL
+      INTO STRICT v_fixed_table_rlbk
+      FROM emaj.emaj_all_param
+      WHERE param_key = 'fixed_table_rollback_duration';
 -- Compute the final estimated duration, by adding the minimum cost for LOCK_TABLE steps.
     v_estimDuration = v_estimDuration + (v_nbTbl * v_fixed_table_rlbk);
 --
@@ -13192,6 +13191,84 @@ $$;
 COMMENT ON FUNCTION emaj.emaj_get_version() IS
 $$Returns the current emaj version.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_set_param(p_key TEXT, p_value TEXT)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_set_param$
+-- This function changes a parameter value in the emaj_param table.
+-- If the supplied value is NULL, it resets the key to its default value.
+-- The supplied key is case insensitive, eventhough keys are stored in lower case.
+-- Input: key and value.
+-- Ouput: number of updated parameters (0 or 1).
+-- The function is defined as SECURITY DEFINER to disable/enable the trigger on emaj_param.
+  DECLARE
+    v_key                    TEXT;
+    v_currentValue           TEXT;
+    v_cast                   TEXT;
+    v_defaultValue           TEXT;
+    v_event                  TEXT;
+  BEGIN
+    v_key = lower(p_key);
+-- Get the current and default parameter values and the type to cast.
+    SELECT param_value, param_cast, param_default
+      INTO v_currentValue, v_cast, v_defaultValue
+      FROM emaj.emaj_all_param
+      WHERE param_key = v_key;
+-- Stop if the parameter key is unknown.
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_set_param: The "%" key is unknown.', v_key;
+    END IF;
+-- If there is no change, exit directly.
+    IF (p_value IS NULL AND v_currentValue = v_defaultValue) OR    -- no local value to reset
+       (p_value IS NOT NULL AND p_value = v_currentValue) THEN     -- unchanged local value
+      RETURN 0;
+    END IF;
+-- Otherwise, check that the new value has a correct format.
+    CASE
+-- Check INTERVAL values.
+      WHEN v_cast = 'INTERVAL' THEN
+        BEGIN
+          PERFORM p_value::INTERVAL;
+        EXCEPTION WHEN OTHERS THEN
+          RAISE EXCEPTION 'emaj_set_param: The "%" value ("%") is not a valid time interval.', v_key, p_value;
+        END;
+      ELSE
+    END CASE;
+-- Disable the trigger on emaj_param.
+    ALTER TABLE emaj.emaj_param DISABLE TRIGGER emaj_param_before_stmt_trg;
+-- Record the change in emaj_param.
+    IF p_value IS NULL THEN
+-- The new parameter value is NULL, DELETE the existing row from emaj_param.
+      DELETE FROM emaj.emaj_param
+        WHERE param_key = v_key;
+      p_value = v_defaultValue;
+      v_event = 'DELETED PARAMETER';
+    ELSIF v_currentValue = v_defaultValue THEN
+-- The parameter has currently its default value, INSERT a row into emaj_param.
+      INSERT INTO emaj.emaj_param (param_key, param_value)
+        VALUES (v_key, p_value);
+      v_event = 'INSERTED PARAMETER';
+    ELSE
+-- Otherwise UPDATE it.
+      UPDATE emaj.emaj_param
+         SET param_value = p_value
+         WHERE param_key = v_key;
+      v_event = 'UPDATED PARAMETER';
+    END IF;
+-- Re-enable the trigger on emaj_param.
+    ALTER TABLE emaj.emaj_param ENABLE TRIGGER emaj_param_before_stmt_trg;
+-- Trace the change into emaj_hist.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SET_PARAM', v_event, v_key,
+              CASE WHEN v_key = 'dblink_user_password' THEN '<masked data>'
+                   ELSE 'From: ' || v_currentValue || ' to: ' || p_value END);
+--
+    RETURN 1;
+  END;
+$emaj_set_param$;
+COMMENT ON FUNCTION emaj.emaj_set_param(TEXT, TEXT) IS
+$$Updates a parameter recorded into the emaj_param table.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_purge_histories(p_retentionDelay INTERVAL)
 RETURNS VOID LANGUAGE plpgsql AS
 $emaj_purge_histories$
@@ -13225,7 +13302,7 @@ $_purge_histories$
 -- The function is called at start group time and when oldest marks are deleted.
 -- It is also called by the emaj_purge_histories() function.
 -- A retention delay >= 100 years means infinite.
--- Input: retention delay ; if supplied, it overloads the history_retention parameter from the emaj_param table.
+-- Input: retention delay ; if supplied, it overloads the history_retention parameter.
   DECLARE
     v_delay                  INTERVAL;
     v_datetimeLimit          TIMESTAMPTZ;
@@ -13238,10 +13315,10 @@ $_purge_histories$
   BEGIN
 -- Compute the retention delay to use.
     SELECT coalesce(p_retentionDelay,
-                    (SELECT param_value_interval
-                       FROM emaj.emaj_param
+                    (SELECT param_value::INTERVAL
+                       FROM emaj.emaj_all_param
                        WHERE param_key = 'history_retention'
-                    ), '1 YEAR')
+                    ))
       INTO v_delay;
 -- Immediately exit if the delay is infinity.
     IF v_delay >= INTERVAL '100 years' THEN
@@ -13331,26 +13408,29 @@ $_purge_histories$
   END;
 $_purge_histories$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration()
+CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration(p_includeDefault BOOLEAN DEFAULT FALSE)
 RETURNS JSON LANGUAGE plpgsql AS
 $emaj_export_parameters_configuration$
--- This function returns a JSON formatted structure representing all the parameters registered in the emaj_param table.
+-- This function returns a JSON formatted structure representing all the parameters.
 -- The function can be called by clients like Emaj_web.
 -- This is just a wrapper of the internal _export_param_conf() function.
+-- Input: boolean indicating whether keys which current value equals their default value must be exported (false by default).
 -- Output: the parameters content in JSON format
   BEGIN
-    RETURN emaj._export_param_conf();
+    RETURN emaj._export_param_conf(p_includeDefault);
   END;
 $emaj_export_parameters_configuration$;
-COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration() IS
+COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration(BOOLEAN) IS
 $$Generates a json structure describing the E-Maj parameters.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration(p_location TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration(p_location TEXT, p_includeDefault BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_export_parameters_configuration$
 -- This function stores the parameters configuration into a file on the server.
 -- The JSON structure is built by the _export_param_conf() function.
+-- Input: - output file location,
+--        - boolean indicating whether keys which current value equals their default value must be exported (false by default).
 -- Output: the number of parameters of the recorded JSON structure.
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
@@ -13359,7 +13439,7 @@ $emaj_export_parameters_configuration$
 -- Verify that the installer role is allowed to execute COPY TO statements.
     PERFORM emaj._check_can_copy_to();
 -- Get the json structure.
-    SELECT emaj._export_param_conf() INTO v_paramsJson;
+    SELECT emaj._export_param_conf(p_includeDefault) INTO v_paramsJson;
 -- Store the structure into the provided file name.
     CREATE TEMP TABLE t (params TEXT);
     INSERT INTO t
@@ -13372,47 +13452,48 @@ $emaj_export_parameters_configuration$
     RETURN json_array_length(v_paramsJson->'parameters');
   END;
 $emaj_export_parameters_configuration$;
-COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration(TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration(TEXT, BOOLEAN) IS
 $$Generates and stores in a file a json structure describing the E-Maj parameters.$$;
 
-CREATE OR REPLACE FUNCTION emaj._export_param_conf()
+CREATE OR REPLACE FUNCTION emaj._export_param_conf(p_includeDefault BOOLEAN)
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_param_conf$
--- This function generates a JSON formatted structure representing the parameters registered in the emaj_param table.
+-- This function generates a JSON formatted structure representing the parameters.
 -- All parameters are extracted, except the "emaj_version" key that is directly linked to the extension and thus is not updatable.
 -- The E-Maj version is already displayed in the generated comment at the beginning of the structure.
+-- Input: boolean indicating whether keys which current value equals their default value must be exported.
 -- Output: the parameters content in JSON format
   DECLARE
+    v_paramHelp              TEXT;
     v_params                 TEXT;
     v_paramsJson             JSON;
     r_param                  RECORD;
   BEGIN
--- Build the header of the JSON structure.
+-- Build the _help attribute content.
+    SELECT string_agg(param_key || CASE WHEN param_default <> '' THEN ' (default = ' || param_default || ')' ELSE '' END,
+                      ', ' ORDER BY param_rank)
+      INTO v_paramHelp
+      FROM emaj.emaj_default_param;
+-- Build the JSON structure header.
     v_params = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
                            emaj.emaj_get_version() || ', at ' || statement_timestamp() || E'",\n' ||
-               E'  "_help": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, '
-                'avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), '
-                'avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), '
-                'fixed_table_rollback_duration (default = 00:00:00.001) and fixed_dblink_rollback_duration (default = 00:00:00.004).",\n';
+                '  "_help": "Known parameter keys: ' || v_paramHelp || E'",\n';
 -- Build the parameters description.
     v_params = v_params || E'  "parameters": [\n';
     FOR r_param IN
-      SELECT param_key AS key,
-             coalesce(to_json(param_value_text),
-                      to_json(param_value_interval),
-                      to_json(param_value_boolean),
-                      to_json(param_value_numeric),
-                      'null') as value
-        FROM emaj.emaj_param
-             JOIN (VALUES (1::INT, 'dblink_user_password'), (2, 'history_retention'), (3, 'alter_log_table'),
-                          (10, 'avg_row_rollback_duration'), (11, 'avg_row_delete_log_duration'),
-                          (12, 'avg_fkey_check_duration'), (13, 'fixed_step_rollback_duration'),
-                          (14, 'fixed_table_rollback_duration'), (15, 'fixed_dblink_rollback_duration')
-                  ) AS p(rank, key) ON (p.key = param_key)
-        ORDER BY rank
+      SELECT to_json(param_key) AS key,
+             to_json(param_value) AS value
+        FROM emaj.emaj_all_param
+        WHERE p_includeDefault OR
+              CASE
+                WHEN param_cast IS NULL THEN (param_value <> param_default)
+                WHEN param_cast = 'INTERVAL' THEN (param_value::INTERVAL <> param_default::INTERVAL)
+                ELSE TRUE
+              END
+        ORDER BY param_rank
     LOOP
       v_params = v_params || E'    {\n'
-                          ||  '      "key": ' || to_json(r_param.key) || E',\n'
+                          ||  '      "key": ' || r_param.key || E',\n'
                           ||  '      "value": ' || r_param.value || E'\n'
                           || E'    },\n';
     END LOOP;
@@ -13433,7 +13514,7 @@ $_export_param_conf$
   END;
 $_export_param_conf$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(p_paramsJson JSON, p_deleteCurrentConf BOOLEAN DEFAULT FALSE)
+CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(p_paramsJson JSON, p_resetOtherParameters BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_import_parameters_configuration$
 -- This function import a supplied JSON formatted structure representing E-Maj parameters to load.
@@ -13441,28 +13522,30 @@ $emaj_import_parameters_configuration$
 -- The function can be called by clients like Emaj_web.
 -- It calls the _import_param_conf() function to perform the emaj_param table changes.
 -- Input: - the parameter configuration structure in JSON format
---        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
---          (by default, the parameter keys not referenced in the input json structure are kept unchanged)
--- Output: the number of inserted or updated parameter keys
+--        - an optional boolean indicating whether parameters not present in the JSON structure must be reset to their default value
+--          (by default, the parameter keys not referenced in the input json structure are kept unchanged).
+-- Output: the number of parameters found in the JSON structure
   DECLARE
-    v_nbParam                INT;
+    v_nbParamInJson          INT;
+    v_nbModifiedParam        INT;
   BEGIN
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event)
       VALUES ('IMPORT_PARAMETERS', 'BEGIN');
 -- Load the parameters.
-    SELECT emaj._import_param_conf(p_paramsJson, p_deleteCurrentConf) INTO v_nbParam;
+    SELECT * FROM emaj._import_param_conf(p_paramsJson, p_resetOtherParameters)
+      INTO v_nbParamInJson, v_nbModifiedParam;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES ('IMPORT_PARAMETERS', 'END', v_nbParam || ' parameters imported');
+      VALUES ('IMPORT_PARAMETERS', 'END', v_nbParamInJson || ' imported parameters, ' || v_nbModifiedParam || ' modified parameters');
 --
-    RETURN v_nbParam;
+    RETURN v_nbParamInJson;
   END;
 $emaj_import_parameters_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(JSON, BOOLEAN) IS
 $$Import a json structure describing E-Maj parameters to load.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(p_location TEXT, p_deleteCurrentConf BOOLEAN DEFAULT FALSE)
+CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(p_location TEXT, p_resetOtherParameters BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_import_parameters_configuration$
@@ -13470,14 +13553,15 @@ $emaj_import_parameters_configuration$
 -- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
 -- It calls the _import_param_conf() function to perform the emaj_param table changes.
 -- Input: - input file location
---        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
---          (by default, the parameter keys not referenced in the input json structure are kept unchanged)
--- Output: the number of inserted or updated parameter keys
+--        - an optional boolean indicating whether parameters not present in the JSON structure must be reset to their default value
+--          (by default, the parameter keys not referenced in the input json structure are kept unchanged).
+-- Output: the number of parameters found in the JSON structure
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_paramsText             TEXT;
     v_paramsJson             JSON;
-    v_nbParam                INT;
+    v_nbParamInJson          INT;
+    v_nbModifiedParam        INT;
   BEGIN
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
@@ -13499,19 +13583,23 @@ $emaj_import_parameters_configuration$
       RAISE EXCEPTION 'emaj_import_parameters_configuration: The file content is not a valid JSON content.';
     END;
 -- Load the parameters.
-    SELECT emaj._import_param_conf(v_paramsJson, p_deleteCurrentConf) INTO v_nbParam;
+    SELECT *
+      INTO v_nbParamInJson, v_nbModifiedParam
+      FROM emaj._import_param_conf(v_paramsJson, p_resetOtherParameters);
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES ('IMPORT_PARAMETERS', 'END', v_nbParam || ' parameters imported');
+      VALUES ('IMPORT_PARAMETERS', 'END', v_nbParamInJson || ' imported parameters, ' || v_nbModifiedParam || ' modified parameters');
 --
-    RETURN v_nbParam;
+    RETURN v_nbParamInJson;
   END;
 $emaj_import_parameters_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(TEXT, BOOLEAN) IS
 $$Import E-Maj parameters from a JSON formatted file.$$;
 
-CREATE OR REPLACE FUNCTION emaj._import_param_conf(p_json JSON, p_deleteCurrentConf BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._import_param_conf(p_json JSON, p_resetOtherParameters BOOLEAN,
+                                                   OUT p_nbParamInJson INT, OUT p_nbModifiedParam INT)
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_import_param_conf$
 -- This function processes a JSON formatted structure representing the E-Maj parameters to load.
 -- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
@@ -13524,13 +13612,14 @@ $_import_param_conf$
 -- If the "value" attribute is missing or null, the parameter is removed from the emaj_param table, and the parameter will be set at
 --   its default value
 -- Input: - the parameter configuration structure in JSON format
---        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
--- Output: the number of inserted or updated parameter keys
+--        - an optional boolean indicating whether parameters not present in the JSON structure must be reset to their default value.
+-- Output: - the number of parameters found in the JSON structure
+--         - the number of really modified parameters.
+-- The function is defined as SECURITY DEFINER to disable/enable the trigger on emaj_param.
   DECLARE
     v_parameters             JSON;
-    v_nbParam                INT;
-    v_key                    TEXT;
-    v_value                  TEXT;
+    v_newValue               TEXT;
+    v_event                  TEXT;
     r_msg                    RECORD;
     r_param                  RECORD;
   BEGIN
@@ -13547,45 +13636,59 @@ $_import_param_conf$
     END IF;
 -- OK
     v_parameters = p_json #> '{"parameters"}';
--- If requested, delete the existing parameters.
--- The trigger on emaj_param records the deletions into emaj_hist.
-    IF p_deleteCurrentConf THEN
-      DELETE FROM emaj.emaj_param;
-    END IF;
+    p_nbParamInJson = json_array_length(v_parameters);
+    p_nbModifiedParam = 0;
+-- Disable the trigger that blocks any attempt to update the emaj_param table.
+    ALTER TABLE emaj.emaj_param DISABLE TRIGGER emaj_param_before_stmt_trg;
 -- Process each parameter.
-    v_nbParam = 0;
     FOR r_param IN
-        SELECT param
-          FROM json_array_elements(v_parameters) AS t(param)
+        WITH json_param AS (
+          SELECT param->>'key' AS json_key, param->>'value' AS json_value
+            FROM json_array_elements(v_parameters) AS t(param))
+        SELECT param_key, param_value, param_default, json_value
+          FROM emaj.emaj_all_param
+               LEFT OUTER JOIN json_param ON (json_key = param_key)
+          ORDER BY param_rank
       LOOP
--- Get each parameter from the list.
-        v_key = r_param.param ->> 'key';
-        v_value = r_param.param ->> 'value';
-        v_nbParam = v_nbParam + 1;
--- If there is no value to set, deleted the parameter, if it exists.
-        IF v_value IS NULL THEN
-          DELETE FROM emaj.emaj_param
-            WHERE param_key = v_key;
-        ELSE
--- Insert or update the parameter in the emaj_param table, selecting the right parameter value column type depending on the key.
-          IF v_key IN ('dblink_user_password', 'alter_log_table') THEN
-            INSERT INTO emaj.emaj_param (param_key, param_value_text)
-              VALUES (v_key, v_value)
-              ON CONFLICT (param_key) DO
-                UPDATE SET param_value_text = v_value
-                  WHERE EXCLUDED.param_key = v_key;
-          ELSIF v_key IN ('history_retention', 'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
-                         'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
-            INSERT INTO emaj.emaj_param (param_key, param_value_interval)
-              VALUES (v_key, v_value::INTERVAL)
-              ON CONFLICT (param_key) DO
-                UPDATE SET param_value_interval = v_value::INTERVAL
-                  WHERE EXCLUDED.param_key = v_key;
+        v_newValue = NULL;
+        IF r_param.json_value IS NOT NULL AND r_param.json_value <> r_param.param_value THEN
+-- The parameter is present in the JSON structure and its value is different from the current parameter value.
+          v_newValue = r_param.json_value;
+        END IF;
+        IF p_resetOtherParameters AND r_param.json_value IS NULL AND r_param.param_value <> r_param.param_default THEN
+-- The parameter is not present in the JSON structure and it must be reset if needed.
+          v_newValue = r_param.param_default;
+        END IF;
+        IF v_newValue IS NOT NULL THEN
+-- The parameter value has changed. So record and trace the change.
+          IF v_newValue = r_param.param_default THEN
+-- The new parameter value equals the default value, so DELETE the existing row from emaj_param.
+            DELETE FROM emaj.emaj_param
+              WHERE param_key = r_param.param_key;
+            v_event = 'DELETED PARAMETER';
+          ELSIF r_param.param_value = r_param.param_default THEN
+-- The parameter has currently its default value, so INSERT a row into emaj_param.
+            INSERT INTO emaj.emaj_param (param_key, param_value)
+              VALUES (r_param.param_key, v_newValue);
+            v_event = 'INSERTED PARAMETER';
+          ELSE
+-- Otherwise UPDATE it.
+            UPDATE emaj.emaj_param
+              SET param_value = v_newValue
+              WHERE param_key = r_param.param_key;
+            v_event = 'UPDATED PARAMETER';
           END IF;
+          INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+            VALUES ('IMPORT_PARAMETERS', v_event, r_param.param_key,
+                    CASE WHEN r_param.param_key = 'dblink_user_password' THEN '<masked data>'
+                         ELSE 'From: ' || r_param.param_value || ' to: ' || v_newValue END);
+          p_nbModifiedParam = p_nbModifiedParam + 1;
         END IF;
       END LOOP;
+-- Enable the trigger that blocks any attempt to update the emaj_param table.
+    ALTER TABLE emaj.emaj_param ENABLE TRIGGER emaj_param_before_stmt_trg;
 --
-    RETURN v_nbParam;
+    RETURN;
   END;
 $_import_param_conf$;
 
@@ -14227,7 +14330,6 @@ $emaj_verify_all$
     v_errorFound             BOOLEAN = FALSE;
     v_status                 INT;
     v_schema                 TEXT;
-    v_paramList              TEXT;
     r_object                 RECORD;
   BEGIN
 -- Get the installation characteristics.
@@ -14259,17 +14361,6 @@ $emaj_verify_all$
         v_errorFound = TRUE;
       END IF;
     END LOOP;
--- Report a warning if emaj_param contains an unknown parameter.
-    SELECT string_agg(param_key, ', ' ORDER BY param_key)
-      INTO v_paramList
-      FROM emaj.emaj_visible_param
-      WHERE param_key NOT IN
-        ('dblink_user_password', 'history_retention', 'alter_log_table', 'avg_row_rollback_duration', 'avg_row_delete_log_duration',
-         'avg_fkey_check_duration', 'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration');
-    IF v_paramList IS NOT NULL THEN
-      RETURN NEXT format('Warning: the emaj_param table contains unknown parameters (%s).',
-                         v_paramList);
-    END IF;
 -- Report a warning if dblink connections are not operational.
     IF has_function_privilege('emaj._dblink_open_cnx(text, boolean)', 'execute') THEN
       SELECT p_status, p_schema INTO v_status, v_schema
@@ -14284,11 +14375,11 @@ $emaj_verify_all$
         WHEN -4 THEN
           RETURN NEXT 'Warning: While testing the dblink connection, the transaction isolation level is not READ COMMITTED.';
         WHEN -5 THEN
-          RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set in the emaj_param table.';
+          RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set.';
         WHEN -6 THEN
           RETURN NEXT 'Warning: The dblink connection attempt failed. The ''dblink_user_password'' parameter value may be incorrect.';
         WHEN -7 THEN
-          RETURN NEXT 'Warning: The role set in the ''dblink_user_password'' parameter has not emaj administration rights.';
+          RETURN NEXT 'Warning: The role set in the ''dblink_user_password'' parameter has not E-Maj administration rights.';
         WHEN -8 THEN
           RETURN NEXT 'Warning: While testing the dblink connection, the installer role has not the "pg_read_all_settings" privileges.';
         ELSE
@@ -15280,6 +15371,7 @@ $do$
       GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 
       REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
+      REVOKE SELECT ON TABLE emaj.emaj_all_param FROM emaj_viewer;
 
 -- ... and execute a subset of emaj functions for which rights are explicitely granted.
       GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;

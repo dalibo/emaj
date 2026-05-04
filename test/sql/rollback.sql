@@ -174,8 +174,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 
 -- bad user/password defined in emaj_param
-insert into emaj.emaj_param (param_key, param_value_text) 
-  values ('dblink_user_password','user=<user> password=<password>');
+select emaj.emaj_set_param('dblink_user_password','user=<user> password=<password>');
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 
 -- transaction not in READ COMMITTED isolation level => the dblink connection is not possible
@@ -185,8 +184,7 @@ begin;
 commit;
 
 -- dblink connection should now be ok (missing right on dblink functions is tested in adm1.sql)
-update emaj.emaj_param set param_value_text = 'user=postgres password=postgres'
-  where param_key = 'dblink_user_password';
+select emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 
 -- missing application table and multi-groups rollback

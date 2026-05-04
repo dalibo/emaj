@@ -395,11 +395,11 @@ Fonctions de niveau général
 | :ref:`emaj_export_groups_configuration           | | fichier TEXT,               | nb.groupes INT                        |
 | <export_groups_conf>`                            | | [tableau.groupes TEXT[]]    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_export_parameters_configuration       |                               | paramètres JSON                       |
+| :ref:`emaj_export_parameters_configuration       | [inclure.défaut BOOLEAN]      | paramètres JSON                       |
 | <export_param_conf>`                             |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_export_parameters_configuration       | fichier TEXT                  | nb.paramètres INT                     |
-| <export_param_conf>`                             |                               |                                       |
+| :ref:`emaj_export_parameters_configuration       | | fichier TEXT,               | nb.paramètres INT                     |
+| <export_param_conf>`                             | | [inclure.défaut BOOLEAN]    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
 | <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
@@ -424,16 +424,21 @@ Fonctions de niveau général
 |                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_parameters_configuration       | | paramètres JSON,            | nb.paramètres INT                     |
-| <import_param_conf>`                             | | [suppression.conf BOOLEAN)] |                                       |
+| <import_param_conf>`                             | | [reset.autres.paramètres    |                                       |
+|                                                  | |  BOOLEAN)]                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_parameters_configuration       | | fichier TEXT,               | nb.paramètres INT                     |
-| <import_param_conf>`                             | | [suppression.conf BOOLEAN)] |                                       |
+| <import_param_conf>`                             | | [reset.autres.paramètres    |                                       |
+|                                                  | |  BOOLEAN)]                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_purge_histories                       | délai.rétention INTERVAL      |                                       |
 | <emaj_purge_histories>`                          |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
 | <emaj_rollback_activity>` (V)                    |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_set_param                             | | clé TEXT,                   | nb.paramètres.modifiés INT            |
+| <emaj_set_param>`                                | | valeur TEXT                 |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_verify_all                            |                               | SETOF TEXT                            |
 | <emaj_verify_all>` (V)                           |                               |                                       |

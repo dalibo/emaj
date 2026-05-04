@@ -70,7 +70,7 @@ Un certain nombre de paramètres influence le fonctionnement d'E-Maj. Le détail
 
 Cette étape de valorisation des paramètres est optionnelle. Leur valeur par défaut permet à E-Maj de fonctionner correctement.
 
-Néanmoins, si l'administrateur E-Maj souhaite bénéficier du :ref:`suivi des opérations de rollback E-Maj<emaj_rollback_activity_prerequisites>`, il est nécessaire de valoriser le paramètre **dblink_user_password** dans la table :ref:`emaj_param <emaj_param>`.
+Néanmoins, si l'administrateur E-Maj souhaite bénéficier du :ref:`suivi des opérations de rollback E-Maj<emaj_rollback_activity>`, ou effectuer des :doc:`rollbacks E-Maj parallélisés<parallelRollbackClient>`, il est nécessaire de valoriser le paramètre **dblink_user_password**.
 
 Test et démonstration
 ---------------------

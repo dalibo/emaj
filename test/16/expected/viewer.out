@@ -339,13 +339,13 @@ select count(*) from emaj._get_sequences_last_value(null, null, null, null, null
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 0.0135 secs
+ @ 0.0145 secs
 (1 row)
 
 select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 0.0135 secs
+ @ 0.0145 secs
 (1 row)
 
 select * from emaj.emaj_rollback_activity();
@@ -371,14 +371,16 @@ select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Start','Start',NULL,NULL
 (1 row)
 
 -----------------------------
--- forbiden table accesses
+-- forbiden tables or views accesses
 -----------------------------
 delete from emaj.emaj_version_hist;
 ERROR:  permission denied for table emaj_version_hist
-select count(*) from emaj.emaj_param;
+delete from emaj.emaj_default_param;
+ERROR:  permission denied for table emaj_default_param
+select * from emaj.emaj_param;
 ERROR:  permission denied for table emaj_param
-delete from emaj.emaj_param;
-ERROR:  permission denied for table emaj_param
+select * from emaj.emaj_all_param;
+ERROR:  permission denied for view emaj_all_param
 delete from emaj.emaj_hist;
 ERROR:  permission denied for table emaj_hist
 delete from emaj.emaj_group;

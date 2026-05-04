@@ -16,17 +16,16 @@ truncate emaj.emaj_hist;
 -----------------------------
 grant emaj_adm to _regress_emaj_adm1, _regress_emaj_adm2;
 
-update emaj.emaj_param set param_value_text = 'user=_regress_emaj_adm1 password=adm'
-  where param_key = 'dblink_user_password';
+select emaj.emaj_set_param('dblink_user_password', 'user=_regress_emaj_adm1 password=adm');
 
 --
 set session_authorization to _regress_emaj_adm1;
 
 -----------------------------
--- authorized table accesses
+-- authorized tables and views accesses
 -----------------------------
 select 'select ok' as result from (select count(*) from emaj.emaj_version_hist) as t;
-select 'select ok' as result from (select count(*) from emaj.emaj_param) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_all_param) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_visible_param) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_time_stamp) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_hist) as t;
@@ -98,7 +97,7 @@ select hist_function, hist_event, hist_wording
 -- recreate and start groups
 -----------------------------
 -- set the parameter to drop the emaj_user_port column and add an 'extra_col_appname' column
-insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_table',
+select emaj.emaj_set_param('alter_log_table',
   'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
 
 select emaj.emaj_create_group('myGroup1') where not emaj.emaj_does_exist_group('myGroup1');
@@ -123,10 +122,10 @@ select emaj.emaj_create_group('emptyGroup');
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','new_mark_name');
 
 -- force a purge of the history, the alter and the rollback tables
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
+select emaj.emaj_set_param('history_retention', '0.1 second');
 select pg_sleep(0.2);
 select emaj.emaj_start_group('myGroup1','M1') where not emaj.emaj_is_logging_group('myGroup1') and not emaj.emaj_does_exist_mark_group('myGroup1', 'M1');
-delete from emaj.emaj_param where param_key = 'history_retention';
+select emaj.emaj_set_param('history_retention', NULL);
 
 select emaj.emaj_start_group('myGroup2','M1');
 

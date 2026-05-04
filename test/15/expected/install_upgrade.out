@@ -372,6 +372,7 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to view emaj_visible_param
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------
@@ -435,13 +436,13 @@ select emaj.emaj_get_version();
 
 -- check the emaj environment, just after creation
 select emaj.emaj_verify_all();
-                                     emaj_verify_all                                     
------------------------------------------------------------------------------------------
- Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+                         emaj_verify_all                         
+-----------------------------------------------------------------
+ Warning: The 'dblink_user_password' parameter value is not set.
  No error detected
 (2 rows)
 
--- check history
+-- check history and parameters
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_id | hist_function | hist_event |  hist_object  |         hist_wording         | hist_user 
 ---------+---------------+------------+---------------+------------------------------+-----------
@@ -451,11 +452,25 @@ select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user 
 (3 rows)
 
 delete from emaj.emaj_hist;
+select * from emaj.emaj_all_param order by param_rank;
+           param_key            | param_value | param_default | param_cast | param_rank 
+--------------------------------+-------------+---------------+------------+------------
+ history_retention              | 1 year      | 1 year        | INTERVAL   |          1
+ dblink_user_password           |             |               |            |          2
+ alter_log_table                |             |               |            |          3
+ avg_row_rollback_duration      | 100 us      | 100 us        | INTERVAL   |          4
+ avg_row_delete_log_duration    | 10 us       | 10 us         | INTERVAL   |          5
+ avg_fkey_check_duration        | 20 us       | 20 us         | INTERVAL   |          6
+ fixed_step_rollback_duration   | 2.5 ms      | 2.5 ms        | INTERVAL   |          7
+ fixed_table_rollback_duration  | 1 ms        | 1 ms          | INTERVAL   |          8
+ fixed_dblink_rollback_duration | 4 ms        | 4 ms          | INTERVAL   |          9
+(9 rows)
+
 -- reset function calls statistics (so the check.sql output is stable with all installation paths)
--- wait during half a second to let the statistics collector aggregate the latest stats
-select pg_sleep(1.2);
- pg_sleep 
-----------
+-- first look at pg_stat_activity to force the statistics collector aggregate the latest stats
+select null as stats_gathered from pg_stat_activity limit 1;
+ stats_gathered 
+----------------
  
 (1 row)
 

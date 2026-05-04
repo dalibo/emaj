@@ -19,14 +19,6 @@ select emaj.emaj_disable_protection_by_event_triggers();
 select * from emaj.emaj_verify_all();
 
 --
--- Unknown emaj_param parameter key
---
-begin;
-  insert into emaj.emaj_param (param_key) VALUES ('dummy_2'), ('dummy_1');
-  select * from emaj.emaj_verify_all();
-rollback;
-
---
 -- dblink connection tests
 --
 -- The "dblink not installed" and "lack of execute right on dblink_connect_u()" tests are located into the non_superuser_install.sql script
@@ -38,20 +30,19 @@ rollback;
 
 -- Test the lack of dblink_user_password parameter
 begin;
-  delete from emaj.emaj_param where param_key = 'dblink_user_password';
+  select emaj.emaj_set_param('dblink_user_password', NULL);
   select * from emaj.emaj_verify_all();
 rollback;
 
 -- Test a bad dblink_user_password parameter content
 begin;
-  update emaj.emaj_param set param_value_text = 'bad_content' where param_key = 'dblink_user_password';
+  select emaj.emaj_set_param('dblink_user_password', 'bad_content');
   select * from emaj.emaj_verify_all();
 rollback;
 
 -- Test a dblink_user_password without emaj_adm rights
 begin;
-  update emaj.emaj_param set param_value_text = 'user=_regress_emaj_viewer password=viewer' 
-    where param_key = 'dblink_user_password';
+  select emaj.emaj_set_param('dblink_user_password', 'user=_regress_emaj_viewer password=viewer');
   select * from emaj.emaj_verify_all();
 rollback;
 

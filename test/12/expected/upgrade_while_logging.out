@@ -128,6 +128,7 @@ drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
 drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
 drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
 drop cascades to function _sequence_stat_seq(emaj_relation,bigint,bigint)
+NOTICE:  drop cascades to view emaj_visible_param
 -----------------------------
 -- check installation
 -----------------------------
@@ -225,6 +226,15 @@ select emaj.emaj_get_version();
  ver_group  | text |           |          | 
  ver_msg    | text |           |          | 
 
+                View "emaj.emaj_all_param"
+    Column     |  Type   | Collation | Nullable | Default 
+---------------+---------+-----------+----------+---------
+ param_key     | text    |           |          | 
+ param_value   | text    |           |          | 
+ param_default | text    |           |          | 
+ param_cast    | text    |           |          | 
+ param_rank    | integer |           |          | 
+
           Composite type "emaj.emaj_consolidable_rollback_type"
             Column             |  Type   | Collation | Nullable | Default 
 -------------------------------+---------+-----------+----------+---------
@@ -235,6 +245,24 @@ select emaj.emaj_get_version();
  cons_end_rlbk_mark_time_id    | bigint  |           |          | 
  cons_rows                     | bigint  |           |          | 
  cons_marks                    | integer |           |          | 
+
+             Table "emaj.emaj_default_param"
+    Column     |  Type   | Collation | Nullable | Default 
+---------------+---------+-----------+----------+---------
+ param_key     | text    |           | not null | 
+ param_default | text    |           |          | 
+ param_cast    | text    |           |          | 
+ param_rank    | integer |           |          | 
+Indexes:
+    "emaj_default_param_pkey" PRIMARY KEY, btree (param_key)
+Triggers:
+    emaj_default_param_before_stmt_trg BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON emaj.emaj_default_param FOR EACH STATEMENT EXECUTE FUNCTION emaj._emaj_default_param_before_stmt_fnct()
+
+ Index "emaj.emaj_default_param_pkey"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ param_key | text | yes  | param_key
+primary key, btree, for table "emaj.emaj_default_param"
 
                Composite type "emaj.emaj_detailed_log_stat_group_type"
           Column          |           Type           | Collation | Nullable | Default 
@@ -465,27 +493,21 @@ Tablespace: "tspemaj"
 primary key, btree, for table "emaj.emaj_mark"
 Tablespace: "tspemaj"
 
-                     Table "emaj.emaj_param"
-        Column        |   Type   | Collation | Nullable | Default 
-----------------------+----------+-----------+----------+---------
- param_key            | text     |           | not null | 
- param_value_text     | text     |           |          | 
- param_value_numeric  | numeric  |           |          | 
- param_value_boolean  | boolean  |           |          | 
- param_value_interval | interval |           |          | 
+               Table "emaj.emaj_param"
+   Column    | Type | Collation | Nullable | Default 
+-------------+------+-----------+----------+---------
+ param_key   | text |           | not null | 
+ param_value | text |           |          | 
 Indexes:
-    "emaj_param_pkey" PRIMARY KEY, btree (param_key), tablespace "tspemaj"
+    "emaj_param_pkey" PRIMARY KEY, btree (param_key)
 Triggers:
-    emaj_param_change_trg AFTER INSERT OR DELETE OR UPDATE ON emaj.emaj_param FOR EACH ROW EXECUTE FUNCTION emaj._emaj_param_change_fnct()
-    emaj_param_truncate_trg BEFORE TRUNCATE ON emaj.emaj_param FOR EACH STATEMENT EXECUTE FUNCTION emaj._emaj_param_change_fnct()
-Tablespace: "tspemaj"
+    emaj_param_before_stmt_trg BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON emaj.emaj_param FOR EACH STATEMENT EXECUTE FUNCTION emaj._emaj_param_before_stmt_fnct()
 
      Index "emaj.emaj_param_pkey"
   Column   | Type | Key? | Definition 
 -----------+------+------+------------
  param_key | text | yes  | param_key
 primary key, btree, for table "emaj.emaj_param"
-Tablespace: "tspemaj"
 
                   Table "emaj.emaj_rel_hist"
      Column      |   Type    | Collation | Nullable | Default 
@@ -957,14 +979,13 @@ Index "emaj.emaj_version_hist_verh_version_verh_time_range_excl"
  verh_time_range | tstzrange     | yes  | verh_time_range
 gist, for table "emaj.emaj_version_hist"
 
-                  View "emaj.emaj_visible_param"
-        Column        |   Type   | Collation | Nullable | Default 
-----------------------+----------+-----------+----------+---------
- param_key            | text     |           |          | 
- param_value_text     | text     |           |          | 
- param_value_numeric  | numeric  |           |          | 
- param_value_boolean  | boolean  |           |          | 
- param_value_interval | interval |           |          | 
+              View "emaj.emaj_visible_param"
+    Column     |  Type   | Collation | Nullable | Default 
+---------------+---------+-----------+----------+---------
+ param_key     | text    |           |          | 
+ param_value   | text    |           |          | 
+ param_default | text    |           |          | 
+ param_rank    | integer |           |          | 
 
                                       Table "emaj_myschema1.myTbl3_log_1"
     Column    |            Type             | Collation | Nullable |                  Default                  
@@ -1479,27 +1500,23 @@ select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
 -----------------------------
 -- Check the changes specific to this version upgrade
 -----------------------------
-select rel_schema, rel_tblseq, rel_time_range, rel_pk_cols from emaj.emaj_relation order by 1,2,3;
-   rel_schema    |                       rel_tblseq                        | rel_time_range |           rel_pk_cols           
------------------+---------------------------------------------------------+----------------+---------------------------------
- myschema1       | myTbl3                                                  | [1,18)         | 
- myschema1       | myTbl3_col31_seq                                        | [1,)           | 
- myschema1       | mytbl1                                                  | [1,)           | {col11,col12}
- myschema1       | mytbl2                                                  | [1,)           | {col21}
- myschema1       | mytbl2b                                                 | [1,)           | {col20}
- myschema1       | mytbl4                                                  | [1,)           | {col43,col41}
- myschema2       | myTbl3                                                  | [2,)           | {col31}
- myschema2       | myTbl3_col31_seq                                        | [2,)           | 
- myschema2       | myseq1                                                  | [2,)           | 
- myschema2       | mytbl1                                                  | [2,)           | {col11,col12}
- myschema2       | mytbl2                                                  | [2,)           | {col21}
- myschema2       | mytbl4                                                  | [2,)           | {col41}
- myschema6       | table_with_50_characters_long_name_____0_________0      | [4,)           | {col1}
- myschema6       | table_with_51_characters_long_name_____0_________0a     | [4,)           | {col1}
- myschema6       | table_with_55_characters_long_name_____0_________0abcde | [4,20)         | 
- myschema6       | table_with_55_characters_long_name_____0_________0fghij | [4,)           | {col1}
- phil's schema"3 | myTbl2\                                                 | [3,)           | 
- phil's schema"3 | phil's tbl1                                             | [3,)           | {"phil's col11","phil's col12"}
- phil's schema"3 | phil's"seq\1                                            | [3,)           | 
-(19 rows)
+select * from emaj.emaj_param order by param_key;
+     param_key     | param_value 
+-------------------+-------------
+ history_retention | @ 1 day
+(1 row)
+
+select * from emaj.emaj_all_param order by param_rank;
+           param_key            | param_value | param_default | param_cast | param_rank 
+--------------------------------+-------------+---------------+------------+------------
+ history_retention              | @ 1 day     | 1 year        | INTERVAL   |          1
+ dblink_user_password           |             |               |            |          2
+ alter_log_table                |             |               |            |          3
+ avg_row_rollback_duration      | 100 us      | 100 us        | INTERVAL   |          4
+ avg_row_delete_log_duration    | 10 us       | 10 us         | INTERVAL   |          5
+ avg_fkey_check_duration        | 20 us       | 20 us         | INTERVAL   |          6
+ fixed_step_rollback_duration   | 2.5 ms      | 2.5 ms        | INTERVAL   |          7
+ fixed_table_rollback_duration  | 1 ms        | 1 ms          | INTERVAL   |          8
+ fixed_dblink_rollback_duration | 4 ms        | 4 ms          | INTERVAL   |          9
+(9 rows)
 

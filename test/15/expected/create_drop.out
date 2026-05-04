@@ -239,7 +239,12 @@ ERROR:  _assign_tables: The schema "emaj_myschema1" should not exist. Drop it ma
 rollback;
 -- bad alter_log_table parameter
 begin;
-  insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_table','dummmy content');
+  select emaj.emaj_set_param('alter_log_table','dummmy content');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
   select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
 ERROR:  syntax error at or near "dummmy" at character 39
 rollback;

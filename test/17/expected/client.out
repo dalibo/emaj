@@ -31,7 +31,12 @@ alter sequence mySchema2.mySeq1 restart 9999;
 -- Call emajParallelRollback.php
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
-delete from emaj.emaj_param where param_key = 'dblink_user_password';
+select emaj.emaj_set_param('dblink_user_password', NULL);
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 \! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
@@ -39,8 +44,12 @@ PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: Cannot use several s
 CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 54 at RAISE in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 146
 Calling the _rlbk_init() function failed.
 
-insert into emaj.emaj_param (param_key, param_value_text) 
-  values ('dblink_user_password','user=postgres password=postgres');
+select emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 -- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
 select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
  emaj_modify_table 
@@ -110,15 +119,24 @@ Error: the user is not an E-Maj administrator.
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 -- parallel rollback, but with disabled dblink connection
-delete from emaj.emaj_param where param_key = 'dblink_user_password';
+select emaj.emaj_set_param('dblink_user_password', NULL);
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 Calling the _rlbk_init() function failed.
 ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
 CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 54 at RAISE
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
-insert into emaj.emaj_param (param_key, param_value_text) 
-  values ('dblink_user_password','user=postgres password=postgres');
+select emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 -- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
 select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
  emaj_modify_table 

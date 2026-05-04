@@ -2,8 +2,7 @@
 --
 
 -- Record the dblink_user_password parameter
-insert into emaj.emaj_param (param_key, param_value_text) 
-  values ('dblink_user_password','user=postgres password=postgres');
+select emaj.emaj_set_param('dblink_user_password','user=postgres password=postgres');
 
 -- Grant emaj_adm so that the cleanup.sql report be stable
 grant emaj_adm to _regress_emaj_adm1, _regress_emaj_adm2;

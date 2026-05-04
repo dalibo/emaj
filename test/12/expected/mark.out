@@ -1068,7 +1068,12 @@ select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark w
 (1 row)
 
 -- check emaj_delete_before_mark_group() also cleans up the emaj_hist table
-insert into emaj.emaj_param (param_key, param_value_interval) values ('history_retention','0 second'::interval);
+select emaj.emaj_set_param('history_retention', '0 second');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
  emaj_set_mark_group 
 ---------------------
@@ -1087,7 +1092,12 @@ select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
                              1
 (1 row)
 
-delete from emaj.emaj_param where param_key = 'history_retention';
+select emaj.emaj_set_param('history_retention', NULL);
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
 -- check for emaj_delete_mark_group() and emaj_delete_before_mark_group()
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3400 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -1142,7 +1152,7 @@ select hist_id, hist_function, hist_event, hist_object,
     3444 | DELETE_BEFORE_MARK_GROUP | END                | emptyGroup        | 0 marks deleted ; SM2 is now the initial mark            | postgres
     3445 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup2          | SM2                                                      | postgres
     3446 | DELETE_BEFORE_MARK_GROUP | END                | myGroup2          | 8 marks deleted ; SM2 is now the initial mark            | postgres
-    3447 |                          | INSERTED PARAMETER | history_retention | @ 0                                                      | postgres
+    3447 | SET_PARAM                | INSERTED PARAMETER | history_retention | From: 1 year to: 0 second                                | postgres
     3448 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  | Mark4                                                    | postgres
     3449 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                          | postgres
     3450 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                           | postgres
@@ -1156,7 +1166,7 @@ select hist_id, hist_function, hist_event, hist_object,
     3458 | DELETE_BEFORE_MARK_GROUP | BEGIN              | phil's group#3",  | Mark4                                                    | postgres
     3459 | PURGE_HISTORIES          |                    |                   | 242 emaj_hist rows deleted ; 15 log session rows deleted | postgres
     3460 | DELETE_BEFORE_MARK_GROUP | END                | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark          | postgres
-    3461 |                          | DELETED PARAMETER  | history_retention |                                                          | postgres
+    3461 | SET_PARAM                | DELETED PARAMETER  | history_retention | From: 0 second to: 1 year                                | postgres
 (54 rows)
 
 select public.handle_emaj_sequences(3600);
