@@ -2,56 +2,17 @@
 
 --------------------------------------------------------------
 --
--- Parallel Rollback clients
+-- Parallel Rollback client
 --
 --------------------------------------------------------------
 
---------------------------------------------
--- Prepare data for emajParallelRollback.php
---------------------------------------------
 -- set sequence restart value
 truncate emaj.emaj_hist;
 select public.handle_emaj_sequences(20000);
 
-delete from mySchema1.myTbl4;
-delete from mySchema1.myTbl1;
-delete from mySchema1.myTbl2; 
-delete from mySchema1."myTbl3";
-delete from mySchema1.myTbl2b;
-delete from mySchema2.myTbl4;
-delete from mySchema2.myTbl1;
-delete from mySchema2.myTbl2; 
-delete from mySchema2."myTbl3";
-delete from mySchema2.myTbl5;
-delete from mySchema2.myTbl6 where col61 <> 0;
-alter sequence mySchema2.mySeq1 restart 9999;
-
 --------------------------------------------
--- Call emajParallelRollback.php
+-- Prepare data
 --------------------------------------------
--- parallel rollback, but with disabled dblink connection
-select emaj.emaj_set_param('dblink_user_password', NULL);
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
-select emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
-
--- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
-select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
-
--- unlogged rollback for 2 groups in unstrict mode
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
-
--- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
-
---------------------------------------------
--- Prepare data for emajParallelRollback.pl
---------------------------------------------
--- set sequence restart value
-truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 20200;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 20200;
-alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 20200;
 
 delete from mySchema1.myTbl4;
 delete from mySchema1.myTbl1;
@@ -90,12 +51,12 @@ select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
 
 --------------------------------------------------------------
 --
--- Rollback monitor clients
+-- Rollback monitor client
 --
 --------------------------------------------------------------
 
 --------------------------------------------
--- Prepare data for both emajRollbackMonitor.php and emajRollbackMonitor.pl
+-- Prepare data
 --------------------------------------------
 
 -- 1st rollback, in EXECUTING state
@@ -146,11 +107,6 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
            5,4,3,NULL,now()-'1 minute'::interval,'PLANNING');
 
 --------------------------------------------
--- call emajRollbackMonitor.php using an emaj_viewer role
---------------------------------------------
-\! ${EMAJ_DIR}/client/emajRollbackMonitor.php -d regression -U _regress_emaj_viewer -W viewer -i 0.1 -n 2 -l 2 -a 12 -v -r
-
---------------------------------------------
 -- call emajRollbackMonitor.pl
 --------------------------------------------
 -- call emajRollbackMonitor.pl using an unauthorized role
@@ -164,6 +120,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 -- emajStat client
 --
 --------------------------------------------------------------
+
 -- call emajStat.pl using an unauthorized role
 \! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_anonym -W anonym --regression-test --no-cls --interval 0.1 --iter 2
 

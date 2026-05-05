@@ -74,13 +74,9 @@ Once :doc:`installed <install>`, an E-Maj version contents the following files.
 +---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_pres.fr.pdf              | French version of the E-Maj presentation (pdf version)              |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajParallelRollback.php             | *php* tool to spawn parallel rollbacks                              |
+| client/emajParallelRollback.pl              | *perl* client to spawn parallel rollbacks                           |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajParallelRollback.pl              | *perl* tool to spawn parallel rollbacks                             |
+| client/emajRollbackMonitor.pl               | *perl* client to monitor rollbacks                                  |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajRollbackMonitor.php              | *php* tool to monitor rollbacks                                     |
-+---------------------------------------------+---------------------------------------------------------------------+
-| client/emajRollbackMonitor.pl               | *perl* tool to monitor rollbacks                                    |
-+---------------------------------------------+---------------------------------------------------------------------+
-| client/emajStat.pl                          | *perl* tool to monitor changes recording                            |
+| client/emajStat.pl                          | *perl* client to monitor changes recording                          |
 +---------------------------------------------+---------------------------------------------------------------------+

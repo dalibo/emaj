@@ -29,6 +29,7 @@ E-Maj - Change log
     emaj_export_groups_configuration().
   * Improve checks of the input JSON structure when importing a tables group
     configuration.
+  * Remove both deprecated php clients.
   * Minor code changes.
 
 ###Bug fixes:###

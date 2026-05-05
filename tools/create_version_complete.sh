@@ -137,8 +137,6 @@
 	mv sql/emaj_prepare_parallel_rollback_test.sql.bak sql/emaj_prepare_parallel_rollback_test.sql
 	mv sql/emaj--devel.sql.bak sql/emaj--devel.sql
 	git add sql/emaj--devel.sql
-	mv client/emajRollbackMonitor.php.bak client/emajRollbackMonitor.php
-	mv client/emajParallelRollback.php.bak client/emajParallelRollback.php
 	mv client/emajParallelRollback.pl.bak client/emajParallelRollback.pl
 	mv client/emajRollbackMonitor.pl.bak client/emajRollbackMonitor.pl
 	mv client/emajStat.pl.bak client/emajStat.pl

@@ -1,12 +1,9 @@
 -- client.sql: Test client tools
 --------------------------------------------------------------
 --
--- Parallel Rollback clients
+-- Parallel Rollback client
 --
 --------------------------------------------------------------
---------------------------------------------
--- Prepare data for emajParallelRollback.php
---------------------------------------------
 -- set sequence restart value
 truncate emaj.emaj_hist;
 select public.handle_emaj_sequences(20000);
@@ -15,89 +12,9 @@ select public.handle_emaj_sequences(20000);
  
 (1 row)
 
-delete from mySchema1.myTbl4;
-delete from mySchema1.myTbl1;
-delete from mySchema1.myTbl2; 
-delete from mySchema1."myTbl3";
-delete from mySchema1.myTbl2b;
-delete from mySchema2.myTbl4;
-delete from mySchema2.myTbl1;
-delete from mySchema2.myTbl2; 
-delete from mySchema2."myTbl3";
-delete from mySchema2.myTbl5;
-delete from mySchema2.myTbl6 where col61 <> 0;
-alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
--- Call emajParallelRollback.php
+-- Prepare data
 --------------------------------------------
--- parallel rollback, but with disabled dblink connection
-select emaj.emaj_set_param('dblink_user_password', NULL);
- emaj_set_param 
-----------------
-              1
-(1 row)
-
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
- E-Maj (version <devel>) - launching parallel rollbacks
------------------------------------------------------------
-PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
-CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 54 at RAISE in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 146
-Calling the _rlbk_init() function failed.
-
-select emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
- emaj_set_param 
-----------------
-              1
-(1 row)
-
--- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
-select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
- emaj_modify_table 
--------------------
-                 1
-(1 row)
-
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
- E-Maj (version <devel>) - launching parallel rollbacks
------------------------------------------------------------
-PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 146
-Calling the _rlbk_init() function failed.
-
--- unlogged rollback for 2 groups in unstrict mode
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
- E-Maj (version <devel>) - launching parallel rollbacks
------------------------------------------------------------
-==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
-==> Logged rollback completed.
-    Notice: Rollback id = 20000.
-    Notice: 10 / 11 tables effectively processed.
-    Notice: 3 / 4 sequences effectively processed.
-    Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
-    Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
-Warning: this php version of emajParallelRollback is deprecated. No functional improvement will be added in the future and it may be removed in a future version. It is strongly advisable to use emajParallelRollback.pl instead, which has the same features and parameters.
--- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -U _regress_emaj_adm1 -W adm -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
- E-Maj (version <devel>) - launching parallel rollbacks
------------------------------------------------------------
-==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
-==> Rollback completed.
-    Notice: Rollback id = 20001.
-    Notice: 4 / 5 tables effectively processed.
-    Notice: 2 / 2 sequences effectively processed.
-    Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
-    Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
-Warning: this php version of emajParallelRollback is deprecated. No functional improvement will be added in the future and it may be removed in a future version. It is strongly advisable to use emajParallelRollback.pl instead, which has the same features and parameters.
---------------------------------------------
--- Prepare data for emajParallelRollback.pl
---------------------------------------------
--- set sequence restart value
-truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 20200;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 20200;
-alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 20200;
 delete from mySchema1.myTbl4;
 delete from mySchema1.myTbl1;
 delete from mySchema1.myTbl2; 
@@ -157,9 +74,9 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
-    Its rollback identifier is 20200. It can be monitored using the emajRollbackMonitor client or Emaj_web.
+    Its rollback identifier is 20000. It can be monitored using the emajRollbackMonitor client or Emaj_web.
 ==> Logged rollback completed.
-    Notice: Rollback id = 20200.
+    Notice: Rollback id = 20000.
     Notice: 10 / 11 tables effectively processed.
     Notice: 3 / 4 sequences effectively processed.
     Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
@@ -169,20 +86,20 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
-    Its rollback identifier is 20201. It can be monitored using the emajRollbackMonitor client or Emaj_web.
+    Its rollback identifier is 20001. It can be monitored using the emajRollbackMonitor client or Emaj_web.
 ==> Rollback completed.
-    Notice: Rollback id = 20201.
+    Notice: Rollback id = 20001.
     Notice: 4 / 5 tables effectively processed.
     Notice: 2 / 2 sequences effectively processed.
     Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 --------------------------------------------------------------
 --
--- Rollback monitor clients
+-- Rollback monitor client
 --
 --------------------------------------------------------------
 --------------------------------------------
--- Prepare data for both emajRollbackMonitor.php and emajRollbackMonitor.pl
+-- Prepare data
 --------------------------------------------
 -- 1st rollback, in EXECUTING state
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
@@ -229,55 +146,6 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
   values (20103,array['group20103'],'mark20103',-2,-4,true,false,1,
            5,4,3,NULL,now()-'1 minute'::interval,'PLANNING');
 --------------------------------------------
--- call emajRollbackMonitor.php using an emaj_viewer role
---------------------------------------------
-\! ${EMAJ_DIR}/client/emajRollbackMonitor.php -d regression -U _regress_emaj_viewer -W viewer -i 0.1 -n 2 -l 2 -a 12 -v -r
- E-Maj (version <devel>) - Monitoring rollbacks activity
----------------------------------------------------------------
-[current date and time]
-** rollback 20200 started at [rollback start time] for groups {myGroup1,myGroup2}
-   status: COMMITTED ; ended at [rollback end time]
-   rollback to mark: "Multi-1" set at [mark time]
-   3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
-** rollback 20201 started at [rollback start time] for groups {myGroup1}
-   status: COMMITTED ; ended at [rollback end time]
-   rollback to mark: "Multi-1" set at [mark time]
-   1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
--> rollback 20101 started at [rollback start time] for groups {group20101}
-   status: EXECUTING ; completion 85 %; @ 20 secs remaining
-   rollback to mark: mark20101 set at [mark time]
-   1 session(s) to process 3/5 table(s) and 1/4 sequence(s)
--> rollback 20102 started at [rollback start time] for groups {group20102}
-   status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
-   rollback to mark: mark20102 set at [mark time]
-   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
--> rollback 20103 started at [rollback start time] for groups {group20103}
-   status: PLANNING ; completion 0 %
-   rollback to mark: mark20103 set at [mark time]
-   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
-[current date and time]
-** rollback 20200 started at [rollback start time] for groups {myGroup1,myGroup2}
-   status: COMMITTED ; ended at [rollback end time]
-   rollback to mark: "Multi-1" set at [mark time]
-   3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
-** rollback 20201 started at [rollback start time] for groups {myGroup1}
-   status: COMMITTED ; ended at [rollback end time]
-   rollback to mark: "Multi-1" set at [mark time]
-   1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
--> rollback 20101 started at [rollback start time] for groups {group20101}
-   status: EXECUTING ; completion 85 %; @ 20 secs remaining
-   rollback to mark: mark20101 set at [mark time]
-   1 session(s) to process 3/5 table(s) and 1/4 sequence(s)
--> rollback 20102 started at [rollback start time] for groups {group20102}
-   status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
-   rollback to mark: mark20102 set at [mark time]
-   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
--> rollback 20103 started at [rollback start time] for groups {group20103}
-   status: PLANNING ; completion 0 %
-   rollback to mark: mark20103 set at [mark time]
-   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
-Warning: this php version of emajRollbackMonitor is deprecated. No functional improvement will be added in the future and it may be removed in a future version. It is strongly advisable to use emajRollbackMonitor.pl instead, which has the same features and parameters.
---------------------------------------------
 -- call emajRollbackMonitor.pl
 --------------------------------------------
 -- call emajRollbackMonitor.pl using an unauthorized role
@@ -290,11 +158,11 @@ Error: the user is not allowed to look at E-Maj data.
  E-Maj (version <devel>) - Monitoring rollbacks activity
 -----------------------------------------------------------
 [current date and time]
-** rollback 20200 started at [rollback start time] for groups {myGroup1,myGroup2} 
+** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2} 
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: "Multi-1" set at [mark time]
    3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
-** rollback 20201 started at [rollback start time] for groups {myGroup1} 
+** rollback 20001 started at [rollback start time] for groups {myGroup1} 
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: "Multi-1" set at [mark time]
    1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
@@ -311,11 +179,11 @@ Error: the user is not allowed to look at E-Maj data.
    rollback to mark: mark20103 set at [mark time]
    1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 [current date and time]
-** rollback 20200 started at [rollback start time] for groups {myGroup1,myGroup2} 
+** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2} 
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: "Multi-1" set at [mark time]
    3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
-** rollback 20201 started at [rollback start time] for groups {myGroup1} 
+** rollback 20001 started at [rollback start time] for groups {myGroup1} 
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: "Multi-1" set at [mark time]
    1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
@@ -352,26 +220,26 @@ select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','latest_mark');
 ----------------------------------------------------------------------------------------------
 [current date and time] - Logging: groups=2/3 tables=11/11 sequences=4/4 -
   Group name + Latest mark                       + Changes since mark + Changes since prev.
-    myGroup1 | Multi-1     ([latest mark date and time]) | 359 ([cps])
+    myGroup1 | Multi-1     ([latest mark date and time]) | 291 ([cps])
     myGroup2 | latest_mark ([latest mark date and time]) |   0 ([cps])
   Table name          + Group    + Changes since mark + Changes since prev.
-    myschema1.mytbl1  | myGroup1 | 211 ([cps])
-    myschema1.myTbl3  | myGroup1 |  60 ([cps])
-    myschema1.mytbl2b | myGroup1 |  52 ([cps])
-    myschema1.mytbl2  | myGroup1 |  27 ([cps])
+    myschema1.mytbl1  | myGroup1 | 171 ([cps])
+    myschema1.myTbl3  | myGroup1 |  50 ([cps])
+    myschema1.mytbl2b | myGroup1 |  40 ([cps])
+    myschema1.mytbl2  | myGroup1 |  21 ([cps])
     myschema1.mytbl4  | myGroup1 |   9 ([cps])
   Sequence name             + Group    + Changes since mark + Changes since prev.
     myschema1.mytbl2b_col20 | myGroup1 |  0 ([cps])
     myschema2.myseq1        | myGroup2 | -1 ([cps])
 [current date and time] - Logging: groups=2/3 tables=11/11 sequences=4/4 - Changes since [refresh duration] sec: 0 ([global cps] c/s)
   Group name + Latest mark                       + Changes since mark + Changes since prev.
-    myGroup1 | Multi-1     ([latest mark date and time]) | 359 ([cps]) | 0 ([cps])
+    myGroup1 | Multi-1     ([latest mark date and time]) | 291 ([cps]) | 0 ([cps])
     myGroup2 | latest_mark ([latest mark date and time]) |   0 ([cps]) | 0 ([cps])
   Table name          + Group    + Changes since mark + Changes since prev.
-    myschema1.mytbl1  | myGroup1 | 211 ([cps]) | 0 ([cps])
-    myschema1.myTbl3  | myGroup1 |  60 ([cps]) | 0 ([cps])
-    myschema1.mytbl2b | myGroup1 |  52 ([cps]) | 0 ([cps])
-    myschema1.mytbl2  | myGroup1 |  27 ([cps]) | 0 ([cps])
+    myschema1.mytbl1  | myGroup1 | 171 ([cps]) | 0 ([cps])
+    myschema1.myTbl3  | myGroup1 |  50 ([cps]) | 0 ([cps])
+    myschema1.mytbl2b | myGroup1 |  40 ([cps]) | 0 ([cps])
+    myschema1.mytbl2  | myGroup1 |  21 ([cps]) | 0 ([cps])
     myschema1.mytbl4  | myGroup1 |   9 ([cps]) | 0 ([cps])
   Sequence name             + Group    + Changes since mark + Changes since prev.
     myschema1.mytbl2b_col20 | myGroup1 |  0 ([cps]) | 0 ([cps])
