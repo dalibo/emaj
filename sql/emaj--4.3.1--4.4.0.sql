@@ -5246,5 +5246,4 @@ $tmp$
   END;
 $tmp$;
 
-RESET default_tablespace;
 SET client_min_messages TO default;

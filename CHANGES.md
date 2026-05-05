@@ -35,6 +35,8 @@ E-Maj - Change log
 ###Bug fixes:###
   * Allow a superuser to drop an emaj extension installed by a non superuser
     with the emaj-<version>.sql script.
+  * Fix emaj upgrade scripts that erroneously reset the default_tablespace
+    session variable at completion.
 
 4.7.1 (2025-Sept-27)
 ------

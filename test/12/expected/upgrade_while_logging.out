@@ -254,15 +254,17 @@ select emaj.emaj_get_version();
  param_cast    | text    |           |          | 
  param_rank    | integer |           |          | 
 Indexes:
-    "emaj_default_param_pkey" PRIMARY KEY, btree (param_key)
+    "emaj_default_param_pkey" PRIMARY KEY, btree (param_key), tablespace "tspemaj"
 Triggers:
     emaj_default_param_before_stmt_trg BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON emaj.emaj_default_param FOR EACH STATEMENT EXECUTE FUNCTION emaj._emaj_default_param_before_stmt_fnct()
+Tablespace: "tspemaj"
 
  Index "emaj.emaj_default_param_pkey"
   Column   | Type | Key? | Definition 
 -----------+------+------+------------
  param_key | text | yes  | param_key
 primary key, btree, for table "emaj.emaj_default_param"
+Tablespace: "tspemaj"
 
                Composite type "emaj.emaj_detailed_log_stat_group_type"
           Column          |           Type           | Collation | Nullable | Default 
@@ -314,9 +316,10 @@ Tablespace: "tspemaj"
  grph_is_rollbackable | boolean   |           |          | 
  grph_log_sessions    | integer   |           |          | 
 Indexes:
-    "emaj_group_hist_pkey" PRIMARY KEY, btree (grph_group, grph_time_range)
-    "emaj_group_hist_grph_group_grph_time_range_excl" EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&)
-    "emaj_group_hist_idx1" btree (upper(grph_time_range))
+    "emaj_group_hist_pkey" PRIMARY KEY, btree (grph_group, grph_time_range), tablespace "tspemaj"
+    "emaj_group_hist_grph_group_grph_time_range_excl" EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&), tablespace "tspemaj"
+    "emaj_group_hist_idx1" btree (upper(grph_time_range)), tablespace "tspemaj"
+Tablespace: "tspemaj"
 
 Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
      Column      |     Type      | Key? |   Definition    
@@ -324,12 +327,14 @@ Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
  grph_group      | gbtreekey_var | yes  | grph_group
  grph_time_range | int8range     | yes  | grph_time_range
 gist, for table "emaj.emaj_group_hist"
+Tablespace: "tspemaj"
 
         Index "emaj.emaj_group_hist_idx1"
  Column |  Type  | Key? |       Definition       
 --------+--------+------+------------------------
  upper  | bigint | yes  | upper(grph_time_range)
 btree, for table "emaj.emaj_group_hist"
+Tablespace: "tspemaj"
 
           Index "emaj.emaj_group_hist_pkey"
      Column      |   Type    | Key? |   Definition    
@@ -337,6 +342,7 @@ btree, for table "emaj.emaj_group_hist"
  grph_group      | text      | yes  | grph_group
  grph_time_range | int8range | yes  | grph_time_range
 primary key, btree, for table "emaj.emaj_group_hist"
+Tablespace: "tspemaj"
 
      Index "emaj.emaj_group_pkey"
    Column   | Type | Key? | Definition 
@@ -382,6 +388,7 @@ Tablespace: "tspemaj"
  inst_with_emaj_adm       | boolean |           | not null | 
  inst_with_emaj_viewer    | boolean |           | not null | 
  inst_with_event_triggers | boolean |           | not null | 
+Tablespace: "tspemaj"
 
                 Table "emaj.emaj_log_session"
      Column      |   Type    | Collation | Nullable | Default 
@@ -391,15 +398,17 @@ Tablespace: "tspemaj"
  lses_marks      | integer   |           |          | 
  lses_log_rows   | bigint    |           |          | 
 Indexes:
-    "emaj_log_session_pkey" PRIMARY KEY, btree (lses_group, lses_time_range)
-    "emaj_log_session_idx1" btree (upper(lses_time_range))
-    "emaj_log_session_lses_group_lses_time_range_excl" EXCLUDE USING gist (lses_group WITH =, lses_time_range WITH &&)
+    "emaj_log_session_pkey" PRIMARY KEY, btree (lses_group, lses_time_range), tablespace "tspemaj"
+    "emaj_log_session_idx1" btree (upper(lses_time_range)), tablespace "tspemaj"
+    "emaj_log_session_lses_group_lses_time_range_excl" EXCLUDE USING gist (lses_group WITH =, lses_time_range WITH &&), tablespace "tspemaj"
+Tablespace: "tspemaj"
 
        Index "emaj.emaj_log_session_idx1"
  Column |  Type  | Key? |       Definition       
 --------+--------+------+------------------------
  upper  | bigint | yes  | upper(lses_time_range)
 btree, for table "emaj.emaj_log_session"
+Tablespace: "tspemaj"
 
 Index "emaj.emaj_log_session_lses_group_lses_time_range_excl"
      Column      |     Type      | Key? |   Definition    
@@ -407,6 +416,7 @@ Index "emaj.emaj_log_session_lses_group_lses_time_range_excl"
  lses_group      | gbtreekey_var | yes  | lses_group
  lses_time_range | int8range     | yes  | lses_time_range
 gist, for table "emaj.emaj_log_session"
+Tablespace: "tspemaj"
 
           Index "emaj.emaj_log_session_pkey"
      Column      |   Type    | Key? |   Definition    
@@ -414,6 +424,7 @@ gist, for table "emaj.emaj_log_session"
  lses_group      | text      | yes  | lses_group
  lses_time_range | int8range | yes  | lses_time_range
 primary key, btree, for table "emaj.emaj_log_session"
+Tablespace: "tspemaj"
 
                     Composite type "emaj.emaj_log_stat_group_type"
           Column          |           Type           | Collation | Nullable | Default 
@@ -499,15 +510,17 @@ Tablespace: "tspemaj"
  param_key   | text |           | not null | 
  param_value | text |           |          | 
 Indexes:
-    "emaj_param_pkey" PRIMARY KEY, btree (param_key)
+    "emaj_param_pkey" PRIMARY KEY, btree (param_key), tablespace "tspemaj"
 Triggers:
     emaj_param_before_stmt_trg BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON emaj.emaj_param FOR EACH STATEMENT EXECUTE FUNCTION emaj._emaj_param_before_stmt_fnct()
+Tablespace: "tspemaj"
 
      Index "emaj.emaj_param_pkey"
   Column   | Type | Key? | Definition 
 -----------+------+------+------------
  param_key | text | yes  | param_key
 primary key, btree, for table "emaj.emaj_param"
+Tablespace: "tspemaj"
 
                   Table "emaj.emaj_rel_hist"
      Column      |   Type    | Collation | Nullable | Default 
@@ -578,13 +591,14 @@ Tablespace: "tspemaj"
  rel_sql_gen_pk_conditions | text      |           |          | 
  rel_log_seq_last_value    | bigint    |           |          | 
 Indexes:
-    "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq, rel_time_range)
-    "emaj_relation_idx1" btree (rel_group, rel_kind)
-    "emaj_relation_idx2" btree (rel_log_schema)
-    "emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl" EXCLUDE USING gist (rel_schema WITH =, rel_tblseq WITH =, rel_time_range WITH &&)
+    "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq, rel_time_range), tablespace "tspemaj"
+    "emaj_relation_idx1" btree (rel_group, rel_kind), tablespace "tspemaj"
+    "emaj_relation_idx2" btree (rel_log_schema), tablespace "tspemaj"
+    "emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl" EXCLUDE USING gist (rel_schema WITH =, rel_tblseq WITH =, rel_time_range WITH &&), tablespace "tspemaj"
 Foreign-key constraints:
     "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
     "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
+Tablespace: "tspemaj"
 
                                Table "emaj.emaj_relation_change"
            Column           |              Type               | Collation | Nullable | Default 
@@ -606,9 +620,10 @@ Foreign-key constraints:
  rlchg_ignored_triggers     | text[]                          |           |          | 
  rlchg_new_ignored_triggers | text[]                          |           |          | 
 Indexes:
-    "emaj_relation_change_pkey" PRIMARY KEY, btree (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind)
+    "emaj_relation_change_pkey" PRIMARY KEY, btree (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind), tablespace "tspemaj"
 Foreign-key constraints:
     "emaj_relation_change_rlchg_time_id_fkey" FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+Tablespace: "tspemaj"
 
                      Index "emaj.emaj_relation_change_pkey"
       Column       |              Type               | Key? |    Definition     
@@ -618,6 +633,7 @@ Foreign-key constraints:
  rlchg_tblseq      | text                            | yes  | rlchg_tblseq
  rlchg_change_kind | emaj._relation_change_kind_enum | yes  | rlchg_change_kind
 primary key, btree, for table "emaj.emaj_relation_change"
+Tablespace: "tspemaj"
 
    Index "emaj.emaj_relation_idx1"
   Column   | Type | Key? | Definition 
@@ -625,12 +641,14 @@ primary key, btree, for table "emaj.emaj_relation_change"
  rel_group | text | yes  | rel_group
  rel_kind  | text | yes  | rel_kind
 btree, for table "emaj.emaj_relation"
+Tablespace: "tspemaj"
 
         Index "emaj.emaj_relation_idx2"
      Column     | Type | Key? |   Definition   
 ----------------+------+------+----------------
  rel_log_schema | text | yes  | rel_log_schema
 btree, for table "emaj.emaj_relation"
+Tablespace: "tspemaj"
 
           Index "emaj.emaj_relation_pkey"
      Column     |   Type    | Key? |   Definition   
@@ -639,6 +657,7 @@ btree, for table "emaj.emaj_relation"
  rel_tblseq     | text      | yes  | rel_tblseq
  rel_time_range | int8range | yes  | rel_time_range
 primary key, btree, for table "emaj.emaj_relation"
+Tablespace: "tspemaj"
 
 Index "emaj.emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl"
      Column     |     Type      | Key? |   Definition   
@@ -647,6 +666,7 @@ Index "emaj.emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl"
  rel_tblseq     | gbtreekey_var | yes  | rel_tblseq
  rel_time_range | int8range     | yes  | rel_time_range
 gist, for table "emaj.emaj_relation"
+Tablespace: "tspemaj"
 
                                               Table "emaj.emaj_rlbk"
            Column            |           Type           | Collation | Nullable |             Default              
@@ -674,8 +694,8 @@ gist, for table "emaj.emaj_relation"
  rlbk_end_datetime           | timestamp with time zone |           |          | 
  rlbk_messages               | text[]                   |           |          | 
 Indexes:
-    "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id)
-    "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum])
+    "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id), tablespace "tspemaj"
+    "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]), tablespace "tspemaj"
 Foreign-key constraints:
     "emaj_rlbk_rlbk_mark_time_id_fkey" FOREIGN KEY (rlbk_mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
@@ -683,18 +703,21 @@ Referenced by:
     TABLE "emaj.emaj_rlbk_plan" CONSTRAINT "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
     TABLE "emaj.emaj_rlbk_session" CONSTRAINT "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
     TABLE "emaj.emaj_rlbk_stat" CONSTRAINT "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+Tablespace: "tspemaj"
 
                 Index "emaj.emaj_rlbk_idx1"
    Column    |          Type          | Key? | Definition  
 -------------+------------------------+------+-------------
  rlbk_status | emaj._rlbk_status_enum | yes  | rlbk_status
 btree, for table "emaj.emaj_rlbk", predicate (rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]))
+Tablespace: "tspemaj"
 
       Index "emaj.emaj_rlbk_pkey"
  Column  |  Type   | Key? | Definition 
 ---------+---------+------+------------
  rlbk_id | integer | yes  | rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk"
+Tablespace: "tspemaj"
 
                               Table "emaj.emaj_rlbk_plan"
           Column           |           Type           | Collation | Nullable | Default 
@@ -717,9 +740,10 @@ primary key, btree, for table "emaj.emaj_rlbk"
  rlbp_quantity             | bigint                   |           |          | 
  rlbp_duration             | interval                 |           |          | 
 Indexes:
-    "emaj_rlbk_plan_pkey" PRIMARY KEY, btree (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object)
+    "emaj_rlbk_plan_pkey" PRIMARY KEY, btree (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object), tablespace "tspemaj"
 Foreign-key constraints:
     "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+Tablespace: "tspemaj"
 
              Index "emaj.emaj_rlbk_plan_pkey"
     Column    |         Type         | Key? |  Definition  
@@ -730,6 +754,7 @@ Foreign-key constraints:
  rlbp_table   | text                 | yes  | rlbp_table
  rlbp_object  | text                 | yes  | rlbp_object
 primary key, btree, for table "emaj.emaj_rlbk_plan"
+Tablespace: "tspemaj"
 
                 Sequence "emaj.emaj_rlbk_rlbk_id_seq"
   Type   | Start | Minimum |  Maximum   | Increment | Cycles? | Cache 
@@ -815,17 +840,19 @@ Tablespace: "tspemaj"
  sch_name    | text   |           | not null | 
  sch_time_id | bigint |           |          | 
 Indexes:
-    "emaj_schema_pkey" PRIMARY KEY, btree (sch_name)
+    "emaj_schema_pkey" PRIMARY KEY, btree (sch_name), tablespace "tspemaj"
 Foreign-key constraints:
     "emaj_schema_sch_time_id_fkey" FOREIGN KEY (sch_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Referenced by:
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
+Tablespace: "tspemaj"
 
     Index "emaj.emaj_schema_pkey"
   Column  | Type | Key? | Definition 
 ----------+------+------+------------
  sch_name | text | yes  | sch_name
 primary key, btree, for table "emaj.emaj_schema"
+Tablespace: "tspemaj"
 
                   Table "emaj.emaj_seq_hole"
        Column       |  Type  | Collation | Nullable | Default 
@@ -905,9 +932,10 @@ Tablespace: "tspemaj"
  tbl_tuples           | double precision |           |          | 
  tbl_log_seq_last_val | bigint           |           | not null | 
 Indexes:
-    "emaj_table_pkey" PRIMARY KEY, btree (tbl_schema, tbl_name, tbl_time_id)
+    "emaj_table_pkey" PRIMARY KEY, btree (tbl_schema, tbl_name, tbl_time_id), tablespace "tspemaj"
 Foreign-key constraints:
     "emaj_table_tbl_time_id_fkey" FOREIGN KEY (tbl_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+Tablespace: "tspemaj"
 
        Index "emaj.emaj_table_pkey"
    Column    |  Type  | Key? | Definition  
@@ -916,6 +944,7 @@ Foreign-key constraints:
  tbl_name    | text   | yes  | tbl_name
  tbl_time_id | bigint | yes  | tbl_time_id
 primary key, btree, for table "emaj.emaj_table"
+Tablespace: "tspemaj"
 
                                      Table "emaj.emaj_time_stamp"
         Column        |           Type           | Collation | Nullable |           Default            
@@ -963,14 +992,16 @@ Sequence for identity column: emaj.emaj_time_stamp.time_id
  verh_install_duration | interval  |           |          | 
  verh_txid             | bigint    |           |          | txid_current()
 Indexes:
-    "emaj_version_hist_pkey" PRIMARY KEY, btree (verh_version)
-    "emaj_version_hist_verh_version_verh_time_range_excl" EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
+    "emaj_version_hist_pkey" PRIMARY KEY, btree (verh_version), tablespace "tspemaj"
+    "emaj_version_hist_verh_version_verh_time_range_excl" EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&), tablespace "tspemaj"
+Tablespace: "tspemaj"
 
     Index "emaj.emaj_version_hist_pkey"
     Column    | Type | Key? |  Definition  
 --------------+------+------+--------------
  verh_version | text | yes  | verh_version
 primary key, btree, for table "emaj.emaj_version_hist"
+Tablespace: "tspemaj"
 
 Index "emaj.emaj_version_hist_verh_version_verh_time_range_excl"
      Column      |     Type      | Key? |   Definition    
@@ -978,6 +1009,7 @@ Index "emaj.emaj_version_hist_verh_version_verh_time_range_excl"
  verh_version    | gbtreekey_var | yes  | verh_version
  verh_time_range | tstzrange     | yes  | verh_time_range
 gist, for table "emaj.emaj_version_hist"
+Tablespace: "tspemaj"
 
               View "emaj.emaj_visible_param"
     Column     |  Type   | Collation | Nullable | Default 
