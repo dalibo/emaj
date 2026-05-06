@@ -72,4 +72,20 @@ Looking at parameters
 
 An *emaj.emaj_all_param* view gives to the administrators a global vision of all parameters, with their current and their default values.
 
+The *emaj_all_param view* structure is:
+
++---------------+------+-----------------------------------------------------------+
+| Colonne       | Type | Description                                               |
++===============+======+===========================================================+
+| param_key     | TEXT | Parameter identifier                                      |
++---------------+------+-----------------------------------------------------------+
+| param_value   | TEXT | Parameter current value                                   |
++---------------+------+-----------------------------------------------------------+
+| param_default | TEXT | Parameter default value                                   |
++---------------+------+-----------------------------------------------------------+
+| param_cast    | TEXT | Parameter data format (NULL for textual data or INTERVAL) |
++---------------+------+-----------------------------------------------------------+
+| param_rank    | INT  | Parameter display rank                                    |
++---------------+------+-----------------------------------------------------------+
+
 Users having *emaj_viewer* privileges can only read parameters using the *emaj.emaj_visible_param* view, that masks the *dblink_user_password* parameter value.

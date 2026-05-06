@@ -73,4 +73,20 @@ Voir les paramètres
 
 La vue *emaj.emaj_all_param* permet aux administrateurs de voir tous les paramètres, avec leur valeur par défaut et leur valeur courante.
 
+La structure de la vue *emaj_all_param* est la suivante :
+
++---------------+------+-----------------------------------------------------------------------------+
+| Colonne       | Type | Description                                                                 |
++===============+======+=============================================================================+
+| param_key     | TEXT | Mot-clé identifiant le paramètre                                            |
++---------------+------+-----------------------------------------------------------------------------+
+| param_value   | TEXT | Valeur courante du paramètre                                                |
++---------------+------+-----------------------------------------------------------------------------+
+| param_default | TEXT | Valeur par défaut du paramètre                                              |
++---------------+------+-----------------------------------------------------------------------------+
+| param_cast    | TEXT | Format de données de la valeur du paramètre (NULL pour du TEXT ou INTERVAL) |
++---------------+------+-----------------------------------------------------------------------------+
+| param_rank    | INT  | Rang d’affichage du paramètre                                               |
++---------------+------+-----------------------------------------------------------------------------+
+
 Les utilisateurs ayant les droits *emaj_viewer* ne peuvent consulter les paramètres qu'au travers de la vue *emaj.emaj_visible_param*, qui masque le contenu du  paramètre *dblink_user_password*.
