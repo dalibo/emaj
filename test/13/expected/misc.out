@@ -2008,16 +2008,37 @@ select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
 -----------------------------
 -- emaj_purge_histories() tests
 -----------------------------
+-- use the default retention delay
 select emaj.emaj_purge_histories(NULL);
  emaj_purge_histories 
 ----------------------
- 
+ Nothing to delete
 (1 row)
 
+-- overload the retention delay
 select emaj.emaj_purge_histories('0 SECOND');
  emaj_purge_histories 
 ----------------------
- 
+ Nothing to delete
+(1 row)
+
+-- use an infinite default retention delay without overload
+select emaj.emaj_set_param('history_retention', '101 years');
+ emaj_set_param 
+----------------
+              1
+(1 row)
+
+select emaj.emaj_purge_histories();
+    emaj_purge_histories     
+-----------------------------
+ Histories purge is disabled
+(1 row)
+
+select emaj.emaj_set_param('history_retention', null);
+ emaj_set_param 
+----------------
+              1
 (1 row)
 
 -- check for emaj_import_parameters_configuration() and emaj_purge_histories()
@@ -2055,7 +2076,11 @@ select hist_id, hist_function, hist_event, hist_object,
     5637 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
     5638 | PURGE_HISTORIES   | BEGIN              |                              | Retention delay @ 0                               | postgres
     5639 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
-(29 rows)
+    5640 | SET_PARAM         | INSERTED PARAMETER | history_retention            | From: 1 year to: 101 years                        | postgres
+    5641 | PURGE_HISTORIES   | BEGIN              |                              |                                                   | postgres
+    5642 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
+    5643 | SET_PARAM         | DELETED PARAMETER  | history_retention            | From: 101 years to: 1 year                        | postgres
+(33 rows)
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

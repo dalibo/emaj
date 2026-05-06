@@ -70,9 +70,11 @@ Purge history data
 
 E-Maj keeps some historical data: traces of elementary operations, E-Maj rollback details, tables groups structure changes (:ref:`more  details...<emaj_hist>`). Oldest traces are automaticaly purged by the extension. But it is also possible to purge these obsolete traces on demand using::
 
-   SELECT emaj.emaj_purge_histories('<retention.delay>');
+   SELECT emaj.emaj_purge_histories(['<retention.delay>']);
 
-The *<retention.delay>* parameter is of type *INTERVAL*. It overloads the *'history_retention'* E-Maj parameter.
+The *<retention.delay>* parameter is of type *INTERVAL*. If present, it overloads the *'history_retention'* E-Maj parameter.
+
+The function returns a synthetic message of executed deletions.
 
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:

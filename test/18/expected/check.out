@@ -179,7 +179,7 @@ select funcname, calls from pg_stat_user_functions
  _move_tables                              |    24
  _move_tbl                                 |    50
  _pg_version_num                           |    22
- _purge_histories                          |    80
+ _purge_histories                          |    81
  _remove_seq                               |    15
  _remove_sequences                         |    20
  _remove_tables                            |    35
@@ -284,7 +284,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_move_tables                          |    12
  emaj_protect_group                        |     7
  emaj_protect_mark_group                   |    11
- emaj_purge_histories                      |     3
+ emaj_purge_histories                      |     4
  emaj_remove_sequence                      |    10
  emaj_remove_sequences                     |     5
  emaj_remove_sequences                     |     5
@@ -300,7 +300,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_sequence_stat_groups                 |     3
  emaj_set_mark_group                       |    82
  emaj_set_mark_groups                      |    25
- emaj_set_param                            |    34
+ emaj_set_param                            |    36
  emaj_snap_group                           |    14
  emaj_start_group                          |    46
  emaj_start_groups                         |    10
@@ -315,7 +315,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1246
+ 1249
 (1 row)
 
 -----------------------------

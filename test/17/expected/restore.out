@@ -389,7 +389,7 @@ SET
 SET
 SET
 ALTER TABLE
-COPY 517
+COPY 513
 ALTER TABLE
 ALTER TABLE
 COPY 3
@@ -404,7 +404,7 @@ ALTER TABLE
 COPY 17
 ALTER TABLE
 ALTER TABLE
-COPY 14
+COPY 12
 ALTER TABLE
 ALTER TABLE
 COPY 3
@@ -425,28 +425,28 @@ ALTER TABLE
 COPY 15
 ALTER TABLE
 ALTER TABLE
-COPY 138
+COPY 137
 ALTER TABLE
 ALTER TABLE
-COPY 83
+COPY 81
 ALTER TABLE
 ALTER TABLE
-COPY 357
+COPY 319
 ALTER TABLE
 ALTER TABLE
-COPY 41
+COPY 37
 ALTER TABLE
 ALTER TABLE
-COPY 269
+COPY 242
 ALTER TABLE
 ALTER TABLE
 COPY 12
 ALTER TABLE
 ALTER TABLE
-COPY 32
+COPY 28
 ALTER TABLE
 ALTER TABLE
-COPY 89
+COPY 77
 ALTER TABLE
 ALTER TABLE
 COPY 0
@@ -467,22 +467,22 @@ ALTER TABLE
 COPY 4
 ALTER TABLE
 ALTER TABLE
-COPY 40
+COPY 20
 ALTER TABLE
 ALTER TABLE
-COPY 44
-ALTER TABLE
-ALTER TABLE
-COPY 12
+COPY 24
 ALTER TABLE
 ALTER TABLE
 COPY 8
 ALTER TABLE
 ALTER TABLE
-COPY 10
+COPY 4
 ALTER TABLE
 ALTER TABLE
-COPY 58
+COPY 8
+ALTER TABLE
+ALTER TABLE
+COPY 46
 ALTER TABLE
 ALTER TABLE
 COPY 5
@@ -570,42 +570,42 @@ COPY 6
 ALTER TABLE
   setval  
 ----------
- 20000272
+ 20000142
 (1 row)
 
  setval 
 --------
-  20288
+  20088
 (1 row)
 
  setval 
 --------
-  20201
+  20001
 (1 row)
 
  setval 
 --------
-  20203
+  20003
 (1 row)
 
  setval 
 --------
-    105
+     95
 (1 row)
 
  setval 
 --------
-    244
+    204
 (1 row)
 
  setval 
 --------
-     30
+     24
 (1 row)
 
  setval 
 --------
-     55
+     43
 (1 row)
 
  setval 
@@ -615,32 +615,32 @@ ALTER TABLE
 
  setval 
 --------
-     50
+     30
 (1 row)
 
  setval 
 --------
-     61
+     41
 (1 row)
 
  setval 
 --------
-     16
+     12
 (1 row)
 
  setval 
 --------
-     18
+     14
 (1 row)
 
  setval 
 --------
-     19
+     17
 (1 row)
 
  setval 
 --------
-     89
+     77
 (1 row)
 
  setval 

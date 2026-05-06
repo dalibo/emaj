@@ -273,6 +273,8 @@ DROP FUNCTION IF EXISTS emaj._start_groups(P_GROUPNAMES TEXT[],P_MARK TEXT,P_MUL
 DROP FUNCTION IF EXISTS emaj._stop_groups(P_GROUPNAMES TEXT[],P_MARK TEXT,P_MULTIGROUP BOOLEAN,P_ISFORCED BOOLEAN);
 DROP FUNCTION IF EXISTS emaj._set_mark_groups(P_GROUPNAMES TEXT[],P_MARK TEXT,P_COMMENT TEXT,P_MULTIGROUP BOOLEAN,P_EVENTTORECORD BOOLEAN,P_LOGGEDRLBKTARGETMARK TEXT,P_TIMEID BIGINT,P_DBLINKSCHEMA TEXT);
 DROP FUNCTION IF EXISTS emaj._rlbk_start_mark(P_RLBKID INT,P_MULTIGROUP BOOLEAN);
+DROP FUNCTION IF EXISTS emaj.emaj_purge_histories(P_RETENTIONDELAY INTERVAL);
+DROP FUNCTION IF EXISTS emaj._purge_histories(P_RETENTIONDELAY INTERVAL);
 DROP FUNCTION IF EXISTS emaj.emaj_export_parameters_configuration();
 DROP FUNCTION IF EXISTS emaj.emaj_export_parameters_configuration(P_LOCATION TEXT);
 DROP FUNCTION IF EXISTS emaj._export_param_conf();
@@ -8968,8 +8970,35 @@ $emaj_set_param$;
 COMMENT ON FUNCTION emaj.emaj_set_param(TEXT, TEXT) IS
 $$Updates a parameter recorded into the emaj_param table.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_purge_histories(p_retentionDelay INTERVAL DEFAULT NULL)
+RETURNS TEXT LANGUAGE plpgsql AS
+$emaj_purge_histories$
+-- This function purges the emaj histories
+-- The function is called by an emaj_adm user, typically an external scheduler.
+-- It calls the _purge_histories() function.
+-- Input: optional retention delay
+-- Output: execution report message
+  DECLARE
+    v_report                 TEXT;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('PURGE_HISTORIES', 'BEGIN', 'Retention delay ' || p_retentionDelay);
+-- Effectively perform the purge.
+    SELECT emaj._purge_histories(p_retentionDelay)
+      INTO v_report;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES ('PURGE_HISTORIES', 'END');
+--
+    RETURN v_report;
+  END;
+$emaj_purge_histories$;
+COMMENT ON FUNCTION emaj.emaj_purge_histories(INTERVAL) IS
+$$Purges obsolete data from emaj history tables.$$;
+
 CREATE OR REPLACE FUNCTION emaj._purge_histories(p_retentionDelay INTERVAL DEFAULT NULL)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS TEXT LANGUAGE plpgsql AS
 $_purge_histories$
 -- This function purges the emaj histories by deleting all rows prior the 'history_retention' parameter, but
 --   without deleting event traces neither after the oldest mark or after the oldest not committed or aborted rollback operation.
@@ -8979,6 +9008,7 @@ $_purge_histories$
 -- It is also called by the emaj_purge_histories() function.
 -- A retention delay >= 100 years means infinite.
 -- Input: retention delay ; if supplied, it overloads the history_retention parameter.
+-- Output: execution report message
   DECLARE
     v_delay                  INTERVAL;
     v_datetimeLimit          TIMESTAMPTZ;
@@ -8987,7 +9017,7 @@ $_purge_histories$
     v_nbDeletedRows          BIGINT;
     v_nbPurgedRlbk           BIGINT;
     v_nbPurgedRelChanges     BIGINT;
-    v_wording                TEXT = '';
+    v_report                 TEXT;
   BEGIN
 -- Compute the retention delay to use.
     SELECT coalesce(p_retentionDelay,
@@ -8998,7 +9028,7 @@ $_purge_histories$
       INTO v_delay;
 -- Immediately exit if the delay is infinity.
     IF v_delay >= INTERVAL '100 years' THEN
-      RETURN;
+      RETURN 'Histories purge is disabled';
     END IF;
 -- Compute the timestamp limit.
     SELECT least(
@@ -9023,28 +9053,28 @@ $_purge_histories$
       WHERE hist_datetime < v_datetimeLimit;
     GET DIAGNOSTICS v_nbDeletedRows = ROW_COUNT;
     IF v_nbDeletedRows > 0 THEN
-      v_wording = v_nbDeletedRows || ' emaj_hist rows deleted';
+      v_report = coalesce(v_report || ' ; ', '') || v_nbDeletedRows || ' emaj_hist rows deleted';
     END IF;
 -- Delete oldest rows from emaj_log_session.
     DELETE FROM emaj.emaj_log_session
       WHERE upper(lses_time_range) - 1 < v_maxTimeId;
     GET DIAGNOSTICS v_nbDeletedRows = ROW_COUNT;
     IF v_nbDeletedRows > 0 THEN
-      v_wording = v_wording || ' ; ' || v_nbDeletedRows || ' log session rows deleted';
+      v_report = coalesce(v_report || ' ; ', '') || v_nbDeletedRows || ' log session rows deleted';
     END IF;
 -- Delete oldest rows from emaj_group_hist.
     DELETE FROM emaj.emaj_group_hist
       WHERE upper(grph_time_range) - 1 < v_maxTimeId;
     GET DIAGNOSTICS v_nbDeletedRows = ROW_COUNT;
     IF v_nbDeletedRows > 0 THEN
-      v_wording = v_wording || ' ; ' || v_nbDeletedRows || ' group history rows deleted';
+      v_report = coalesce(v_report || ' ; ', '') || v_nbDeletedRows || ' group history rows deleted';
     END IF;
 -- Delete oldest rows from emaj_rel_hist.
     DELETE FROM emaj.emaj_rel_hist
       WHERE upper(relh_time_range) < v_maxTimeId;
     GET DIAGNOSTICS v_nbDeletedRows = ROW_COUNT;
     IF v_nbDeletedRows > 0 THEN
-      v_wording = v_wording || ' ; ' || v_nbDeletedRows || ' relation history rows deleted';
+      v_report = coalesce(v_report || ' ; ', '') || v_nbDeletedRows || ' relation history rows deleted';
     END IF;
 -- Purge the emaj_relation_change table.
     WITH deleted_relation_change AS
@@ -9055,7 +9085,7 @@ $_purge_histories$
       SELECT COUNT (DISTINCT rlchg_time_id) INTO v_nbPurgedRelChanges
         FROM deleted_relation_change;
     IF v_nbPurgedRelChanges > 0 THEN
-      v_wording = v_wording || ' ; ' || v_nbPurgedRelChanges || ' relation changes deleted';
+      v_report = coalesce(v_report || ' ; ', '') || v_nbPurgedRelChanges || ' relation changes deleted';
     END IF;
 -- Get the greatest rollback identifier to purge.
     SELECT max(rlbk_id) INTO v_maxRlbkId
@@ -9072,15 +9102,17 @@ $_purge_histories$
         )
         SELECT COUNT(DISTINCT rlbs_rlbk_id) INTO v_nbPurgedRlbk
           FROM deleted_rlbk;
-      v_wording = v_wording || ' ; ' || v_nbPurgedRlbk || ' rollback events deleted';
+      IF v_nbPurgedRlbk > 0 THEN
+        v_report = coalesce(v_report || ' ; ', '') || v_nbPurgedRlbk || ' rollback operations cleaned';
+      END IF;
     END IF;
 -- Record the purge into the history if there are significant data.
-    IF v_wording <> '' THEN
+    IF v_report IS NOT NULL THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_wording)
-        VALUES ('PURGE_HISTORIES', v_wording);
+        VALUES ('PURGE_HISTORIES', v_report);
     END IF;
 --
-    RETURN;
+    RETURN coalesce(v_report, 'Nothing to delete');
   END;
 $_purge_histories$;
 

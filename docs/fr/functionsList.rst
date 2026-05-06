@@ -431,7 +431,7 @@ Fonctions de niveau général
 | <import_param_conf>`                             | | [reset.autres.paramètres    |                                       |
 |                                                  | |  BOOLEAN)]                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_purge_histories                       | délai.rétention INTERVAL      |                                       |
+| :ref:`emaj_purge_histories                       | [délai.rétention INTERVAL]    | rapport.execution TEXT                |
 | <emaj_purge_histories>`                          |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |

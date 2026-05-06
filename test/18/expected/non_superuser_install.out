@@ -61,12 +61,12 @@ reset search_path;
 set session_authorization to _regress_emaj_install;
 -- install emaj
 \set ECHO errors
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15608: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15615: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_function | hist_event |  hist_object  |                                            hist_wording                                            |       hist_user       
@@ -397,10 +397,10 @@ revoke all on function dblink_connect_u(text,text) from _regress_emaj_install;
 set session_authorization to _regress_emaj_install;
 -- install emaj
 \set ECHO errors
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15608: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15615: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_function | hist_event |  hist_object  |                               hist_wording                               |       hist_user       
@@ -439,9 +439,9 @@ ALTER ROLE _regress_emaj_install CREATEROLE;
 set session_authorization to _regress_emaj_install;
 -- install emaj
 \set ECHO errors
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15608: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15615: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
 -- check the installation
 select hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_function | hist_event |  hist_object  |                        hist_wording                         |       hist_user       
@@ -497,10 +497,10 @@ set session_authorization to _regress_emaj_install;
 (9 rows)
 
 select emaj.emaj_drop_extension();
-WARNING:  emaj_drop_extension: The emaj_adm role is also referenced in some other databases (regression_1, regression_2)
+WARNING:  emaj_drop_extension: The emaj_adm role is also referenced in some other databases (postgres, regression_1, regression_2)
 WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_admin2, _regress_emaj_install) who have been granted emaj_adm role.
 WARNING:  emaj_drop_extension: For these reasons, emaj_adm has not been dropped by this script.
-WARNING:  emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (regression_1, regression_2)
+WARNING:  emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (postgres, regression_1, regression_2)
 WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_admin2) who have been granted emaj_viewer role.
 WARNING:  emaj_drop_extension: For these reasons, the emaj_viewer role has not been dropped by this script.
  emaj_drop_extension 
@@ -539,9 +539,9 @@ ERROR:  role "emaj_adm" cannot be dropped because some objects depend on it
 -- Reinstall emaj
 set session_authorization to _regress_emaj_install;
 \set ECHO errors
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
-psql:sql/emaj-devel.sql:15608: WARNING:      This may lead to permission issues when using E-Maj.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
-psql:sql/emaj-devel.sql:15608: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: The current user (_regress_emaj_install) is not a superuser.
+psql:sql/emaj-devel.sql:15615: WARNING:      This may lead to permission issues when using E-Maj.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: emaj_adm role is not supported. The current role is the only emaj administrator.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: Event triggers that protect the E-Maj environment have not been created.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: The current user has not been granted pg_read_server_files privileges.
+psql:sql/emaj-devel.sql:15615: WARNING:  E-Maj installation: The current user has not been granted pg_write_server_files privileges.

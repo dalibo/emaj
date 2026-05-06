@@ -25,6 +25,8 @@ E-Maj - Change log
     option to also export parameters whose value is their default value.
   * Use the dblink_connect() function when emaj is installed by a superuser,
       avoiding to grant rights to dblink_connect_u() in most cases.
+  * The emaj_purge_histories() function now returns an execution report message.
+    And its input parameter becomes optional.
   * Improve the initial comment of the JSON output produced by
     emaj_export_groups_configuration().
   * Improve checks of the input JSON structure when importing a tables group

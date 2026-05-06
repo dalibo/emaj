@@ -427,7 +427,7 @@ General purpose functions
 | :ref:`emaj_import_parameters_configuration       | | file.path TEXT,             | #.parameters INT                      |
 | <import_param_conf>`                             | | [reset.others BOOLEAN)]     |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_purge_histories                       | retention.delay INTERVAL      |                                       |
+| :ref:`emaj_purge_histories                       | [retention.delay INTERVAL]    | execution.report TEXT                 |
 | <emaj_purge_histories>`                          |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |

@@ -737,8 +737,14 @@ select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
 -----------------------------
 -- emaj_purge_histories() tests
 -----------------------------
+-- use the default retention delay
 select emaj.emaj_purge_histories(NULL);
+-- overload the retention delay
 select emaj.emaj_purge_histories('0 SECOND');
+-- use an infinite default retention delay without overload
+select emaj.emaj_set_param('history_retention', '101 years');
+select emaj.emaj_purge_histories();
+select emaj.emaj_set_param('history_retention', null);
 
 -- check for emaj_import_parameters_configuration() and emaj_purge_histories()
 select hist_id, hist_function, hist_event, hist_object, 

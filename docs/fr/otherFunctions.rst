@@ -69,9 +69,11 @@ Purger les historiques
 
 E-Maj historise certaines données : traces globales de fonctionnement, détail des rollbacks E-Maj, évolutions de structures de groupes de tables (:ref:`plus de détails...<emaj_hist>`), Les traces les plus anciennes sont automatiquement purgées par l’extension. Mais une fonction permet également de déclencher la purge de manière manuelle ::
 
-   SELECT emaj.emaj_purge_histories('<délai.rétention>');
+   SELECT emaj.emaj_purge_histories(['<délai.rétention>']);
 
-La paramètre <délai.rétention> est de type *INTERVAL*. Il surcharge le paramètre E-Maj *'history_retention'*.
+Le paramètre <délai.rétention> est de type *INTERVAL*. S’il est présent, il surcharge le paramètre E-Maj *'history_retention'*.
+
+La fonction retourne un message de synthèse des suppressions effectuées.
 
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:
