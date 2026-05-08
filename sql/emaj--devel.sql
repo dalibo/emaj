@@ -791,7 +791,7 @@ $$Represents a generic notice, warning or error message structure that can be tr
 --                                                            --
 ----------------------------------------------------------------
 
--- Insert parameters with their default value.
+-- Insert all parameters with their default value.
 INSERT INTO emaj.emaj_default_param(param_key, param_default, param_cast, param_rank) VALUES
 -- General purpose parameters
   ('history_retention', '1 year', 'INTERVAL', 1),              -- Retention delay for historical internal tables content
@@ -1143,16 +1143,16 @@ RETURNS TEXT[] LANGUAGE plpgsql AS
 $_check_group_names$
 -- This function performs various checks on a group names array.
 -- The NULL, empty strings and duplicate values are removed from the array. If the array is empty raise either an exception or a warning.
--- Checks are then perform to verify:
--- - that all groups exist,
--- - if requested are ROLLBACKABLE,
--- - if requested are in LOGGING or IDLE state,
--- - if requested are not PROTECTED against rollback operations.
--- A SELECT FOR UPDATE is executed if requested, to avoid other sensitive actions in parallel on the same groups.
+-- Checks are then perform to verify that all groups:
+-- - exist,
+-- - are in LOGGING or IDLE state (if requested),
+-- - are ROLLBACKABLE (if requested),
+-- - are not PROTECTED against rollback operations (if requested).
+-- A SELECT FOR UPDATE may be executed, if requested, to avoid other sensitive actions in parallel on the same groups.
 -- Input: group names array,
---        a boolean that tells whether a NULL array only raise a WARNING,
+--        a boolean that tells whether a NULL array only raises a WARNING,
 --        a boolean that tells whether the groups have to be locked,
---        a string that lists the checks to perform, with the following possible values: IDLE, LOGGING, ROLLBACKABLE and UNPROTECTED.
+--        4 booleans that define the checks to perform on groups states (IDLE/LOGGING, ROLLBACKABLE and UNPROTECTED).
 -- Output: validated group names array
   DECLARE
     v_groupList              TEXT;
