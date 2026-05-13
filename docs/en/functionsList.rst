@@ -351,10 +351,14 @@ Groups level functions
 | :ref:`emaj_start_group                           | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_start_group>`                              | | [mark TEXT],                |                                       |
 |                                                  | | [reset.log BOOLEAN]         |                                       |
+|                                                  | | [logging.group.allowed      |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_start_groups                          | | groups.array TEXT[],        | #.tables.and.seq INT                  |
 | <multiGroupsFunctions>`                          | | [mark TEXT],                |                                       |
 |                                                  | | [reset.log BOOLEAN]         |                                       |
+|                                                  | | [logging.groups.allowed     |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_stop_group                            | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_stop_group>`                               | | [mark TEXT]                 |                                       |

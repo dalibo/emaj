@@ -379,6 +379,14 @@ select emaj.emaj_start_group('myGroup2','Mark3') where not emaj.emaj_is_logging_
 ------------------
 (0 rows)
 
+-- do not stop on error
+select emaj.emaj_start_group('myGroup2','',true,true);
+WARNING:  _start_groups_init: The group "myGroup2" is already in LOGGING state.
+ emaj_start_group 
+------------------
+                0
+(1 row)
+
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
 ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
@@ -390,8 +398,9 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  emptyGroup       | Mark1          |         2004 | f                      |              |                           | 
  myGroup2         | STOP_%         |         2006 | f                      |              |                         0 | 
  myGroup1         | %abc%          |         2010 | f                      |              |                           | 
- myGroup2         | START_%        |         2011 | f                      |              |                           | 
-(6 rows)
+ myGroup2         | START_%        |         2011 | f                      |              |                         0 | 
+ myGroup2         | START_%        |         2012 | f                      |              |                           | 
+(7 rows)
 
 -- multiple emaj_start_group() using the same generated start mark name => fails
 -- this test is commented because the generated error message differs from one run to another
@@ -418,7 +427,7 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
  myGroup1         | [2001,2006)     |          2 |             0
  myGroup1         | [2010,)         |          1 |             0
  myGroup2         | [2002,2007)     |          2 |             0
- myGroup2         | [2011,)         |          1 |             0
+ myGroup2         | [2011,)         |          2 |             0
  phil's group#3", | [2003,)         |          1 |             0
 (6 rows)
 
@@ -441,8 +450,9 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  emptyGroup       | Mark1          |         2004 | f                      |              |                           | 
  myGroup2         | STOP_%         |         2006 | f                      |              |                         0 | 
  myGroup1         | %abc%          |         2010 | f                      |              |                           | 
- myGroup2         | START_%        |         2011 | f                      |              |                           | 
-(6 rows)
+ myGroup2         | START_%        |         2011 | f                      |              |                         0 | 
+ myGroup2         | START_%        |         2012 | f                      |              |                           | 
+(7 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -456,7 +466,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     2006 |            2000000 | X
     2010 |            2000000 | S
     2011 |            2000000 | S
-(9 rows)
+    2012 |            2000000 | S
+(10 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
@@ -522,7 +533,14 @@ select hist_id, hist_function, hist_event, hist_object,
     2124 | SET_MARK_GROUP  | BEGIN             | myGroup2          | START_%                                                                                                                                                 | postgres
     2125 | SET_MARK_GROUP  | END               | myGroup2          | START_%                                                                                                                                                 | postgres
     2126 | START_GROUP     | END               | myGroup2          | 10 tables/sequences processed                                                                                                                           | postgres
-(59 rows)
+    2128 | START_GROUP     | BEGIN             | myGroup2          | With log reset                                                                                                                                          | postgres
+    2129 | LOCK_GROUP      | BEGIN             | myGroup2          |                                                                                                                                                         | postgres
+    2130 | LOCK_GROUP      | END               | myGroup2          | 8 tables locked, 0 deadlock(s)                                                                                                                          | postgres
+    2131 | START_GROUP     | TIME STAMP SET    | 2012              |                                                                                                                                                         | postgres
+    2132 | SET_MARK_GROUP  | BEGIN             | myGroup2          | START_%                                                                                                                                                 | postgres
+    2133 | SET_MARK_GROUP  | END               | myGroup2          | START_%                                                                                                                                                 | postgres
+    2134 | START_GROUP     | END               |                   | 0 tables/sequences processed                                                                                                                            | postgres
+(66 rows)
 
 select public.handle_emaj_sequences(2200);
  handle_emaj_sequences 
@@ -774,15 +792,38 @@ ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 -- reserved mark name
 select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
--- 2 groups already started
+-- OK
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',true);
  emaj_start_groups 
 -------------------
                 17
 (1 row)
 
-select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',false);
+-- 2 groups already started and onErrorStop set to true
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark2',false,false);
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in IDLE state.
+-- 1 group already started and p_loggingGroupsAllowed set to true
+select emaj.emaj_stop_group('myGroup1');
+ emaj_stop_group 
+-----------------
+               7
+(1 row)
+
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark2',false,true);
+WARNING:  _start_groups_init: The group "myGroup2" is already in LOGGING state.
+ emaj_start_groups 
+-------------------
+                 7
+(1 row)
+
+-- 2 groups already started and p_loggingGroupsAllowed set to true
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark3',false,true);
+WARNING:  _star_groups_init: Groups "myGroup1, myGroup2" are already in LOGGING state.
+ emaj_start_groups 
+-------------------
+                 0
+(1 row)
+
 select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
  emaj_stop_groups 
 ------------------
@@ -828,8 +869,8 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
   from emaj.emaj_mark where mark_time_id >= 2400 order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mark1          |         2403 | f                      |              |                           | 
- myGroup2   | Mark1          |         2403 | f                      |              |                           | 
+ myGroup1   | Mark1          |         2406 | f                      |              |                           | 
+ myGroup2   | Mark1          |         2406 | f                      |              |                           | 
 (2 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2400 order by time_id;
@@ -837,8 +878,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 ---------+--------------------+------------
     2400 |            2400000 | S
     2401 |            2400000 | X
+    2402 |            2400000 | S
     2403 |            2400000 | S
-(3 rows)
+    2404 |            2400000 | X
+    2406 |            2400000 | S
+(6 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
@@ -858,21 +902,44 @@ select hist_id, hist_function, hist_event, hist_object,
     2413 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | Mark1                           | postgres
     2414 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | Mark1                           | postgres
     2415 | START_GROUPS    | END            | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
-    2417 | STOP_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
-    2418 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
-    2419 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
-    2420 | STOP_GROUPS     | TIME STAMP SET | 2401              |                                 | postgres
-    2421 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | STOP_%                          | postgres
-    2422 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | STOP_%                          | postgres
-    2423 | STOP_GROUPS     | END            | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
-    2432 | START_GROUPS    | BEGIN          | myGroup1,myGroup2 | With log reset                  | postgres
-    2433 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
-    2434 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
-    2435 | START_GROUPS    | TIME STAMP SET | 2403              |                                 | postgres
-    2436 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | Mark1                           | postgres
-    2437 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | Mark1                           | postgres
-    2438 | START_GROUPS    | END            | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
-(27 rows)
+    2417 | STOP_GROUP      | BEGIN          | myGroup1          |                                 | postgres
+    2418 | LOCK_GROUP      | BEGIN          | myGroup1          |                                 | postgres
+    2419 | LOCK_GROUP      | END            | myGroup1          | 5 tables locked, 0 deadlock(s)  | postgres
+    2420 | STOP_GROUP      | TIME STAMP SET | 2401              |                                 | postgres
+    2421 | SET_MARK_GROUP  | BEGIN          | myGroup1          | STOP_%                          | postgres
+    2422 | SET_MARK_GROUP  | END            | myGroup1          | STOP_%                          | postgres
+    2423 | STOP_GROUP      | END            | myGroup1          | 7 tables/sequences processed    | postgres
+    2424 | START_GROUPS    | BEGIN          | myGroup1,myGroup2 | Without log reset               | postgres
+    2425 | LOCK_GROUPS     | BEGIN          | myGroup1          |                                 | postgres
+    2426 | LOCK_GROUPS     | END            | myGroup1          | 5 tables locked, 0 deadlock(s)  | postgres
+    2427 | LOCK_GROUPS     | BEGIN          | myGroup2          |                                 | postgres
+    2428 | LOCK_GROUPS     | END            | myGroup2          | 8 tables locked, 0 deadlock(s)  | postgres
+    2429 | START_GROUPS    | TIME STAMP SET | 2402              |                                 | postgres
+    2430 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | Mark2                           | postgres
+    2431 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | Mark2                           | postgres
+    2432 | START_GROUPS    | END            | myGroup1          | 7 tables/sequences processed    | postgres
+    2433 | START_GROUPS    | BEGIN          | myGroup1,myGroup2 | Without log reset               | postgres
+    2434 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
+    2435 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
+    2436 | START_GROUPS    | TIME STAMP SET | 2403              |                                 | postgres
+    2437 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | Mark3                           | postgres
+    2438 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | Mark3                           | postgres
+    2439 | START_GROUPS    | END            |                   | 0 tables/sequences processed    | postgres
+    2440 | STOP_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
+    2441 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
+    2442 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
+    2443 | STOP_GROUPS     | TIME STAMP SET | 2404              |                                 | postgres
+    2444 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | STOP_%                          | postgres
+    2445 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | STOP_%                          | postgres
+    2446 | STOP_GROUPS     | END            | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
+    2455 | START_GROUPS    | BEGIN          | myGroup1,myGroup2 | With log reset                  | postgres
+    2456 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
+    2457 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
+    2458 | START_GROUPS    | TIME STAMP SET | 2406              |                                 | postgres
+    2459 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | Mark1                           | postgres
+    2460 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | Mark1                           | postgres
+    2461 | START_GROUPS    | END            | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
+(50 rows)
 
 select public.handle_emaj_sequences(2500);
  handle_emaj_sequences 
@@ -922,8 +989,8 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  phil's group#3", | Mark3            |         2003 | f                      |              |                           | 
  emptyGroup       | Mark1            |         2004 | f                      |              |                         0 | 
  emptyGroup       | STOP_%           |         2202 | f                      |              |                         0 | 
- myGroup1         | Mark1            |         2403 | f                      |              |                         0 | 
- myGroup2         | Mark1            |         2403 | f                      |              |                         0 | 
+ myGroup1         | Mark1            |         2406 | f                      |              |                         0 | 
+ myGroup2         | Mark1            |         2406 | f                      |              |                         0 | 
  myGroup1         | Global Stop at % |         2501 | f                      |              |                         0 | 
  myGroup2         | Global Stop at % |         2501 | f                      |              |                         0 | 
 (7 rows)
@@ -1046,16 +1113,17 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
  myGroup1         | [2010,2202)     |          2 |             0
  myGroup1         | [2204,2207)     |          2 |             0
  myGroup1         | [2400,2402)     |          2 |             0
- myGroup1         | [2403,2502)     |          2 |             0
+ myGroup1         | [2402,2405)     |          3 |             0
+ myGroup1         | [2406,2502)     |          2 |             0
  myGroup1         | [2502,2509)     |          1 |             0
  myGroup2         | [2002,2007)     |          2 |             0
- myGroup2         | [2011,2204)     |          2 |             0
+ myGroup2         | [2011,2204)     |          3 |             0
  myGroup2         | [2205,2208)     |          2 |             0
- myGroup2         | [2400,2402)     |          2 |             0
- myGroup2         | [2403,2502)     |          2 |             0
+ myGroup2         | [2400,2405)     |          4 |             0
+ myGroup2         | [2406,2502)     |          2 |             0
  myGroup2         | [2502,2508)     |          1 |             0
  phil's group#3", | [2003,)         |          1 |             0
-(14 rows)
+(15 rows)
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2500 order by mark_time_id, mark_group;

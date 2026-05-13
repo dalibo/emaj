@@ -116,10 +116,10 @@ Si les :ref:`propriétés E-Maj des tables<table_emaj_properties>` d’un groupe
 État des groupes de tables
 --------------------------
 
-Le :ref:`démarrage<emaj_start_group>` ou l’:ref:`arrêt d’un groupe de tables<emaj_stop_group>` peut prendre en compte son état courant ::
+Il est possible de conditionner la :ref:`pose d’une marque<emaj_set_mark_group>` sur un groupe de tables par son état courant ::
 
-   SELECT emaj.emaj_start_group ('grp1', '<marque_start>')
-   	 WHERE NOT emaj.emaj_is_logging_group('grp1');
+   SELECT emaj.emaj_set_mark_group ('grp1', '<marque>')
+   	 WHERE emaj.emaj_is_logging_group('grp1');
    
    SELECT emaj.emaj_stop_group ('grp1')
    	 WHERE emaj.emaj_is_logging_group('grp1');

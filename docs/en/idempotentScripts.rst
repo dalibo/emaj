@@ -116,10 +116,10 @@ If E-Maj properties of tables belonging to a group have non default values, it i
 Tables groups state
 -------------------
 
-:ref:`Starting<emaj_start_group>` or :ref:`stopping<emaj_stop_group>` a tables group may take its current state into account::
+It is possible to :ref:`set a mark<emaj_set_mark_group>` or stop a tables group taking into account its current state::
 
-   SELECT emaj.emaj_start_group ('grp1', '<start_mark>')
-      WHERE NOT emaj.emaj_is_logging_group('grp1');
+   SELECT emaj.emaj_set_mark_group ('grp1', '<mark>')
+      WHERE emaj.emaj_is_logging_group('grp1');
 
    SELECT emaj.emaj_stop_group ('grp1')
       WHERE emaj.emaj_is_logging_group('grp1');

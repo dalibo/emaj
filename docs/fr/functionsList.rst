@@ -350,10 +350,14 @@ Fonctions de niveau groupe de tables
 | :ref:`emaj_start_group                           | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_start_group>`                              | | [marque TEXT],              |                                       |
 |                                                  | | [reset.log BOOLEAN]         |                                       |
+|                                                  | | [groupe.actif.admis         |                                       |
+|                                                  | | BOOLEAN]                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_start_groups                          | | tableau.groupes TEXT[],     | nb.tables.et.seq INT                  |
 | <multiGroupsFunctions>`                          | | [marque TEXT],              |                                       |
 |                                                  | | [reset.log BOOLEAN]         |                                       |
+|                                                  | | [groupes.actifs.admis       |                                       |
+|                                                  | | BOOLEAN]                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_stop_group                            | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_stop_group>`                               | | [marque TEXT]               |                                       |

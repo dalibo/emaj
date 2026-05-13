@@ -4,6 +4,8 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * Writing idempotent administration scripts:
+    * Allow to start tables groups that are already in LOGGING state, using
+      a new parameter in emaj_start_group() and emaj_start_groups() functions.
     * Add 2 new functions to help building idempotent tables groups content
       definition scripts.
     * Add 3 helper functions to build group names arrays.

@@ -195,6 +195,8 @@ select emaj.emaj_start_group('myGroup2','',false);
 -- group already started
 select emaj.emaj_start_group('myGroup2','Mark3');
 select emaj.emaj_start_group('myGroup2','Mark3') where not emaj.emaj_is_logging_group('myGroup2');
+-- do not stop on error
+select emaj.emaj_start_group('myGroup2','',true,true);
 
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
@@ -299,9 +301,16 @@ select emaj.emaj_start_groups('{"myGroup1","unknownGroup"}',NULL,false);
 -- reserved mark name
 select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 
--- 2 groups already started
+-- OK
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',true);
-select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',false);
+-- 2 groups already started and onErrorStop set to true
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark2',false,false);
+-- 1 group already started and p_loggingGroupsAllowed set to true
+select emaj.emaj_stop_group('myGroup1');
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark2',false,true);
+-- 2 groups already started and p_loggingGroupsAllowed set to true
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark3',false,true);
+
 select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
 
 -- missing application table

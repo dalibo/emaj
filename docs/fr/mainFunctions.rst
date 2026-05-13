@@ -16,21 +16,24 @@ L'enchaînement des opérations possibles pour un groupe de tables peut se maté
 Démarrer un groupe de tables
 ----------------------------
 
-Démarrer un groupe de table consiste à activer l'enregistrement des mises à jour des tables du groupe. Pour ce faire, il faut exécuter la commande ::
+"*Démarrer un groupe de tables*" consiste à activer l'enregistrement des mises à jour des tables du groupe. Pour ce faire, il faut exécuter la commande ::
 
-   SELECT emaj.emaj_start_group('<nom.du.groupe>'[, '<nom.de.marque>' [, <effacer.anciens.logs?>]]);
+   SELECT emaj.emaj_start_group('<nom.du.groupe>'[, '<nom.de.marque>'
+              [, <effacer.anciens.logs?> [, <groupe.actif.admis?>]]]);
 
-Le groupe de tables doit être au préalable à l'état inactif.
+Par défaut, le groupe de tables doit être au préalable à l'état inactif.
 
-Le démarrage du groupe de tables créé une première marque.
+Le démarrage du groupe de tables crée une première marque.
 
 S'il est spécifié, le nom de la marque initiale peut contenir un caractère générique '%'. Ce caractère est alors remplacé par l'heure courante, au format *hh.mn.ss.mmmm*,
 
 Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : "*START_%*", où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
  
-Le paramètre *<anciens.logs.à.effacer>* est un booléen optionnel. Par défaut sa valeur est égal à vrai (true), ce qui signifie que les tables de log du groupe de tables sont purgées de toutes anciennes données avant l'activation des triggers de log. Si le paramètre est explicitement positionné à « faux » (false), les anciens enregistrements sont conservés dans les tables de log. De la même manière, les anciennes marques sont conservées, même si ces dernières ne sont alors plus utilisables pour un éventuel rollback (des mises à jour ont pu être effectuées sans être tracées alors que le groupe de tables était arrêté).
+Le paramètre *<anciens.logs.à.effacer?>* est un booléen optionnel. Par défaut sa valeur est égal à *vrai* (*true*), ce qui signifie que les tables de log du groupe de tables sont purgées de toutes anciennes données avant l'activation des triggers de log. Si le paramètre est explicitement positionné à *faux* (*false*), les anciens enregistrements sont conservés dans les tables de log. De la même manière, les anciennes marques sont conservées, même si ces dernières ne sont alors plus utilisables pour un éventuel rollback (des mises à jour ont pu être effectuées sans être tracées alors que le groupe de tables était arrêté).
 
-La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
+Le paramètre *<groupe.actif.admis?>* est aussi un booléen optionnel. Par défaut sa valeur est égal à *faux* (*false*) : si le groupe de tables est déjà actif, la fonction retourne une erreur. Si le paramètre est explicitement positionné à *vrai* (*true*), un groupe actif ne génère qu’un message d’avertissement et la marque est posée. Ce paramètre permet d’écrire des scripts d’administration idempotents.
+
+La fonction retourne le nombre de tables et de séquences contenues dans le groupe, ou 0 si le groupe était déjà *actif*.
 
 Pour être certain qu'aucune transaction impliquant les tables du groupe n'est en cours, la fonction *emaj_start_group()* pose explicitement sur chacune des tables du groupe un verrou de type *SHARE ROW EXCLUSIVE*. Si des transactions accédant à ces tables sont en cours, ceci peut se traduire par la survenue d'une étreinte fatale (*deadlock*). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le deadlock est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives.
 
@@ -38,15 +41,14 @@ La fonction procède également à la purge des événements les plus anciens de
 
 A l'issue du démarrage d'un groupe, celui-ci devient actif ("*LOGGING*").
 
-Pour insérer le démarrage d’un groupe de tables dans un script idempotent, il est possible de conditionner l’opération à l’état préalable du groupe, en utilisant la fonction :ref:`emaj_is_logging_group()<emaj_exist_state_mark_group>` dans une clause *WHERE*.
-
 Plusieurs groupes de tables peuvent être démarrés en même temps, en utilisant la fonction *emaj_start_groups()* ::
 
    SELECT emaj.emaj_start_groups('<tableau.des.groupes>'[, '<nom.de.marque>'
-              [, <effacer.anciens.logs?>]]);
+              [, <effacer.anciens.logs?> [, <groupes.actifs.admis?> ]]]);
+
+Si au moins un groupe de tables est déjà *actif*, le 4ème paramètre doit être positionné à *vrai*. La fonction retourne le nombre de tables et séquences des groupes effectivement passés de l’état *inactif* à *actif*.
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
-
 
 .. _emaj_set_mark_group:
 

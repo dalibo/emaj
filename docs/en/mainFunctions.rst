@@ -16,11 +16,12 @@ The possible chaining of operations for a tables group can be materialised by th
 Start a tables group
 --------------------
 
-Starting a tables group consists in activating the recording of updates for all tables of the group. To achieve this, the following command must be executed::
+Starting a tables group consists in activating the changes recording for all tables of the group. To achieve this, the following command must be executed::
 
-   SELECT emaj.emaj_start_group('<group.name>'[, '<mark.name>'[, <delete.old.logs?>]]);
+   SELECT emaj.emaj_start_group('<group.name>'[, '<mark.name>'
+              [, <delete.old.logs?>[, <logging.group.allowed?>]]]);
 
-The group must be first in *IDLE* state.
+By default, the group must previously be in *IDLE* state.
 
 When a tables group is started, a first mark is created.
  
@@ -28,9 +29,11 @@ If specified, the initial mark name may contain a generic '%' character. Then th
 
 If the parameter representing the mark is not specified, or is empty or NULL, a name is automatically generated: "*START_%*", where the '%' character represents the current time with a *hh.mn.ss.mmmm* pattern.
 
-The *<are.old.logs.to.be.deleted?>* parameter is an optional boolean. By default, its value is true, meaning that all log tables of the tables group are purged before the trigger activation. If the value is explicitly set to false, all rows from log tables are kept as is. The old marks are also preserved, even-though they are not usable for a rollback anymore, (unlogged updates may have occurred while the tables group was stopped).
+The *<delete.old.logs?>* parameter is an optional boolean. By default, its value is *true*, meaning that all log tables of the tables group are purged before the trigger activation. If the value is explicitly set to *false*, all rows from log tables are kept as is. The old marks are also preserved, even-though they are not usable for a rollback anymore, (unlogged updates may have occurred while the tables group was stopped).
 
-The function returns the number of tables and sequences contained by the group.
+The *<logging.group.allowed?>* parameter is also an optional boolean. By default, its value is *false*: if the tables group is already in LOGGING state, the function returns an error. If the parameter is explicitely set to *true*, a LOGGING group only raises a warning and the mark is set. This parameter allows to write idempotent administration scripts.
+
+The function returns the number of tables and sequences contained by the group or 0 if the group was already in *LOGGING* state.
 
 To be sure that no transaction implying any table of the group is currently running, the *emaj_start_group()* function explicitly sets a *SHARE ROW EXCLUSIVE* lock on each table of the group. If transactions accessing these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 
@@ -38,11 +41,12 @@ The function also performs a purge of the oldest events in the :ref:`emaj_hist <
 
 When a group is started, its state becomes "*LOGGING*".
 
-To insert a tables group start into an idempotent script, it is possible to condition the operation to the group state, by using the :ref:`emaj_is_logging_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
-
 Using the *emaj_start_groups()* function, several groups can be started at once::
 
-   SELECT emaj.emaj_start_groups('<group.names.array>'[, '<mark.name>'[, <delete.old.logs?>]]);
+   SELECT emaj.emaj_start_groups('<group.names.array>'[, '<mark.name>'
+              [, <delete.old.logs?>[, <logging.groups.allowed?> ]]]);
+
+If at least one tables group is already in *LOGGING* state, the 4th parameter must be set to *true*. The function returns the number of tables and sequences of groups effectively set from *IDLE* to *LOGGING* state.
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
