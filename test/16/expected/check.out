@@ -136,15 +136,15 @@ select funcname, calls from pg_stat_user_functions
  _delete_intermediate_mark_group           |    31
  _delete_log_tbl                           |    67
  _detailed_log_stat_groups                 |    27
- _disable_event_triggers                   |   298
+ _disable_event_triggers                   |   245
  _drop_group                               |    34
  _drop_groups                              |    37
- _drop_log_schemas                         |   132
+ _drop_log_schemas                         |    85
  _drop_seq                                 |    73
  _drop_tbl                                 |   231
  _emaj_default_param_before_stmt_fnct      |     0
  _emaj_param_before_stmt_fnct              |     0
- _enable_event_triggers                    |   293
+ _enable_event_triggers                    |   240
  _estimate_rlbk_step_duration              |   784
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   204

@@ -5075,17 +5075,12 @@ $_start_groups_exec$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   DECLARE
     v_nbTblSeq               INT = 0;
-    v_eventTriggers          TEXT[];
     r_tblsq                  RECORD;
   BEGIN
     IF p_idleGroups IS NOT NULL THEN
 -- If requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs.
       IF p_resetLog THEN
         PERFORM emaj._reset_groups(p_idleGroups);
--- Drop the log schemas that would have been emptied by the _reset_groups() call.
-        SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
-        PERFORM emaj._drop_log_schemas(CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, FALSE);
-        PERFORM emaj._enable_event_triggers(v_eventTriggers);
       END IF;
 -- Enable all log triggers for the groups.
 -- For each relation currently belonging to the idle groups,
@@ -7380,16 +7375,48 @@ $_estimate_rollback_groups$
   END;
 $_estimate_rollback_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_reset_group(p_groupName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_reset_group$
+-- This function empties the log tables for all tables of a group and deletes the sequences saves.
+-- It calls the emaj_rst_group function to do the job.
+-- Input: group name
+-- Output: number of processed tables
+  DECLARE
+    v_nbRel                  INT = 0;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES ('RESET_GROUP', 'BEGIN', p_groupName);
+-- Check the group name.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkIdle := TRUE);
+-- Perform the reset operation.
+    SELECT emaj._reset_groups(ARRAY[p_groupName]) INTO v_nbRel;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('RESET_GROUP', 'END', p_groupName, v_nbRel || ' tables/sequences processed');
+--
+    RETURN v_nbRel;
+  END;
+$emaj_reset_group$;
+COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
+$$Resets all log tables content of a stopped E-Maj group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._reset_groups(p_groupNames TEXT[])
 RETURNS INT LANGUAGE plpgsql AS
 $_reset_groups$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences images.
+-- It also:
+--   - deletes all marks for the groups,
+--   - drops obsolete log tables and schemas, if any,
+--   - purges history traces.
 -- It is called by emaj_reset_group(), _start_groups() and _import_groups_conf_alter() functions.
 -- Input: group names array
 -- Output: number of processed tables and sequences
 -- There is no check of the groups state (this is done by callers).
   DECLARE
     v_eventTriggers          TEXT[];
+    v_nbDroppedTable         INT = 0;
     v_batchSize     CONSTANT INT = 100;
     v_tableList              TEXT;
     v_nbTbl                  INT;
@@ -7427,14 +7454,14 @@ $_reset_groups$
                ));
 -- Delete all sequence holes for the tables of the groups.
 -- It may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
--- but is safe enough for rollbacks.
+-- but it is safe enough for rollbacks.
     DELETE FROM emaj.emaj_seq_hole
       USING emaj.emaj_relation
       WHERE rel_schema = sqhl_schema
         AND rel_tblseq = sqhl_table
         AND rel_group = ANY (p_groupNames)
         AND rel_kind = 'r';
--- Drop obsolete log tables, but keep those linked to other groups.
+-- Drop obsolete log tables, but keep those currently linked to other groups.
     FOR r_rel IN
         SELECT DISTINCT rel_log_schema, rel_log_table
           FROM emaj.emaj_relation
@@ -7450,7 +7477,12 @@ $_reset_groups$
     LOOP
       EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
                      r_rel.rel_log_schema, r_rel.rel_log_table);
+      v_nbDroppedTable = v_nbDroppedTable + 1;
     END LOOP;
+-- If any table has been dropped, drop now empty log schemas.
+    IF v_nbDroppedTable > 0 THEN
+      PERFORM emaj._drop_log_schemas('RESET_GROUP', FALSE);
+    END IF;
 -- Delete emaj_sequence rows related to the sequences of the groups.
     DELETE FROM emaj.emaj_sequence
       USING emaj.emaj_relation
