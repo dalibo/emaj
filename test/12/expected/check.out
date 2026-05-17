@@ -58,13 +58,6 @@ select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel
 -----------------------------
 -- get test coverage data just before cleanup
 -----------------------------
--- look at pg_stat_activity to force the statistics collector aggregate the latest stats
-select 0 from pg_stat_activity limit 1;
- ?column? 
-----------
-        0
-(1 row)
-
 -- display the functions that are not called by any regression test script.
 -- some functions are excluded:
 --   _emaj_param_before_stmt_fnct and _emaj_default_param_before_stmt_fnct are called by triggers but always raise an exception
@@ -129,20 +122,20 @@ select funcname, calls from pg_stat_user_functions
  _create_seq                               |    48
  _create_tbl                               |   176
  _dblink_close_cnx                         |   119
- _dblink_open_cnx                          |   142
+ _dblink_open_cnx                          |   143
  _dblink_sql_exec                          |  2309
  _delete_before_mark_group                 |    24
  _delete_between_marks_group               |    15
  _delete_intermediate_mark_group           |    31
  _delete_log_tbl                           |    67
  _detailed_log_stat_groups                 |    27
- _disable_event_triggers                   |   246
+ _disable_event_triggers                   |   247
  _drop_group                               |    34
  _drop_groups                              |    37
  _drop_log_schemas                         |    85
  _drop_seq                                 |    73
  _drop_tbl                                 |   231
- _enable_event_triggers                    |   241
+ _enable_event_triggers                    |   242
  _estimate_rlbk_step_duration              |   784
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   205
@@ -176,7 +169,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    24
  _move_tbl                                 |    50
- _pg_version_num                           |    21
+ _pg_version_num                           |    23
  _purge_histories                          |    82
  _remove_seq                               |    15
  _remove_sequences                         |    20
@@ -211,8 +204,8 @@ select funcname, calls from pg_stat_user_functions
  _stop_groups_init                         |    77
  _stop_groups_lock                         |    77
  _truncate_trigger_fnct                    |    15
- _verify_all_groups                        |    54
- _verify_all_schemas                       |    54
+ _verify_all_groups                        |    56
+ _verify_all_schemas                       |    56
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
@@ -257,7 +250,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_logging_groups                   |     6
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |    11
- emaj_get_version                          |    22
+ emaj_get_version                          |    23
  emaj_import_groups_configuration          |     4
  emaj_import_groups_configuration          |    17
  emaj_import_parameters_configuration      |     7
@@ -306,14 +299,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |    11
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    54
+ emaj_verify_all                           |    56
 (210 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1253
+ 1256
 (1 row)
 
 -----------------------------

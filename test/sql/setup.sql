@@ -4,6 +4,13 @@
 
 SET client_min_messages TO WARNING;
 
+--
+-- reset emaj function calls statistics (so the check.sql output is stable with all installation paths)
+--
+with reset as (select funcid, pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
+                 where (funcname like E'emaj\\_%' or funcname like E'\\_%') )
+  select * from reset where funcid is null;
+
 ------------------------------------------------------------
 -- create several application schemas with tables, sequences, triggers
 ------------------------------------------------------------

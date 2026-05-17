@@ -466,18 +466,3 @@ select * from emaj.emaj_all_param order by param_rank;
  fixed_dblink_rollback_duration | 4 ms        | 4 ms          | INTERVAL   |          9
 (9 rows)
 
--- reset function calls statistics (so the check.sql output is stable with all installation paths)
--- first look at pg_stat_activity to force the statistics collector aggregate the latest stats
-select null as stats_gathered from pg_stat_activity limit 1;
- stats_gathered 
-----------------
- 
-(1 row)
-
-with reset as (select funcid, pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
-                 where (funcname like E'emaj\\_%' or funcname like E'\\_%') )
-  select * from reset where funcid is null;
- funcid | pg_stat_reset_single_function_counters 
---------+----------------------------------------
-(0 rows)
-
