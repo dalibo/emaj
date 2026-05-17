@@ -246,8 +246,8 @@ rollback;
 select emaj.emaj_stop_group('myGroup1');
 select emaj.emaj_stop_group('emptyGroup');
 
--- should be OK with a stop mark
-select emaj.emaj_stop_group('myGroup2','Stop mark');
+-- should be OK with a stop mark and logs reset
+select emaj.emaj_stop_group('myGroup2','Stop mark', true);
 
 -- warning, already stopped
 select emaj.emaj_stop_group('myGroup2');
@@ -361,8 +361,11 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 
--- with warning about group names array content
-select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1']);
+-- with warning about group names array content and logs reset
+select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1'], 'STOP');
+
+-- re-stop with logs reset and using the previous mark name
+select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1'], 'STOP', true);
 
 -----------------------------
 -- emaj_force_stop_group() tests

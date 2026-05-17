@@ -25,6 +25,8 @@ E-Maj - Change log
     table is also restructured.
   * The emaj_export_parameters_configuration() functions now have an additional
     option to also export parameters whose value is their default value.
+  * Add a boolean parameter to emaj_stop_group() and emaj_stop_groups()
+    functions to optionnaly reset logs when tables groups are stopped.
   * Use the dblink_connect() function when emaj is installed by a superuser,
       avoiding to grant rights to dblink_connect_u() in most cases.
   * The emaj_purge_histories() function now returns an execution report message.

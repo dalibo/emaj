@@ -350,21 +350,23 @@ Groups level functions
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_start_group                           | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_start_group>`                              | | [mark TEXT],                |                                       |
-|                                                  | | [reset.log BOOLEAN]         |                                       |
+|                                                  | | [reset.logs BOOLEAN],       |                                       |
 |                                                  | | [logging.group.allowed      |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_start_groups                          | | groups.array TEXT[],        | #.tables.and.seq INT                  |
 | <multiGroupsFunctions>`                          | | [mark TEXT],                |                                       |
-|                                                  | | [reset.log BOOLEAN]         |                                       |
+|                                                  | | [reset.logs BOOLEAN],       |                                       |
 |                                                  | | [logging.groups.allowed     |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_stop_group                            | | group TEXT,                 | #.tables.and.seq INT                  |
-| <emaj_stop_group>`                               | | [mark TEXT]                 |                                       |
+| <emaj_stop_group>`                               | | [mark TEXT],                |                                       |
+|                                                  | | [reset.logs BOOLEAN]        |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_stop_groups                           | | groups.array TEXT[],        | #.tables.and.seq INT                  |
-| <multiGroupsFunctions>`                          | | [mark TEXT]                 |                                       |
+| <multiGroupsFunctions>`                          | | [mark TEXT],                |                                       |
+|                                                  | | [reset.logs BOOLEAN]        |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_unprotect_group                       | | group TEXT                  | 0/1 INT                               |
 | <emaj_unprotect_group>`                          |                               |                                       |

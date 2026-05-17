@@ -199,17 +199,20 @@ Stop a tables group
 
 When one wishes to stop the updates recording for tables of a group, it is possible to deactivate the logging mechanism, using the command::
 
-   SELECT emaj.emaj_stop_group('<group.name>'[, '<mark.name>')];
+   SELECT emaj.emaj_stop_group('<group.name>'[, '<mark.name>'
+              [, <delete.old.logs?>]]);
 
 The function returns the number of tables and sequences contained in the group.
 
 If the mark parameter is not specified or is empty or *NULL*, a mark name is generated: "*STOP_%*" where '%' represents the current time expressed as *hh.mn.ss.mmmm*.
 
-Stopping a tables group simply deactivates log triggers of application tables of the group. The setting of *SHARE ROW EXCLUSIVE* locks may lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
+The *<delete.old.logs?>* parameter is an optional boolean. By default, its value is *false*, meaning that all log tables and marks of the tables group are left unchanged. If the value is explicitly set to *true*, log tables are purged and old marks are deleted.
+
+Stopping a tables group deactivates log triggers of application tables of the group. The setting of *SHARE ROW EXCLUSIVE* locks may lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 
 The *emaj_stop_group()* function closes the current log session. Then, it is not possible to execute an E-Maj rollback targeting an existing mark anymore, even though no changes have been applied since the tables group stop.
 
-However the content of log tables and E-Maj technical tables can be examined. 
+However other uses of log tables and marks remain possible (visualization, statistics, changes dump, SQL generation).
 
 When a group is stopped, its state becomes "*IDLE*" again.
 
@@ -219,6 +222,7 @@ To insert a tables group stop into an idempotent script, it is possible to condi
 
 Using the *emaj_stop_groups()* function, several groups can be stopped at once::
 
-   SELECT emaj.emaj_stop_groups('<group.names.array>'[, '<mark.name>')];
+   SELECT emaj.emaj_stop_groups('<group.names.array>'[, '<mark.name>'
+              [, <delete.old.logs?>]]);
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.

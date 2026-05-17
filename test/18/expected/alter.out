@@ -452,7 +452,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 8000 order by hist_id;
   hist_function   |     hist_event     |                    hist_object                     |                       regexp_replace                       | hist_user 
 ------------------+--------------------+----------------------------------------------------+------------------------------------------------------------+-----------
- STOP_GROUP       | BEGIN              | myGroup1                                           |                                                            | postgres
+ STOP_GROUP       | BEGIN              | myGroup1                                           | Without logs reset                                         | postgres
  LOCK_GROUP       | BEGIN              | myGroup1                                           |                                                            | postgres
  LOCK_GROUP       | END                | myGroup1                                           | 5 tables locked, 0 deadlock(s)                             | postgres
  STOP_GROUP       | TIME STAMP SET     | 8000                                               |                                                            | postgres
@@ -469,7 +469,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP | TIME STAMP SET     | 8002                                               |                                                            | postgres
  FORCE_DROP_GROUP | LOG_SCHEMA DROPPED | emaj_myschema2                                     |                                                            | postgres
  FORCE_DROP_GROUP | END                | myGroup2                                           | 10 tables/sequences processed                              | postgres
- STOP_GROUP       | BEGIN              | phil's group#3",                                   |                                                            | postgres
+ STOP_GROUP       | BEGIN              | phil's group#3",                                   | Without logs reset                                         | postgres
  LOCK_GROUP       | BEGIN              | phil's group#3",                                   |                                                            | postgres
  LOCK_GROUP       | END                | phil's group#3",                                   | 2 tables locked, 0 deadlock(s)                             | postgres
  STOP_GROUP       | TIME STAMP SET     | 8003                                               |                                                            | postgres
@@ -480,7 +480,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP       | TIME STAMP SET     | 8004                                               |                                                            | postgres
  DROP_GROUP       | LOG_SCHEMA DROPPED | "emaj_phil's schema""3"                            |                                                            | postgres
  DROP_GROUP       | END                | phil's group#3",                                   | 4 tables/sequences processed                               | postgres
- FORCE_STOP_GROUP | BEGIN              | myGroup4                                           |                                                            | postgres
+ FORCE_STOP_GROUP | BEGIN              | myGroup4                                           | Without logs reset                                         | postgres
  LOCK_GROUP       | BEGIN              | myGroup4                                           |                                                            | postgres
  LOCK_GROUP       | END                | myGroup4                                           | 8 tables locked, 0 deadlock(s)                             | postgres
  FORCE_STOP_GROUP | TIME STAMP SET     | 8005                                               |                                                            | postgres
@@ -489,7 +489,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP       | TIME STAMP SET     | 8006                                               |                                                            | postgres
  DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema4                                     |                                                            | postgres
  DROP_GROUP       | END                | myGroup4                                           | 8 tables/sequences processed                               | postgres
- FORCE_STOP_GROUP | BEGIN              | emptyGroup                                         |                                                            | postgres
+ FORCE_STOP_GROUP | BEGIN              | emptyGroup                                         | Without logs reset                                         | postgres
  LOCK_GROUP       | BEGIN              | emptyGroup                                         |                                                            | postgres
  LOCK_GROUP       | END                | emptyGroup                                         | 0 tables locked, 0 deadlock(s)                             | postgres
  FORCE_STOP_GROUP | TIME STAMP SET     | 8007                                               |                                                            | postgres

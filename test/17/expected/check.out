@@ -112,18 +112,18 @@ select funcname, calls from pg_stat_user_functions
  _check_can_copy_to                        |   101
  _check_can_exec_program                   |    26
  _check_fk_groups                          |    99
- _check_group_names                        |  1240
+ _check_group_names                        |  1241
  _check_json_groups_conf                   |    54
  _check_json_param_conf                    |    19
  _check_json_table_properties              |    44
  _check_mark_name                          |   614
  _check_marks_range                        |   181
- _check_new_mark                           |   485
+ _check_new_mark                           |   484
  _check_schema                             |   302
  _check_tables_for_rollbackable_group      |    73
  _check_tblseqs_array                      |   111
  _check_tblseqs_filter                     |    29
- _clean_array                              |  1594
+ _clean_array                              |  1595
  _cleanup_rollback_state                   |   382
  _create_log_schemas                       |    22
  _create_seq                               |    48
@@ -136,7 +136,7 @@ select funcname, calls from pg_stat_user_functions
  _delete_intermediate_mark_group           |    31
  _delete_log_tbl                           |    67
  _detailed_log_stat_groups                 |    27
- _disable_event_triggers                   |   245
+ _disable_event_triggers                   |   246
  _drop_group                               |    34
  _drop_groups                              |    37
  _drop_log_schemas                         |    85
@@ -144,7 +144,7 @@ select funcname, calls from pg_stat_user_functions
  _drop_tbl                                 |   231
  _emaj_default_param_before_stmt_fnct      |     0
  _emaj_param_before_stmt_fnct              |     0
- _enable_event_triggers                    |   240
+ _enable_event_triggers                    |   241
  _estimate_rlbk_step_duration              |   870
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   290
@@ -179,13 +179,13 @@ select funcname, calls from pg_stat_user_functions
  _move_tables                              |    24
  _move_tbl                                 |    50
  _pg_version_num                           |    20
- _purge_histories                          |    81
+ _purge_histories                          |    82
  _remove_seq                               |    15
  _remove_sequences                         |    20
  _remove_tables                            |    35
  _remove_tbl                               |    40
  _repair_tbl                               |     2
- _reset_groups                             |    53
+ _reset_groups                             |    54
  _rlbk_async                               |     2
  _rlbk_check                               |   103
  _rlbk_end                                 |    80
@@ -209,9 +209,9 @@ select funcname, calls from pg_stat_user_functions
  _start_groups_exec                        |    59
  _start_groups_init                        |    59
  _start_groups_lock                        |    59
- _stop_groups_exec                         |    69
- _stop_groups_init                         |    76
- _stop_groups_lock                         |    76
+ _stop_groups_exec                         |    70
+ _stop_groups_init                         |    77
+ _stop_groups_lock                         |    77
  _truncate_trigger_fnct                    |    15
  _verify_all_groups                        |    55
  _verify_all_schemas                       |    55
@@ -305,7 +305,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_start_group                          |    47
  emaj_start_groups                         |    12
  emaj_stop_group                           |    46
- emaj_stop_groups                          |    10
+ emaj_stop_groups                          |    11
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
  emaj_verify_all                           |    55
@@ -315,7 +315,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1253
+ 1254
 (1 row)
 
 -----------------------------
