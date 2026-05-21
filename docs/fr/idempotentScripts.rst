@@ -120,9 +120,6 @@ Il est possible de conditionner la :ref:`pose d’une marque<emaj_set_mark_group
 
    SELECT emaj.emaj_set_mark_group ('grp1', '<marque>')
    	 WHERE emaj.emaj_is_logging_group('grp1');
-   
-   SELECT emaj.emaj_stop_group ('grp1')
-   	 WHERE emaj.emaj_is_logging_group('grp1');
 
 Pour démarrer ou arrêter tous les groupes de tables, quel que soit leur état courant ::
 

@@ -105,24 +105,24 @@ select funcname, calls from pg_stat_user_functions
  _check_can_copy_to                        |   101
  _check_can_exec_program                   |    26
  _check_fk_groups                          |    99
- _check_group_names                        |  1240
+ _check_group_names                        |  1239
  _check_json_groups_conf                   |    54
  _check_json_param_conf                    |    19
  _check_json_table_properties              |    44
  _check_mark_name                          |   614
  _check_marks_range                        |   181
- _check_new_mark                           |   484
+ _check_new_mark                           |   488
  _check_schema                             |   302
  _check_tables_for_rollbackable_group      |    73
  _check_tblseqs_array                      |   111
  _check_tblseqs_filter                     |    29
- _clean_array                              |  1594
+ _clean_array                              |  1596
  _cleanup_rollback_state                   |   382
  _create_log_schemas                       |    22
  _create_seq                               |    48
  _create_tbl                               |   176
  _dblink_close_cnx                         |   119
- _dblink_open_cnx                          |   143
+ _dblink_open_cnx                          |   142
  _dblink_sql_exec                          |  2309
  _delete_before_mark_group                 |    24
  _delete_between_marks_group               |    15
@@ -149,7 +149,7 @@ select funcname, calls from pg_stat_user_functions
  _gen_sql_seq                              |    40
  _gen_sql_tbl                              |    50
  _get_app_sequence_last_value              |    23
- _get_current_seq                          |  1012
+ _get_current_seq                          |  1014
  _get_default_tablespace                   |    11
  _get_lock_tblseqs_groups                  |   147
  _get_previous_mark_group                  |    47
@@ -160,7 +160,7 @@ select funcname, calls from pg_stat_user_functions
  _import_groups_conf_exec                  |    21
  _import_groups_conf_prepare               |    40
  _import_param_conf                        |    10
- _lock_groups                              |   328
+ _lock_groups                              |   333
  _log_stat_groups                          |    31
  _log_stat_sequence                        |    25
  _log_stat_table                           |    25
@@ -169,14 +169,14 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    24
  _move_tbl                                 |    50
- _pg_version_num                           |    23
- _purge_histories                          |    82
+ _pg_version_num                           |    21
+ _purge_histories                          |    83
  _remove_seq                               |    15
  _remove_sequences                         |    20
  _remove_tables                            |    35
  _remove_tbl                               |    40
  _repair_tbl                               |     2
- _reset_groups                             |    54
+ _reset_groups                             |    55
  _rlbk_async                               |     2
  _rlbk_check                               |   103
  _rlbk_end                                 |    80
@@ -196,16 +196,16 @@ select funcname, calls from pg_stat_user_functions
  _set_mark_groups_exec                     |   371
  _set_mark_groups_init                     |   107
  _set_mark_groups_lock                     |   107
- _set_time_stamp                           |   602
+ _set_time_stamp                           |   604
  _start_groups_exec                        |    59
  _start_groups_init                        |    59
  _start_groups_lock                        |    59
- _stop_groups_exec                         |    70
- _stop_groups_init                         |    77
- _stop_groups_lock                         |    77
+ _stop_groups_exec                         |    69
+ _stop_groups_init                         |    76
+ _stop_groups_lock                         |    76
  _truncate_trigger_fnct                    |    15
- _verify_all_groups                        |    56
- _verify_all_schemas                       |    56
+ _verify_all_groups                        |    54
+ _verify_all_schemas                       |    54
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
@@ -235,7 +235,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_export_parameters_configuration      |     5
  emaj_export_parameters_configuration      |     2
  emaj_force_drop_group                     |     6
- emaj_force_stop_group                     |    13
+ emaj_force_stop_group                     |    12
  emaj_forget_group                         |     3
  emaj_gen_sql_dump_changes_group           |    27
  emaj_gen_sql_dump_changes_group           |     5
@@ -250,7 +250,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_logging_groups                   |     6
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |    11
- emaj_get_version                          |    23
+ emaj_get_version                          |    21
  emaj_import_groups_configuration          |     4
  emaj_import_groups_configuration          |    17
  emaj_import_parameters_configuration      |     7
@@ -299,14 +299,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |    11
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    56
+ emaj_verify_all                           |    54
 (210 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1256
+ 1251
 (1 row)
 
 -----------------------------

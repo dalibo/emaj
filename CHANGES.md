@@ -6,6 +6,8 @@ E-Maj - Change log
   * Writing idempotent administration scripts:
     * Allow to start tables groups that are already in LOGGING state, using
       a new parameter in emaj_start_group() and emaj_start_groups() functions.
+    * Allow to stop tables groups that are already in IDLE state, using
+      a new parameter in emaj_stop_group() and emaj_stop_groups() functions.
     * Add 2 new functions to help building idempotent tables groups content
       definition scripts.
     * Add 3 helper functions to build group names arrays.

@@ -361,11 +361,15 @@ Fonctions de niveau groupe de tables
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_stop_group                            | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_stop_group>`                               | | [marque TEXT],              |                                       |
-|                                                  | | [reset.logs BOOLEAN]        |                                       |
+|                                                  | | [reset.logs BOOLEAN],       |                                       |
+|                                                  | | [groupe.inactif.admis       |                                       |
+|                                                  | | BOOLEAN]                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_stop_groups                           | | tableau.groupes TEXT[],     | nb.tables.et.seq INT                  |
 | <multiGroupsFunctions>`                          | | [marque TEXT],              |                                       |
-|                                                  | | [reset.logs BOOLEAN]        |                                       |
+|                                                  | | [reset.logs BOOLEAN],       |                                       |
+|                                                  | | [groupes.inactifs.admis     |                                       |
+|                                                  | | BOOLEAN]                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_unprotect_group                       | | groupe TEXT                 | 0/1 INT                               |
 | <emaj_unprotect_group>`                          |                               |                                       |

@@ -37,7 +37,7 @@ The function returns the number of tables and sequences contained by the group o
 
 To be sure that no transaction implying any table of the group is currently running, the *emaj_start_group()* function explicitly sets a *SHARE ROW EXCLUSIVE* lock on each table of the group. If transactions accessing these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 
-The function also performs a purge of the oldest events in the :ref:`emaj_hist <emaj_hist>` technical table.
+The function also purges the oldest events in the :ref:`emaj_hist <emaj_hist>` technical table and in some other internal tables.
 
 When a group is started, its state becomes "*LOGGING*".
 
@@ -200,13 +200,15 @@ Stop a tables group
 When one wishes to stop the updates recording for tables of a group, it is possible to deactivate the logging mechanism, using the command::
 
    SELECT emaj.emaj_stop_group('<group.name>'[, '<mark.name>'
-              [, <delete.old.logs?>]]);
-
-The function returns the number of tables and sequences contained in the group.
+              [, <delete.old.logs?>[, <idle.group.allowed?>]]]);
 
 If the mark parameter is not specified or is empty or *NULL*, a mark name is generated: "*STOP_%*" where '%' represents the current time expressed as *hh.mn.ss.mmmm*.
 
-The *<delete.old.logs?>* parameter is an optional boolean. By default, its value is *false*, meaning that all log tables and marks of the tables group are left unchanged. If the value is explicitly set to *true*, log tables are purged and old marks are deleted.
+The *<delete.old.logs?>* parameter is an optional boolean. By default, its value is *false*, meaning that all log tables and marks of the tables group are left unchanged. If the value is explicitly set to *true*, log tables are purged, old marks are deleted and no stop mark is set.
+
+The *<idle.group.allowed?>* parameter is also an optional boolean. By default, its value is *false*: if the tables group is already in *IDLE* state, the function returns an error. If the parameter is explicitely set to *true*, an *IDLE* group only raises a warning and the stop mark is not set. This parameter allows to write idempotent administration scripts.
+
+The function returns the number of tables and sequences contained in the group, or 0 if the tables group was already stopped.
 
 Stopping a tables group deactivates log triggers of application tables of the group. The setting of *SHARE ROW EXCLUSIVE* locks may lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 
@@ -216,13 +218,11 @@ However other uses of log tables and marks remain possible (visualization, stati
 
 When a group is stopped, its state becomes "*IDLE*" again.
 
-Executing the *emaj_stop_group()* function for a tables group already stopped does not generate an error. Only a warning message is returned.
-
-To insert a tables group stop into an idempotent script, it is possible to condition the operation to the group state, by using the :ref:`emaj_is_logging_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
-
 Using the *emaj_stop_groups()* function, several groups can be stopped at once::
 
    SELECT emaj.emaj_stop_groups('<group.names.array>'[, '<mark.name>'
-              [, <delete.old.logs?>]]);
+              [, <delete.old.logs?>[, <idle.groups.allowed?>]]]);
+
+If at least one tables group is already in *IDLE* state, the 4th parameter must be set to *true*. In this case the stop mark is set on all listed tables groups, this mark been a common point in time for further statistics or SQL scripts generation. The function returns the number of tables and sequences of groups effectively set from *LOGGING* to *IDLE* state.
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.

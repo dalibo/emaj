@@ -1164,7 +1164,7 @@ select hist_id, hist_function, hist_event, hist_object,
     3456 | SET_MARK_GROUP           | TIME STAMP SET     | 3403              |                                                          | postgres
     3457 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark5                                                    | postgres
     3458 | DELETE_BEFORE_MARK_GROUP | BEGIN              | phil's group#3",  | Mark4                                                    | postgres
-    3459 | PURGE_HISTORIES          |                    |                   | 274 emaj_hist rows deleted ; 16 log session rows deleted | postgres
+    3459 | PURGE_HISTORIES          |                    |                   | 284 emaj_hist rows deleted ; 16 log session rows deleted | postgres
     3460 | DELETE_BEFORE_MARK_GROUP | END                | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark          | postgres
     3461 | SET_PARAM                | DELETED PARAMETER  | history_retention | From: 0 second to: 1 year                                | postgres
 (54 rows)

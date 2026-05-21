@@ -7211,8 +7211,8 @@ $_start_groups_init$
     SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup,
                                    p_lockGroups := TRUE, p_checkIdle := NOT p_loggingGroupsAllowed)
       INTO p_groupNames;
-    IF p_groupNames IS NOT NULL THEN
 -- If there is at least 1 group to process, go on.
+    IF p_groupNames IS NOT NULL THEN
 -- Check that no group is damaged.
       PERFORM 0
         FROM emaj._verify_groups(p_groupNames, TRUE);
@@ -7252,6 +7252,7 @@ $_start_groups_lock$
 -- This function materializes a stable point for the operation. It locks all tables of processed groups and set an E-Maj time-stamp.
 -- One sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
 -- risk of deadlock.
+-- The function sets a time stamp that will be used to set the start mark.
 -- Input: idle group names array,
 --        logging group names array,
 --        boolean indicating whether the function is called by a multi group function,
@@ -7272,6 +7273,7 @@ $_start_groups_lock$
       SELECT emaj._set_time_stamp(CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END,
                                   'S') INTO v_timeId;
     END IF;
+--
     RETURN v_timeId;
   END;
 $_start_groups_lock$;
@@ -7285,8 +7287,8 @@ $_start_groups_exec$
 -- It resets groups when requested, activates the log triggers of all the tables for one or several groups, sets the first mark of the
 --   new log session.
 -- It also delete oldest rows in historical tables.
--- Input: idle group names array,
---        all group names array,
+-- Input: all group names array,
+--        idle group names array,
 --        name of the mark to set,
 --        boolean indicating whether the function is called by a multi group function,
 --        boolean indicating whether the function must reset the group at start time,
@@ -7348,56 +7350,67 @@ $_start_groups_exec$
     RETURN v_nbTblSeq;
   END;
 $_start_groups_exec$;
-CREATE OR REPLACE FUNCTION emaj.emaj_stop_group(p_groupName TEXT, p_mark TEXT DEFAULT 'STOP_%', p_resetLogs BOOLEAN DEFAULT FALSE)
+CREATE OR REPLACE FUNCTION emaj.emaj_stop_group(p_groupName TEXT, p_mark TEXT DEFAULT 'STOP_%', p_resetLogs BOOLEAN DEFAULT FALSE,
+                                                p_idleGroupAllowed BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_group$
 -- This function de-activates the log triggers of all the tables for a group.
--- Execute several emaj_stop_group functions for the same group doesn't produce any error.
+-- It doesn't reset log tables by default, but logs content may be reset.
+-- By default, trying to stop a group already in IDLE state raises an exception. But it is possible to only raise a warning in this case.
 -- Input: group name,
 --        name of the mark to set (if omitted, STOP_<current timestamp>)
 --          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
---          if omitted or if null or '', the mark is set to 'STOP_%', % representing the current timestamp
+--          if omitted or if null or '', the mark is set to 'STOP_%', % representing the current timestamp,
 --        boolean indicating whether the log tables of the group must be reset, false by default,
--- Output: number of processed tables and sequences
+--        boolean indicating whether tables groups already in IDLE state are allowed, false by default.
+-- Output: number of processed tables and sequences in previously logging groups
   DECLARE
-    v_groupNames             TEXT[] = ARRAY[p_groupName];
+    v_allGroups              TEXT[];
+    v_idleGroups             TEXT[];
+    v_loggingGroups          TEXT[];
     v_timeId                 BIGINT;
   BEGIN
 -- Initialize the groups stop operation.
-    SELECT * FROM emaj._stop_groups_init(v_groupNames, p_mark, FALSE, FALSE, p_resetLogs)
-      INTO v_groupNames, p_mark;
+    SELECT * FROM emaj._stop_groups_init(ARRAY[p_groupName], p_mark, FALSE, FALSE, p_resetLogs, p_idleGroupAllowed)
+      INTO v_allGroups, p_mark, v_loggingGroups, v_idleGroups;
 -- Perform the groups lock step.
-    SELECT emaj._stop_groups_lock(v_groupNames, FALSE, FALSE)
+    SELECT emaj._stop_groups_lock(v_loggingGroups, v_idleGroups, FALSE, FALSE)
       INTO v_timeId;
 -- Execute the groups stop operation.
-    RETURN emaj._stop_groups_exec(v_groupNames, p_mark, FALSE, FALSE, p_resetLogs, v_timeId);
+    RETURN emaj._stop_groups_exec(v_allGroups, v_loggingGroups, p_mark, FALSE, FALSE, p_resetLogs, v_timeId);
   END;
 $emaj_stop_group$;
-COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT, TEXT, BOOLEAN) IS
+COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT, TEXT, BOOLEAN, BOOLEAN) IS
 $$Stops an E-Maj group.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_stop_groups(p_groupNames TEXT[], p_mark TEXT DEFAULT 'STOP_%', p_resetLogs BOOLEAN DEFAULT FALSE)
+CREATE OR REPLACE FUNCTION emaj.emaj_stop_groups(p_groupNames TEXT[], p_mark TEXT DEFAULT 'STOP_%', p_resetLogs BOOLEAN DEFAULT FALSE,
+                                                 p_idleGroupsAllowed BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_groups$
 -- This function de-activates the log triggers of all the tables for a groups array.
--- Groups already not in LOGGING state are simply not processed.
+-- It doesn't reset log tables by default, but logs content may be reset.
+-- By default, trying to stop a group already in IDLE state raises an exception. But it is possible to only raise a warning in this case.
 -- Input: array of group names,
---        stop mark name to set (by default, STOP_<current timestamp>)
+--        stop mark name to set (by default, STOP_<current timestamp>),
 --        boolean indicating whether the log tables of the group must be reset, false by default,
--- Output: number of processed tables and sequences
+--        boolean indicating whether tables groups already in IDLE state are allowed, false by default.
+-- Output: number of processed tables and sequences in previously logging groups
   DECLARE
+    v_allGroups              TEXT[];
+    v_idleGroups             TEXT[];
+    v_loggingGroups          TEXT[];
     v_timeId                 BIGINT;
   BEGIN
 -- Initialize the groups stop operation.
-    SELECT * FROM emaj._stop_groups_init(p_groupNames, p_mark, TRUE, FALSE, p_resetLogs)
-      INTO p_groupNames, p_mark;
+    SELECT * FROM emaj._stop_groups_init(p_groupNames, p_mark, TRUE, FALSE, p_resetLogs, p_idleGroupsAllowed)
+      INTO v_allGroups, p_mark, v_loggingGroups, v_idleGroups;
 -- Perform the groups lock step.
-    SELECT emaj._stop_groups_lock(p_groupNames, TRUE, FALSE)
+    SELECT emaj._stop_groups_lock(v_loggingGroups, v_idleGroups, TRUE, FALSE)
       INTO v_timeId;
 -- Execute the groups stop operation.
-    RETURN emaj._stop_groups_exec(p_groupNames, p_mark, TRUE, FALSE, p_resetLogs, v_timeId);
+    RETURN emaj._stop_groups_exec(v_allGroups, v_loggingGroups, p_mark, TRUE, FALSE, p_resetLogs, v_timeId);
   END;
 $emaj_stop_groups$;
-COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[], TEXT, BOOLEAN) IS
+COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[], TEXT, BOOLEAN, BOOLEAN) IS
 $$Stops several E-Maj groups.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_force_stop_group(p_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -7405,7 +7418,9 @@ $emaj_force_stop_group$
 -- This function forces a tables group stop.
 -- The differences with the standart emaj_stop_group() function are:
 --   - it silently ignores errors when an application table or one of its triggers is missing,
---   - no stop mark is set (to avoid error)
+--   - no stop mark is set (to avoid error),
+--   - the group must be in logging state,
+--   - logs and marks are always left unchanged.
 -- Input: group name
 -- Output: number of processed tables and sequences
   DECLARE
@@ -7413,19 +7428,20 @@ $emaj_force_stop_group$
     v_timeId                 BIGINT;
   BEGIN
 -- Initialize the groups stop operation.
-    SELECT p_groupNames FROM emaj._stop_groups_init(v_groupNames, NULL, FALSE, TRUE, FALSE)
+    SELECT p_groupNames FROM emaj._stop_groups_init(v_groupNames, NULL, FALSE, TRUE, FALSE, FALSE)
       INTO v_groupNames;
 -- Perform the groups lock step.
-    SELECT emaj._stop_groups_lock(v_groupNames, FALSE, TRUE)
+    SELECT emaj._stop_groups_lock(v_groupNames, NULL, FALSE, TRUE)
       INTO v_timeId;
 -- Execute the groups stop operation.
-    RETURN emaj._stop_groups_exec(v_groupNames, NULL, FALSE, TRUE, FALSE, v_timeId);
+    RETURN emaj._stop_groups_exec(v_groupNames, v_groupNames, NULL, FALSE, TRUE, FALSE, v_timeId);
   END;
 $emaj_force_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_force_stop_group(TEXT) IS
 $$Forces an E-Maj group stop.$$;
 CREATE OR REPLACE FUNCTION emaj._stop_groups_init(INOUT p_groupNames TEXT[], INOUT p_mark TEXT, p_multiGroup BOOLEAN, p_isForced BOOLEAN,
-                                                  p_resetLogs BOOLEAN)
+                                                  p_resetLogs BOOLEAN, p_idleGroupsAllowed BOOLEAN,
+                                                  OUT p_loggingGroups TEXT[], OUT p_idleGroups TEXT[])
 LANGUAGE plpgsql AS
 $_stop_groups_init$
 -- This function performs the initial step of emaj_stop_group() and emaj_stop_groups() and emaj_force_stop_group() functions.
@@ -7433,10 +7449,11 @@ $_stop_groups_init$
 -- Input: array of group names, name of the mark to set, boolean indicating whether the function is called by a multi group function,
 --        boolean indicating whether the function is in FORCE mode,
 --        boolean indicating whether the log tables of the group must be reset.
--- Output: adjusted group names array and adjusted mark name
+--        boolean indicating whether tables groups already in IDLE state are allowed.
+-- Output: adjusted group names array and adjusted mark name, logging groups array and idle groups array.
   DECLARE
-    v_groupList              TEXT;
-    v_count                  INT;
+    v_idleGroupsList         TEXT;
+    v_nbIdleGroups           INT;
   BEGIN
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -7446,26 +7463,10 @@ $_stop_groups_init$
               'BEGIN', array_to_string(p_groupNames, ','),
               CASE WHEN p_resetLogs THEN 'With logs reset' ELSE 'Without logs reset' END);
 -- Check the group names.
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup,
+                                   p_lockGroups := TRUE, p_checkLogging := NOT p_idleGroupsAllowed)
       INTO p_groupNames;
--- For all already IDLE groups, generate a warning message and remove them from the list of the groups to process.
-    SELECT string_agg(group_name, ', ' ORDER BY group_name), count(*)
-      INTO v_groupList, v_count
-      FROM emaj.emaj_group
-      WHERE group_name = ANY(p_groupNames)
-       AND NOT group_is_logging;
-    IF v_count = 1 THEN
-      RAISE WARNING '_stop_groups_init: The group "%" is already in IDLE state.', v_groupList;
-    END IF;
-    IF v_count > 1 THEN
-      RAISE WARNING '_stop_groups_init: The groups "%" are already in IDLE state.', v_groupList;
-    END IF;
--- Process the LOGGING groups.
-    SELECT array_agg(DISTINCT group_name)
-      INTO p_groupNames
-      FROM emaj.emaj_group
-      WHERE group_name = ANY(p_groupNames)
-        AND group_is_logging;
+-- If there is at least 1 group to process, go on.
     IF p_groupNames IS NOT NULL THEN
 -- Process the supplied mark name (except if the function is called by emaj_force_stop_group()).
       IF NOT p_isForced THEN
@@ -7478,41 +7479,72 @@ $_stop_groups_init$
         END IF;
       END IF;
     END IF;
+-- Build both idle and logging groups arrays.
+    SELECT array_agg(group_name ORDER BY group_name) FILTER (WHERE NOT group_is_logging),
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging),
+           string_agg(group_name, ', ' ORDER BY group_name) FILTER (WHERE NOT group_is_logging),
+           count(group_name) FILTER (WHERE NOT group_is_logging)
+      INTO p_idleGroups, p_loggingGroups, v_idleGroupsList, v_nbIdleGroups
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(p_groupNames);
+-- For all already IDLE groups, generate a warning message.
+    IF v_nbIdleGroups = 1 THEN
+      RAISE WARNING '_stop_groups_init: The group "%" is already in IDLE state.', v_idleGroupsList;
+    END IF;
+    IF v_nbIdleGroups > 1 THEN
+      RAISE WARNING '_stop_groups_init: The groups "%" are already in IDLE state.', v_idleGroupsList;
+    END IF;
+--
     RETURN;
   END;
 $_stop_groups_init$;
-CREATE OR REPLACE FUNCTION emaj._stop_groups_lock(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_isForced BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._stop_groups_lock(p_loggingGroups TEXT[], p_idleGroups TEXT[], p_multiGroup BOOLEAN, p_isForced BOOLEAN)
 RETURNS BIGINT
 LANGUAGE plpgsql AS
 $_stop_groups_lock$
 -- This function materializes a stable point for the operation. It locks all tables of processed groups and set an E-Maj time-stamp.
 -- One sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
 -- risk of deadlock.
--- Input: array of group names, boolean indicating whether the function is called by a multi group function,
---        boolean indicating whether the function is in FORCE mode
+-- The function sets the time stamp that will be used to set the stop mark.
+-- Input: logging group names array,
+--        idle group names array,
+--        boolean indicating whether the function is called by a multi group function,
+--        boolean indicating whether the function is in FORCE mode.
 -- Output: timeId of the groups stop
   DECLARE
     v_timeId                 BIGINT;
   BEGIN
-    IF p_groupNames IS NOT NULL THEN
--- Lock all tables to get a stable point.
-      PERFORM emaj._lock_groups(p_groupNames, 'SHARE ROW EXCLUSIVE', p_multiGroup);
--- Get a time stamp id of type 'X' for the operation.
-      SELECT emaj._set_time_stamp(CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
-                                    WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
-                                    ELSE 'FORCE_STOP_GROUP' END, 'X') INTO v_timeId;
+-- Lock all tables to get a stable point. The lock type depends on the group state.
+    IF p_loggingGroups IS NOT NULL THEN
+      PERFORM emaj._lock_groups(p_loggingGroups, 'SHARE ROW EXCLUSIVE', p_multiGroup);
     END IF;
+    IF p_idleGroups IS NOT NULL THEN
+      PERFORM emaj._lock_groups(p_idleGroups, 'ROW EXCLUSIVE', p_multiGroup);
+    END IF;
+-- Get a time stamp id of type 'X', except when it is not needed: no group to process or a single group already idle.
+    IF (p_loggingGroups IS NOT NULL OR p_idleGroups IS NOT NULL) AND
+       (p_multiGroup OR p_loggingGroups IS NOT NULL) THEN
+      SELECT emaj._set_time_stamp(CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
+                                       WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
+                                       ELSE 'FORCE_STOP_GROUP' END, 'X')
+        INTO v_timeId;
+    END IF;
+--
     RETURN v_timeId;
   END;
 $_stop_groups_lock$;
-CREATE OR REPLACE FUNCTION emaj._stop_groups_exec(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_isForced BOOLEAN,
-                                                  p_resetLogs BOOLEAN, p_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._stop_groups_exec(p_allGroups TEXT[], p_loggingGroups TEXT[], p_mark TEXT, p_multiGroup BOOLEAN,
+                                                  p_isForced BOOLEAN, p_resetLogs BOOLEAN, p_timeId BIGINT)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_stop_groups_exec$
 -- This function effectively de-activates the log triggers of all the tables for a group.
--- Input: array of group names, a mark name to set, and a boolean indicating if the function is called by a multi group function,
---        boolean indicating whether the function is in FORCE mode, operation time id
+-- Input: all group names array,
+--        logging group names array,
+--        mark name to set,
+--        boolean indicating if the function is called by a multi group function,
+--        boolean indicating whether the function is in FORCE mode,
+--        operation time id.
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   DECLARE
@@ -7522,13 +7554,13 @@ $_stop_groups_exec$
     r_schema                 RECORD;
     r_tblsq                  RECORD;
   BEGIN
-    IF p_groupNames IS NOT NULL THEN
+    IF p_loggingGroups IS NOT NULL THEN
 -- Verify that all application schemas for the groups still exists.
       FOR r_schema IN
         SELECT DISTINCT rel_schema
           FROM emaj.emaj_relation
           WHERE upper_inf(rel_time_range)
-            AND rel_group = ANY (p_groupNames)
+            AND rel_group = ANY (p_loggingGroups)
             AND NOT EXISTS
                  (SELECT nspname
                     FROM pg_catalog.pg_namespace
@@ -7547,7 +7579,7 @@ $_stop_groups_exec$
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind
           FROM emaj.emaj_relation
           WHERE upper_inf(rel_time_range)
-            AND rel_group = ANY (p_groupNames)
+            AND rel_group = ANY (p_loggingGroups)
           ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
         IF r_tblsq.rel_kind = 'r' THEN
@@ -7597,21 +7629,31 @@ $_stop_groups_exec$
         END IF;
         v_nbTblSeq = v_nbTblSeq + 1;
       END LOOP;
+    END IF;
+    IF p_allGroups IS NOT NULL THEN
 -- If requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs.
       IF p_resetLogs THEN
-        PERFORM emaj._reset_groups(p_groupNames);
+        PERFORM emaj._reset_groups(p_allGroups);
       END IF;
--- If the function is not called by emaj_force_stop_group(), set the stop mark for each group,
-      IF NOT p_isForced THEN
-        PERFORM emaj._set_mark_groups_exec(p_groupNames, p_mark, NULL, p_multiGroup, p_timeId);
--- and set the number of log rows to 0 for these marks.
+-- Set the stop mark on all groups if it has to be set
+-- No mark will be set if:
+--   - no group to process,
+--   - or mono group stop and the group is already idle.
+--   - or the group stop is forced,
+--   - or logs are reset,
+-- Note that the mark set for multi_groups stop will be usable for multi-groups statistic or SQL generation functions.
+      IF (p_multiGroup OR p_loggingGroups IS NOT NULL) AND NOT p_isForced AND NOT p_resetLogs THEN
+        PERFORM emaj._set_mark_groups_exec(p_allGroups, p_mark, NULL, p_multiGroup, p_timeId);
+-- and immediately set the number of log rows to 0 for these marks.
         UPDATE emaj.emaj_mark m
           SET mark_log_rows_before_next = 0
-          WHERE mark_group = ANY (p_groupNames)
+          WHERE mark_group = ANY (p_allGroups)
             AND mark_time_id = p_timeId;
       END IF;
+    END IF;
 -- Process each tables group separately to ...
-      FOREACH v_group IN ARRAY p_groupNames
+    IF p_loggingGroups IS NOT NULL THEN
+      FOREACH v_group IN ARRAY p_loggingGroups
       LOOP
 -- Get the latest log session of the tables group.
         SELECT lses_time_range
@@ -7634,14 +7676,14 @@ $_stop_groups_exec$
 -- Update the emaj_group table to set the groups state and the rollback protections.
       UPDATE emaj.emaj_group
         SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
-        WHERE group_name = ANY (p_groupNames);
+        WHERE group_name = ANY (p_loggingGroups);
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
                    WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
                    ELSE 'FORCE_STOP_GROUP' END,
-             'END', array_to_string(p_groupNames, ','), v_nbTblSeq || ' tables/sequences processed');
+             'END', array_to_string(p_loggingGroups, ','), v_nbTblSeq || ' tables/sequences processed');
 --
     RETURN v_nbTblSeq;
   END;
@@ -15396,7 +15438,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:15681: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:15723: NOTICE:  E-Maj installation: E-Maj successfully installed.
 -- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
 WITH start_time_data AS (
   SELECT clock_timestamp() - lower(verh_time_range) AS duration

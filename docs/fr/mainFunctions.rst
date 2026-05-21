@@ -29,15 +29,15 @@ S'il est spécifié, le nom de la marque initiale peut contenir un caractère g�
 
 Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : "*START_%*", où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
  
-Le paramètre *<effacer.anciens.logs?>* est un booléen optionnel. Par défaut sa valeur est égal à *vrai* (*true*), ce qui signifie que les tables de log du groupe de tables sont purgées de toutes anciennes données avant l'activation des triggers de log. Si le paramètre est explicitement positionné à *faux* (*false*), les anciens enregistrements sont conservés dans les tables de log. De la même manière, les anciennes marques sont conservées, même si ces dernières ne sont alors plus utilisables pour un éventuel rollback (des mises à jour ont pu être effectuées sans être tracées alors que le groupe de tables était arrêté).
+Le paramètre *<effacer.anciens.logs?>* est un booléen optionnel. Par défaut sa valeur est égale à *vrai* (*true*), ce qui signifie que les tables de log du groupe de tables sont purgées de toutes anciennes données avant l'activation des triggers de log. Si le paramètre est explicitement positionné à *faux* (*false*), les anciens enregistrements sont conservés dans les tables de log. De la même manière, les anciennes marques sont conservées, même si ces dernières ne sont alors plus utilisables pour un éventuel rollback (des mises à jour ont pu être effectuées sans être tracées alors que le groupe de tables était arrêté).
 
-Le paramètre *<groupe.actif.admis?>* est aussi un booléen optionnel. Par défaut sa valeur est égal à *faux* (*false*) : si le groupe de tables est déjà actif, la fonction retourne une erreur. Si le paramètre est explicitement positionné à *vrai* (*true*), un groupe actif ne génère qu’un message d’avertissement et la marque est posée. Ce paramètre permet d’écrire des scripts d’administration idempotents.
+Le paramètre *<groupe.actif.admis?>* est aussi un booléen optionnel. Par défaut sa valeur est égale à *faux* (*false*) : si le groupe de tables est déjà actif, la fonction retourne une erreur. Si le paramètre est explicitement positionné à *vrai* (*true*), un groupe actif ne génère qu’un message d’avertissement et la marque est posée. Ce paramètre permet d’écrire des scripts d’administration idempotents.
 
 La fonction retourne le nombre de tables et de séquences contenues dans le groupe, ou 0 si le groupe était déjà *actif*.
 
 Pour être certain qu'aucune transaction impliquant les tables du groupe n'est en cours, la fonction *emaj_start_group()* pose explicitement sur chacune des tables du groupe un verrou de type *SHARE ROW EXCLUSIVE*. Si des transactions accédant à ces tables sont en cours, ceci peut se traduire par la survenue d'une étreinte fatale (*deadlock*). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le deadlock est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives.
 
-La fonction procède également à la purge des événements les plus anciens de la table technique :ref:`emaj_hist <emaj_hist>`.
+La fonction procède également à la purge des événements les plus anciens de la table technique :ref:`emaj_hist <emaj_hist>` et de quelques autres tables internes.
 
 A l'issue du démarrage d'un groupe, celui-ci devient actif ("*LOGGING*").
 
@@ -46,7 +46,7 @@ Plusieurs groupes de tables peuvent être démarrés en même temps, en utilisan
    SELECT emaj.emaj_start_groups('<tableau.des.groupes>'[, '<nom.de.marque>'
               [, <effacer.anciens.logs?> [, <groupes.actifs.admis?> ]]]);
 
-Si au moins un groupe de tables est déjà *actif*, le 4ème paramètre doit être positionné à *vrai*. La fonction retourne le nombre de tables et séquences des groupes effectivement passés de l’état *inactif* à *actif*.
+Si au moins un groupe de tables est déjà *actif*, le 4ème paramètre doit être positionné à *vrai*. Mais les tables et séquences des groupes déjà actifs ne sont pas comptés dans le nombre de tables et séquences retourné par la fonction.
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 
@@ -200,14 +200,14 @@ Arrêter un groupe de tables
 Lorsqu'on souhaite arrêter l'enregistrement des mises à jour des tables d'un groupe, il est possible de désactiver le log par la commande SQL ::
 
    SELECT emaj.emaj_stop_group('<nom.du.groupe>'[, '<nom.de.marque'>
-              [, <effacer.anciens.logs?> ]]);
-
-La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
+              [, <effacer.anciens.logs?> [, <groupe.inactif.admis?>]]]);
 
 La fonction pose automatiquement une marque correspondant à la fin de l'enregistrement. 
 Si le paramètre représentant cette marque n'est pas spécifié ou s'il est vide ou *NULL*, un nom est automatiquement généré : « *STOP_%* », où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
 
-Le paramètre *<effacer.anciens.logs?>* est un booléen optionnel. Par défaut sa valeur est égal à faux (*false*), ce qui signifie que les tables de log et les marques du groupe de tables sont conservées en l’état. Si le paramètre est explicitement positionné à vrai (*true*), les tables de log sont vidées et les marques existantes supprimées.
+Le paramètre *<effacer.anciens.logs?>* est un booléen optionnel. Par défaut sa valeur est égale à faux (*false*), ce qui signifie que les tables de log et les marques du groupe de tables sont conservées en l’état. Si le paramètre est explicitement positionné à vrai (*true*), les tables de log sont vidées, les marques existantes supprimées et aucune marque d’arrêt n’est posée.
+
+La fonction retourne le nombre de tables et de séquences contenues dans le groupe, ou 0 si le groupe était déjà arrêté.
 
 L'arrêt d'un groupe de table désactive les triggers de log des tables applicatives du groupe. La pose de verrous de type *SHARE ROW EXCLUSIVE* qu’entraîne cette opération peut se traduire par la survenue d'une étreinte fatale (*deadlock*).  Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le deadlock est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives.
 
@@ -217,14 +217,12 @@ Pour autant, les autres usages des tables de log et des marques, si elles n’on
 
 A l'issue de l'arrêt d'un groupe, celui-ci redevient inactif.
 
-Exécuter la fonction *emaj_stop_group()* sur un groupe de tables déjà arrêté ne génère pas d'erreur. Seul un message d'avertissement est retourné.
-
-Pour insérer l’arrêt d’un groupe de tables dans un script idempotent, il est possible de conditionner l’opération à l’état préalable du groupe, en utilisant la fonction :ref:`emaj_is_logging_group()<emaj_exist_state_mark_group>` dans une clause *WHERE*.
-
 Plusieurs groupes de tables peuvent être arrêtés en même temps, en utilisant la fonction *emaj_stop_groups()* ::
 
    SELECT emaj.emaj_stop_groups('<tableau.des.groupes>'[, '<nom.de.marque'>
-              [, <effacer.anciens.logs?> ]]);
+              [, <effacer.anciens.logs?> [, <groupes.inactifs.admis?>]]]);
+
+Si au moins un groupe de tables est déjà inactif, le 4ème paramètre doit être positionné à vrai. Dans ce cas, la marque d’arrêt est posée sur tous les groupes de tables cités afin d’en faire une référence commune à tous les groupes pour d’éventuelles productions de statistiques ou de scripts SQL de rejeu des changements. La fonction retourne le nombre de tables et séquences des groupes effectivement passés de l’état actif à inactif. 
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`. 
 
