@@ -23,13 +23,13 @@ $APPNAME = 'emajRollbackMonitor';
 
 # Just asking for help.
 if ((!@ARGV) || ($ARGV[0] eq '--help') || ($ARGV[0] eq '?')) {
-  print_help();
+  printHelp();
   exit 0;
 }
 
 # Just asking for version.
 if ($ARGV[0] eq '--version') {
-  print_version();
+  printVersion();
   exit 0;
 }
 
@@ -190,7 +190,13 @@ while ($maxIter == 0 || $nbIter < $maxIter) {
 $dbh->disconnect
   or die("Disconnect failed.\n$DBI::errstr\n");
 
-sub print_help {
+#------------------------------------------------------------------------------
+#
+# Sub-functions
+#
+#------------------------------------------------------------------------------
+
+sub printHelp {
   print qq{$PROGRAM belongs to the E-Maj PostgreSQL extension (version $VERSION).
 It monitors E-Maj rollback operations in progress or recently completed.
   
@@ -220,7 +226,7 @@ Examples:
 };
 }
 
-sub print_version {
+sub printVersion {
   print ("This version of $PROGRAM belongs to E-Maj version $VERSION.\n");
   print ("Type '$PROGRAM --help' to get usage information\n\n");
 }

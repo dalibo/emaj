@@ -27,13 +27,13 @@ $APPNAME = 'emajParallelRollback';
 
 # Just asking for help.
 if ((!@ARGV) || ($ARGV[0] eq '--help') || ($ARGV[0] eq '?')) {
-  print_help();
+  printHelp();
   exit 0;
 }
 
 # Just asking for version.
 if ($ARGV[0] eq '--version') {
-  print_version();
+  printVersion();
   exit 0;
 }
 
@@ -72,14 +72,14 @@ GetOptions(
 # other parameters
   "a"   => sub { $isAlterGroupAllowed = 'true'; },
   "c:s" => \$comment,
-  "g=s" => \&check_opt_groups,
+  "g=s" => \&checkOptGroups,
   "l"   => sub {$isLogged = 'true'; $msgRlbk = 'Logged rollback'; },
   "m:s" => \$mark,
   "s:i" => \$nbSession,
   "v"   => sub { $verbose = 1; }
 );
 
-sub check_opt_groups {
+sub checkOptGroups {
   $groups = $_[1];
   $groups =~ s/,$//g;
   if ( $groups =~ s/,/','/g ) {
@@ -248,8 +248,13 @@ foreach $execReportRows ( @$execReportRows) {
   print ("    ".@$execReportRows[0].": ".@$execReportRows[1]."\n");
 }
 
+#------------------------------------------------------------------------------
+#
+# Sub-functions
+#
+#------------------------------------------------------------------------------
 
-sub print_help {
+sub printHelp {
   print qq{$PROGRAM belongs to the E-Maj PostgreSQL extension (version $VERSION).
 It performs E-Maj rollback for one or several groups and a previously set mark, processing tables in parallel.
 
@@ -282,7 +287,7 @@ Examples:
 };
 }
 
-sub print_version {
+sub printVersion {
   print ("This version of $PROGRAM belongs to E-Maj version $VERSION.\n");
   print ("Type '$PROGRAM --help' to get usage information\n");
 }

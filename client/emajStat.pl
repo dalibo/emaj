@@ -227,16 +227,16 @@ sub processOptions {
 		"regression-test|rt" => \$regressTest,
 		"version" => \$askVersion,
 	)
-		or print_help();
+		or printHelp();
 
 # Just asking for help.
 	if ($askHelp) {
-		print_help();
+		printHelp();
 	}
 
 # Just asking for version.
 	if ($askVersion) {
-		print_version();
+		printVersion();
 	}
 
 # Check options.
@@ -261,7 +261,7 @@ sub processOptions {
 }
 
 # Display the help message.
-sub print_help {
+sub printHelp {
 	print qq{
 $PROGRAM belongs to the E-Maj PostgreSQL extension (version $VERSION).
 It monitors the tables and sequences changes logged by E-Maj.
@@ -304,7 +304,7 @@ Examples:
 }
 
 # Display the program version.
-sub print_version {
+sub printVersion {
 	print ("This version of $PROGRAM belongs to E-Maj version $VERSION.\n");
 	print ("Type '$PROGRAM --help' to get usage information.\n\n");
 	exit 0;
@@ -466,7 +466,7 @@ sub refreshStructures {
 	$structureJustRefreshed = 1;
 }
 
-sub	computeGlobalChanges {
+sub computeGlobalChanges {
 	if (defined($previousEmajGlobalSeq)) {
 		$emajChangesSincePrevious = $currentEmajGlobalSeq - $previousEmajGlobalSeq;
 		$emajRefreshDuration = $currentDbEpoch - $previousDbEpoch;
