@@ -1,6 +1,6 @@
--- misc.sql : test miscellaneous functions
+-- Misc.sql : test miscellaneous functions.
 --   emaj_set_param(),
---   emaj_reset_group(), 
+--   emaj_reset_group(),
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
 --   emaj_get_current_log_table(),
@@ -10,406 +10,405 @@
 --   emaj_import_parameters_configuration() and emaj_export_parameters_configuration(),
 --   emaj_purge_histories().
 --
--- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+-- Do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement).
 \set VERBOSITY terse
--- set sequence restart value
-select public.handle_emaj_sequences(5200);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(5200);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
--- define and create the temp file directory to be used by the script
+-- Define and create the temp file directory to be used by the script.
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/misc'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
-   
 -----------------------------
--- emaj_set_param() test
+-- emaj_set_param() test.
 -----------------------------
--- illegal key
-select emaj.emaj_set_param('A key', 'a value');
+-- Illegal key.
+SELECT emaj.emaj_set_param('A key', 'a value');
 ERROR:  emaj_set_param: The "a key" key is unknown.
--- invalid interval format
-select emaj.emaj_set_param('history_retention', 'not an interval value');
+-- Invalid interval format.
+SELECT emaj.emaj_set_param('history_retention', 'not an interval value');
 ERROR:  emaj_set_param: The "history_retention" value ("not an interval value") is not a valid time interval.
--- update a key with a real value change
-select emaj.emaj_set_param('history_retention', '1 MONTHS');
+-- Update a key with a real value change.
+SELECT emaj.emaj_set_param('history_retention', '1 MONTHS');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- update a key with the same value
-select emaj.emaj_set_param('history_retention', '1 MONTHS');
+-- Update a key with the same value.
+SELECT emaj.emaj_set_param('history_retention', '1 MONTHS');
  emaj_set_param 
 ----------------
               0
 (1 row)
 
--- reset a key (here in upper case) to its default value
-select emaj.emaj_set_param('HISTORY_RETENTION', NULL);
+-- Reset a key (here in upper case) to its default value.
+SELECT emaj.emaj_set_param('HISTORY_RETENTION', NULL);
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- reset a key with no change
-select emaj.emaj_set_param('history_retention', NULL);
+-- Reset a key with no change.
+SELECT emaj.emaj_set_param('history_retention', NULL);
  emaj_set_param 
 ----------------
               0
 (1 row)
 
 -----------------------------
--- emaj_reset_group() test
+-- emaj_reset_group() test.
 -----------------------------
--- group is unknown
-select emaj.emaj_reset_group(NULL);
+-- Group is unknown.
+SELECT emaj.emaj_reset_group(NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_reset_group('unknownGroup');
+SELECT emaj.emaj_reset_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- group still in logging state
-select emaj.emaj_reset_group('myGroup1');
+-- Group still in logging state.
+SELECT emaj.emaj_reset_group('myGroup1');
 ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
--- log tables are not yet empty
-select count(*) from emaj_myschema1.mytbl1_log;
+-- Log tables are not yet empty.
+SELECT count(*) FROM emaj_myschema1.mytbl1_log;
  count 
 -------
     18
 (1 row)
 
-select count(*) from emaj_myschema1.mytbl2_log;
+SELECT count(*) FROM emaj_myschema1.mytbl2_log;
  count 
 -------
      2
 (1 row)
 
-select count(*) from emaj_myschema1.mytbl2b_log;
+SELECT count(*) FROM emaj_myschema1.mytbl2b_log;
  count 
 -------
      2
 (1 row)
 
-select count(*) from emaj_myschema1."myTbl3_log";
+SELECT count(*) FROM emaj_myschema1."myTbl3_log";
  count 
 -------
     10
 (1 row)
 
-select count(*) from emaj_myschema1.mytbl4_log;
+SELECT count(*) FROM emaj_myschema1.mytbl4_log;
  count 
 -------
      1
 (1 row)
 
--- should be OK
-begin;
-  select emaj.emaj_stop_group('myGroup1');
+-- Should be OK.
+BEGIN;
+  SELECT emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
                7
 (1 row)
 
-  select emaj.emaj_reset_group('myGroup1');
+  SELECT emaj.emaj_reset_group('myGroup1');
  emaj_reset_group 
 ------------------
                 7
 (1 row)
 
-  select count(*) from emaj_myschema1.mytbl1_log;
+  SELECT count(*) FROM emaj_myschema1.mytbl1_log;
  count 
 -------
      0
 (1 row)
 
-  select count(*) from emaj_myschema1.mytbl2_log;
+  SELECT count(*) FROM emaj_myschema1.mytbl2_log;
  count 
 -------
      0
 (1 row)
 
-  select count(*) from emaj_myschema1.mytbl2b_log;
+  SELECT count(*) FROM emaj_myschema1.mytbl2b_log;
  count 
 -------
      0
 (1 row)
 
-  select count(*) from emaj_myschema1."myTbl3_log";
+  SELECT count(*) FROM emaj_myschema1."myTbl3_log";
  count 
 -------
      0
 (1 row)
 
-  select count(*) from emaj_myschema1.mytbl4_log;
+  SELECT count(*) FROM emaj_myschema1.mytbl4_log;
  count 
 -------
      0
 (1 row)
 
-rollback;
-begin;
-  select emaj.emaj_stop_group('emptyGroup');
+ROLLBACK;
+BEGIN;
+  SELECT emaj.emaj_stop_group('emptyGroup');
  emaj_stop_group 
 -----------------
                0
 (1 row)
 
-  select emaj.emaj_reset_group('emptyGroup');
+  SELECT emaj.emaj_reset_group('emptyGroup');
  emaj_reset_group 
 ------------------
                 0
 (1 row)
 
-rollback;
+ROLLBACK;
 -----------------------------
--- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests
+-- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests.
 --
 -- When emaj is not created as an extension - i.e. is created with the psql script - the estimate durations are different.
 -- This is normal as the FK are not processed the same way.
 -----------------------------
--- group is unknown
-select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);
+-- Group is unknown.
+SELECT emaj.emaj_estimate_rollback_group(NULL, NULL, FALSE);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_estimate_rollback_group('unknownGroup',NULL,TRUE);
+SELECT emaj.emaj_estimate_rollback_group('unknownGroup', NULL, TRUE);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-select emaj.emaj_estimate_rollback_groups('{"myGroup2","unknownGroup"}',NULL,TRUE);
+SELECT emaj.emaj_estimate_rollback_groups('{"myGroup2", "unknownGroup"}', NULL, TRUE);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- invalid marks
-select emaj.emaj_estimate_rollback_group('myGroup2','dummyMark',TRUE);
+-- Invalid marks.
+SELECT emaj.emaj_estimate_rollback_group('myGroup2', 'dummyMark', TRUE);
 ERROR:  _check_mark_name: The mark "dummyMark" does not exist for the group "myGroup2".
-select emaj.emaj_set_mark_group('myGroup1','Mark21');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Mark21');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-select emaj.emaj_estimate_rollback_groups(array['myGroup1','myGroup2'],'Mark21',TRUE);
+SELECT emaj.emaj_estimate_rollback_groups(ARRAY['myGroup1', 'myGroup2'], 'Mark21', TRUE);
 ERROR:  _check_mark_name: The mark "Mark21" does not represent the same point in time for all groups.
--- group not in logging state
-begin;
-  select emaj.emaj_stop_group('myGroup1');
+-- Group not in logging state.
+BEGIN;
+  SELECT emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
                7
 (1 row)
 
-  select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
+  SELECT emaj.emaj_estimate_rollback_group('myGroup1', 'Mark11', FALSE);
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
-rollback;
--- estimate a rollback of an empty group
-select emaj.emaj_estimate_rollback_group('emptyGroup','EGM4',TRUE);
+ROLLBACK;
+-- Estimate a rollback of an empty group.
+SELECT emaj.emaj_estimate_rollback_group('emptyGroup', 'EGM4', TRUE);
  emaj_estimate_rollback_group 
 ------------------------------
  @ 0
 (1 row)
 
--- insert 1 timing parameters (=> so use 5 default values)
-select emaj.emaj_set_param('fixed_step_rollback_duration','2.5 millisecond');
+-- Insert 1 timing parameters (=> so use 5 default values).
+SELECT emaj.emaj_set_param('fixed_step_rollback_duration', '2.5 millisecond');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- analyze tables to get proper reltuples statistics
-vacuum analyze myschema2.mytbl4;
-select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid and relname = 'mytbl4' and nspname = 'myschema2';
+-- Analyze tables to get proper reltuples statistics.
+VACUUM ANALYZE myschema2.mytbl4;
+SELECT reltuples FROM pg_class, pg_namespace WHERE relnamespace=pg_namespace.oid AND relname = 'mytbl4' AND nspname = 'myschema2';
  reltuples 
 -----------
        100
 (1 row)
 
--- estimate with empty rollback statistics and default parameters
-delete from emaj.emaj_rlbk_stat;
--- estimates with empty rollback statistics but 1 temporarily modified parameter ; no table to rollback
--- check in passing that the simulation is not blocked by protections set on groups or marks
-begin;
-  select emaj.emaj_protect_group('myGroup2');
+-- Estimate with empty rollback statistics and default parameters.
+DELETE FROM emaj.emaj_rlbk_stat;
+-- Estimates with empty rollback statistics but 1 temporarily modified parameter ; no table to rollback.
+-- Check in passing that the simulation is not blocked by protections set on groups or marks.
+BEGIN;
+  SELECT emaj.emaj_protect_group('myGroup2');
  emaj_protect_group 
 --------------------
                   1
 (1 row)
 
-  select emaj.emaj_protect_mark_group('myGroup2','EMAJ_LAST_MARK');
+  SELECT emaj.emaj_protect_mark_group('myGroup2', 'EMAJ_LAST_MARK');
  emaj_protect_mark_group 
 -------------------------
                        1
 (1 row)
 
-  select emaj.emaj_set_param('fixed_table_rollback_duration','1.4 millisecond');
+  SELECT emaj.emaj_set_param('fixed_table_rollback_duration', '1.4 millisecond');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
+  SELECT emaj.emaj_estimate_rollback_group('myGroup2', 'EMAJ_LAST_MARK', FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
  @ 0.0205 secs
 (1 row)
 
--- should return 0.0205 sec
-  select emaj.emaj_unprotect_mark_group('myGroup2','EMAJ_LAST_MARK');
+-- Should return 0.0205 sec.
+  SELECT emaj.emaj_unprotect_mark_group('myGroup2', 'EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
 ---------------------------
                          1
 (1 row)
 
-  select emaj.emaj_unprotect_group('myGroup2');
+  SELECT emaj.emaj_unprotect_group('myGroup2');
  emaj_unprotect_group 
 ----------------------
                     1
 (1 row)
 
-rollback;
-select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
+ROLLBACK;
+SELECT emaj.emaj_estimate_rollback_group('myGroup2', 'Mark21', FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
  @ 1.4086 secs
 (1 row)
 
--- should return 1.4086 sec (or 1.4291 sec is emaj is not an extension)
--- estimates with empty rollback statistics but temporarily modified parameters
-begin;
-  select emaj.emaj_set_param('avg_row_rollback_duration','150 microsecond');
+-- Should return 1.4086 sec (or 1.4291 sec is emaj is not an extension).
+-- Estimates with empty rollback statistics but temporarily modified parameters.
+BEGIN;
+  SELECT emaj.emaj_set_param('avg_row_rollback_duration', '150 microsecond');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select emaj.emaj_set_param('avg_row_delete_log_duration','12 microsecond');
+  SELECT emaj.emaj_set_param('avg_row_delete_log_duration', '12 microsecond');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select emaj.emaj_set_param('avg_fkey_check_duration','27 microsecond');
+  SELECT emaj.emaj_set_param('avg_fkey_check_duration', '27 microsecond');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select emaj.emaj_set_param('fixed_step_rollback_duration', '7 millisecond');
+  SELECT emaj.emaj_set_param('fixed_step_rollback_duration', '7 millisecond');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select emaj.emaj_set_param('fixed_dblink_rollback_duration','2.5 millisecond');
+  SELECT emaj.emaj_set_param('fixed_dblink_rollback_duration', '2.5 millisecond');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
+  SELECT emaj.emaj_estimate_rollback_groups('{"myGroup2"}', 'Mark21', TRUE);
  emaj_estimate_rollback_groups 
 -------------------------------
  @ 1.814 secs
 (1 row)
 
--- should return 1.814 sec (or 1.8285 sec is emaj is not an extension)
-rollback;
--- estimate with added rollback statistics about fkey drops, recreations and checks, and rollback sequences
---   drop the foreign key on emaj_rlbk_stat to easily temporarily insert dummy rows
-alter table emaj.emaj_rlbk_stat drop constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey;
-insert into emaj.emaj_rlbk_stat values
-  ('DROP_FK','','','',1,1,'0.003 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',1,300,'0.036 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',1,2000,'0.030 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('DROP_FK','','','',2,1,'0.0042 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',2,200,'0.020 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,1200,'0.015 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('RLBK_SEQUENCES','','','',1,2,'0.003 SECONDS'::interval);
-select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
+-- Should return 1.814 sec (or 1.8285 sec is emaj is not an extension).
+ROLLBACK;
+-- Estimate with added rollback statistics about fkey drops, recreations and checks, and rollback sequences.
+--   Drop the foreign key on emaj_rlbk_stat to easily temporarily insert dummy rows.
+ALTER TABLE emaj.emaj_rlbk_stat DROP CONSTRAINT emaj_rlbk_stat_rlbt_rlbk_id_fkey;
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DROP_FK', '', '', '', 1, 1, '0.003 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('ADD_FK', 'myschema2', 'mytbl4', 'mytbl4_col44_fkey', 1, 300, '0.036 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('SET_FK_IMM', 'myschema2', 'mytbl4', 'mytbl4_col43_fkey', 1, 2000, '0.030 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DROP_FK', '', '', '', 2, 1, '0.0042 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('ADD_FK', 'myschema2', 'mytbl4', 'mytbl4_col44_fkey', 2, 200, '0.020 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('SET_FK_IMM', 'myschema2', 'mytbl4', 'mytbl4_col43_fkey', 2, 1200, '0.015 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('RLBK_SEQUENCES', '', '', '', 1, 2, '0.003 SECONDS'::INTERVAL);
+SELECT emaj.emaj_estimate_rollback_group('myGroup2', 'Mark21', FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
  @ 1.4071 secs
 (1 row)
 
--- should return 1.4071 sec (or 1.435306 sec is emaj is not an extension)
--- estimate with added statistics about tables rollbacks
-insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl1','',1,5350,'1.000 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl2','',1,100,'0.004 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl2','',2,200,'0.010 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl2','',3,20000,'1.610 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','myTbl3','',1,99,'0.004 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','myTbl3','',2,101,'0.008 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl4','',1,50000,'3.600 SECONDS'::interval);
-select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
+-- Should return 1.4071 sec (or 1.435306 sec is emaj is not an extension).
+-- Estimate with added statistics about tables rollbacks.
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('RLBK_TABLE', 'myschema2', 'mytbl1', '', 1, 5350, '1.000 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('RLBK_TABLE', 'myschema2', 'mytbl2', '', 1, 100, '0.004 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('RLBK_TABLE', 'myschema2', 'mytbl2', '', 2, 200, '0.010 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('RLBK_TABLE', 'myschema2', 'mytbl2', '', 3, 20000, '1.610 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('RLBK_TABLE', 'myschema2', 'myTbl3', '', 1, 99, '0.004 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('RLBK_TABLE', 'myschema2', 'myTbl3', '', 2, 101, '0.008 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('RLBK_TABLE', 'myschema2', 'mytbl4', '', 1, 50000, '3.600 SECONDS'::INTERVAL);
+SELECT emaj.emaj_estimate_rollback_group('myGroup2', 'Mark21', FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
  @ 2.275704 secs
 (1 row)
 
--- should return 2.275704 sec (or 2.30391 sec is emaj is not an extension)
--- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
-insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl1','',1,5350,'0.250 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl2','',1,150,'0.001 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl2','',2,200,'0.003 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl2','',3,20000,'1.610 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','myTbl3','',1,99,'0.001 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','myTbl3','',2,151,'0.002 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl4','',1,50000,'0.900 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('CTRL+DBLINK','','','',1,10,'0.005 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('CTRL-DBLINK','','','',2,10,'0.035 SECONDS'::interval);
-insert into emaj.emaj_rlbk_stat values
-  ('CTRL-DBLINK','','','',3,10,'0.025 SECONDS'::interval);
-select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
+-- Should return 2.275704 sec (or 2.30391 sec is emaj is not an extension).
+-- Estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps.
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DELETE_LOG', 'myschema2', 'mytbl1', '', 1, 5350, '0.250 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DELETE_LOG', 'myschema2', 'mytbl2', '', 1, 150, '0.001 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DELETE_LOG', 'myschema2', 'mytbl2', '', 2, 200, '0.003 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DELETE_LOG', 'myschema2', 'mytbl2', '', 3, 20000, '1.610 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DELETE_LOG', 'myschema2', 'myTbl3', '', 1, 99, '0.001 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DELETE_LOG', 'myschema2', 'myTbl3', '', 2, 151, '0.002 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('DELETE_LOG', 'myschema2', 'mytbl4', '', 1, 50000, '0.900 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('CTRL+DBLINK', '', '', '', 1, 10, '0.005 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('CTRL-DBLINK', '', '', '', 2, 10, '0.035 SECONDS'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk_stat VALUES
+  ('CTRL-DBLINK', '', '', '', 3, 10, '0.025 SECONDS'::INTERVAL);
+SELECT emaj.emaj_estimate_rollback_group('myGroup2', 'Mark21', FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
  @ 2.643791 secs
 (1 row)
 
--- should return 2.643791 sec (or 2.668997 sec is emaj is not an extension)
--- estimate with 2 groups and a SET_FK_DEF step
-vacuum analyze myschema1.mytbl4;
-select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid and relname = 'mytbl4' and nspname = 'myschema1';
+-- Should return 2.643791 sec (or 2.668997 sec is emaj is not an extension).
+-- Estimate with 2 groups and a SET_FK_DEF step.
+VACUUM ANALYZE myschema1.mytbl4;
+SELECT reltuples FROM pg_class, pg_namespace WHERE relnamespace=pg_namespace.oid AND relname = 'mytbl4' AND nspname = 'myschema1';
  reltuples 
 -----------
          1
 (1 row)
 
-begin;
--- temporarily insert new rows into myTbl4 of myschema1
-  insert into myschema1.myTbl4 select i,'FK...',2,1,'ABC' from generate_series (10,20) as i;
-  select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
+BEGIN;
+-- Temporarily insert new rows into myTbl4 of myschema1.
+  INSERT INTO myschema1.myTbl4 SELECT i, 'FK...', 2, 1, 'ABC' FROM generate_series (10, 20) AS i;
+  SELECT emaj.emaj_estimate_rollback_groups('{"myGroup1", "myGroup2"}', 'Multi-1', FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
  @ 2.675001 secs
 (1 row)
 
--- should return 2.675001 sec (or 2.724307 sec is emaj is not an extension)
-rollback;
--- delete all manualy inserted rollback statistics, cleanup the statistics table and recreate its foreign key
-delete from emaj.emaj_rlbk_stat;
-vacuum emaj.emaj_rlbk_stat;
-alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
--- check for emaj_estimate_rollback_group()
-select hist_id, hist_function, hist_event, hist_object, 
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5200 order by hist_id) as t;
+-- Should return 2.675001 sec (or 2.724307 sec is emaj is not an extension).
+ROLLBACK;
+-- Delete all manualy inserted rollback statistics, cleanup the statistics table and recreate its foreign key.
+DELETE FROM emaj.emaj_rlbk_stat;
+VACUUM emaj.emaj_rlbk_stat;
+ALTER table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
+-- Check for emaj_estimate_rollback_group().
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'), hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 5200 ORDER BY hist_id;
  hist_id |   hist_function    |     hist_event     |         hist_object          |          regexp_replace          | hist_user 
 ---------+--------------------+--------------------+------------------------------+----------------------------------+-----------
     5200 | SET_PARAM          | INSERTED PARAMETER | history_retention            | From: 1 year to: 1 MONTHS        | postgres
@@ -425,36 +424,36 @@ select hist_id, hist_function, hist_event, hist_object,
     5244 | SET_PARAM          | INSERTED PARAMETER | fixed_step_rollback_duration | From: 2.5 ms to: 2.5 millisecond | postgres
 (11 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(5300);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(5300);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- emaj_snap_group() tests
+-- emaj_snap_group() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_snap_group(NULL,NULL,NULL);
+-- Group is unknown.
+SELECT emaj.emaj_snap_group(NULL, NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_snap_group('unknownGroup',NULL,NULL);
+SELECT emaj.emaj_snap_group('unknownGroup', NULL, NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- invalid directory
-select emaj.emaj_snap_group('myGroup1',NULL,NULL);
+-- Invalid directory.
+SELECT emaj.emaj_snap_group('myGroup1', NULL, NULL);
 ERROR:  emaj_snap_group: The directory parameter cannot be NULL.
-select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
+SELECT emaj.emaj_snap_group('myGroup1', 'unknown_directory', NULL);
 ERROR:  relative path not allowed for COPY to file
-select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
+SELECT emaj.emaj_snap_group('myGroup1', '/unknown_directory', NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
--- invalid COPY TO options
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','dummy_option');
+-- Invalid COPY TO options.
+SELECT emaj.emaj_snap_group('myGroup1', :'EMAJTESTTMPDIR', 'dummy_option');
 ERROR:  syntax error at or near "dummy_option" at character 101
--- SQL injection attempt
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
+-- SQL injection attempt.
+SELECT emaj.emaj_snap_group('myGroup1', :'EMAJTESTTMPDIR', '; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: The COPY options parameter format is invalid.
--- should be OK (even when executed twice, files being overwriten)
-select emaj.emaj_snap_group('emptyGroup',:'EMAJTESTTMPDIR','');
+-- Should be OK (even when executed twice, files being overwriten).
+SELECT emaj.emaj_snap_group('emptyGroup', :'EMAJTESTTMPDIR', '');
  emaj_snap_group 
 -----------------
                0
@@ -462,13 +461,13 @@ select emaj.emaj_snap_group('emptyGroup',:'EMAJTESTTMPDIR','');
 
 \! ls $EMAJTESTTMPDIR
 _INFO
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','');
+SELECT emaj.emaj_snap_group('myGroup1', :'EMAJTESTTMPDIR', '');
  emaj_snap_group 
 -----------------
                7
 (1 row)
 
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','CSV HEADER DELIMITER '';'' ');
+SELECT emaj.emaj_snap_group('myGroup1', :'EMAJTESTTMPDIR', 'CSV HEADER DELIMITER '';'' ');
  emaj_snap_group 
 -----------------
                7
@@ -484,7 +483,7 @@ myschema1_mytbl2b.snap
 myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
 \! rm $EMAJTESTTMPDIR/*
-select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR','');
+SELECT emaj.emaj_snap_group('phil''s group#3",', :'EMAJTESTTMPDIR', '');
  emaj_snap_group 
 -----------------
                4
@@ -498,33 +497,33 @@ phil_s_schema_3_phil_s_seq_1.snap
 phil_s_schema_3_phil_s_tbl1.snap
 \! rm $EMAJTESTTMPDIR/*
 -----------------------------
--- emaj_get_current_log_table() tests
+-- emaj_get_current_log_table() tests.
 -----------------------------
--- not found
-select * from emaj.emaj_get_current_log_table('myschema1', 'dummy_table');
+-- Not found.
+SELECT * FROM emaj.emaj_get_current_log_table('myschema1', 'dummy_table');
  log_schema | log_table 
 ------------+-----------
             | 
 (1 row)
 
--- found
-select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
+-- Found.
+SELECT * FROM emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
    log_schema   | log_table  
 ----------------+------------
  emaj_myschema1 | mytbl1_log
 (1 row)
 
-select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(log_table)
-  from emaj.emaj_get_current_log_table('myschema1','mytbl1');
+SELECT 'SELECT count(*) FROM ' || quote_ident(log_schema) || '.' || quote_ident(log_table)
+  FROM emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
                     ?column?                    
 ------------------------------------------------
- select count(*) from emaj_myschema1.mytbl1_log
+ SELECT count(*) FROM emaj_myschema1.mytbl1_log
 (1 row)
 
--- check for emaj_snap_group()
-select hist_id, hist_function, hist_event, hist_object, 
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5300 order by hist_id) as t;
+-- Check for emaj_snap_group().
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'), hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 5300 ORDER BY hist_id;
  hist_id | hist_function | hist_event |   hist_object    |        regexp_replace        | hist_user 
 ---------+---------------+------------+------------------+------------------------------+-----------
     5307 | SNAP_GROUP    | BEGIN      | emptyGroup       | /tmp/emaj_15/misc            | postgres
@@ -537,111 +536,111 @@ select hist_id, hist_function, hist_event, hist_object,
     5314 | SNAP_GROUP    | END        | phil's group#3", | 4 tables/sequences processed | postgres
 (8 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(5400);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(5400);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group() tests
+-- emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group() tests.
 -----------------------------
 --
--- Test errors with input parameters
+-- Test errors with input parameters.
 --
--- group is unknown
-select emaj.emaj_gen_sql_dump_changes_group('dummy', NULL, NULL, NULL, NULL);
+-- Group is unknown.
+SELECT emaj.emaj_gen_sql_dump_changes_group('dummy', NULL, NULL, NULL, NULL);
 ERROR:  _check_group_names: The group "dummy" does not exist.
--- start mark is null or unknown
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', NULL, NULL, NULL, NULL);
+-- Start mark is null or unknown.
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', NULL, NULL, NULL, NULL);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'dummy', NULL, NULL, NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'dummy', NULL, NULL, NULL);
 ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup2".
--- end mark is null or unknown
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', NULL, NULL, NULL);
+-- End mark is null or unknown.
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', NULL, NULL, NULL);
 ERROR:  _check_marks_range: The last mark cannot be NULL or empty.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'dummy', NULL, NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'dummy', NULL, NULL);
 ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup2".
--- end mark is prior start mark
--- just check the error is trapped, because the error message contents timestamps
+-- End mark is prior start mark.
+-- Just check the error is trapped, because the error message contents timestamps.
 do language plpgsql
 $$
-begin
-  begin
-    perform emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark23', 'Mark21', NULL, NULL);
-    return;
-  exception when raise_exception then
-    raise notice 'Error trapped on emaj_gen_sql_dump_changes_group() call';
-  end;
-end;
+BEGIN
+  BEGIN
+    PERFORM emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark23', 'Mark21', NULL, NULL);
+    RETURN;
+  EXCEPTION WHEN raise_exception THEN
+    RAISE NOTICE 'Error trapped on emaj_gen_sql_dump_changes_group() call';
+  END;
+END;
 $$;
 NOTICE:  Error trapped on emaj_gen_sql_dump_changes_group() call
--- invalid options
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'dummy', NULL);
+-- Invalid options.
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: The option "DUMMY" is unknown.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER = dummy', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "COLS_ORDER=DUMMY". The COLS_ORDER option only accepts LOG_TABLE or PK values).
-select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'COLS_ORDER = PK', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'COLS_ORDER = PK', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=()', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=()', NULL);
 ERROR:  _gen_sql_dump_changes_group: The option "COPY_OPTIONS=()" is unknown.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION = dummy', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "CONSOLIDATION=DUMMY". The CONSOLIDATION option only accepts NONE or PARTIAL or FULL values).
-select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = FULL', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = FULL', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
-select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = partial', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = partial', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = dummy', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "EMAJ_COLUMNS=DUMMY". The EMAJ_COLUMNS option only accepts ALL or MIN values or a (columns list).
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = ()', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = ()', NULL);
 ERROR:  _gen_sql_dump_changes_group: In the EMAJ_COLUMN option, the "emaj_tuple" column must be part of the columns list.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = (emaj_tuple , dummy)', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = (emaj_tuple , dummy)', NULL);
 ERROR:  _gen_sql_dump_changes_tbl: The emaj column "dummy" from the EMAJ_COLUMNS option (emaj_tuple,dummy) is not valid for table emaj_myschema2.myTbl3_log.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'NO_EMPTY_FILES', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'NO_EMPTY_FILES', NULL);
 ERROR:  _gen_sql_dump_changes_group: The option "NO_EMPTY_FILES" is unknown.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'Tables_Only, Sequences_Only', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'Tables_Only, Sequences_Only', NULL);
 ERROR:  _gen_sql_dump_changes_group: SEQUENCES_ONLY and TABLES_ONLY options are mutually exclusive.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = dummy', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "ORDER_BY=DUMMY". The ORDER_BY option only accepts PK or TIME values.
-select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'ORDER_BY = pk', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'ORDER_BY = pk', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL_FORMAT = dummy', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL_FORMAT = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "SQL_FORMAT=DUMMY". The SQL_FORMAT option only accepts RAW or PRETTY values.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "PSQL_COPY_DIR=DUMMY". The directory name must be set between ().
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), SQL_FORMAT=PRETTY', NULL);
 ERROR:  _gen_sql_dump_changes_group: PSQL_COPY_DIR and FORMAT=PRETTY options are mutually exclusive.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=dummy', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "PSQL_COPY_OPTIONS=DUMMY". The COPY options list must be set between ().
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=(format csv)', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=(format csv)', NULL);
 ERROR:  _gen_sql_dump_changes_group: the PSQL_COPY_OPTIONS option needs a PSQL_COPY_DIR option to be set.
-select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL, :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL, :'EMAJTESTTMPDIR');
 ERROR:  _gen_sql_dump_changes_group: The option "PSQL_COPY_DIR=DUMMY" is unknown.
-select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=()', NULL, :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=()', NULL, :'EMAJTESTTMPDIR');
 ERROR:  _gen_sql_dump_changes_group: The option "PSQL_COPY_OPTIONS=()" is unknown.
-select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=dummy', NULL, :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=dummy', NULL, :'EMAJTESTTMPDIR');
 ERROR:  _gen_sql_dump_changes_group: Error on the option "COPY_OPTIONS=DUMMY". The COPY options must be set between ().
-select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(dummy)', NULL, :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(dummy)', NULL, :'EMAJTESTTMPDIR');
 ERROR:  option "dummy" not recognized at character 48
-select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(;)', NULL, :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(;)', NULL, :'EMAJTESTTMPDIR');
 ERROR:  _gen_sql_dump_changes_group: Unquoted semi-column in COPY options is illegal.
--- invalid relations array
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['dummy']);
+-- Invalid relations array.
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['dummy']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (dummy) never belonged to any of the selected tables groups during the requested marks range.
--- invalid output location
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
+-- Invalid output location.
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
 ERROR:  emaj_gen_sql_dump_changes_group: The output script location parameter cannot be NULL.
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 'dummy');
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 'dummy');
 ERROR:  relative path not allowed for COPY to file
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, '/dummy');
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, '/dummy');
 ERROR:  could not open file "/dummy" for writing: Permission denied
-select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
 ERROR:  emaj_dump_changes_group: The directory parameter cannot be NULL.
-select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 'dummy');
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 'dummy');
 ERROR:  relative path not allowed for COPY to file
 --
--- various options influencing the generated SQL
+-- Various options influencing the generated SQL.
 --
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', '', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -675,13 +674,13 @@ SELECT * FROM emaj_temp_sql;
               10 |               1 | sequence     | myschema2  | myseq1           | Mark21         | Mark23        | myGroup2  |                | .changes             | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 5003 ORDER BY emaj_tuple DESC ;                     |           
 (21 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=NONE,SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=NONE, SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  10 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1', 'myseq1') AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                       sql_text                        
 ------------+-------------------------------------------------------
  mytbl1     | SELECT tbl.*
@@ -702,13 +701,13 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | ;
 (16 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=PARTIAL,SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=PARTIAL, SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  10 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1', 'myseq1') AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                                 sql_text                                 
 ------------+--------------------------------------------------------------------------
  mytbl1     | WITH keys AS (
@@ -737,13 +736,13 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | ;
 (24 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=FULL, SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  12 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1', 'myseq1') AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                                                     sql_text                                                     
 ------------+------------------------------------------------------------------------------------------------------------------
  mytbl1     | WITH keys AS (
@@ -794,13 +793,13 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | ;
 (46 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=ALL,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=ALL, CONSOLIDATION=FULL, SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  12 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1', 'myseq1') AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                                                     sql_text                                                     
 ------------+------------------------------------------------------------------------------------------------------------------
  mytbl1     | WITH keys AS (
@@ -851,13 +850,13 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | ;
 (46 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=MIN,SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=MIN, SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  10 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1', 'myseq1') AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                         sql_text                         
 ------------+----------------------------------------------------------
  mytbl1     | SELECT tbl.col11,tbl.col12,tbl.col13,emaj_gid,emaj_tuple
@@ -878,13 +877,13 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | ;
 (16 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_txid),SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_txid), SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  10 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1', 'myseq1') AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                              sql_text                              
 ------------+--------------------------------------------------------------------
  mytbl1     | SELECT tbl.col11,tbl.col12,tbl.col13,emaj_tuple,emaj_gid,emaj_txid
@@ -905,13 +904,13 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | ;
 (16 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY=PK,SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY=PK, SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  10 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1', 'myseq1') AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                          sql_text                          
 ------------+------------------------------------------------------------
  mytbl1     | SELECT tbl.*
@@ -933,14 +932,14 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
 (16 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = TIME,
-																			 Consolidation = partial,
-																			 Sql_Format = Pretty', NULL);
+                                                                             Consolidation = partial,
+                                                                             Sql_Format = Pretty', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  10 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1', 'myseq1') AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                                 sql_text                                 
 ------------+--------------------------------------------------------------------------
  mytbl1     | WITH keys AS (
@@ -969,13 +968,13 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | ;
 (24 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=LOG_TABLE,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=LOG_TABLE, CONSOLIDATION=FULL, SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  12 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                                                     sql_text                                                     
 ------------+------------------------------------------------------------------------------------------------------------------
  mytbl1     | WITH keys AS (
@@ -1005,13 +1004,13 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and s
  mytbl1     |     ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC;
 (25 rows)
 
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=PK,SQL_FORMAT=PRETTY', NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=PK, SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  10 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' AND sql_line_number >= 1 ORDER BY sql_stmt_number, sql_line_number;
  sql_tblseq |                                              sql_text                                               
 ------------+-----------------------------------------------------------------------------------------------------
  mytbl1     | SELECT tbl.col11,tbl.col12,emaj_gid,emaj_tuple,tbl.col13,emaj_verb,emaj_changed,emaj_txid,emaj_user
@@ -1027,7 +1026,7 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SEQ
  2 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by sql_rel_kind ORDER BY sql_rel_kind;
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 GROUP BY sql_rel_kind ORDER BY sql_rel_kind;
  sql_rel_kind | count 
 --------------+-------
  sequence     |     2
@@ -1039,13 +1038,13 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'TAB
  8 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by sql_rel_kind ORDER BY sql_rel_kind;
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 GROUP BY sql_rel_kind ORDER BY sql_rel_kind;
  sql_rel_kind | count 
 --------------+-------
  table        |     8
 (1 row)
 
--- test the tables/sequences array filter
+-- Test the tables/sequences array filter.
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY[]::TEXT[]);
 WARNING:  _check_tblseqs_filter: The table/sequence names array is empty.
                     emaj_gen_sql_dump_changes_group                    
@@ -1066,7 +1065,7 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL
  2 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by 1;
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 GROUP BY 1;
  sql_rel_kind | count 
 --------------+-------
  table        |     1
@@ -1085,9 +1084,9 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'TAB
  0 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
--- test output as a sql/psql script
+-- Test output as a sql/psql script.
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL_FORMAT=PRETTY', ARRAY['myschema2.mytbl1', 'myschema2.myseq1'],
-											:'EMAJTESTTMPDIR' || '/sql_script');
+                                            :'EMAJTESTTMPDIR' || '/sql_script');
                          emaj_gen_sql_dump_changes_group                         
 ---------------------------------------------------------------------------------
  2 SQL statements have been written into the "/tmp/emaj_15/misc/sql_script" file
@@ -1114,7 +1113,7 @@ SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
  ORDER BY emaj_tuple DESC
 ;
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || ')', ARRAY['myschema2.mytbl1', 'myschema2.myseq1'],
-											:'EMAJTESTTMPDIR' || '/sql_script');
+                                            :'EMAJTESTTMPDIR' || '/sql_script');
                          emaj_gen_sql_dump_changes_group                         
 ---------------------------------------------------------------------------------
  2 SQL statements have been written into the "/tmp/emaj_15/misc/sql_script" file
@@ -1127,8 +1126,8 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQ
 -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
 \copy (SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 5003 ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_15/misc/myschema2_myseq1.changes'
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23',
-											'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), PSQL_COPY_OPTIONS=(format csv, delimiter '';'', header)',
-											ARRAY['myschema2.mytbl1', 'myschema2.myseq1'], :'EMAJTESTTMPDIR' || '/sql_script');
+                                            'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), PSQL_COPY_OPTIONS=(format csv, delimiter '';'', header)',
+                                            ARRAY['myschema2.mytbl1', 'myschema2.myseq1'], :'EMAJTESTTMPDIR' || '/sql_script');
                          emaj_gen_sql_dump_changes_group                         
 ---------------------------------------------------------------------------------
  2 SQL statements have been written into the "/tmp/emaj_15/misc/sql_script" file
@@ -1141,62 +1140,62 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23',
 -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
 \copy (SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 5003 ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_15/misc/myschema2_myseq1.changes' (format csv, delimiter ';', header)
 \! rm $EMAJTESTTMPDIR/*
--- Perform logged changes
-select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M1');
+-- Perform logged changes.
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Dump_changes_tests_M1');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
--- Build the base content of the test table
-UPDATE myschema1.myTbl4 SET col42 = 'Initial row' WHERE col41 = 1 and col43 = 1;
+-- Build the base content of the test table.
+UPDATE myschema1.myTbl4 SET col42 = 'Initial row' WHERE col41 = 1 AND col43 = 1;
 INSERT INTO myschema1.myTbl4
-  SELECT i, 'Initial row', 1, 1, 'ABC' FROM generate_series(2,9) i;
-select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M2');
+  SELECT i, 'Initial row', 1, 1, 'ABC' FROM generate_series(2, 9) i;
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Dump_changes_tests_M2');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
--- Record changes
+-- Record changes.
 INSERT INTO myschema1.myTbl4 VALUES (10, 'Inserted row', 1, 1, 'ABC');
-DELETE FROM myschema1.myTbl4 WHERE col41 = 1 and col43 = 1;
-UPDATE myschema1.myTbl4 SET col43 = 2, col42 = 'PK col changed' WHERE col41 = 2 and col43 = 1;
-UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed' WHERE col41 = 3 and col43 = 1;
-UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed' WHERE col41 = 4 and col43 = 1;
-UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed twice' WHERE col41 = 4 and col43 = 1;
-UPDATE myschema1.myTbl4 SET col44 = 1 WHERE col41 = 5 and col43 = 1;  -- actually no change
-select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M3');
+DELETE FROM myschema1.myTbl4 WHERE col41 = 1 AND col43 = 1;
+UPDATE myschema1.myTbl4 SET col43 = 2, col42 = 'PK col changed' WHERE col41 = 2 AND col43 = 1;
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed' WHERE col41 = 3 AND col43 = 1;
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed' WHERE col41 = 4 AND col43 = 1;
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed twice' WHERE col41 = 4 AND col43 = 1;
+UPDATE myschema1.myTbl4 SET col44 = 1 WHERE col41 = 5 AND col43 = 1;  -- actually no change
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Dump_changes_tests_M3');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
 INSERT INTO myschema1.myTbl4 VALUES (11, 'Inserted and deleted row', 2, 1, 'ABC');
-DELETE FROM myschema1.myTbl4 WHERE col41 = 11 and col43 = 2;
-DELETE FROM myschema1.myTbl4 WHERE col41 = 6 and col43 = 1;
+DELETE FROM myschema1.myTbl4 WHERE col41 = 11 AND col43 = 2;
+DELETE FROM myschema1.myTbl4 WHERE col41 = 6 AND col43 = 1;
 INSERT INTO myschema1.myTbl4 VALUES (6, 'Deleted and inserted row', 1, 1, 'ABC');
-DELETE FROM myschema1.myTbl4 WHERE col41 = 7 and col43 = 1;
+DELETE FROM myschema1.myTbl4 WHERE col41 = 7 AND col43 = 1;
 INSERT INTO myschema1.myTbl4 VALUES (7, 'Initial row', 1, 1, 'ABC');    -- totaly unchanged row
 INSERT INTO myschema1.myTbl4 VALUES (12, 'Inserted, updated and deleted row', 2, 1, 'ABC');
-UPDATE myschema1.myTbl4 SET col44 = 2 WHERE col41 = 12 and col43 = 2;
-DELETE FROM myschema1.myTbl4 WHERE col41 = 12 and col43 = 2;
+UPDATE myschema1.myTbl4 SET col44 = 2 WHERE col41 = 12 AND col43 = 2;
+DELETE FROM myschema1.myTbl4 WHERE col41 = 12 AND col43 = 2;
 SELECT nextval('myschema1."myTbl3_col31_seq"');
  nextval 
 ---------
       11
 (1 row)
 
-select * from emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M4');
+SELECT * FROM emaj.emaj_set_mark_group('myGroup1', 'Dump_changes_tests_M4');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
--- Directly dump changes
+-- Directly dump changes.
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M3',
-									'NO_EMPTY_FILES, EMAJ_COLUMNS=MIN',
-									NULL, :'EMAJTESTTMPDIR');
+                                    'NO_EMPTY_FILES, EMAJ_COLUMNS=MIN',
+                                    NULL, :'EMAJTESTTMPDIR');
             emaj_dump_changes_group             
 ------------------------------------------------
  4 files have been created in /tmp/emaj_15/misc
@@ -1226,8 +1225,8 @@ OLD	myschema1	myTbl3_col31_seq	5401	11	1	1	2147483647	1	1	f	f
 NEW	myschema1	myTbl3_col31_seq	5402	11	1	1	2147483647	1	1	f	f
 \! rm $EMAJTESTTMPDIR/*
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M3', 'Dump_changes_tests_M4',
-									'NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb,emaj_tuple,emaj_gid)',
-									NULL, :'EMAJTESTTMPDIR');
+                                    'NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb, emaj_tuple, emaj_gid)',
+                                    NULL, :'EMAJTESTTMPDIR');
             emaj_dump_changes_group             
 ------------------------------------------------
  4 files have been created in /tmp/emaj_15/misc
@@ -1241,7 +1240,7 @@ total 16
 4 myschema1_mytbl2b_col20_seq.changes
 \! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
 Dump logged changes for the group "myGroup1" between mark "Dump_changes_tests_M3" and mark "Dump_changes_tests_M4"
-  using options "NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb,emaj_tuple,emaj_gid)"
+  using options "NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb, emaj_tuple, emaj_gid)"
 File myschema1_mytbl4.changes covers table "myschema1.mytbl4" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
 File myschema1_myTbl3_col31_seq.changes covers sequence "myschema1.myTbl3_col31_seq" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
 File myschema1_mytbl2b_col20_seq.changes covers sequence "myschema1.mytbl2b_col20_seq" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
@@ -1263,7 +1262,7 @@ OLD,myschema1,myTbl3_col31_seq,5402,11,1,1,2147483647,1,1,f,f
 NEW,myschema1,myTbl3_col31_seq,5403,11,1,1,2147483647,1,1,f,t
 \! rm $EMAJTESTTMPDIR/*
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
-									'CONSOLIDATION=FULL, COPY_OPTIONS=(format csv, delimiter '';'', force_quote *, header)',
+                                    'CONSOLIDATION=FULL, COPY_OPTIONS=(format csv, delimiter '';'', force_quote *, header)',
                                     NULL, :'EMAJTESTTMPDIR');
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -1288,7 +1287,7 @@ emaj_tuple;sequ_schema;sequ_name;sequ_time_id;sequ_last_val;sequ_start_val;sequ_
 "NEW";"myschema1";"myTbl3_col31_seq";"5403";"11";"1";"1";"2147483647";"1";"1";"f";"t"
 \! rm $EMAJTESTTMPDIR/*
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
-									'CONSOLIDATION=PARTIAL',
+                                    'CONSOLIDATION=PARTIAL',
                                     NULL, :'EMAJTESTTMPDIR');
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -1316,7 +1315,7 @@ NEW	myschema1	myTbl3_col31_seq	5403	11	1	1	2147483647	1	1	f	t
 \! rm $EMAJTESTTMPDIR/*
 -- Dump changes for tables with unusual data types and consolidation.
 SELECT emaj.emaj_dump_changes_group('myGroup2', 'Multi-2', 'Multi-3',
-									'CONSOLIDATION=PARTIAL',
+                                    'CONSOLIDATION=PARTIAL',
                                     '{"myschema2.mytbl5", "myschema2.mytbl6"}', :'EMAJTESTTMPDIR');
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -1330,7 +1329,7 @@ total 4
 0 myschema2_mytbl6.changes
 \! rm $EMAJTESTTMPDIR/*
 SELECT emaj.emaj_dump_changes_group('myGroup2', 'Multi-2', 'Multi-3',
-									'CONSOLIDATION=FULL',
+                                    'CONSOLIDATION=FULL',
                                     '{"myschema2.mytbl5", "myschema2.mytbl6"}', :'EMAJTESTTMPDIR');
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -1343,10 +1342,10 @@ total 4
 0 myschema2_mytbl5.changes
 0 myschema2_mytbl6.changes
 \! rm $EMAJTESTTMPDIR/*
--- Generate SQL statements with the PSQL_COPY_DIR option and execute the generated script
+-- Generate SQL statements with the PSQL_COPY_DIR option and execute the generated script.
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
-											'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), CONSOLIDATION=FULL',
-											NULL, :'EMAJTESTTMPDIR' || '/sql_script');
+                                            'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), CONSOLIDATION=FULL',
+                                            NULL, :'EMAJTESTTMPDIR' || '/sql_script');
                          emaj_gen_sql_dump_changes_group                         
 ---------------------------------------------------------------------------------
  9 SQL statements have been written into the "/tmp/emaj_15/misc/sql_script" file
@@ -1395,7 +1394,7 @@ total 20
 OLD	myschema1	myTbl3_col31_seq	5401	11	1	1	2147483647	1	1	f	f
 NEW	myschema1	myTbl3_col31_seq	5403	11	1	1	2147483647	1	1	f	t
 \! rm $EMAJTESTTMPDIR/*
-select * from emaj.emaj_rollback_group('myGroup1','Dump_changes_tests_M1');
+SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'Dump_changes_tests_M1');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | Rollback id = 5400.
@@ -1403,19 +1402,19 @@ select * from emaj.emaj_rollback_group('myGroup1','Dump_changes_tests_M1');
  Notice        | 1 / 2 sequences effectively processed.
 (3 rows)
 
-select emaj.emaj_cleanup_rollback_state();
+SELECT emaj.emaj_cleanup_rollback_state();
  emaj_cleanup_rollback_state 
 -----------------------------
                            1
 (1 row)
 
-select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+SELECT emaj.emaj_delete_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
--- Test using quotes in schema, table or group names
+-- Test using quotes in schema, table or group names.
 SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=NONE', NULL, :'EMAJTESTTMPDIR');
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -1452,10 +1451,10 @@ SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONS
 (1 row)
 
 \! rm $EMAJTESTTMPDIR/*
--- Checks for emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group()
-select hist_id, hist_function, hist_event, hist_object, 
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5400 order by hist_id) as t;
+-- Checks for emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group().
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'), hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 5400 ORDER BY hist_id;
  hist_id |       hist_function        |   hist_event   |         hist_object          |                                          regexp_replace                                          | hist_user 
 ---------+----------------------------+----------------+------------------------------+--------------------------------------------------------------------------------------------------+-----------
     5410 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_15/misc/sql_script                                  | postgres
@@ -1525,140 +1524,140 @@ select hist_id, hist_function, hist_event, hist_object,
     5474 | DUMP_CHANGES_GROUP         | END            | phil's group#3",             | 2 generated files                                                                                | postgres
 (65 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(5500);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(5500);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- emaj_gen_sql_group() and emaj_gen_sql_groups() tests
+-- emaj_gen_sql_group() and emaj_gen_sql_groups() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
+-- Group is unknown.
+SELECT emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_gen_sql_group('unknownGroup', NULL, NULL, NULL, NULL);
+SELECT emaj.emaj_gen_sql_group('unknownGroup', NULL, NULL, NULL, NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-select emaj.emaj_gen_sql_groups(NULL, NULL, NULL, NULL);
+SELECT emaj.emaj_gen_sql_groups(NULL, NULL, NULL, NULL);
 WARNING:  _check_group_names: No group to process.
  emaj_gen_sql_groups 
 ---------------------
                    0
 (1 row)
 
-select emaj.emaj_gen_sql_groups('{"myGroup1","unknownGroup"}', NULL, NULL, NULL);
+SELECT emaj.emaj_gen_sql_groups('{"myGroup1", "unknownGroup"}', NULL, NULL, NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- invalid start mark
-select emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
+-- Invalid start mark.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
-select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Mark11', NULL, NULL, NULL);
+SELECT emaj.emaj_gen_sql_groups('{"myGroup1", "myGroup2"}', 'Mark11', NULL, NULL, NULL);
 ERROR:  _check_mark_name: The mark "Mark11" does not exist for the group "myGroup2".
--- invalid end mark
-select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', 'unknownMark', NULL);
+-- Invalid end mark.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', 'unknownMark', NULL);
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
-select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Multi-1', 'Mark11', NULL);
+SELECT emaj.emaj_gen_sql_groups('{"myGroup1", "myGroup2"}', 'Multi-1', 'Mark11', NULL);
 ERROR:  _check_mark_name: The mark "Mark11" does not exist for the group "myGroup2".
--- end mark is prior start mark
--- (mark timestamps are temporarily changed so that regression test can return a stable error message)
-begin;
-  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00' 
-    from emaj.emaj_mark
-    where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark21';
-  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 13:00:00+00'
-    from emaj.emaj_mark
-    where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark22';
-  select emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
+-- End mark is prior start mark.
+-- (mark timestamps are temporarily changed so that regression test can return a stable error message).
+BEGIN;
+  UPDATE emaj.emaj_time_stamp SET time_clock_timestamp = '2000-01-01 12:00:00+00'
+    FROM emaj.emaj_mark
+    WHERE time_id = mark_time_id AND mark_group = 'myGroup2' AND mark_name = 'Mark21';
+  UPDATE emaj.emaj_time_stamp SET time_clock_timestamp = '2000-01-01 13:00:00+00'
+    FROM emaj.emaj_mark
+    WHERE time_id = mark_time_id AND mark_group = 'myGroup2' AND mark_name = 'Mark22';
+  SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
 ERROR:  _check_marks_range: The start mark "Mark22" (2000-01-01 05:00:00-08) has been set after the end mark "Mark21" (2000-01-01 04:00:00-08).
-rollback;
-begin;
-  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00'
-    from emaj.emaj_mark
-    where time_id = mark_time_id and mark_name = 'Multi-2';
-  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 13:00:00+00'
-    from emaj.emaj_mark
-    where time_id = mark_time_id and mark_name = 'Multi-3';
-  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-3', 'Multi-2', NULL);
+ROLLBACK;
+BEGIN;
+  UPDATE emaj.emaj_time_stamp SET time_clock_timestamp = '2000-01-01 12:00:00+00'
+    FROM emaj.emaj_mark
+    WHERE time_id = mark_time_id AND mark_name = 'Multi-2';
+  UPDATE emaj.emaj_time_stamp SET time_clock_timestamp = '2000-01-01 13:00:00+00'
+    FROM emaj.emaj_mark
+    WHERE time_id = mark_time_id AND mark_name = 'Multi-3';
+  SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-3', 'Multi-2', NULL);
 ERROR:  _check_marks_range: The start mark "Multi-3" (2000-01-01 05:00:00-08) has been set after the end mark "Multi-2" (2000-01-01 04:00:00-08).
-rollback;
--- start mark with the same name but that doesn't correspond to the same point in time
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Mark21', 'Multi-2', NULL);
+ROLLBACK;
+-- Start mark with the same name but that doesn't correspond to the same point in time.
+SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Mark21', 'Multi-2', NULL);
 ERROR:  _check_mark_name: The mark "Mark21" does not represent the same point in time for all groups.
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
+SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], NULL, 'Multi-2', NULL, NULL);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
--- end mark with the same name but that doesn't correspond to the same point in time
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);
+-- End mark with the same name but that doesn't correspond to the same point in time.
+SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', 'Mark21', NULL);
 ERROR:  _check_mark_name: The mark "Mark21" does not represent the same point in time for all groups.
--- empty table/sequence names array
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array['']);
+-- Empty table/sequence names array.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', ARRAY['']);
 WARNING:  _check_tblseqs_filter: The table/sequence names array is empty.
  emaj_gen_sql_group 
 --------------------
                   0
 (1 row)
 
--- unknown table/sequence names in the tables filter
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile', array['foo']);
+-- Unknown table/sequence names in the tables filter.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile', ARRAY['foo']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (foo) did not belong to any of the selected tables groups at start mark time.
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile', array[
-     'myschema1.mytbl1','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
+     'myschema1.mytbl1', 'myschema2.myTbl3_col31_seq', 'phil''s schema3.phil''s tbl1']);
 ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) did not belong to any of the selected tables groups at start mark time.
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile', array[
-     'myschema1.mytbl1','foo','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
+SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
+     'myschema1.mytbl1', 'foo', 'myschema2.myTbl3_col31_seq', 'phil''s schema3.phil''s tbl1']);
 ERROR:  _check_tblseqs_filter: 2 tables/sequences (foo, phil's schema3.phil's tbl1) did not belong to any of the selected tables groups at start mark time.
--- the tables group contains a table without pkey
-select emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
+-- The tables group contains a table without pkey.
+SELECT emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
 ERROR:  _gen_sql_groups: 1 tables/sequences (phil's schema"3.myTbl2\) had no pkey at Mark4 mark time.
--- invalid location path name
-select emaj.emaj_gen_sql_group('myGroup1', 'Mark21', NULL, '/tmp/unknownDirectory/myFile');
+-- Invalid location path name.
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'Mark21', NULL, '/tmp/unknownDirectory/myFile');
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
+SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
--- should be ok
--- generated files content is checked later in adm2.sql scenario
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile');
+-- Should be ok.
+-- Generated files content is checked later in adm2.sql scenario.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile');
  emaj_gen_sql_group 
 --------------------
               11712
 (1 row)
 
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'Mark22', :'EMAJTESTTMPDIR' || '/myFile');
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'Mark22', :'EMAJTESTTMPDIR' || '/myFile');
  emaj_gen_sql_group 
 --------------------
               11601
 (1 row)
 
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile');
+SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile');
  emaj_gen_sql_groups 
 ---------------------
                11712
 (1 row)
 
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-2', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile');
+SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-2', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile');
  emaj_gen_sql_groups 
 ---------------------
                  112
 (1 row)
 
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile');
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile');
  emaj_gen_sql_group 
 --------------------
               11712
 (1 row)
 
--- should be ok with no output file supplied
-select emaj.emaj_gen_sql_group('myGroup1', 'Mark21', NULL, NULL);
+-- Should be ok with no output file supplied.
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'Mark21', NULL, NULL);
  emaj_gen_sql_group 
 --------------------
                   0
 (1 row)
 
 \copy (select * from emaj_sql_script) to '/dev/null'
-drop table emaj_temp_script cascade;
+DROP TABLE emaj_temp_script CASCADE;
 NOTICE:  drop cascades to view emaj_sql_script
--- should be ok, with tables and sequences filtering
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK');
+-- Should be ok, with tables and sequences filtering.
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK');
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | myTbl3     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | INSERT    |        10
@@ -1669,52 +1668,52 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl4     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | INSERT    |       100
 (6 rows)
 
--- all tables and sequences
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
-     'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
-     'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
+-- All tables and sequences.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
+     'myschema2.mytbl1', 'myschema2.mytbl2', 'myschema2.myTbl3', 'myschema2.mytbl4',
+     'myschema2.mytbl5', 'myschema2.mytbl6', 'myschema2.myseq1', 'myschema2.myTbl3_col31_seq']);
  emaj_gen_sql_group 
 --------------------
               11712
 (1 row)
 
--- minus 1 sequence
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
-     'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
-     'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1']);
+-- Minus 1 sequence.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
+     'myschema2.mytbl1', 'myschema2.mytbl2', 'myschema2.myTbl3', 'myschema2.mytbl4',
+     'myschema2.mytbl5', 'myschema2.mytbl6', 'myschema2.myseq1']);
  emaj_gen_sql_group 
 --------------------
               11711
 (1 row)
 
--- minus 1 table
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
-     'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3',
-     'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1']);
+-- Minus 1 table.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
+     'myschema2.mytbl1', 'myschema2.mytbl2', 'myschema2.myTbl3',
+     'myschema2.mytbl5', 'myschema2.mytbl6', 'myschema2.myseq1']);
  emaj_gen_sql_group 
 --------------------
               11611
 (1 row)
 
--- only 1 sequence
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
+-- Only 1 sequence.
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
      'myschema2.myTbl3_col31_seq']);
  emaj_gen_sql_group 
 --------------------
                   1
 (1 row)
 
--- only 1 table (with a strange name and belonging to a group having another table without pkey)
-select emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
+-- Only 1 table (with a strange name and belonging to a group having another table without pkey).
+SELECT emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
      'phil''s schema"3.phil''s tbl1']);
  emaj_gen_sql_group 
 --------------------
                   0
 (1 row)
 
--- several groups and 1 table of each, with redondancy in the tables array
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile', array[
-     'myschema1.mytbl4','myschema2.mytbl4','myschema1.mytbl4','myschema2.mytbl4']);
+-- Several groups and 1 table of each, with redondancy in the tables array.
+SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
+     'myschema1.mytbl4', 'myschema2.mytbl4', 'myschema1.mytbl4', 'myschema2.mytbl4']);
  emaj_gen_sql_groups 
 ---------------------
                  100
@@ -1722,37 +1721,37 @@ select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-
 
 \! grep 'only for' $EMAJTESTTMPDIR/myFile
 --    only for the following tables/sequences: myschema1.mytbl4,myschema2.mytbl4
--- generate a sql script after a table structure change but on a time frame prior the change
-begin;
-  select emaj.emaj_set_mark_group('myGroup2','Test sql generation');
+-- Generate a sql script after a table structure change but on a time frame prior the change.
+BEGIN;
+  SELECT emaj.emaj_set_mark_group('myGroup2', 'Test sql generation');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
-  insert into mySchema2.myTbl2 values(1000,'Text','01/01/2000');
-  update mySchema2.myTbl2 set col22 = 'New text' where col21 = 1000;
-  delete from mySchema2.myTbl2 where col21 = 1000;
-  select emaj.emaj_remove_table('myschema2', 'mytbl2','Before ALTER mytbl2');
+  INSERT INTO mySchema2.myTbl2 VALUES (1000, 'Text', '01/01/2000');
+  UPDATE mySchema2.myTbl2 SET col22 = 'New TEXT' WHERE col21 = 1000;
+  DELETE FROM mySchema2.myTbl2 WHERE col21 = 1000;
+  SELECT emaj.emaj_remove_table('myschema2', 'mytbl2', 'Before ALTER mytbl2');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-  alter table mySchema2.myTbl2 rename column col21 to id;
-  select emaj.emaj_gen_sql_group('myGroup2', 'Test sql generation', 'Before ALTER mytbl2', :'EMAJTESTTMPDIR' || '/altered_tbl.sql');
+  ALTER table mySchema2.myTbl2 RENAME COLUMN col21 TO id;
+  SELECT emaj.emaj_gen_sql_group('myGroup2', 'Test sql generation', 'Before ALTER mytbl2', :'EMAJTESTTMPDIR' || '/altered_tbl.sql');
  emaj_gen_sql_group 
 --------------------
                   3
 (1 row)
 
-rollback;
--- comment transaction commands and mask the timestamp in the initial comment for the need of the current test
+ROLLBACK;
+-- Comment transaction commands and mask the timestamp in the initial comment for the need of the current test.
 \! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
 \! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
--- and execute the generated script
+-- And execute the generated script.
 \set SQLSCRIPT :EMAJTESTTMPDIR '/altered_tbl.sql'
-begin;
+BEGIN;
   \i :SQLSCRIPT
 -- SQL script generated by E-Maj at [ts]$
 --    for tables group(s): myGroup2
@@ -1762,18 +1761,18 @@ SET escape_string_warning = OFF;
 SET datestyle = 'ISO, YMD';
 --BEGIN TRANSACTION;
 INSERT INTO myschema2.mytbl2 VALUES (1000, 'Text', '2000-01-01');
-UPDATE ONLY myschema2.mytbl2 SET col21 = 1000, col22 = 'New text', col23 = '2000-01-01' WHERE col21 = 1000;
+UPDATE ONLY myschema2.mytbl2 SET col21 = 1000, col22 = 'New TEXT', col23 = '2000-01-01' WHERE col21 = 1000;
 DELETE FROM ONLY myschema2.mytbl2 WHERE col21 = 1000;
 --COMMIT;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
 RESET datestyle;
-rollback;
+ROLLBACK;
 \! rm $EMAJTESTTMPDIR/*
--- check for emaj_gen_sql_group()
-select hist_id, hist_function, hist_event, hist_object, 
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5500 order by hist_id) as t;
+-- Check for emaj_gen_sql_group().
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'), hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 5500 ORDER BY hist_id;
  hist_id | hist_function  | hist_event |    hist_object    |                               regexp_replace                               | hist_user 
 ---------+----------------+------------+-------------------+----------------------------------------------------------------------------+-----------
     5502 | GEN_SQL_GROUPS | BEGIN      |                   | From mark  to current state                                                | postgres
@@ -1806,54 +1805,54 @@ select hist_id, hist_function, hist_event, hist_object,
     5545 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 100 generated statements - script exported into /tmp/emaj_15/misc/myFile   | postgres
 (28 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(5600);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(5600);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full
+-- Test a table reclustering (it will use the pkey index as clustered index) and a vacuum full.
 -----------------------------
-cluster emaj_myschema1.mytbl1_log;
-vacuum full emaj_myschema1.mytbl1_log;
+CLUSTER emaj_myschema1.mytbl1_log;
+VACUUM FULL emaj_myschema1.mytbl1_log;
 -----------------------------
--- try forbiden actions on parameters tables
+-- Try forbiden actions on parameters tables.
 -----------------------------
-truncate emaj.emaj_param;
+TRUNCATE emaj.emaj_param;
 ERROR:  emaj_param_before_stmt_trg: Modifying the emaj_param table is not allowed. Use the emaj_set_param() function instead.
-truncate emaj.emaj_default_param;
+TRUNCATE emaj.emaj_default_param;
 ERROR:  emaj_default_param_before_stmt_trg: Modifying the emaj_default_param table is not allowed.
 -----------------------------
--- emaj_export_parameters_configuration() and emaj_import_parameters_configuration() tests
+-- emaj_export_parameters_configuration() and emaj_import_parameters_configuration() tests.
 -----------------------------
-select emaj.emaj_set_param('fixed_step_rollback_duration','3.5 millisecond');
+SELECT emaj.emaj_set_param('fixed_step_rollback_duration', '3.5 millisecond');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- direct export
---   ok
-select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+-- Direct export.
+--   OK.
+SELECT json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
  json_array_length 
 -------------------
                  2
 (1 row)
 
-select json_array_length(emaj.emaj_export_parameters_configuration(true)->'parameters');
+SELECT json_array_length(emaj.emaj_export_parameters_configuration(TRUE)->'parameters');
  json_array_length 
 -------------------
                  9
 (1 row)
 
--- export in file
---   error
-select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
+-- Export in file.
+--   Error.
+SELECT emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
---   ok
-select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config');
+--   OK.
+SELECT emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config');
  emaj_export_parameters_configuration 
 --------------------------------------
                                     2
@@ -1876,175 +1875,175 @@ select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
   ]
 }
 
--- direct import
---   error
---     no "parameters" array
-select emaj.emaj_import_parameters_configuration('{ "dummy_json": null }'::json);
+-- Direct import.
+--   Error.
+--     No "parameters" array.
+SELECT emaj.emaj_import_parameters_configuration('{ "dummy_json": null }'::JSON);
 WARNING:  _import_param_conf : The JSON structure does not contain any "parameters" array.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
---     unknown attributes
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::json);
+--     Unknown attributes.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::JSON);
 WARNING:  _import_param_conf : For the parameter "history_retention", the attribute "unknown_attribute_1" is unknown.
 WARNING:  _import_param_conf : For the parameter "history_retention", the attribute "unknown_attribute_2" is unknown.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
---     missing or null "key" attributes
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "value": "no_key"} ] }'::json);
+--     Missing or null "key" attributes.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "value": "no_key"} ] }'::JSON);
 WARNING:  _import_param_conf : The #1 parameter has no "key" attribute or a "key" set to null.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": null} ] }'::json);
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": null} ] }'::JSON);
 WARNING:  _import_param_conf : The #1 parameter has no "key" attribute or a "key" set to null.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
---     invalid key
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "unknown_param" } ] }'::json);
+--     Invalid key.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "unknown_param" } ] }'::JSON);
 WARNING:  _import_param_conf : "unknown_param" is not a known E-Maj parameter.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
---     duplicate key
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention" }, { "key": "history_retention" } ] }'::json);
+--     Duplicate key.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention" }, { "key": "history_retention" } ] }'::JSON);
 WARNING:  _import_param_conf : The JSON structure references several times the parameter "history_retention".
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
---     bad interval format
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "not an interval" } ] }'::json);
-WARNING:  _import_param_conf : For key "history_retention", the value ("not an interval") is not a valid time interval.
+--     Bad interval format.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "NOT an interval" } ] }'::JSON);
+WARNING:  _import_param_conf : For key "history_retention", the value ("NOT an interval") is not a valid time interval.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
---   ok
---     new local value
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "1 day"} ] }'::json);
+--   Ok.
+--     New local value.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "1 day"} ] }'::JSON);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     1
 (1 row)
 
---     modified local value
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "2 days"} ] }'::json);
+--     Modified local value.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "2 days"} ] }'::JSON);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     1
 (1 row)
 
---     "null" "value" attribute
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": null} ] }'::json);
+--     "null" "value" attribute.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": null} ] }'::JSON);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     1
 (1 row)
 
---     missing "value" attribute
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention"} ] }'::json);
+--     Missing "value" attribute.
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention"} ] }'::JSON);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     1
 (1 row)
 
-select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+SELECT json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
  json_array_length 
 -------------------
                  3
 (1 row)
 
---   reset other parameters
-select emaj.emaj_set_param('history_retention', '1 day');
+--   Reset other parameters.
+SELECT emaj.emaj_set_param('history_retention', '1 day');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ ] }'::json, false);
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ ] }'::JSON, FALSE);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     0
 (1 row)
 
-select * from emaj.emaj_param where param_key = 'history_retention';
+SELECT * FROM emaj.emaj_param WHERE param_key = 'history_retention';
      param_key     | param_value 
 -------------------+-------------
  history_retention | 1 day
 (1 row)
 
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ ] }'::json, true);
+SELECT emaj.emaj_import_parameters_configuration('{ "parameters": [ ] }'::JSON, TRUE);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     0
 (1 row)
 
-select * from emaj.emaj_param where param_key = 'history_retention';
+SELECT * FROM emaj.emaj_param WHERE param_key = 'history_retention';
  param_key | param_value 
 -----------+-------------
 (0 rows)
 
--- import from file
---   error
-select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
+-- Import from file.
+--   Error.
+SELECT emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for reading: No such file or directory
 \! echo 'not a json content' >$EMAJTESTTMPDIR/bad_param_config
-select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
+SELECT emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
 ERROR:  emaj_import_parameters_configuration: The file content is not a valid JSON content.
 \! echo '{ "dummy_json": null }' >$EMAJTESTTMPDIR/bad_param_config
-select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
+SELECT emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
 WARNING:  _import_param_conf : The JSON structure does not contain any "parameters" array.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 \! echo '{ "parameters": [ { "key": "bad_key", "value": null} ] }' >$EMAJTESTTMPDIR/bad_param_config
-select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
+SELECT emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
 WARNING:  _import_param_conf : "bad_key" is not a known E-Maj parameter.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
---   ok
-select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config', true);
+--   Ok.
+SELECT emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config', TRUE);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     2
 (1 row)
 
-select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+SELECT json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
  json_array_length 
 -------------------
                  2
 (1 row)
 
-select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config', false);
+SELECT emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config', FALSE);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     2
 (1 row)
 
 -----------------------------
--- emaj_purge_histories() tests
+-- emaj_purge_histories() tests.
 -----------------------------
--- use the default retention delay
-select emaj.emaj_purge_histories(NULL);
+-- Use the default retention delay.
+SELECT emaj.emaj_purge_histories(NULL);
  emaj_purge_histories 
 ----------------------
  Nothing to delete
 (1 row)
 
--- overload the retention delay
-select emaj.emaj_purge_histories('0 SECOND');
+-- Overload the retention delay.
+SELECT emaj.emaj_purge_histories('0 SECOND');
  emaj_purge_histories 
 ----------------------
  Nothing to delete
 (1 row)
 
--- use an infinite default retention delay without overload
-select emaj.emaj_set_param('history_retention', '101 years');
+-- Use an infinite default retention delay without overload.
+SELECT emaj.emaj_set_param('history_retention', '101 years');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-select emaj.emaj_purge_histories();
+SELECT emaj.emaj_purge_histories();
     emaj_purge_histories     
 -----------------------------
  Histories purge is disabled
 (1 row)
 
-select emaj.emaj_set_param('history_retention', null);
+SELECT emaj.emaj_set_param('history_retention', NULL);
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- check for emaj_import_parameters_configuration() and emaj_purge_histories()
-select hist_id, hist_function, hist_event, hist_object, 
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5600 order by hist_id) as t;
+-- Check for emaj_import_parameters_configuration() and emaj_purge_histories().
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'), hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 5600 ORDER BY hist_id;
  hist_id |   hist_function   |     hist_event     |         hist_object          |                  regexp_replace                   | hist_user 
 ---------+-------------------+--------------------+------------------------------+---------------------------------------------------+-----------
     5600 | SET_PARAM         | UPDATED PARAMETER  | fixed_step_rollback_duration | From: 2.5 millisecond to: 3.5 millisecond         | postgres
@@ -2082,5 +2081,5 @@ select hist_id, hist_function, hist_event, hist_object,
     5643 | SET_PARAM         | DELETED PARAMETER  | history_retention            | From: 101 years to: 1 year                        | postgres
 (33 rows)
 
--- remove the temp directory
+-- Remove the temp directory.
 \! rm -R $EMAJTESTTMPDIR

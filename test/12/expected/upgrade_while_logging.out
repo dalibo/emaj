@@ -1,24 +1,24 @@
 -- upgrade_while_logging.sql : Upgrade from the previous to the next version while groups are in logging state.
 --
 -----------------------------
--- set the default_tablespace parameter to tspemaj to store new technical tables into this tablespace
+-- Set the default_tablespace parameter to tspemaj to store new technical tables into this tablespace.
 -----------------------------
 SET default_tablespace TO tspemaj;
 -----------------------------
--- emaj update to the next version
+-- Update emaj to the next version.
 -----------------------------
--- check the extension is available
-select * from pg_available_extension_versions where name = 'emaj' order by version desc limit 2;
+-- Check the extension is available.
+SELECT * FROM pg_available_extension_versions WHERE name = 'emaj' ORDER BY version DESC LIMIT 2;
  name | version | installed | superuser | relocatable | schema |      requires       |                                            comment                                             
 ------+---------+-----------+-----------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
  emaj | devel   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
  emaj | 4.7.1   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
-select relname from pg_catalog.pg_class, 
-                    (select unnest(extconfig) as oid from pg_catalog.pg_extension where extname = 'emaj') as t 
-  where t.oid = pg_class.oid
-  order by 1;
+SELECT relname FROM pg_catalog.pg_class, 
+                    (SELECT unnest(extconfig) AS oid FROM pg_catalog.pg_extension WHERE extname = 'emaj') AS t 
+  WHERE t.oid = pg_class.oid
+  ORDER BY 1;
            relname           
 -----------------------------
  emaj_alter_plan
@@ -44,14 +44,14 @@ select relname from pg_catalog.pg_class,
  emaj_time_stamp_time_id_seq
 (21 rows)
 
--- check the emaj integrity before upgrading
-select * from emaj.emaj_verify_all();
+-- Check the emaj integrity before upgrading.
+SELECT * FROM emaj.emaj_verify_all();
   emaj_verify_all  
 -------------------
  No error detected
 (1 row)
 
--- process the extension upgrade
+-- Process the extension update.
 ALTER EXTENSION emaj UPDATE TO 'devel';
 NOTICE:  drop cascades to 8 other objects
 DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
@@ -130,19 +130,19 @@ drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
 drop cascades to function _sequence_stat_seq(emaj_relation,bigint,bigint)
 NOTICE:  drop cascades to view emaj_visible_param
 -----------------------------
--- check installation
+-- Check installation.
 -----------------------------
--- check impact in catalog
-select extname, extversion from pg_extension where extname = 'emaj';
+-- Check impact in catalog.
+SELECT extname, extversion FROM pg_extension WHERE extname = 'emaj';
  extname | extversion 
 ---------+------------
  emaj    | devel
 (1 row)
 
-select relname from pg_catalog.pg_class, 
-                    (select unnest(extconfig) as oid from pg_catalog.pg_extension where extname = 'emaj') as t 
-  where t.oid = pg_class.oid
-  order by 1;
+SELECT relname FROM pg_catalog.pg_class, 
+                    (SELECT unnest(extconfig) AS oid FROM pg_catalog.pg_extension WHERE extname = 'emaj') AS t 
+  WHERE t.oid = pg_class.oid
+  ORDER BY 1;
            relname           
 -----------------------------
  emaj_global_seq
@@ -170,8 +170,8 @@ select relname from pg_catalog.pg_class,
  emaj_version_hist
 (23 rows)
 
--- check the emaj_version_hist and emaj_install_conf content
-select verh_version from emaj.emaj_version_hist order by verh_time_range;
+-- Check the emaj_version_hist and emaj_install_conf content.
+SELECT verh_version FROM emaj.emaj_version_hist ORDER BY verh_time_range;
  verh_version 
 --------------
  3.1.0
@@ -192,19 +192,19 @@ select verh_version from emaj.emaj_version_hist order by verh_time_range;
  <devel>
 (16 rows)
 
-select * from emaj.emaj_install_conf;
+SELECT * FROM emaj.emaj_install_conf;
  inst_as_extension | inst_by_superuser | inst_installer_role | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
 -------------------+-------------------+---------------------+--------------------+-----------------------+--------------------------
  t                 | t                 | postgres            | t                  | t                     | t
 (1 row)
 
-select emaj.emaj_get_version();
+SELECT emaj.emaj_get_version();
  emaj_get_version 
 ------------------
  <devel>
 (1 row)
 
--- check tables list
+-- Check tables list.
 \d emaj*.*
         Composite type "emaj._report_message_type"
      Column     |  Type   | Collation | Nullable | Default 
@@ -1443,102 +1443,102 @@ Tablespace: "tspemaj"
 --------+-------+---------+---------------------+-----------+---------+-------
  bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
--- check technical sequences position
-select * from emaj.emaj_global_seq;
+-- Check technical sequences position.
+SELECT * FROM emaj.emaj_global_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
          84 |      15 | t
 (1 row)
 
-select * from emaj.emaj_hist_hist_id_seq;
+SELECT * FROM emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
         150 |      16 | t
 (1 row)
 
-select * from emaj.emaj_time_stamp_time_id_seq;
+SELECT * FROM emaj.emaj_time_stamp_time_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
          22 |       0 | f
 (1 row)
 
-select * from emaj.emaj_rlbk_rlbk_id_seq;
+SELECT * FROM emaj.emaj_rlbk_rlbk_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           3 |       0 | t
 (1 row)
 
--- check log sequences position
-select * from emaj_myschema1.mytbl1_log_seq;
+-- Check log sequences position.
+SELECT * FROM emaj_myschema1.mytbl1_log_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
          24 |       9 | t
 (1 row)
 
-select * from emaj_myschema1.mytbl2_log_seq;
+SELECT * FROM emaj_myschema1.mytbl2_log_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           3 |      30 | t
 (1 row)
 
-select * from emaj_myschema1.mytbl2b_log_seq;
+SELECT * FROM emaj_myschema1.mytbl2b_log_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           3 |      30 | t
 (1 row)
 
-select * from emaj_myschema1.mytbl4_log_seq;
+SELECT * FROM emaj_myschema1.mytbl4_log_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           9 |      24 | t
 (1 row)
 
-select * from emaj_myschema2.mytbl1_log_seq;
+SELECT * FROM emaj_myschema2.mytbl1_log_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
          15 |      18 | t
 (1 row)
 
-select * from emaj_myschema2.mytbl2_log_seq;
+SELECT * FROM emaj_myschema2.mytbl2_log_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           2 |      31 | t
 (1 row)
 
-select * from emaj_myschema2."myTbl3_log_seq";
+SELECT * FROM emaj_myschema2."myTbl3_log_seq";
  last_value | log_cnt | is_called 
 ------------+---------+-----------
          10 |      23 | t
 (1 row)
 
-select * from emaj_myschema2.mytbl4_log_seq;
+SELECT * FROM emaj_myschema2.mytbl4_log_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           8 |      25 | t
 (1 row)
 
-select * from "emaj_phil's schema""3"."phil's tbl1_log_seq";
+SELECT * FROM "emaj_phil's schema""3"."phil's tbl1_log_seq";
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           1 |       0 | f
 (1 row)
 
-select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
+SELECT * FROM "emaj_phil's schema""3"."myTbl2\_log_seq";
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           1 |       0 | f
 (1 row)
 
 -----------------------------
--- Check the changes specific to this version upgrade
+-- Check the changes specific to this version upgrade.
 -----------------------------
-select * from emaj.emaj_param order by param_key;
+SELECT * FROM emaj.emaj_param ORDER BY param_key;
      param_key     | param_value 
 -------------------+-------------
  history_retention | @ 1 day
 (1 row)
 
-select * from emaj.emaj_all_param order by param_rank;
+SELECT * FROM emaj.emaj_all_param ORDER BY param_rank;
            param_key            | param_value | param_default | param_cast | param_rank 
 --------------------------------+-------------+---------------+------------+------------
  history_retention              | @ 1 day     | 1 year        | INTERVAL   |          1

@@ -1,93 +1,93 @@
--- check.sql: Perform various checks on the installed E-Maj components.
+-- Check.sql: Perform various checks on the installed E-Maj components.
 --            Also appreciate the regression test coverage.
 --
 -----------------------------
--- count all functions in emaj schema and functions callable by users (emaj_xxx)
+-- Count all functions in emaj schema and functions callable by users (emaj_xxx).
 -----------------------------
-select count(*) from pg_proc, pg_namespace 
-  where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
+SELECT count(*) FROM pg_proc, pg_namespace
+  WHERE pg_namespace.oid=pronamespace AND nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%');
  count 
 -------
    217
 (1 row)
 
-select count(*) from pg_proc, pg_namespace 
-  where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname like E'emaj\\_%';
+SELECT count(*) FROM pg_proc, pg_namespace
+  WHERE pg_namespace.oid=pronamespace AND nspname = 'emaj' AND proname LIKE E'emaj\\_%';
  count 
 -------
     95
 (1 row)
 
 -----------------------------
--- check that no function has kept its default rights to public
+-- Check that no function has kept its default rights to public.
 -----------------------------
--- should return no row
-select proname, proacl from pg_proc, pg_namespace 
-  where pg_namespace.oid=pronamespace
-    and nspname = 'emaj' and proname not like '%_log_fnct'
-    and proacl is null;
+-- Should return no row.
+SELECT proname, proacl FROM pg_proc, pg_namespace
+  WHERE pg_namespace.oid=pronamespace
+    AND nspname = 'emaj' AND proname NOT LIKE '%_log_fnct'
+    AND proacl IS NULL;
  proname | proacl 
 ---------+--------
 (0 rows)
 
 -----------------------------
--- check that no user function has the default comment
+-- Check that no user function has the default comment.
 -----------------------------
--- should return no row
-select pg_proc.proname
-  from pg_proc
-    join pg_namespace on (pronamespace=pg_namespace.oid)
-    left outer join pg_description on (pg_description.objoid = pg_proc.oid 
-                     and classoid = (select oid from pg_class where relname = 'pg_proc')
-                     and objsubid=0)
-  where nspname = 'emaj' and proname like E'emaj\\_%' and 
+-- Should return no row.
+SELECT pg_proc.proname
+  FROM pg_proc
+    JOIN pg_namespace on (pronamespace=pg_namespace.oid)
+    LEFT OUTER JOIN pg_description on (pg_description.objoid = pg_proc.oid
+                     AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc')
+                     AND objsubid=0)
+  WHERE nspname = 'emaj' AND proname LIKE E'emaj\\_%' AND
         pg_description.description = 'E-Maj internal function';
  proname 
 ---------
 (0 rows)
 
 -----------------------------
--- perform various consistency checks on technical tables
+-- Perform various consistency checks on technical tables.
 -----------------------------
--- no row in emaj_schema not linked to a relation assigned to a group (to complement the fkey between emaj_relation and emaj_schema)
-select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel_log_schema from emaj.emaj_relation);
+-- No row in emaj_schema not linked to a relation assigned to a group (to complement the fkey between emaj_relation and emaj_schema).
+SELECT sch_name FROM emaj.emaj_schema WHERE sch_name NOT IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation);
  sch_name 
 ----------
 (0 rows)
 
 -----------------------------
--- get test coverage data just before cleanup
+-- Get test coverage data just before cleanup.
 -----------------------------
--- display the functions that are not called by any regression test script.
--- some functions are excluded:
---   _emaj_param_before_stmt_fnct and _emaj_default_param_before_stmt_fnct are called by triggers but always raise an exception
+-- Display the functions that are not called by any regression test script.
+-- Some functions are excluded:
+--   _emaj_param_before_stmt_fnct and _emaj_default_param_before_stmt_fnct are called by triggers but always raise an exception.
 --       (and thus are not listed in pg_stat_user_functions for PG14- versions),
 --   _build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics,
 --   emaj_drop_extension() is not called by the standart test scenarios, but a dedicated scenario tests it.
-select proname from pg_proc, pg_namespace
-  where pronamespace = pg_namespace.oid
-    and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%')
-    and proname not in ('_emaj_default_param_before_stmt_fnct', '_emaj_param_before_stmt_fnct', '_build_path_name', 'emaj_drop_extension')
-except
-select funcname from pg_stat_user_functions
-  where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
-order by 1;
+SELECT proname FROM pg_proc, pg_namespace
+  WHERE pronamespace = pg_namespace.oid
+    AND nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
+    AND proname NOT IN ('_emaj_default_param_before_stmt_fnct', '_emaj_param_before_stmt_fnct', '_build_path_name', 'emaj_drop_extension')
+EXCEPT
+SELECT funcname FROM pg_stat_user_functions
+  WHERE schemaname = 'emaj' AND (funcname LIKE E'emaj\\_%' OR funcname LIKE E'\\_%')
+ORDER BY 1;
  proname 
 ---------
 (0 rows)
 
--- display the number of calls for each emaj function
+-- Display the number of calls for each emaj function.
 --   (_verify_groups(), _log_stat_tbl() and _get_log_sequence_last_value() functions are excluded as their number of calls is not stable.
 --      _log_stat_tbl() and _get_log_sequence_last_value() sometimes differ in verify.sql or adm3.sql, always at the same place:
---      a call to emaj.emaj_verify_all() (verify.sql line 313) and to _remove_tables() (adm3.sql line 409). But these functions do not
---      call _log_stat_tbl(), directly or indirectly. This happens mostly with PG 11.)
-select funcname, calls from pg_stat_user_functions
-  where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
-    and funcname not in (
+--      A call to emaj.emaj_verify_all() (verify.sql line 313) and to _remove_tables() (adm3.sql line 409). But these functions do not.
+--      Call _log_stat_tbl(), directly or indirectly. This happens mostly with PG 11.).
+SELECT funcname, calls FROM pg_stat_user_functions
+  WHERE schemaname = 'emaj' AND (funcname LIKE E'emaj\\_%' OR funcname LIKE E'\\_%')
+    AND funcname NOT IN (
       '_log_stat_tbl', '_get_log_sequence_last_value',
       '_verify_groups'
                         )
-  order by funcname, funcid;
+  ORDER BY funcname, funcid;
                  funcname                  | calls 
 -------------------------------------------+-------
  _add_seq                                  |    48
@@ -171,7 +171,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    24
  _move_tbl                                 |    50
- _pg_version_num                           |    21
+ _pg_version_num                           |    19
  _purge_histories                          |    83
  _remove_seq                               |    15
  _remove_sequences                         |    20
@@ -304,14 +304,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_verify_all                           |    55
 (212 rows)
 
--- count the total number of user-callable function calls (those who failed are not counted)
-select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
+-- Count the total number of user-callable function calls (those who failed are not counted).
+SELECT sum(calls) FROM pg_stat_user_functions WHERE funcname LIKE E'emaj\\_%';
  sum  
 ------
  1252
 (1 row)
 
 -----------------------------
--- execute the perl script that checks the code
+-- Execute the perl script that checks the code.
 -----------------------------
 \! perl ${EMAJ_DIR}/tools/check_code.pl | grep -P '^WARNING:|^ERROR:'

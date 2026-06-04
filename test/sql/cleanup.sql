@@ -1,19 +1,19 @@
--- cleanup.sql: Clean up the regression test environment, in particular roles 
---              (all components inside the regression database will be deleted with the regression database)
+-- Cleanup.sql: Clean up the regression test environment, in particular roles.
+--              (all components inside the regression database will be deleted with the regression database).
 
 -----------------------------
--- cleanup the temporary files structure
+-- Cleanup the temporary files structure.
 -----------------------------
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`
 \! rm -Rf $EMAJTESTTMPDIR
 
 -----------------------------
--- drop the function that checks and sets the last_value of emaj technical sequences
+-- Drop the function that checks and sets the last_value of emaj technical sequences.
 -----------------------------
 DROP FUNCTION public.handle_emaj_sequences(INT);
 
 -----------------------------
--- rename the tspemaj tablespace if it exists
+-- Rename the tspemaj tablespace if it exists.
 -----------------------------
 DO LANGUAGE plpgsql
 $$
@@ -26,35 +26,35 @@ $$
 $$;
 
 -----------------------------
--- drop emaj_adm roles
+-- Drop emaj_adm roles.
 -----------------------------
-revoke emaj_adm from _regress_emaj_adm1, _regress_emaj_adm2;
-revoke all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
-  from _regress_emaj_adm1, _regress_emaj_adm2;
-revoke all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
-  from _regress_emaj_adm1, _regress_emaj_adm2;
-revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
-  from _regress_emaj_adm1, _regress_emaj_adm2;
-revoke all on tablespace tsplog1, "tsp log'2", tspemaj_renamed
-  from _regress_emaj_adm1, _regress_emaj_adm2;
+REVOKE emaj_adm FROM _regress_emaj_adm1, _regress_emaj_adm2;
+REVOKE ALL ON SCHEMA mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
+  FROM _regress_emaj_adm1, _regress_emaj_adm2;
+REVOKE ALL ON ALL TABLES IN SCHEMA mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
+  FROM _regress_emaj_adm1, _regress_emaj_adm2;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
+  FROM _regress_emaj_adm1, _regress_emaj_adm2;
+REVOKE ALL ON TABLESPACE tsplog1, "tsp log'2", tspemaj_renamed
+  FROM _regress_emaj_adm1, _regress_emaj_adm2;
 
-drop role _regress_emaj_adm1, _regress_emaj_adm2;
-
------------------------------
--- drop _regress_emaj_viewer role
------------------------------
-revoke all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 from _regress_emaj_viewer;
-revoke all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 from _regress_emaj_viewer;
-revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 from _regress_emaj_viewer;
-drop role _regress_emaj_viewer;
+DROP ROLE _regress_emaj_adm1, _regress_emaj_adm2;
 
 -----------------------------
--- drop _regress_emaj_anonym role
+-- Drop _regress_emaj_viewer role.
 -----------------------------
-revoke all on database regression from _regress_emaj_anonym;
-drop role _regress_emaj_anonym;
+REVOKE ALL ON SCHEMA mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 FROM _regress_emaj_viewer;
+REVOKE ALL ON ALL TABLES IN SCHEMA mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 FROM _regress_emaj_viewer;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 FROM _regress_emaj_viewer;
+DROP ROLE _regress_emaj_viewer;
+
+-----------------------------
+-- Drop _regress_emaj_anonym role.
+-----------------------------
+REVOKE ALL ON DATABASE regression FROM _regress_emaj_anonym;
+DROP ROLE _regress_emaj_anonym;
 
 --------------------------------------------
--- Dump the regression database (once the test roles have been dropped)
+-- Dump the regression database (once the test roles have been dropped).
 --------------------------------------------
 \! ${EMAJ_DIR}/test/${PGVER}/bin/pg_dump regression >${EMAJ_DIR}/test/${PGVER}/results/regression.dump

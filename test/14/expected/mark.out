@@ -1,206 +1,207 @@
--- mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_does_exist_mark_group(),
--- emaj_comment_mark_group(), emaj_rename_mark_group(), emaj_get_previous_mark_group(),
--- emaj_delete_mark_group(), emaj_protect_mark_group() and emaj_unprotect_mark_group() functions
+-- Mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_does_exist_mark_group(),
+--                 emaj_comment_mark_group(), emaj_rename_mark_group(), emaj_get_previous_mark_group(),
+--                 emaj_delete_mark_group(), emaj_protect_mark_group() and emaj_unprotect_mark_group() functions.
 --
--- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+-- Do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement).
 \set VERBOSITY terse
--- set sequence restart value
-select public.handle_emaj_sequences(3000);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(3000);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
-select emaj.emaj_start_group('myGroup1','Mark1');
+SELECT emaj.emaj_start_group('myGroup1', 'Mark1');
  emaj_start_group 
 ------------------
                 7
 (1 row)
 
-select emaj.emaj_start_group('myGroup2','Mark2');
+SELECT emaj.emaj_start_group('myGroup2', 'Mark2');
  emaj_start_group 
 ------------------
                10
 (1 row)
 
-select emaj.emaj_start_group('emptyGroup','MarkInit');
+SELECT emaj.emaj_start_group('emptyGroup', 'MarkInit');
  emaj_start_group 
 ------------------
                 0
 (1 row)
 
 -----------------------------
--- emaj_set_mark_group() tests
+-- emaj_set_mark_group() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_set_mark_group(NULL,NULL);
+-- Group is unknown.
+SELECT emaj.emaj_set_mark_group(NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_set_mark_group('unknownGroup',NULL);
+SELECT emaj.emaj_set_mark_group('unknownGroup', NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- reserved mark name
-select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
+-- Reserved mark name.
+SELECT emaj.emaj_set_mark_group('myGroup1', 'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
--- should be OK
-select emaj.emaj_set_mark_group('myGroup1','SM1');
+-- Should be OK.
+SELECT emaj.emaj_set_mark_group('myGroup1', 'SM1');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup2','SM1','comment recorded at mark''s set');
+SELECT emaj.emaj_set_mark_group('myGroup2', 'SM1', 'comment recorded at mark''s set');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup2','phil''s mark #1');
+SELECT emaj.emaj_set_mark_group('myGroup2', 'phil''s mark #1');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
-select emaj.emaj_set_mark_group('emptyGroup','SM1');
+SELECT emaj.emaj_set_mark_group('emptyGroup', 'SM1');
  emaj_set_mark_group 
 ---------------------
                    0
 (1 row)
 
--- check mark existence
-select emaj.emaj_does_exist_mark_group('unknownGroup', 'unknownMark');
+-- Check mark existence.
+SELECT emaj.emaj_does_exist_mark_group('unknownGroup', 'unknownMark');
  emaj_does_exist_mark_group 
 ----------------------------
  f
 (1 row)
 
-select emaj.emaj_does_exist_mark_group('myGroup1', 'unknownMark');
+SELECT emaj.emaj_does_exist_mark_group('myGroup1', 'unknownMark');
  emaj_does_exist_mark_group 
 ----------------------------
  f
 (1 row)
 
-select emaj.emaj_does_exist_mark_group('myGroup1', 'SM1');
+SELECT emaj.emaj_does_exist_mark_group('myGroup1', 'SM1');
  emaj_does_exist_mark_group 
 ----------------------------
  t
 (1 row)
 
--- duplicate mark name
-select emaj.emaj_set_mark_group('myGroup1','SM1');
+-- Duplicate mark name.
+SELECT emaj.emaj_set_mark_group('myGroup1', 'SM1');
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "SM1".
-select emaj.emaj_set_mark_group('myGroup1','SM1') where not emaj.emaj_does_exist_mark_group('myGroup1', 'SM1');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'SM1') WHERE NOT emaj.emaj_does_exist_mark_group('myGroup1', 'SM1');
  emaj_set_mark_group 
 ---------------------
 (0 rows)
 
--- mark with generated name and in a single transaction
-begin transaction;
-  select emaj.emaj_set_mark_group('myGroup1',NULL);
+-- Mark with generated name and in a single transaction.
+BEGIN TRANSACTION;
+  SELECT emaj.emaj_set_mark_group('myGroup1', NULL);
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-  select emaj.emaj_set_mark_group('myGroup2','');
+  SELECT emaj.emaj_set_mark_group('myGroup2', '');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
-commit;
--- default value for mark name
-select pg_sleep(0.001);
+COMMIT;
+-- Default value for mark name.
+SELECT pg_sleep(0.001);
  pg_sleep 
 ----------
  
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup2');
+SELECT emaj.emaj_set_mark_group('myGroup2');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
--- use of % in mark name
-select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
+-- Use of % in mark name.
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Foo%Bar');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
--- multiple emaj_set_mark_group() using the same generated start mark name => fails
--- this test is commented because the generated error message differs from one run to another
---begin;
---  select emaj.emaj_start_group('myGroup4');
---  select emaj.emaj_set_mark_group('myGroup4');
---  select emaj.emaj_set_mark_group('myGroup4');
---rollback;
+-- Multiple emaj_set_mark_group() using the same generated start mark name => fails.
+-- This test is commented because the generated error message differs from one run to another.
+--BEGIN;
+--  SELECT emaj.emaj_start_group('myGroup4');
+--  SELECT emaj.emaj_set_mark_group('myGroup4');
+--  SELECT emaj.emaj_set_mark_group('myGroup4');
+--ROLLBACK;
 -----------------------------
--- emaj_set_mark_groups() tests
+-- emaj_set_mark_groups() tests.
 -----------------------------
--- NULL group names array
-select emaj.emaj_set_mark_groups(NULL,NULL);
+-- NULL group names array.
+SELECT emaj.emaj_set_mark_groups(NULL, NULL);
 WARNING:  _check_group_names: No group to process.
  emaj_set_mark_groups 
 ----------------------
                     0
 (1 row)
 
--- groups array is unknown
-select emaj.emaj_set_mark_groups('{"unknownGroup",""}',NULL);
+-- Groups array is unknown.
+SELECT emaj.emaj_set_mark_groups('{"unknownGroup", ""}', NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- reserved mark name
-select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
+-- Reserved mark name.
+SELECT emaj.emaj_set_mark_groups('{"myGroup1"}', 'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
--- should be OK
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
+-- Should be OK.
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}', 'SM3');
  emaj_set_mark_groups 
 ----------------------
                    17
 (1 row)
 
--- duplicate mark name and warning on group names array content
-select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','emptyGroup','myGroup2','myGroup1'],'SM3');
+-- Duplicate mark name and warning on group names array content.
+SELECT emaj.emaj_set_mark_groups(ARRAY['myGroup1', NULL, 'myGroup2', '', 'myGroup2', 'emptyGroup', 'myGroup2', 'myGroup1'], 'SM3');
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "SM3".
--- generated mark name
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');
+-- Generated mark name.
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}', '');
  emaj_set_mark_groups 
 ----------------------
                    17
 (1 row)
 
-select pg_sleep(0.001);
+SELECT pg_sleep(0.001);
  pg_sleep 
 ----------
  
 (1 row)
 
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}',NULL);
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}', NULL);
  emaj_set_mark_groups 
 ----------------------
                    17
 (1 row)
 
-select pg_sleep(0.001);
+SELECT pg_sleep(0.001);
  pg_sleep 
 ----------
  
 (1 row)
 
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}');
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}');
  emaj_set_mark_groups 
 ----------------------
                    17
 (1 row)
 
--- use of % in mark name
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo','comment recorded at mark''s set');
+-- Use of % in mark name.
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}', 'Bar%Foo', 'comment recorded at mark''s set');
  emaj_set_mark_groups 
 ----------------------
                    17
 (1 row)
 
--- check for emaj_set_mark_group() and emaj_set_mark_groups()
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+-- Check for emaj_set_mark_group() and emaj_set_mark_groups().
+SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_time_id, mark_is_rlbk_protected,
+       mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark FROM emaj.emaj_mark ORDER BY mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |          mark_comment          | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+------------------------+--------------------------------+---------------------------+------------------------------
  phil's group#3", | Mark3          |         2003 | f                      |                                |                           | 
@@ -227,7 +228,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2         | Bar%Foo        |         3015 | f                      | comment recorded at mark's set |                           | 
 (22 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3000 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 3000 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     3000 |            3000000 | S
@@ -248,7 +249,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     3015 |            3000000 | M
 (16 rows)
 
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called FROM emaj.emaj_sequence ORDER BY sequ_time_id, sequ_schema, sequ_name;
    sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -----------------+-------------------+--------------+---------------+----------------
  phil's schema"3 | myTbl2\_col21_seq |         2003 |             1 | f
@@ -293,7 +294,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2       | myseq1            |         3015 |          1000 | f
 (40 rows)
 
-select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+SELECT tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val FROM emaj.emaj_table ORDER BY tbl_time_id, tbl_schema, tbl_name;
    tbl_schema    |  tbl_name   | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
 -----------------+-------------+-------------+------------+-----------+----------------------
  phil's schema"3 | myTbl2\     |        2003 |         -1 |         0 |                    0
@@ -425,9 +426,9 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
  myschema2       | mytbl8      |        3015 |         -1 |         0 |                    0
 (127 rows)
 
-select hist_id, hist_function, hist_event, hist_object, 
-  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
-  hist_user from emaj.emaj_hist where hist_id >= 3000 order by hist_id;
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user FROM emaj.emaj_hist WHERE hist_id >= 3000 ORDER BY hist_id;
  hist_id |  hist_function  |   hist_event   |    hist_object    |         regexp_replace          | hist_user 
 ---------+-----------------+----------------+-------------------+---------------------------------+-----------
     3000 | START_GROUP     | BEGIN          | myGroup1          | With logs reset                 | postgres
@@ -520,182 +521,192 @@ select hist_id, hist_function, hist_event, hist_object,
     3094 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | Bar%Foo                         | postgres
 (88 rows)
 
-select public.handle_emaj_sequences(3200);
+SELECT public.handle_emaj_sequences(3200);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- emaj_comment_mark_group() tests
+-- emaj_comment_mark_group() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_comment_mark_group(NULL,NULL,NULL);
+-- Group is unknown.
+SELECT emaj.emaj_comment_mark_group(NULL, NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_comment_mark_group('unknownGroup',NULL,NULL);
+SELECT emaj.emaj_comment_mark_group('unknownGroup', NULL, NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- mark is unknown
-select emaj.emaj_comment_mark_group('myGroup1','unknownMark',NULL);
+-- Mark is unknown.
+SELECT emaj.emaj_comment_mark_group('myGroup1', 'unknownMark', NULL);
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
--- should be OK
-select emaj.emaj_comment_mark_group('myGroup1','SM1','a first comment for group #1');
+-- Should be OK.
+SELECT emaj.emaj_comment_mark_group('myGroup1', 'SM1', 'a first comment for group #1');
  emaj_comment_mark_group 
 -------------------------
  
 (1 row)
 
-select emaj.emaj_comment_mark_group('myGroup1','SM1','a better comment for group #1');
+SELECT emaj.emaj_comment_mark_group('myGroup1', 'SM1', 'a better comment for group #1');
  emaj_comment_mark_group 
 -------------------------
  
 (1 row)
 
-select emaj.emaj_comment_mark_group('myGroup2','SM1','a first comment for group #2');
+SELECT emaj.emaj_comment_mark_group('myGroup2', 'SM1', 'a first comment for group #2');
  emaj_comment_mark_group 
 -------------------------
  
 (1 row)
 
-select emaj.emaj_comment_mark_group('myGroup2','SM1',NULL);
+SELECT emaj.emaj_comment_mark_group('myGroup2', 'SM1', NULL);
  emaj_comment_mark_group 
 -------------------------
  
 (1 row)
 
-select emaj.emaj_comment_mark_group('myGroup2','EMAJ_LAST_MARK','a comment for group #2');
+SELECT emaj.emaj_comment_mark_group('myGroup2', 'EMAJ_LAST_MARK', 'a comment for group #2');
  emaj_comment_mark_group 
 -------------------------
  
 (1 row)
 
-select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s comment!');
+SELECT emaj.emaj_comment_mark_group('myGroup2', 'phil''s mark #1', 'a good phil''s comment!');
  emaj_comment_mark_group 
 -------------------------
  
 (1 row)
 
-select emaj.emaj_comment_mark_group('emptyGroup','SM1','a comment on a mark for an empty group');
+SELECT emaj.emaj_comment_mark_group('emptyGroup', 'SM1', 'a comment on a mark for an empty group');
  emaj_comment_mark_group 
 -------------------------
  
 (1 row)
 
 -----------------------------
--- emaj_get_previous_mark_group()
+-- emaj_get_previous_mark_group().
 -----------------------------
--- group is unknown
-select emaj.emaj_get_previous_mark_group(NULL,NULL::timestamptz);
+-- Group is unknown.
+SELECT emaj.emaj_get_previous_mark_group(NULL, NULL::timestamptz);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::timestamptz);
+SELECT emaj.emaj_get_previous_mark_group('unknownGroup', NULL::timestamptz);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-select emaj.emaj_get_previous_mark_group(NULL,NULL::text);
+SELECT emaj.emaj_get_previous_mark_group(NULL, NULL::TEXT);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::text);
+SELECT emaj.emaj_get_previous_mark_group('unknownGroup', NULL::TEXT);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- mark is unknown in emaj_mark
-select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
+-- Mark is unknown in emaj_mark.
+SELECT emaj.emaj_get_previous_mark_group('myGroup2', 'unknownMark');
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
--- should be OK
-select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'SM1'));
+-- Should be OK.
+SELECT emaj.emaj_get_previous_mark_group('myGroup2',
+                   (SELECT time_clock_timestamp FROM emaj.emaj_mark, emaj.emaj_time_stamp
+                      WHERE time_id = mark_time_id AND mark_group = 'myGroup2' AND mark_name = 'SM1'));
  emaj_get_previous_mark_group 
 ------------------------------
  Mark2
 (1 row)
 
-select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'SM1')+'0.000001 SECOND'::interval);
+SELECT emaj.emaj_get_previous_mark_group('myGroup2',
+                   (SELECT time_clock_timestamp FROM emaj.emaj_mark, emaj.emaj_time_stamp
+                      WHERE time_id = mark_time_id AND mark_group = 'myGroup2' AND mark_name = 'SM1')+'0.000001 SECOND'::interval);
  emaj_get_previous_mark_group 
 ------------------------------
  SM1
 (1 row)
 
-select emaj.emaj_get_previous_mark_group('myGroup1',(select min(time_clock_timestamp) from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup1'));
+SELECT emaj.emaj_get_previous_mark_group('myGroup1',
+                   (SELECT min(time_clock_timestamp) FROM emaj.emaj_mark, emaj.emaj_time_stamp
+                      WHERE time_id = mark_time_id AND mark_group = 'myGroup1'));
  emaj_get_previous_mark_group 
 ------------------------------
  
 (1 row)
 
-select emaj.emaj_get_previous_mark_group('myGroup2','SM1');
+SELECT emaj.emaj_get_previous_mark_group('myGroup2', 'SM1');
  emaj_get_previous_mark_group 
 ------------------------------
  Mark2
 (1 row)
 
-select emaj.emaj_get_previous_mark_group('emptyGroup','SM1');
+SELECT emaj.emaj_get_previous_mark_group('emptyGroup', 'SM1');
  emaj_get_previous_mark_group 
 ------------------------------
  MarkInit
 (1 row)
 
-select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previous mark');
+SELECT coalesce(emaj.emaj_get_previous_mark_group('myGroup2', 'Mark2'), 'No previous mark');
      coalesce     
 ------------------
  No previous mark
 (1 row)
 
-select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))))));
+SELECT emaj.emaj_get_previous_mark_group('myGroup2',
+                   (SELECT emaj.emaj_get_previous_mark_group('myGroup2',
+                                       (SELECT emaj.emaj_get_previous_mark_group('myGroup2',
+                                                           (SELECT emaj.emaj_get_previous_mark_group('myGroup2', 'EMAJ_LAST_MARK')))))));
  emaj_get_previous_mark_group 
 ------------------------------
  SM3
 (1 row)
 
 -----------------------------
--- emaj_rename_mark_group() tests
+-- emaj_rename_mark_group() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_rename_mark_group(NULL,NULL,NULL);
+-- Group is unknown.
+SELECT emaj.emaj_rename_mark_group(NULL, NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_rename_mark_group('unknownGroup',NULL,NULL);
+SELECT emaj.emaj_rename_mark_group('unknownGroup', NULL, NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- unknown mark name
-select emaj.emaj_rename_mark_group('myGroup1','DummyMark','new mark');
+-- Unknown mark name.
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'DummyMark', 'new mark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
--- invalid new mark name
-select emaj.emaj_rename_mark_group('myGroup1','Mark1','EMAJ_LAST_MARK');
+-- Invalid new mark name.
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'Mark1', 'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
--- new mark name already exists
-select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM1');
+-- New mark name already exists.
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'EMAJ_LAST_MARK', 'SM1');
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "SM1".
--- should be OK
-select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK',NULL);
+-- Should be OK.
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'EMAJ_LAST_MARK', NULL);
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM2');
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'EMAJ_LAST_MARK', 'SM2');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','SM2');
+SELECT emaj.emaj_rename_mark_group('myGroup2', 'EMAJ_LAST_MARK', 'SM2');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1');
+SELECT emaj.emaj_rename_mark_group('myGroup2', 'phil''s mark #1', 'john''s mark #1');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_rename_mark_group('emptyGroup','EMAJ_LAST_MARK','SM2');
+SELECT emaj.emaj_rename_mark_group('emptyGroup', 'EMAJ_LAST_MARK', 'SM2');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
--- simulate SM2 is the end mark of a logged rollback operations on both myGroup1 and myGroup2 groups
-update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'Mark1' where mark_name = 'SM2';
-select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
+-- Simulate SM2 is the end mark of a logged rollback operations on both myGroup1 and myGroup2 groups.
+UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = 'Mark1' WHERE mark_name = 'SM2';
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'Mark1', 'First Mark');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
--- check for emaj_comment_mark_group() and emaj_rename_mark_group()
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+-- Check for emaj_comment_mark_group() and emaj_rename_mark_group().
+SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_time_id, mark_is_rlbk_protected,
+       mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark FROM emaj.emaj_mark ORDER BY mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
  phil's group#3", | Mark3          |         2003 | f                      |                                        |                           | 
@@ -722,7 +733,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2         | SM2            |         3015 | f                      | a comment for group #2                 |                           | Mark1
 (22 rows)
 
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called FROM emaj.emaj_sequence ORDER BY sequ_time_id, sequ_schema, sequ_name;
    sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -----------------+-------------------+--------------+---------------+----------------
  phil's schema"3 | myTbl2\_col21_seq |         2003 |             1 | f
@@ -767,7 +778,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2       | myseq1            |         3015 |          1000 | f
 (40 rows)
 
-select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table ORDER BY tbl_time_id, tbl_schema, tbl_name;
    tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
 -----------------+-------------+-------------+----------------------
  phil's schema"3 | myTbl2\     |        2003 |                    0
@@ -899,14 +910,14 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2       | mytbl8      |        3015 |                    0
 (127 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3200 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 3200 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
 (0 rows)
 
-select hist_id, hist_function, hist_event, hist_object, 
-  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
-  hist_user from emaj.emaj_hist where hist_id >= 3200 order by hist_id;
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user FROM emaj.emaj_hist WHERE hist_id >= 3200 ORDER BY hist_id;
  hist_id |   hist_function    | hist_event | hist_object |            regexp_replace             | hist_user 
 ---------+--------------------+------------+-------------+---------------------------------------+-----------
     3200 | COMMENT_MARK_GROUP |            | myGroup1    | Mark SM1                              | postgres
@@ -930,176 +941,176 @@ select hist_id, hist_function, hist_event, hist_object,
     3223 | RENAME_MARK_GROUP  | END        | myGroup1    | Mark1 renamed First Mark              | postgres
 (19 rows)
 
-select public.handle_emaj_sequences(3400);
+SELECT public.handle_emaj_sequences(3400);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- emaj_delete_mark_group() tests
+-- emaj_delete_mark_group() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_delete_mark_group(NULL,NULL);
+-- Group is unknown.
+SELECT emaj.emaj_delete_mark_group(NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_delete_mark_group('unknownGroup',NULL);
+SELECT emaj.emaj_delete_mark_group('unknownGroup', NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- unknown mark name
-select emaj.emaj_delete_mark_group('myGroup2',NULL);
+-- Unknown mark name.
+SELECT emaj.emaj_delete_mark_group('myGroup2', NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup2".
-select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
+SELECT emaj.emaj_delete_mark_group('myGroup2', 'DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
--- next attempts should be OK
-select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+-- Next attempts should be OK.
+SELECT emaj.emaj_delete_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
--- simulate SM3 is an end mark of a logged rollback operations on myGroup1 group
-update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group = 'myGroup1' and mark_name = 'SM3';
-select emaj.emaj_delete_mark_group('myGroup1','SM1');
+-- Simulate SM3 is an end mark of a logged rollback operations on myGroup1 group.
+UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = 'SM1' WHERE mark_group = 'myGroup1' AND mark_name = 'SM3';
+SELECT emaj.emaj_delete_mark_group('myGroup1', 'SM1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'SM3';
+SELECT mark_group, mark_name, mark_logged_rlbk_target_mark FROM emaj.emaj_mark WHERE mark_group = 'myGroup1' AND mark_name = 'SM3';
  mark_group | mark_name | mark_logged_rlbk_target_mark 
 ------------+-----------+------------------------------
  myGroup1   | SM3       | 
 (1 row)
 
-select emaj.emaj_delete_mark_group('emptyGroup','MarkInit');
+SELECT emaj.emaj_delete_mark_group('emptyGroup', 'MarkInit');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-select emaj.emaj_delete_mark_group('myGroup1','First Mark');
+SELECT emaj.emaj_delete_mark_group('myGroup1', 'First Mark');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-select sum(emaj.emaj_delete_mark_group('myGroup1',mark_name)) from 
- (select mark_name from emaj.emaj_mark
-    where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d')
-    order by mark_time_id) as t;
+SELECT sum(emaj.emaj_delete_mark_group('myGroup1', mark_name))
+  FROM (SELECT mark_name FROM emaj.emaj_mark
+          WHERE mark_group = 'myGroup1' AND (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d')
+          ORDER BY mark_time_id) as t;
  sum 
 -----
    5
 (1 row)
 
-    
-select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
+SELECT emaj.emaj_delete_mark_group('myGroup2', 'john''s mark #1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
--- error: at least 1 mark should remain
-select emaj.emaj_delete_mark_group('myGroup1','SM3');
+-- Error: at least 1 mark should remain.
+SELECT emaj.emaj_delete_mark_group('myGroup1', 'SM3');
 ERROR:  emaj_delete_mark_group: "SM3" is the only mark of the group. It cannot be deleted.
 -----------------------------
--- emaj_delete_before_mark_group() tests
+-- emaj_delete_before_mark_group() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_delete_before_mark_group(NULL,NULL);
+-- Group is unknown.
+SELECT emaj.emaj_delete_before_mark_group(NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_delete_before_mark_group('unknownGroup',NULL);
+SELECT emaj.emaj_delete_before_mark_group('unknownGroup', NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- unknown mark name
-select emaj.emaj_delete_before_mark_group('myGroup2','DummyMark');
+-- Unknown mark name.
+SELECT emaj.emaj_delete_before_mark_group('myGroup2', 'DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
--- NULL input for mark name returns NULL
-select emaj.emaj_delete_before_mark_group('myGroup2',NULL);
+-- NULL input for mark name returns NULL.
+SELECT emaj.emaj_delete_before_mark_group('myGroup2', NULL);
  emaj_delete_before_mark_group 
 -------------------------------
                               
 (1 row)
 
--- should be OK
-select emaj.emaj_delete_before_mark_group('myGroup1','SM3');
+-- Should be OK.
+SELECT emaj.emaj_delete_before_mark_group('myGroup1', 'SM3');
  emaj_delete_before_mark_group 
 -------------------------------
                              0
 (1 row)
 
-select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
+SELECT emaj.emaj_delete_before_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_delete_before_mark_group 
 -------------------------------
                              0
 (1 row)
 
-select emaj.emaj_set_mark_group('emptyGroup','EGM3');
+SELECT emaj.emaj_set_mark_group('emptyGroup', 'EGM3');
  emaj_set_mark_group 
 ---------------------
                    0
 (1 row)
 
-select emaj.emaj_set_mark_group('emptyGroup','EGM4');
+SELECT emaj.emaj_set_mark_group('emptyGroup', 'EGM4');
  emaj_set_mark_group 
 ---------------------
                    0
 (1 row)
 
-select emaj.emaj_delete_before_mark_group('emptyGroup','SM2');
+SELECT emaj.emaj_delete_before_mark_group('emptyGroup', 'SM2');
  emaj_delete_before_mark_group 
 -------------------------------
                              0
 (1 row)
 
--- simulate SM2 is an end mark of a logged rollback operations on myGroup2 group
-update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group = 'myGroup2' and mark_name = 'SM2';
--- and delete marks including SM1
-select emaj.emaj_delete_before_mark_group('myGroup2',
-      (select emaj.emaj_get_previous_mark_group('myGroup2',
-             (select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
+-- Simulate SM2 is an end mark of a logged rollback operations on myGroup2 group.
+UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = 'SM1' WHERE mark_group = 'myGroup2' AND mark_name = 'SM2';
+-- And delete marks including SM1.
+SELECT emaj.emaj_delete_before_mark_group('myGroup2',
+      (SELECT emaj.emaj_get_previous_mark_group('myGroup2',
+             (SELECT time_clock_timestamp FROM emaj.emaj_mark, emaj.emaj_time_stamp
+                WHERE time_id = mark_time_id AND mark_group = 'myGroup2' AND mark_group = 'myGroup2' AND mark_name = 'SM2')+'0.000001 SECOND'::interval)));
  emaj_delete_before_mark_group 
 -------------------------------
                              8
 (1 row)
 
-select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2';
+SELECT mark_group, mark_name, mark_logged_rlbk_target_mark FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'SM2';
  mark_group | mark_name | mark_logged_rlbk_target_mark 
 ------------+-----------+------------------------------
  myGroup2   | SM2       | 
 (1 row)
 
--- check emaj_delete_before_mark_group() also cleans up the emaj_hist table
-select emaj.emaj_set_param('history_retention', '0 second');
+-- Check emaj_delete_before_mark_group() also cleans up the emaj_hist table.
+SELECT emaj.emaj_set_param('history_retention', '0 second');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
+SELECT emaj.emaj_set_mark_group('phil''s group#3",', 'Mark4');
  emaj_set_mark_group 
 ---------------------
                    4
 (1 row)
 
-select emaj.emaj_set_mark_group('phil''s group#3",','Mark5');
+SELECT emaj.emaj_set_mark_group('phil''s group#3",', 'Mark5');
  emaj_set_mark_group 
 ---------------------
                    4
 (1 row)
 
-select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
+SELECT emaj.emaj_delete_before_mark_group('phil''s group#3",', 'Mark4');
  emaj_delete_before_mark_group 
 -------------------------------
                              1
 (1 row)
 
-select emaj.emaj_set_param('history_retention', NULL);
+SELECT emaj.emaj_set_param('history_retention', NULL);
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- check for emaj_delete_mark_group() and emaj_delete_before_mark_group()
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3400 order by time_id;
+-- Check for emaj_delete_mark_group() and emaj_delete_before_mark_group().
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 3400 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     3400 |            3400000 | M
@@ -1108,9 +1119,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     3403 |            3400000 | M
 (4 rows)
 
-select hist_id, hist_function, hist_event, hist_object, 
-  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
-  hist_user from emaj.emaj_hist where hist_id >= 3400 order by hist_id;
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user FROM emaj.emaj_hist WHERE hist_id >= 3400 ORDER BY hist_id;
  hist_id |      hist_function       |     hist_event     |    hist_object    |                      regexp_replace                      | hist_user 
 ---------+--------------------------+--------------------+-------------------+----------------------------------------------------------+-----------
     3404 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                           | postgres
@@ -1169,131 +1180,130 @@ select hist_id, hist_function, hist_event, hist_object,
     3461 | SET_PARAM                | DELETED PARAMETER  | history_retention | From: 0 second to: 1 year                                | postgres
 (54 rows)
 
-select public.handle_emaj_sequences(3600);
+SELECT public.handle_emaj_sequences(3600);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- emaj_protect_mark_group() tests
+-- emaj_protect_mark_group() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_protect_mark_group(NULL,NULL);
+-- Group is unknown.
+SELECT emaj.emaj_protect_mark_group(NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_protect_mark_group('unknownGroup',NULL);
+SELECT emaj.emaj_protect_mark_group('unknownGroup', NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- group is not rollbackable
-select emaj.emaj_protect_mark_group('phil''s group#3",',NULL);
+-- Group is not rollbackable.
+SELECT emaj.emaj_protect_mark_group('phil''s group#3",', NULL);
 ERROR:  _check_group_names: The group "phil's group#3"," has been created as AUDIT_ONLY.
--- mark is unknown
-select emaj.emaj_protect_mark_group('myGroup1',NULL);
+-- Mark is unknown.
+SELECT emaj.emaj_protect_mark_group('myGroup1', NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
-select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
+SELECT emaj.emaj_protect_mark_group('myGroup1', 'unknownMark');
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
--- should be ok
-select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+-- Should be ok.
+SELECT emaj.emaj_protect_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_protect_mark_group 
 -------------------------
                        1
 (1 row)
 
-select mark_time_id, mark_name, mark_group, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+SELECT mark_time_id, mark_name, mark_group, mark_is_rlbk_protected FROM emaj.emaj_mark WHERE mark_group = 'myGroup1';
  mark_time_id | mark_name | mark_group | mark_is_rlbk_protected 
 --------------+-----------+------------+------------------------
          3011 | SM3       | myGroup1   | t
 (1 row)
 
-select emaj.emaj_protect_mark_group('emptyGroup','EMAJ_LAST_MARK');
+SELECT emaj.emaj_protect_mark_group('emptyGroup', 'EMAJ_LAST_MARK');
  emaj_protect_mark_group 
 -------------------------
                        1
 (1 row)
 
--- protect an already protected group
-select emaj.emaj_protect_mark_group('myGroup1','SM3');
+-- Protect an already protected group.
+SELECT emaj.emaj_protect_mark_group('myGroup1', 'SM3');
  emaj_protect_mark_group 
 -------------------------
                        0
 (1 row)
 
-select mark_time_id, mark_name, mark_group, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+SELECT mark_time_id, mark_name, mark_group, mark_is_rlbk_protected FROM emaj.emaj_mark WHERE mark_group = 'myGroup1';
  mark_time_id | mark_name | mark_group | mark_is_rlbk_protected 
 --------------+-----------+------------+------------------------
          3011 | SM3       | myGroup1   | t
 (1 row)
 
 -----------------------------
--- emaj_unprotect_mark_group() tests
+-- emaj_unprotect_mark_group() tests.
 -----------------------------
--- group is unknown
-select emaj.emaj_unprotect_mark_group(NULL,NULL);
+-- Group is unknown.
+SELECT emaj.emaj_unprotect_mark_group(NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select emaj.emaj_unprotect_mark_group('unknownGroup',NULL);
+SELECT emaj.emaj_unprotect_mark_group('unknownGroup', NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- group is not rollbackable
-select emaj.emaj_unprotect_mark_group('phil''s group#3",',NULL);
+-- Group is not rollbackable.
+SELECT emaj.emaj_unprotect_mark_group('phil''s group#3",', NULL);
 ERROR:  _check_group_names: The group "phil's group#3"," has been created as AUDIT_ONLY.
--- mark is unknown
-select emaj.emaj_unprotect_mark_group('myGroup1',NULL);
+-- Mark is unknown.
+SELECT emaj.emaj_unprotect_mark_group('myGroup1', NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
-select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
+SELECT emaj.emaj_unprotect_mark_group('myGroup1', 'unknownMark');
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
--- should be ok
-select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
+-- Should be ok.
+SELECT emaj.emaj_unprotect_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
 ---------------------------
                          1
 (1 row)
 
-select mark_time_id, mark_name, mark_group, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+SELECT mark_time_id, mark_name, mark_group, mark_is_rlbk_protected FROM emaj.emaj_mark WHERE mark_group = 'myGroup1';
  mark_time_id | mark_name | mark_group | mark_is_rlbk_protected 
 --------------+-----------+------------+------------------------
          3011 | SM3       | myGroup1   | f
 (1 row)
 
-select emaj.emaj_unprotect_mark_group('emptyGroup','EMAJ_LAST_MARK');
+SELECT emaj.emaj_unprotect_mark_group('emptyGroup', 'EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
 ---------------------------
                          1
 (1 row)
 
--- protect an already protected group
-select emaj.emaj_unprotect_mark_group('myGroup1','SM3');
+-- Protect an already protected group.
+SELECT emaj.emaj_unprotect_mark_group('myGroup1', 'SM3');
  emaj_unprotect_mark_group 
 ---------------------------
                          0
 (1 row)
 
-select mark_time_id, mark_name, mark_group, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+SELECT mark_time_id, mark_name, mark_group, mark_is_rlbk_protected FROM emaj.emaj_mark WHERE mark_group = 'myGroup1';
  mark_time_id | mark_name | mark_group | mark_is_rlbk_protected 
 --------------+-----------+------------+------------------------
          3011 | SM3       | myGroup1   | f
 (1 row)
 
--- check mark protections is removed by stop_group functions
-select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+-- Check mark protections is removed by stop_group functions.
+SELECT emaj.emaj_protect_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_protect_mark_group 
 -------------------------
                        1
 (1 row)
 
-select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_is_rlbk_protected 
-  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+SELECT regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_is_rlbk_protected
+  FROM emaj.emaj_mark WHERE mark_group = 'myGroup1' ORDER BY mark_time_id, mark_group;
  regexp_replace | mark_is_rlbk_protected 
 ----------------+------------------------
  SM3            | t
 (1 row)
 
-  
-select emaj.emaj_stop_group('myGroup1');
+SELECT emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
                7
 (1 row)
 
-select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_is_rlbk_protected 
-  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+SELECT regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_is_rlbk_protected
+  FROM emaj.emaj_mark WHERE mark_group = 'myGroup1' ORDER BY mark_time_id, mark_group;
  regexp_replace | mark_is_rlbk_protected 
 ----------------+------------------------
  SM3            | f
@@ -1301,35 +1311,36 @@ select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g
 (2 rows)
 
 -----------------------------
--- test functions with group not in logging state 
+-- Test functions with group not in logging state.
 -----------------------------
--- myGroup1 is already stopped
-select emaj.emaj_stop_group('myGroup2');
+-- MyGroup1 is already stopped.
+SELECT emaj.emaj_stop_group('myGroup2');
  emaj_stop_group 
 -----------------
               10
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup1','SM1');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'SM1');
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
-select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
+SELECT emaj.emaj_set_mark_groups(ARRAY['myGroup1', 'myGroup2'], 'SM1');
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in LOGGING state.
-select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RENAMED');
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'EMAJ_LAST_MARK', 'RENAMED');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_protect_mark_group('myGroup1','RENAMED');
+SELECT emaj.emaj_protect_mark_group('myGroup1', 'RENAMED');
 ERROR:  _check_mark_name: For the group "myGroup1", the mark "RENAMED" was set before the latest group start.
-select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
+SELECT emaj.emaj_unprotect_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
 ---------------------------
                          0
 (1 row)
 
--- check marks state
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+-- Check marks state.
+SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_time_id, mark_is_rlbk_protected,
+       mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark FROM emaj.emaj_mark ORDER BY mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
  emptyGroup       | SM2            |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
@@ -1343,7 +1354,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2         | STOP_%         |         3601 | f                      |                                        |                         0 | 
 (9 rows)
 
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called FROM emaj.emaj_sequence ORDER BY sequ_time_id, sequ_schema, sequ_name;
    sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -----------------+-------------------+--------------+---------------+----------------
  myschema1       | myTbl3_col31_seq  |         3011 |             1 | f
@@ -1360,7 +1371,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2       | myseq1            |         3601 |          1000 | f
 (12 rows)
 
-select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table ORDER BY tbl_time_id, tbl_schema, tbl_name;
    tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
 -----------------+-------------+-------------+----------------------
  myschema1       | myTbl3      |        3011 |                    0
@@ -1396,9 +1407,9 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 (30 rows)
 
 -----------------------------
--- test end: check
+-- Test end: check.
 -----------------------------
-select * from emaj.emaj_log_session order by lses_group, lses_time_range;
+SELECT * FROM emaj.emaj_log_session ORDER BY lses_group, lses_time_range;
     lses_group    | lses_time_range | lses_marks | lses_log_rows 
 ------------------+-----------------+------------+---------------
  emptyGroup       | [3002,)         |          4 |             0
@@ -1407,15 +1418,18 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
  phil's group#3", | [2003,)         |          3 |             0
 (4 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3600 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 3600 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     3600 |            3600000 | X
     3601 |            3600000 | X
 (2 rows)
 
-select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist where hist_id >= 3600 order by hist_id) as t;
+SELECT hist_id, hist_function, hist_event,
+       regexp_replace(hist_object, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 3600 ORDER BY hist_id;
  hist_id |    hist_function     |   hist_event   | regexp_replace |         regexp_replace         | hist_user 
 ---------+----------------------+----------------+----------------+--------------------------------+-----------
     3600 | PROTECT_MARK_GROUP   |                | myGroup1       | Mark SM3 ; status 1            | postgres

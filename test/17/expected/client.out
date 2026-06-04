@@ -1,42 +1,42 @@
--- client.sql: Test client tools
+-- Client.sql: Test client tools.
 --------------------------------------------------------------
 --
--- Parallel Rollback client
+-- Parallel Rollback client.
 --
 --------------------------------------------------------------
--- set sequence restart value
-truncate emaj.emaj_hist;
-select public.handle_emaj_sequences(20000);
+-- Set sequence restart value.
+TRUNCATE emaj.emaj_hist;
+SELECT public.handle_emaj_sequences(20000);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 --------------------------------------------
--- Prepare data
+-- Prepare data.
 --------------------------------------------
-delete from mySchema1.myTbl4;
-delete from mySchema1.myTbl1;
-delete from mySchema1.myTbl2; 
-delete from mySchema1."myTbl3";
-delete from mySchema1.myTbl2b;
-delete from mySchema2.myTbl4;
-delete from mySchema2.myTbl1;
-delete from mySchema2.myTbl2; 
-delete from mySchema2."myTbl3";
-delete from mySchema2.myTbl5;
-delete from mySchema2.myTbl6 where col61 <> 0;
-alter sequence mySchema2.mySeq1 restart 9999;
+DELETE FROM mySchema1.myTbl4;
+DELETE FROM mySchema1.myTbl1;
+DELETE FROM mySchema1.myTbl2;
+DELETE FROM mySchema1."myTbl3";
+DELETE FROM mySchema1.myTbl2b;
+DELETE FROM mySchema2.myTbl4;
+DELETE FROM mySchema2.myTbl1;
+DELETE FROM mySchema2.myTbl2;
+DELETE FROM mySchema2."myTbl3";
+DELETE FROM mySchema2.myTbl5;
+DELETE FROM mySchema2.myTbl6 WHERE col61 <> 0;
+ALTER SEQUENCE mySchema2.mySeq1 RESTART 9999;
 --------------------------------------------
--- Call emajParallelRollback.pl
+-- Call emajParallelRollback.pl.
 --------------------------------------------
--- parallel rollback attempt with an unauthorized role
+-- Parallel rollback attempt with an unauthorized role.
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_viewer -W viewer -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 Error: the user is not an E-Maj administrator.
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
--- parallel rollback, but with disabled dblink connection
-select emaj.emaj_set_param('dblink_user_password', NULL);
+-- Parallel rollback, but with disabled dblink connection.
+SELECT emaj.emaj_set_param('dblink_user_password', NULL);
  emaj_set_param 
 ----------------
               1
@@ -48,14 +48,14 @@ ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capabi
 CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 54 at RAISE
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
-select emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
+SELECT emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
-select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
+-- Unlogged rollback for 2 groups in strict mode, after having performed a group configuration change.
+SELECT emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::JSONB);
  emaj_modify_table 
 -------------------
                  1
@@ -69,7 +69,7 @@ SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllow
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
--- unlogged rollback for 2 groups in unstrict mode
+-- Unlogged rollback for 2 groups in unstrict mode.
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
@@ -81,7 +81,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
     Notice: 3 / 4 sequences effectively processed.
     Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
--- logged rollback for a single group and a single session
+-- Logged rollback for a single group and a single session.
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
@@ -95,65 +95,65 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 --------------------------------------------------------------
 --
--- Rollback monitor client
+-- Rollback monitor client.
 --
 --------------------------------------------------------------
 --------------------------------------------
--- Prepare data
+-- Prepare data.
 --------------------------------------------
--- 1st rollback, in EXECUTING state
-insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
-  values (-1, now()-'110.1 seconds'::interval);
-insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
-  values (-2, '2000-01-01 01:00:00');
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
+-- 1st rollback, in EXECUTING state.
+INSERT INTO emaj.emaj_time_stamp (time_id, time_tx_timestamp) OVERRIDING SYSTEM VALUE
+  VALUES (-1, now() - '110.1 seconds'::INTERVAL);
+INSERT INTO emaj.emaj_time_stamp (time_id, time_clock_timestamp) OVERRIDING SYSTEM VALUE
+  VALUES (-2, '2000-01-01 01:00:00');
+INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session,
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_end_planning_datetime, rlbk_end_locking_datetime, rlbk_status)
-  values (20101,array['group20101'],'mark20101',-2,-1,true,false,1,
-           5,4,3,1,now()-'110.1 seconds'::interval,now()-'110.0 seconds'::interval,now()-'109.8 seconds'::interval,'EXECUTING');
-insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
+  VALUES (20101, ARRAY['group20101'], 'mark20101', -2, -1, TRUE, FALSE, 1,
+           5, 4, 3, 1, now() - '110.1 seconds'::INTERVAL, now() - '110.0 seconds'::INTERVAL, now() - '109.8 seconds'::INTERVAL, 'EXECUTING');
+INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
-  values (20101, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
-         (20101, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null),
-         (20101, 'RLBK_TABLE','schema','t3','','20 seconds'::interval,null,null);
--- the first RLBK_TABLE is completed, and the step duration < the estimated duration 
-update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '45 seconds'::interval,
-                               rlbp_duration = '45 seconds'::interval
-  where rlbp_rlbk_id = 20101 and rlbp_table = 't1';
--- the second RLBK_TABLE is completed, and the step duration > the estimated duration 
-update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::interval,
-                               rlbp_duration = '65 seconds'::interval
-  where rlbp_rlbk_id = 20101 and rlbp_table = 't2';
--- 2nd rollback, in LOCKING state with RLBK_TABLE steps
-insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
-  values (-3, now()-'2 minutes'::interval);
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
+  VALUES (20101, 'RLBK_TABLE', 'schema', 't1', '', '50 seconds'::INTERVAL, NULL, NULL),
+         (20101, 'RLBK_TABLE', 'schema', 't2', '', '30 seconds'::INTERVAL, NULL, NULL),
+         (20101, 'RLBK_TABLE', 'schema', 't3', '', '20 seconds'::INTERVAL, NULL, NULL);
+-- The first RLBK_TABLE is completed, and the step duration < the estimated duration.
+UPDATE emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '45 seconds'::INTERVAL,
+                               rlbp_duration = '45 seconds'::INTERVAL
+  WHERE rlbp_rlbk_id = 20101 AND rlbp_table = 't1';
+-- The second RLBK_TABLE is completed, and the step duration > the estimated duration.
+UPDATE emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::INTERVAL,
+                               rlbp_duration = '65 seconds'::INTERVAL
+  WHERE rlbp_rlbk_id = 20101 AND rlbp_table = 't2';
+-- 2nd rollback, in LOCKING state with RLBK_TABLE steps.
+INSERT INTO emaj.emaj_time_stamp (time_id, time_tx_timestamp) OVERRIDING SYSTEM VALUE
+  VALUES (-3, now() - '2 minutes'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session,
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_end_planning_datetime, rlbk_status)
-  values (20102,array['group20102'],'mark20102',-2,-3,true,false,1,
-           5,4,3,NULL,now()-'2 minutes'::interval,now()-'1 minute 59.8 seconds'::interval,'LOCKING');
-insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
+  VALUES (20102, ARRAY['group20102'], 'mark20102', -2, -3, TRUE, FALSE, 1,
+           5, 4, 3, NULL, now() - '2 minutes'::INTERVAL, now() - '1 minute 59.8 seconds'::INTERVAL, 'LOCKING');
+INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
-  values (20102, 'LOCK_TABLE','schema','t1','',null,null,null),
-         (20102, 'LOCK_TABLE','schema','t2','',null,null,null),
-         (20102, 'LOCK_TABLE','schema','t3','',null,null,null),
-         (20102, 'RLBK_TABLE','schema','t1','','0:20:00'::interval,null,null),
-         (20102, 'RLBK_TABLE','schema','t2','','0:02:00'::interval,null,null),
-         (20102, 'RLBK_TABLE','schema','t3','','0:00:20'::interval,null,null);
--- 3rd rollback, in PLANNING state
-insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
-  values (-4, now()-'1 minute'::interval);
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session,
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime,rlbk_status)
-  values (20103,array['group20103'],'mark20103',-2,-4,true,false,1,
-           5,4,3,NULL,now()-'1 minute'::interval,'PLANNING');
+  VALUES (20102, 'LOCK_TABLE', 'schema', 't1', '', NULL, NULL, NULL),
+         (20102, 'LOCK_TABLE', 'schema', 't2', '', NULL, NULL, NULL),
+         (20102, 'LOCK_TABLE', 'schema', 't3', '', NULL, NULL, NULL),
+         (20102, 'RLBK_TABLE', 'schema', 't1', '', '0:20:00'::INTERVAL, NULL, NULL),
+         (20102, 'RLBK_TABLE', 'schema', 't2', '', '0:02:00'::INTERVAL, NULL, NULL),
+         (20102, 'RLBK_TABLE', 'schema', 't3', '', '0:00:20'::INTERVAL, NULL, NULL);
+-- 3rd rollback, in PLANNING state.
+INSERT INTO emaj.emaj_time_stamp (time_id, time_tx_timestamp) OVERRIDING SYSTEM VALUE
+  VALUES (-4, now() - '1 minute'::INTERVAL);
+INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session,
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_status)
+  VALUES (20103, ARRAY['group20103'], 'mark20103', -2, -4, TRUE, FALSE, 1,
+           5, 4, 3, NULL, now() - '1 minute'::INTERVAL, 'PLANNING');
 --------------------------------------------
--- call emajRollbackMonitor.pl
+-- Call emajRollbackMonitor.pl.
 --------------------------------------------
--- call emajRollbackMonitor.pl using an unauthorized role
+-- Call emajRollbackMonitor.pl using an unauthorized role.
 \! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_anonym -W anonym -i 0.1 -n 2 -l 2 -a 12 -v -r
 Error: the user is not allowed to look at E-Maj data.
  E-Maj (version <devel>) - Monitoring rollbacks activity
 -----------------------------------------------------------
--- call emajRollbackMonitor.pl using an emaj_viewer role
+-- Call emajRollbackMonitor.pl using an emaj_viewer role.
 \! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U _regress_emaj_viewer -W viewer -i 0.1 -n 2 -l 2 -a 12 -v -r
  E-Maj (version <devel>) - Monitoring rollbacks activity
 -----------------------------------------------------------
@@ -201,21 +201,21 @@ Error: the user is not allowed to look at E-Maj data.
    1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 --------------------------------------------------------------
 --
--- emajStat client
+-- emajStat client.
 --
 --------------------------------------------------------------
--- call emajStat.pl using an unauthorized role
-\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_anonym -W anonym --regression-test --no-cls --interval 0.1 --iter 2
+-- Call emajStat.pl using an unauthorized role.
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_anonym -W anonym --regression-test --no-cls --INTERVAL 0.1 --iter 2
 Error: the user is not allowed to look at E-Maj data.
--- Rename the latest mark of myGroup2 for output stability
-select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','latest_mark');
+-- Rename the latest mark of myGroup2 for output stability.
+SELECT emaj.emaj_rename_mark_group('myGroup2', 'EMAJ_LAST_MARK', 'latest_mark');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
--- 2 displays with an emaj_viewer role with various options
-\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_viewer -W viewer --regression-test --no-cls --interval 0.1 --iter 2 --include-group '1|2' --max-table 5 --exclude-sequence 'col31' --max-relation-name-length 23
+-- 2 displays with an emaj_viewer role with various options.
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U _regress_emaj_viewer -W viewer --regression-test --no-cls --INTERVAL 0.1 --iter 2 --include-group '1|2' --max-table 5 --exclude-sequence 'col31' --max-relation-name-length 23
  E-Maj (version <devel>) - Monitoring logged changes on database regression (@127.0.0.1:5417)
 ----------------------------------------------------------------------------------------------
 [current date and time] - Logging: groups=2/3 tables=11/11 sequences=4/4 -

@@ -5,14 +5,14 @@
 SET client_min_messages TO WARNING;
 
 --
--- reset emaj function calls statistics (so the check.sql output is stable with all installation paths)
+-- Reset emaj function calls statistics (so the check.sql output is stable with all installation paths).
 --
-with reset as (select funcid, pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
-                 where (funcname like E'emaj\\_%' or funcname like E'\\_%') )
-  select * from reset where funcid is null;
+WITH reset AS (SELECT funcid, pg_stat_reset_single_function_counters(funcid) FROM pg_stat_user_functions
+                 WHERE (funcname LIKE E'emaj\\_%' OR funcname LIKE E'\\_%') )
+  SELECT * FROM reset WHERE funcid IS NULL;
 
 ------------------------------------------------------------
--- create several application schemas with tables, sequences, triggers
+-- Create several application schemas with tables, sequences, triggers.
 ------------------------------------------------------------
 --
 -- First schema
@@ -20,17 +20,17 @@ with reset as (select funcid, pg_stat_reset_single_function_counters(funcid) fro
 DROP SCHEMA IF EXISTS mySchema1 CASCADE;
 CREATE SCHEMA mySchema1;
 
-SET search_path=mySchema1;
+SET search_path TO mySchema1;
 
 DROP TABLE IF EXISTS myTbl1 ;
 CREATE TABLE myTbl1 (
   badName     DECIMAL (7)      NOT NULL,
   col12       CHAR (10)        NOT NULL,
   col13       BYTEA            ,
-  PRIMARY KEY (badName,col12)
+  PRIMARY KEY (badName, col12)
 );
 ALTER TABLE myTbl1 RENAME badName TO col11;
-CREATE INDEX myTbl1_idx on myTbl1 (col13);
+CREATE INDEX myTbl1_idx ON myTbl1 (col13);
 
 DROP TABLE IF EXISTS myTbl2 ;
 CREATE TABLE myTbl2 (
@@ -47,7 +47,7 @@ CREATE TABLE "myTbl3" (
   col33       DECIMAL (12,2)   ,
   PRIMARY KEY (col31)
 );
-CREATE INDEX myIdx3 ON "myTbl3" (col32,col33);
+CREATE INDEX myIdx3 ON "myTbl3" (col32, col33);
 
 DROP TABLE IF EXISTS myTbl4 ;
 CREATE TABLE myTbl4 (
@@ -56,9 +56,9 @@ CREATE TABLE myTbl4 (
   col43       INT              NOT NULL,
   col44       DECIMAL(7)       ,
   col45       CHAR(10)         ,
-  PRIMARY KEY (col43,col41),
+  PRIMARY KEY (col43, col41),
   FOREIGN KEY (col43) REFERENCES myTbl2 (col21) DEFERRABLE INITIALLY IMMEDIATE,
-  CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL DEFERRABLE INITIALLY DEFERRED
+  CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44, col45) REFERENCES myTbl1 (col11, col12) ON DELETE CASCADE ON UPDATE SET NULL DEFERRABLE INITIALLY DEFERRED
 );
 
 DO $$
@@ -86,7 +86,7 @@ BEGIN
 END;
 $$;
 
-CREATE or REPLACE FUNCTION myTbl2trgfct1 () RETURNS trigger AS $$
+CREATE or REPLACE FUNCTION myTbl2trgfct1 () RETURNS TRIGGER AS $$
 BEGIN
   IF (TG_OP = 'DELETE') THEN
     INSERT INTO mySchema1.myTbl2b (col21) SELECT OLD.col21;
@@ -105,7 +105,7 @@ CREATE TRIGGER myTbl2trg1
   AFTER INSERT OR UPDATE OR DELETE ON myTbl2
   FOR EACH ROW EXECUTE PROCEDURE myTbl2trgfct1();
 
-CREATE or REPLACE FUNCTION myTbl2trgfct2 () RETURNS trigger AS $$
+CREATE OR REPLACE FUNCTION myTbl2trgfct2 () RETURNS TRIGGER AS $$
 BEGIN
   RETURN NEW;
 END;
@@ -123,14 +123,14 @@ ALTER TABLE mySchema1.myTbl2 DISABLE TRIGGER myTbl2trg2;
 DROP SCHEMA IF EXISTS mySchema2 CASCADE;
 CREATE SCHEMA mySchema2;
 
-SET search_path=mySchema2;
+SET search_path TO mySchema2;
 
 DROP TABLE IF EXISTS myTbl1 ;
 CREATE TABLE myTbl1 (
   col11       DECIMAL (7)      NOT NULL,
   col12       CHAR (10)        NOT NULL,
   col13       BYTEA            ,
-  PRIMARY KEY (col11,col12)
+  PRIMARY KEY (col11, col12)
 );
 
 DROP TABLE IF EXISTS myTbl2 ;
@@ -148,7 +148,7 @@ CREATE TABLE "myTbl3" (
   col33       DECIMAL (12,2)   ,
   PRIMARY KEY (col31)
 );
-CREATE INDEX myIdx3 ON "myTbl3" (col32,col33);
+CREATE INDEX myIdx3 ON "myTbl3" (col32, col33);
 
 DROP TABLE IF EXISTS myTbl4 ;
 CREATE TABLE myTbl4 (
@@ -159,7 +159,7 @@ CREATE TABLE myTbl4 (
   col45       CHAR(10)         ,
   PRIMARY KEY (col41),
   FOREIGN KEY (col43) REFERENCES myTbl2 (col21) DEFERRABLE INITIALLY DEFERRED,
-  CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL
+  CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44, col45) REFERENCES myTbl1 (col11, col12) ON DELETE CASCADE ON UPDATE SET NULL
 );
 
 DROP DOMAIN IF EXISTS idjson;
@@ -200,14 +200,14 @@ CREATE TABLE myTbl6 (
   EXCLUDE USING gist (col63 WITH &&)
 );
 
--- This table will remain outside table groups
+-- This table will remain outside table groups.
 DROP TABLE IF EXISTS myTbl7 ;
 CREATE TABLE myTbl7 (
   col71       INT              NOT NULL,
   PRIMARY KEY (col71)
 );
 
--- This table will remain outside table groups
+-- This table will remain outside table groups.
 DROP TABLE IF EXISTS myTbl8 ;
 CREATE TABLE myTbl8 (
   col81       INT              NOT NULL,
@@ -219,7 +219,7 @@ ALTER TABLE myschema2.myTbl8 ADD FOREIGN KEY (col81) REFERENCES myschema2.myTbl6
 
 CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 
--- This sequence will remain outside any groups until the addition into a group in logging state
+-- This sequence will remain outside any groups until the addition into a group in logging state.
 CREATE SEQUENCE mySeq2;
 
 --
@@ -229,14 +229,14 @@ CREATE SEQUENCE mySeq2;
 DROP SCHEMA IF EXISTS "phil's schema""3" CASCADE;
 CREATE SCHEMA "phil's schema""3";
 
-SET search_path="phil's schema""3";
+SET search_path TO "phil's schema""3";
 
 DROP TABLE IF EXISTS "phil's tbl1" ;
 CREATE TABLE "phil's tbl1" (
   "phil's col11"   DECIMAL (7)      NOT NULL,
   "phil's col12"   CHAR (10)        NOT NULL,
   "phil\s""col13"  BYTEA            ,
-  PRIMARY KEY ("phil's col11","phil's col12")
+  PRIMARY KEY ("phil's col11", "phil's col12")
 );
 
 DROP TABLE IF EXISTS "myTbl2\" ;
@@ -255,10 +255,10 @@ CREATE TABLE "my""tbl4" (
   col44            DECIMAL(7)       ,
   col45            CHAR(10)         ,
   PRIMARY KEY (col41),
-  CONSTRAINT "my""tbl4_col44_fkey" FOREIGN KEY (col44,col45) REFERENCES "phil's tbl1" ("phil's col11","phil's col12") ON DELETE CASCADE ON UPDATE SET NULL
+  CONSTRAINT "my""tbl4_col44_fkey" FOREIGN KEY (col44, col45) REFERENCES "phil's tbl1" ("phil's col11", "phil's col12") ON DELETE CASCADE ON UPDATE SET NULL
 );
 ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey_nv FOREIGN KEY (col21) REFERENCES "my""tbl4" (col41) NOT VALID;
--- This next statement fails with PG17-
+-- This next statement fails with PG17-.
 ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey_ne FOREIGN KEY (col21) REFERENCES "my""tbl4" (col41) NOT ENFORCED;
 
 CREATE SEQUENCE "phil's""seq\1" MINVALUE 1000 MAXVALUE 2000 CYCLE;
@@ -270,9 +270,9 @@ CREATE SEQUENCE "phil's""seq\1" MINVALUE 1000 MAXVALUE 2000 CYCLE;
 DROP SCHEMA IF EXISTS mySchema4 CASCADE;
 CREATE SCHEMA mySchema4;
 
-SET search_path=mySchema4;
+SET search_path TO mySchema4;
 
--- Old partitionning style
+-- Old partitionning style.
 
 DROP TABLE IF EXISTS myTblM ;
 CREATE TABLE myTblM (
@@ -303,7 +303,7 @@ END;
 $trigger$ LANGUAGE PLPGSQL;
 CREATE TRIGGER myTblM_insert_trigger BEFORE INSERT ON myTblM FOR EACH ROW EXECUTE PROCEDURE mySchema4.myTblM_insert_trigger();
 
--- Declarative partitionning (with subpartitions, FK and triggers on partitionned table)
+-- Declarative partitionning (with subpartitions, FK and triggers on partitionned table).
 
 DROP TABLE IF EXISTS myTblP;
 CREATE TABLE myTblP (
@@ -331,9 +331,7 @@ CREATE TABLE myTblR1 (
   col1       INT              NOT NULL PRIMARY KEY
 );
 -- Add a global FK.
-ALTER TABLE myTblP ADD FOREIGN KEY (col1) REFERENCES myTblR1(col1)
-  ON DELETE CASCADE
-;
+ALTER TABLE myTblP ADD FOREIGN KEY (col1) REFERENCES myTblR1(col1) ON DELETE CASCADE;
 
 DROP TABLE IF EXISTS myTblR2;
 CREATE TABLE myTblR2 (
@@ -353,15 +351,15 @@ CREATE TRIGGER z_min_update
   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
 
 --
--- fifth schema (for tables unsupported in rollbackable tables groups)
+-- Fifth schema (for tables unsupported in rollbackable tables groups)
 --
 
 DROP SCHEMA IF EXISTS mySchema5 CASCADE;
 CREATE SCHEMA mySchema5;
 
-SET search_path=mySchema5;
+SET search_path TO mySchema5;
 
--- myTempTbl will be created in the test script that needs is
+-- myTempTbl will be created in the test script that needs is.
 
 DROP TABLE IF EXISTS myUnloggedTbl;
 CREATE UNLOGGED TABLE myUnloggedTbl (
@@ -370,13 +368,13 @@ CREATE UNLOGGED TABLE myUnloggedTbl (
 );
 
 --
--- sixth schema (for tables with very long names)
+-- Sixth schema (for tables with very long names)
 --
 
 DROP SCHEMA IF EXISTS mySchema6 CASCADE;
 CREATE SCHEMA mySchema6;
 
-SET search_path=mySchema6;
+SET search_path TO mySchema6;
 
 DROP TABLE IF EXISTS table_with_50_characters_long_name_____0_________0;
 CREATE TABLE table_with_50_characters_long_name_____0_________0 (
@@ -402,75 +400,71 @@ CREATE TABLE table_with_55_characters_long_name_____0_________0fghij (
 );
 
 -----------------------------
--- create roles and give rights
+-- Create roles and give rights.
 -----------------------------
-create role _regress_emaj_adm1 login password 'adm';
-create role _regress_emaj_adm2 login password 'adm';
-create role _regress_emaj_viewer login password 'viewer';
-create role _regress_emaj_anonym login password 'anonym';
+CREATE ROLE _regress_emaj_adm1 LOGIN PASSWORD 'adm';
+CREATE ROLE _regress_emaj_adm2 LOGIN PASSWORD 'adm';
+CREATE ROLE _regress_emaj_viewer LOGIN PASSWORD 'viewer';
+CREATE ROLE _regress_emaj_anonym LOGIN PASSWORD 'anonym';
 --
-grant create on tablespace tsplog1, "tsp log'2"
-  to _regress_emaj_adm1, _regress_emaj_adm2;
--- give the CREATE right to emaj_adm on either tspemaj or tspemaj_renamed tablespace
+GRANT CREATE ON TABLESPACE tsplog1, "tsp log'2" TO _regress_emaj_adm1, _regress_emaj_adm2;
+
+-- Give the CREATE right to emaj_adm on either tspemaj or tspemaj_renamed tablespace.
 DO LANGUAGE plpgsql
 $$
   BEGIN
     PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
     IF FOUND THEN
-      grant create on tablespace tspemaj to _regress_emaj_adm1, _regress_emaj_adm2;
+      GRANT CREATE ON TABLESPACE tspemaj TO _regress_emaj_adm1, _regress_emaj_adm2;
     ELSE
-      grant create on tablespace tspemaj_renamed to _regress_emaj_adm1, _regress_emaj_adm2;
+      GRANT CREATE ON TABLESPACE tspemaj_renamed TO _regress_emaj_adm1, _regress_emaj_adm2;
     END IF;
   END;
 $$;
 --
-grant all on database regression to _regress_emaj_anonym;
+GRANT ALL ON DATABASE regression TO _regress_emaj_anonym;
 
 -----------------------------
--- create the function that will check and set the last_value of emaj technical sequences
+-- Create the function that will check and set the last_value of emaj technical sequences.
 -----------------------------
 CREATE OR REPLACE FUNCTION public.handle_emaj_sequences(v_restart INT) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $handle_emaj_sequences$
 DECLARE
   v_lastval     INT;
 BEGIN
--- checks current last_value to be sure there will not be any sequence values overlay
+-- Check current last_value to be sure there will not be any sequence values overlay.
 --   emaj_hist_hist_id_seq
   SELECT last_value INTO v_lastval
     FROM emaj.emaj_hist_hist_id_seq;
---  RAISE WARNING 'handle_emaj_sequences: the current emaj_hist_hist_id_seq last_value = %',v_lastval;
   IF v_lastval > v_restart THEN
-    RAISE EXCEPTION 'handle_emaj_sequences: the current emaj_hist_hist_id_seq last_value (%) is too high to be set to %',
+    RAISE EXCEPTION 'handle_emaj_sequences: The current emaj_hist_hist_id_seq last_value (%) is too high to be set to %.',
       v_lastval, v_restart;
   END IF;
 --   emaj_time_stamp_time_id_seq
   SELECT last_value INTO v_lastval
     FROM emaj.emaj_time_stamp_time_id_seq;
---  RAISE WARNING 'handle_emaj_sequences: the current emaj_time_stamp_time_id_seq last_value = %',v_lastval;
   IF v_lastval > v_restart THEN
-    RAISE EXCEPTION 'handle_emaj_sequences: the current emaj_time_stamp_time_id_seq last_value (%) is too high to be set to %',
+    RAISE EXCEPTION 'handle_emaj_sequences: The current emaj_time_stamp_time_id_seq last_value (%) is too high to be set to %.',
       v_lastval, v_restart;
   END IF;
 --   emaj_rlbk_rlbk_id_seq
   SELECT last_value INTO v_lastval
     FROM emaj.emaj_rlbk_rlbk_id_seq;
---  RAISE WARNING 'handle_emaj_sequences: the current emaj_rlbk_rlbk_id_seq last_value = %',v_lastval;
   IF v_lastval > v_restart THEN
-    RAISE EXCEPTION 'handle_emaj_sequences: the current emaj_rlbk_rlbk_id_seq last_value (%) is too high to be set to %',
+    RAISE EXCEPTION 'handle_emaj_sequences: The current emaj_rlbk_rlbk_id_seq last_value (%) is too high to be set to %.',
       v_lastval, v_restart;
   END IF;
 --   emaj_global_seq
   SELECT last_value INTO v_lastval
     FROM emaj.emaj_global_seq;
---  RAISE WARNING 'handle_emaj_sequences: the current emaj_global_seq last_value = %',v_lastval;
   IF v_lastval > v_restart * 1000 THEN
-    RAISE EXCEPTION 'handle_emaj_sequences: the current emaj_global_seq last_value (%) is too high to be set to %',
+    RAISE EXCEPTION 'handle_emaj_sequences: The current emaj_global_seq last_value (%) is too high to be set to %.',
       v_lastval, v_restart * 1000;
   END IF;
--- OK, let's set the sequences values
-  PERFORM setval('emaj.emaj_hist_hist_id_seq', v_restart - 1, true);
-  PERFORM setval('emaj.emaj_time_stamp_time_id_seq', v_restart - 1, true);
-  PERFORM setval('emaj.emaj_rlbk_rlbk_id_seq', v_restart - 1, true);
-  PERFORM setval('emaj.emaj_global_seq', v_restart * 1000, true);
+-- OK, let's set the sequences values.
+  PERFORM setval('emaj.emaj_hist_hist_id_seq', v_restart - 1, TRUE);
+  PERFORM setval('emaj.emaj_time_stamp_time_id_seq', v_restart - 1, TRUE);
+  PERFORM setval('emaj.emaj_rlbk_rlbk_id_seq', v_restart - 1, TRUE);
+  PERFORM setval('emaj.emaj_global_seq', v_restart * 1000, TRUE);
 END;
 $handle_emaj_sequences$;

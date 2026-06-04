@@ -1,7 +1,7 @@
 -- uninstall.sql : test of the emaj EXTENSION drop
 --
--- Corrupt a log schema by adding an unattended object
-create sequence emaj_emaj_demo_app_schema.not_an_emaj_seq;
+-- Corrupt a log schema by adding an unattended object.
+CREATE SEQUENCE emaj_emaj_demo_app_schema.not_an_emaj_seq;
 -- Try to uninstall the extension. It fails because of the extra sequence.
 \i sql/emaj_uninstall.sql
 -- emaj_uninstall.sql

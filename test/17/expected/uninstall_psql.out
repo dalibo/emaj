@@ -1,7 +1,7 @@
 -- uninstall_psql.sql : test of the E-Maj drop when installed with a psql script (i.e. not as an EXTENSION)
 --
--- Call the emaj_drop_extension function
-select emaj.emaj_drop_extension();
+-- Call the emaj_drop_extension function.
+SELECT emaj.emaj_drop_extension();
 NOTICE:  drop cascades to 5 other objects
 DETAIL:  drop cascades to table emaj_demo_app_schema.mytbl1
 drop cascades to table emaj_demo_app_schema.mytbl2
@@ -129,13 +129,13 @@ WARNING:  emaj_drop_extension: For these reasons, the emaj_viewer role has not b
  
 (1 row)
 
--- Check that the emaj schema is not known anymore
+-- Check that the emaj schema is not known anymore.
 \dn emaj
 List of schemas
  Name | Owner 
 ------+-------
 (0 rows)
 
--- Drop the extra extensions to get a stable re-install test
-drop extension dblink;
-drop extension btree_gist;
+-- Drop the extra extensions to get a stable re-install test.
+DROP EXTENSION dblink;
+DROP EXTENSION btree_gist;

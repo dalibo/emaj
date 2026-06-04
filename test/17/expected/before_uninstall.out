@@ -1,15 +1,15 @@
--- before_uninstall.sql : prepare the uninstall test
+-- Before_uninstall.sql : prepare the uninstall test.
 --
--- Record the dblink_user_password parameter
-select emaj.emaj_set_param('dblink_user_password','user=postgres password=postgres');
+-- Record the dblink_user_password parameter.
+SELECT emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- Grant emaj_adm so that the cleanup.sql report be stable
-grant emaj_adm to _regress_emaj_adm1, _regress_emaj_adm2;
--- Execute the demo scripts
+-- Grant emaj_adm so that the cleanup.sql report be stable.
+GRANT emaj_adm TO _regress_emaj_adm1, _regress_emaj_adm2;
+-- Execute the demo scripts.
 \o /dev/null
 \i sql/emaj_demo.sql
 -- emaj_demo.sql : Version <devel>
@@ -610,15 +610,15 @@ RESET search_path;
 --- emajParallelRollback.pl -g 'emaj parallel rollback test group' -m BEFORE_PROC_2 -s 3 -v <and any needed connection parameters among -dhpUW>
 --- emajParallelRollback.pl --help" provides information about available parameters.
 ---
--- Direct emaj extension drop attempt
-drop extension emaj cascade;
+-- Direct emaj extension drop attempt.
+DROP extension emaj CASCADE;
 ERROR:  extension "emaj" does not exist
--- Direct emaj schema drop attempt
-drop schema emaj cascade;
+-- Direct emaj schema drop attempt.
+DROP SCHEMA emaj CASCADE;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj". Please execute the emaj.emaj_drop_extension() function if you really want to remove all E-Maj components.
 CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 17 at RAISE
--- Look at the tables groups
-select group_name from emaj.emaj_group order by group_name;
+-- Look at the tables groups.
+SELECT group_name FROM emaj.emaj_group ORDER BY group_name;
             group_name             
 -----------------------------------
  emaj demo group 1
@@ -626,7 +626,7 @@ select group_name from emaj.emaj_group order by group_name;
  emaj parallel rollback test group
 (3 rows)
 
--- Look at the public and cleanup functions
+-- Look at the public and cleanup functions.
 \df public._emaj*
                                       List of functions
  Schema |                Name                 | Result data type | Argument data types | Type 

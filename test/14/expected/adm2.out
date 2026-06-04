@@ -1,39 +1,39 @@
--- adm2.sql : complex scenario executed by an emaj_adm role. 
---            Follows adm1.sql, and includes more specific test cases
+-- Adm2.sql : complex scenario executed by an emaj_adm role.
+--            Follows adm1.sql, and includes more specific test cases.
 --
--- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+-- Do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement).
 \set VERBOSITY terse
--- set sequence restart value
-select public.handle_emaj_sequences(14000);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(14000);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
--- define and create the temp file directory to be used by the script
+-- Define and create the temp file directory to be used by the script.
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/adm2'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
-set session_authorization to _regress_emaj_adm1;
--- before going on, save and reload parameters
-select emaj.emaj_import_parameters_configuration(emaj.emaj_export_parameters_configuration());
+SET session_authorization TO _regress_emaj_adm1;
+-- Before going on, save and reload parameters.
+SELECT emaj.emaj_import_parameters_configuration(emaj.emaj_export_parameters_configuration());
  emaj_import_parameters_configuration 
 --------------------------------------
                                     3
 (1 row)
 
 -----------------------------
--- Step 8 : use of multi-group functions, start_group(s) without log reset and use old marks (i.e. set before the latest group start)
+-- Step 8 : use of multi-group functions, start_group(s) without log reset and use old marks (i.e. set before the latest group start).
 -----------------------------
--- stop both groups
-select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+-- Stop both groups.
+SELECT emaj.emaj_stop_groups(ARRAY['myGroup1', 'myGroup2']);
  emaj_stop_groups 
 ------------------
                15
 (1 row)
 
--- start both groups
-select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
+-- Start both groups.
+SELECT emaj.emaj_start_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', FALSE);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_start_groups 
@@ -41,15 +41,15 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                 15
 (1 row)
 
--- set a mark for both groups
-select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
+-- Set a mark for both groups.
+SELECT emaj.emaj_set_mark_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-2');
  emaj_set_mark_groups 
 ----------------------
                    15
 (1 row)
 
--- logged rollback to Multi-1
-select * from emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
+-- Logged rollback to Multi-1.
+SELECT * FROM emaj.emaj_logged_rollback_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -57,8 +57,8 @@ select * from emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Mul
  Notice        | Rollback id = 14000.
 (3 rows)
 
--- rollback to Multi-2
-select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',false) order by 1,2;
+-- Rollback to Multi-2.
+SELECT * FROM emaj.emaj_rollback_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-2', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -66,8 +66,8 @@ select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',f
  Notice        | Rollback id = 14001.
 (3 rows)
 
--- rollback and stop to Multi-1
-select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
+-- Rollback and stop to Multi-1.
+SELECT * FROM emaj.emaj_rollback_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -75,19 +75,19 @@ select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',f
  Notice        | Rollback id = 14002.
 (3 rows)
 
-select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback');
+SELECT emaj.emaj_stop_groups(ARRAY['myGroup1', 'myGroup2'], 'Stop after ROLLBACK');
  emaj_stop_groups 
 ------------------
                15
 (1 row)
 
--- try to start both groups, but with an old mark name
-select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
+-- Try to start both groups, but with an old mark name.
+SELECT emaj.emaj_start_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', FALSE);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "Multi-1".
--- really start both groups
-select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
+-- Really start both groups.
+SELECT emaj.emaj_start_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1b', FALSE);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_start_groups 
@@ -95,39 +95,40 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                 15
 (1 row)
 
--- try to rollback several groups to an old common mark
-select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1', false);
+-- Try to rollback several groups to an old common mark.
+SELECT * FROM emaj.emaj_rollback_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', FALSE);
 ERROR:  _check_mark_name: For the groups "myGroup1, myGroup2", the mark "Multi-1" was set before the latest group start.
--- set again a mark for both groups
-select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
+-- Set again a mark for both groups.
+SELECT emaj.emaj_set_mark_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-2');
  emaj_set_mark_groups 
 ----------------------
                    15
 (1 row)
 
--- delete the mark for only 1 group and get detailed statistics for the other group
-select emaj.emaj_delete_mark_group('myGroup1','Multi-2');
+-- Delete the mark for only 1 group and get detailed statistics for the other group.
+SELECT emaj.emaj_delete_mark_group('myGroup1', 'Multi-2');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
--- use this mark for the other group before delete it
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
+-- Use this mark for the other group before delete it.
+SELECT * FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-2', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_first_time_id | stat_last_mark | stat_last_mark_datetime | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------------+--------------------+----------------+-------------------------+-------------------+-----------+-----------+-----------
 (0 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup2', 'Multi-2', NULL)
-  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup2', 'Multi-2', NULL)
+  ORDER BY stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | Multi-2         |              14009 |                |                   |               0 | f
  myGroup2   | myschema2   | myseq1           | Multi-2         |              14009 |                |                   |               0 | f
 (2 rows)
 
-select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
+SELECT * FROM emaj.emaj_rollback_group('myGroup2', 'Multi-2', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -135,15 +136,15 @@ select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
  Notice        | Rollback id = 14003.
 (3 rows)
 
-select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
+SELECT emaj.emaj_delete_mark_group('myGroup2', 'Multi-2');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
--- get statistics using old marks
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
+-- Get statistics using old marks.
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'M1', 'M2');
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | myTbl3     | M1              |              12017 | M2             |             12300 | postgres  | INSERT    |        10
@@ -157,75 +158,78 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl6     | M1              |              12017 | M2             |             12300 | postgres  | UPDATE    |         3
 (9 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup2', 'M1', 'M2')
-  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup2', 'M1', 'M2')
+  ORDER BY stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | M1              |              12017 | M2             |             12300 |              10 | f
  myGroup2   | myschema2   | myseq1           | M1              |              12017 | M2             |             12300 |               1 | f
 (2 rows)
 
--- delete intermediate old marks
-select emaj.emaj_delete_mark_group('myGroup1','Multi-1');
+-- Delete intermediate old marks.
+SELECT emaj.emaj_delete_mark_group('myGroup1', 'Multi-1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-select emaj.emaj_delete_mark_group('myGroup2','Multi-1');
+SELECT emaj.emaj_delete_mark_group('myGroup2', 'Multi-1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
--- ... and reuse mark names for parallel rollback test
-select emaj.emaj_rename_mark_group('myGroup1','Multi-1b','Multi-1');
+-- ... and reuse mark names for parallel rollback test.
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'Multi-1b', 'Multi-1');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_rename_mark_group('myGroup2','Multi-1b','Multi-1');
+SELECT emaj.emaj_rename_mark_group('myGroup2', 'Multi-1b', 'Multi-1');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
--- rename an old mark
-select emaj.emaj_rename_mark_group('myGroup2','M2','Deleted M2');
+-- Rename an old mark.
+SELECT emaj.emaj_rename_mark_group('myGroup2', 'M2', 'Deleted M2');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
--- use emaj_get_previous_mark_group and delete an initial old mark
-select emaj.emaj_delete_before_mark_group('myGroup2',
-      (select emaj.emaj_get_previous_mark_group('myGroup2',
-             (select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_group = 'myGroup2' and mark_name = 'M3')+'0.000001 SECOND'::interval)));
+-- Use emaj_get_previous_mark_group and delete an initial old mark.
+SELECT emaj.emaj_delete_before_mark_group('myGroup2',
+      (SELECT emaj.emaj_get_previous_mark_group('myGroup2',
+             (SELECT time_clock_timestamp FROM emaj.emaj_mark, emaj.emaj_time_stamp
+                WHERE time_id = mark_time_id AND mark_group = 'myGroup2' AND mark_group = 'myGroup2' AND mark_name = 'M3')+'0.000001 SECOND'::interval)));
  emaj_delete_before_mark_group 
 -------------------------------
                              2
 (1 row)
 
--- comment an old mark
-select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is old');
+-- Comment an old mark.
+SELECT emaj.emaj_comment_mark_group('myGroup2', 'M3', 'This mark is old');
  emaj_comment_mark_group 
 -------------------------
  
 (1 row)
 
--- try to get a rollback duration estimate on an old mark
-select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
+-- Try to get a rollback duration estimate on an old mark.
+SELECT emaj.emaj_estimate_rollback_group('myGroup2', 'M3', TRUE);
 ERROR:  _check_mark_name: For the group "myGroup2", the mark "M3" was set before the latest group start.
--- try to rollback on an old mark
-select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
+-- Try to rollback on an old mark.
+SELECT * FROM emaj.emaj_rollback_group('myGroup2', 'M3', FALSE) ORDER BY 1, 2;
 ERROR:  _check_mark_name: For the group "myGroup2", the mark "M3" was set before the latest group start.
 -----------------------------
--- Checking step 8
+-- Checking step 8.
 -----------------------------
--- emaj tables
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+-- emaj tables.
+SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_time_id, mark_is_rlbk_protected,
+       mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark FROM emaj.emaj_mark ORDER BY mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                  mark_comment                  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+------------------------+------------------------------------------------+---------------------------+------------------------------
  myGroup2   | M3                           |        12301 | f                      | This mark is old                               |                         0 | 
@@ -234,13 +238,14 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup1   | Before logged rollback to M4 |        12701 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
  myGroup1   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
  myGroup2   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
- myGroup1   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
- myGroup2   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup1   | Stop after ROLLBACK          |        14007 | f                      |                                                |                         0 | 
+ myGroup2   | Stop after ROLLBACK          |        14007 | f                      |                                                |                         0 | 
  myGroup1   | Multi-1                      |        14008 | f                      |                                                |                           | 
  myGroup2   | Multi-1                      |        14008 | f                      |                                                |                           | 
 (10 rows)
 
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
+  FROM emaj.emaj_sequence ORDER BY sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
  myschema2   | myTbl3_col31_seq  |        12301 |            20 | t
@@ -269,7 +274,8 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2   | myseq1            |        14008 |          1004 | f
 (24 rows)
 
-select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+SELECT tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val
+  FROM emaj.emaj_table ORDER BY tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
 ------------+----------+-------------+------------+-----------+----------------------
  myschema2  | myTbl3   |       12301 |          0 |         0 |                   10
@@ -339,7 +345,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
  myschema2  | mytbl6   |       14008 |          1 |         1 |                   23
 (65 rows)
 
-select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+SELECT sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size FROM emaj.emaj_seq_hole ORDER BY 1, 2, 3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | mytbl1     |              12502 |            12700 |              1
@@ -349,7 +355,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
  myschema2   | mytbl6     |              12301 |            12602 |              9
 (5 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14000 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 14000 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    14000 |           14000000 | X
@@ -365,13 +371,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    14010 |           14000000 | R
 (11 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
        hist_user
-  from emaj.emaj_hist where hist_id >= 14000 order by hist_id;
+  FROM emaj.emaj_hist WHERE hist_id >= 14000 ORDER BY hist_id;
       hist_function       |   hist_event   |    hist_object    |                    regexp_replace                    |     hist_user      
 --------------------------+----------------+-------------------+------------------------------------------------------+--------------------
  IMPORT_PARAMETERS        | BEGIN          |                   |                                                      | _regress_emaj_adm1
@@ -441,11 +447,11 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
  LOCK_GROUPS              | END            | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                      | _regress_emaj_adm1
  STOP_GROUPS              | TIME STAMP SET | 14007             |                                                      | _regress_emaj_adm1
- SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Stop after rollback                                  | _regress_emaj_adm1
+ SET_MARK_GROUPS          | BEGIN          | myGroup1,myGroup2 | Stop after ROLLBACK                                  | _regress_emaj_adm1
  CLEANUP_RLBK_STATE       |                | Rollback id 14000 | set to COMMITTED                                     | _regress_emaj_adm1
  CLEANUP_RLBK_STATE       |                | Rollback id 14001 | set to COMMITTED                                     | _regress_emaj_adm1
  CLEANUP_RLBK_STATE       |                | Rollback id 14002 | set to COMMITTED                                     | _regress_emaj_adm1
- SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | Stop after rollback                                  | _regress_emaj_adm1
+ SET_MARK_GROUPS          | END            | myGroup1,myGroup2 | Stop after ROLLBACK                                  | _regress_emaj_adm1
  STOP_GROUPS              | END            | myGroup1,myGroup2 | 15 tables/sequences processed                        | _regress_emaj_adm1
  START_GROUPS             | BEGIN          | myGroup1,myGroup2 | Without logs reset                                   | _regress_emaj_adm1
  LOCK_GROUPS              | BEGIN          | myGroup1,myGroup2 |                                                      | _regress_emaj_adm1
@@ -488,26 +494,26 @@ select hist_function, hist_event, hist_object,
  COMMENT_MARK_GROUP       |                | myGroup2          | Mark M3                                              | _regress_emaj_adm1
 (112 rows)
 
--- log tables
-reset session_authorization;
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
+-- Log tables.
+RESET session_authorization;
+SELECT col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema1.myTbl1_log ORDER BY emaj_gid, emaj_tuple DESC;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
      1 | Step 6     | \x01  | INS       | NEW        | 12700004
      1 | Step 6     | \x01  | DEL       | OLD        | 12700029
 (2 rows)
 
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
+SELECT col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema1.myTbl2_log ORDER BY emaj_gid, emaj_tuple DESC;
  col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+SELECT col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema1.myTbl2b_log ORDER BY emaj_gid, emaj_tuple DESC;
  col20 | col21 | col22 | col23 | col24 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
+SELECT col31, col33, emaj_verb, emaj_tuple, emaj_gid FROM emaj_myschema1."myTbl3_log" ORDER BY emaj_gid, emaj_tuple DESC;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
     11 | 10.00 | UPD       | OLD        | 12500015
@@ -557,7 +563,7 @@ select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3
     18 | 10.00 | DEL       | OLD        | 12800005
 (45 rows)
 
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
+SELECT col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema1.myTbl4_log ORDER BY emaj_gid, emaj_tuple DESC;
  col41 | col42 | col43 | col44 | col45  | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+--------+-----------+------------+----------
     11 |       |     1 |     1 | Step 6 | INS       | NEW        | 12700005
@@ -566,71 +572,72 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
     12 |       |     1 |     1 | Step 6 | DEL       | OLD        | 12700028
 (4 rows)
 
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
+SELECT col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema2.myTbl1_log ORDER BY emaj_gid, emaj_tuple DESC;
  col11 | col12 | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
+SELECT col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema2.myTbl2_log ORDER BY emaj_gid, emaj_tuple DESC;
  col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
+SELECT col31, col33, emaj_verb, emaj_tuple, emaj_gid FROM emaj_myschema2."myTbl3_log" ORDER BY emaj_gid, emaj_tuple DESC;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
 (0 rows)
 
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl4_log order by emaj_gid, emaj_tuple desc;
+SELECT col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid FROM emaj_myschema2.mytbl4_log ORDER BY emaj_gid, emaj_tuple DESC;
  col41 | col42 | col43 | col44 | col45 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col51, col52, col53, col54, col55, col56, col57, col58, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
+SELECT col51, col52, col53, col54, col55, col56, col57, col58, emaj_verb, emaj_tuple, emaj_gid
+  FROM emaj_myschema2.mytbl5_log ORDER BY emaj_gid, emaj_tuple DESC;
  col51 | col52 | col53 | col54 | col55 | col56 | col57 | col58 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
+SELECT col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema2.myTbl6_log ORDER BY emaj_gid, emaj_tuple DESC;
  col61 | col62 | col63 | col64 | col65 | col66 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(14200);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(14200);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- Step 9 : for phil''s group#3", recreate the group as rollbackable, update tables, 
---          rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 9 : for phil''s group#3", recreate the group as rollbackable, update tables,
+--          Rename a mark, then delete 2 marks then delete all before a mark.
 -----------------------------
--- prepare phil's group#3, group
+-- Prepare phil's group#3, group.
 --
-reset session_authorization;
-alter table "phil's schema""3"."myTbl2\" add primary key (col21);
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_create_group('phil''s group#3",');
+RESET session_authorization;
+ALTER TABLE "phil's schema""3"."myTbl2\" add primary key (col21);
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_create_group('phil''s group#3",');
  emaj_create_group 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
+SELECT emaj.emaj_assign_tables('phil''s schema"3', '.*', 'my"tbl4', 'phil''s group#3",');
  emaj_assign_tables 
 --------------------
                   2
 (1 row)
 
-select emaj.emaj_assign_sequences('phil''s schema"3','.*',null,'phil''s group#3",');
+SELECT emaj.emaj_assign_sequences('phil''s schema"3', '.*', NULL, 'phil''s group#3",');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
-select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
+SELECT emaj.emaj_start_group('phil''s group#3",', 'M1_rollbackable');
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey_nv" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema"3.phil's tbl1" is referenced by the foreign key "my"tbl4_col44_fkey" on the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
@@ -639,85 +646,86 @@ WARNING:  _check_fk_groups: The table "phil's schema"3.phil's tbl1" is reference
 (1 row)
 
 --
-reset session_authorization;
-set search_path=public,"phil's schema""3";
+RESET session_authorization;
+SET search_path TO public, "phil's schema""3";
 --
-insert into "phil's tbl1" select i, 'AB''C', E'\\014'::bytea from generate_series (1,31) as i;
-update "phil's tbl1" set "phil\s""col13" = E'\\034'::bytea where "phil's col11" <= 3;
-update "phil's tbl1" set "phil\s""col13" = E'\\034'''::bytea where "phil's col11" between 18 and 22;
-insert into "my""tbl4" (col41) values (1);
-insert into "my""tbl4" (col41) values (2);
-insert into "myTbl2\" values (1,'ABC','2010-12-31');
-delete from "phil's tbl1" where "phil's col11" > 20;
-insert into "myTbl2\" values (2,'DEF',NULL);
-select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
+INSERT INTO "phil's tbl1" SELECT i, 'AB''C', E'\\014'::BYTEA FROM generate_series (1, 31) AS i;
+UPDATE "phil's tbl1" SET "phil\s""col13" = E'\\034'::BYTEA WHERE "phil's col11" <= 3;
+UPDATE "phil's tbl1" SET "phil\s""col13" = E'\\034'''::BYTEA WHERE "phil's col11" between 18 AND 22;
+INSERT INTO "my""tbl4" (col41) VALUES (1);
+INSERT INTO "my""tbl4" (col41) VALUES (2);
+INSERT INTO "myTbl2\" VALUES (1, 'ABC', '2010-12-31');
+DELETE FROM "phil's tbl1" WHERE "phil's col11" > 20;
+INSERT INTO "myTbl2\" VALUES (2, 'DEF', NULL);
+SELECT nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
  nextval 
 ---------
     1000
 (1 row)
 
 --
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_set_mark_group('phil''s group#3",','M2_rollbackable');
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_set_mark_group('phil''s group#3",', 'M2_rollbackable');
  emaj_set_mark_group 
 ---------------------
                    4
 (1 row)
 
-select emaj.emaj_set_mark_group('phil''s group#3",','M2_again!');
+SELECT emaj.emaj_set_mark_group('phil''s group#3",', 'M2_again!');
  emaj_set_mark_group 
 ---------------------
                    4
 (1 row)
 
 --
-reset session_authorization;
-delete from "phil's tbl1" where "phil's col11" = 10;
-update "phil's tbl1" set "phil's col12" = 'DEF' where "phil's col11" <= 2;
-select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
+RESET session_authorization;
+DELETE FROM "phil's tbl1" WHERE "phil's col11" = 10;
+UPDATE "phil's tbl1" SET "phil's col12" = 'DEF' WHERE "phil's col11" <= 2;
+SELECT nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
  nextval 
 ---------
     1001
 (1 row)
 
 --
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1','Third mark set');
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_set_mark_groups(ARRAY['phil''s group#3",'], 'phil''s mark #1', 'Third mark set');
  emaj_set_mark_groups 
 ----------------------
                     4
 (1 row)
 
 --
-select emaj.emaj_rename_mark_group('phil''s group#3",','phil''s mark #1','phil''s mark #3');
+SELECT emaj.emaj_rename_mark_group('phil''s group#3",', 'phil''s mark #1', 'phil''s mark #3');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
--- 
-select emaj.emaj_delete_mark_group('phil''s group#3",','M2_again!');
+--
+SELECT emaj.emaj_delete_mark_group('phil''s group#3",', 'M2_again!');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
 --
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','M1_rollbackable','');
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('phil''s group#3",', 'M1_rollbackable', '');
     stat_group    |   stat_schema   | stat_table  | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------------+-----------------+-------------+-----------------+--------------------+----------------+-------------------+-----------
  phil's group#3", | phil's schema"3 | myTbl2\     | M1_rollbackable |              14203 |                |                   |         2
  phil's group#3", | phil's schema"3 | phil's tbl1 | M1_rollbackable |              14203 |                |                   |        53
 (2 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'phil''s mark #3', '');
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
 (0 rows)
 
-select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
-  from emaj.emaj_log_stat_table('phil''s schema"3', 'phil''s tbl1');
+SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('phil''s schema"3', 'phil''s tbl1');
     stat_group    | stat_first_mark | stat_is_log_start | stat_last_mark  | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------------+-----------------+-------------------+-----------------+------------------+--------------+----------------
  phil's group#3", | M1_rollbackable | t                 | M2_rollbackable | f                |           50 |              0
@@ -725,8 +733,8 @@ select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_l
  phil's group#3", | phil's mark #3  | f                 | [current state] | f                |            0 |              0
 (3 rows)
 
-select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-  from emaj.emaj_log_stat_sequence('phil''s schema"3', 'phil''s"seq\1');
+SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('phil''s schema"3', 'phil''s"seq\1');
     stat_group    | stat_first_mark | stat_is_log_start | stat_last_mark  | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------------+-----------------+-------------------+-----------------+------------------+-----------------+----------------------------+----------------
  phil's group#3", | M1_rollbackable | t                 | M2_rollbackable | f                |               1 | f                          |              0
@@ -735,7 +743,7 @@ select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_l
 (3 rows)
 
 --
-select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
+SELECT * FROM emaj.emaj_logged_rollback_group('phil''s group#3",', 'phil''s mark #3', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -743,7 +751,7 @@ select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark 
  Notice        | Rollback id = 14200.
 (3 rows)
 
-select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
+SELECT * FROM emaj.emaj_rollback_group('phil''s group#3",', 'phil''s mark #3', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -752,10 +760,11 @@ select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',fal
 (3 rows)
 
 -----------------------------
--- Checking step 9
+-- Checking step 9.
 -----------------------------
--- emaj tables
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+-- emaj tables.
+SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_time_id, mark_is_rlbk_protected,
+       mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark FROM emaj.emaj_mark ORDER BY mark_time_id, mark_group;
     mark_group    |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                  mark_comment                  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+------------------------------+--------------+------------------------+------------------------------------------------+---------------------------+------------------------------
  myGroup2         | M3                           |        12301 | f                      | This mark is old                               |                         0 | 
@@ -764,8 +773,8 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup1         | Before logged rollback to M4 |        12701 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
  myGroup1         | STOP_%                       |        14000 | f                      |                                                |                         0 | 
  myGroup2         | STOP_%                       |        14000 | f                      |                                                |                         0 | 
- myGroup1         | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
- myGroup2         | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup1         | Stop after ROLLBACK          |        14007 | f                      |                                                |                         0 | 
+ myGroup2         | Stop after ROLLBACK          |        14007 | f                      |                                                |                         0 | 
  myGroup1         | Multi-1                      |        14008 | f                      |                                                |                           | 
  myGroup2         | Multi-1                      |        14008 | f                      |                                                |                           | 
  phil's group#3", | M1_rollbackable              |        14203 | f                      |                                                |                        52 | 
@@ -773,7 +782,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  phil's group#3", | phil's mark #3               |        14206 | f                      | Third mark set                                 |                           | 
 (13 rows)
 
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called FROM emaj.emaj_sequence ORDER BY sequ_time_id, sequ_schema, sequ_name;
    sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -----------------+-------------------+--------------+---------------+----------------
  myschema2       | myTbl3_col31_seq  |        12301 |            20 | t
@@ -808,7 +817,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  phil's schema"3 | phil's"seq\1      |        14206 |          1001 | t
 (30 rows)
 
-select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table ORDER BY tbl_time_id, tbl_schema, tbl_name;
    tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
 -----------------+-------------+-------------+----------------------
  myschema2       | myTbl3      |       12301 |                   10
@@ -884,7 +893,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  phil's schema"3 | phil's tbl1 |       14206 |                   53
 (71 rows)
 
-select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+SELECT sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size FROM emaj.emaj_seq_hole ORDER BY 1, 2, 3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | mytbl1     |              12502 |            12700 |              1
@@ -894,8 +903,8 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
  myschema2   | mytbl6     |              12301 |            12602 |              9
 (5 rows)
 
-select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
-  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
+SELECT rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity FROM emaj.emaj_rlbk_stat
+  ORDER BY rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
  rlbt_rlbk_id |   rlbt_step    | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_quantity 
 --------------+----------------+-------------+------------+-------------------+---------------
         12400 | RLBK_SEQUENCES |             |            |                   |             2
@@ -970,7 +979,7 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quant
         14201 | CTRL+DBLINK    |             |            |                   |             1
 (70 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14200 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 14200 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    14200 |           14200000 | C
@@ -985,13 +994,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    14209 |           14200055 | R
 (10 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
        hist_user
-  from emaj.emaj_hist where hist_id >= 14200 order by hist_id;
+  FROM emaj.emaj_hist WHERE hist_id >= 14200 ORDER BY hist_id;
    hist_function    |     hist_event     |              hist_object               |                    regexp_replace                    |     hist_user      
 --------------------+--------------------+----------------------------------------+------------------------------------------------------+--------------------
  CREATE_GROUP       | BEGIN              | phil's group#3",                       | rollbackable                                         | _regress_emaj_adm2
@@ -1064,9 +1073,9 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP     | END                | phil's group#3",                       | Rollback_id 14201                                    | _regress_emaj_adm2
 (68 rows)
 
--- user tables
-reset session_authorization;
-select * from "phil's schema""3"."phil's tbl1" order by "phil's col11","phil's col12";
+-- User tables.
+RESET session_authorization;
+SELECT * FROM "phil's schema""3"."phil's tbl1" ORDER BY "phil's col11", "phil's col12";
  phil's col11 | phil's col12 | phil\s"col13 
 --------------+--------------+--------------
             1 | DEF          | \x1c
@@ -1090,16 +1099,17 @@ select * from "phil's schema""3"."phil's tbl1" order by "phil's col11","phil's c
            20 | AB'C         | \x1c27
 (19 rows)
 
-select * from "phil's schema""3"."myTbl2\" order by col21;
+SELECT * FROM "phil's schema""3"."myTbl2\" ORDER BY col21;
  col21 | col22 |   col23    | col24 
 -------+-------+------------+-------
      1 | ABC   | 12-31-2010 |     5
      2 | DEF   |            |      
 (2 rows)
 
--- log tables
-set session_authorization to _regress_emaj_adm2;
-select "phil's col11", "phil's col12", "phil\s""col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
+-- Log tables.
+SET session_authorization TO _regress_emaj_adm2;
+SELECT "phil's col11", "phil's col12", "phil\s""col13", emaj_verb, emaj_tuple, emaj_gid
+  FROM "emaj_phil's schema""3"."phil's tbl1_log" ORDER BY emaj_gid, emaj_tuple DESC;
  phil's col11 | phil's col12 | phil\s"col13 | emaj_verb | emaj_tuple | emaj_gid 
 --------------+--------------+--------------+-----------+------------+----------
             1 | AB'C         | \x0c         | INS       | NEW        | 14200001
@@ -1167,33 +1177,33 @@ select "phil's col11", "phil's col12", "phil\s""col13", emaj_verb, emaj_tuple, e
             2 | DEF          | \x1c         | UPD       | NEW        | 14200055
 (63 rows)
 
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
+SELECT col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid FROM "emaj_phil's schema""3"."myTbl2\_log" ORDER BY emaj_gid, emaj_tuple DESC;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+------------+-----------+------------+----------
      1 | ABC   | 12-31-2010 | INS       | NEW        | 14200040
      2 | DEF   |            | INS       | NEW        | 14200052
 (2 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(14300);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(14300);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- Step 10 : for myGroup1, in a transaction, update tables and rollback the transaction, 
---           then rollback to previous mark 
+-- Step 10 : for myGroup1, in a transaction, update tables and rollback the transaction,
+--           Then rollback to previous mark.
 -----------------------------
-reset session_authorization;
-set search_path=public,myschema1;
+RESET session_authorization;
+SET search_path TO public, myschema1;
 --
-begin transaction;
-  delete from mytbl1;
-rollback;
+BEGIN TRANSACTION;
+  DELETE FROM mytbl1;
+ROLLBACK;
 --
-set session_authorization to _regress_emaj_adm2;
-select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order by 1,2;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'EMAJ_LAST_MARK', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -1202,10 +1212,10 @@ select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order 
 (3 rows)
 
 -----------------------------
--- Checking step 10
+-- Checking step 10.
 -----------------------------
--- emaj tables
-select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+-- emaj tables.
+SELECT sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size FROM emaj.emaj_seq_hole ORDER BY 1, 2, 3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | mytbl1     |              12502 |            12700 |              1
@@ -1216,8 +1226,8 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
  myschema2   | mytbl6     |              12301 |            12602 |              9
 (6 rows)
 
-select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
-  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
+SELECT rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity FROM emaj.emaj_rlbk_stat
+  ORDER BY rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
  rlbt_rlbk_id |   rlbt_step    | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_quantity 
 --------------+----------------+-------------+------------+-------------------+---------------
         12400 | RLBK_SEQUENCES |             |            |                   |             2
@@ -1298,19 +1308,19 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quant
         14300 | CTRL+DBLINK    |             |            |                   |             5
 (76 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14300 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 14300 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    14300 |           14300020 | R
 (1 row)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
        hist_user
-  from emaj.emaj_hist where hist_id >= 14300 order by hist_id;
+  FROM emaj.emaj_hist WHERE hist_id >= 14300 ORDER BY hist_id;
   hist_function   |   hist_event   |    hist_object    |                                           regexp_replace                                           |     hist_user      
 ------------------+----------------+-------------------+----------------------------------------------------------------------------------------------------+--------------------
  ROLLBACK_GROUP   | BEGIN          | myGroup1          | Unlogged rollback to mark Multi-1 (timestamp)                                                      | _regress_emaj_adm2
@@ -1327,55 +1337,57 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP   | END            | myGroup1          | Rollback_id 14300                                                                                  | _regress_emaj_adm2
 (12 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(14400);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(14400);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- Step 11 : tests snaps and script generation functions
+-- Step 11 : tests snaps and script generation functions.
 -----------------------------
--- first perform changes in a table with generated columns
+-- First perform changes in a table with generated columns.
 reset session_authorization;
-set search_path=public,myschema1;
-insert into mytbl2b (col21) values (10),(11);
-update mytbl2b set col21 = 12 where col21 = 11;
-delete from mytbl2b where col21 >= 10;
--- add some updates for tables with unusual types (arrays, geometric)
-set search_path=public,myschema2;
-insert into myTbl5 values (10,'{"abc","def","ghi"}','{1,2,3}',NULL,'{}',NULL,'{"id":1000}','[2020-01-01, 2021-01-01)',NULL);
-insert into myTbl5 values (20,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date],'{"id":1001, "c1":"abc"}',NULL,'{"id":1001}',NULL,XMLPARSE (CONTENT '<foo>bar</foo>'));
-update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c2":"def"}', col57 = '{"id":1001, "c3":"ghi"}' where col54 is null;
-insert into myTbl6 select i+10, point(i,1.3), box(point(i,2),point(i+0.2,3)), circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27','EXECUTING',(i+10,point(i,1.3))::mycomposite from generate_series (1,8) as i;
-update myTbl6 set col64 = '<(5,6),3.5>', col65 = null, col67 = 'COMPLETED' where col61 <= 13;
--- also add rows with unusual text content
-insert into mytbl2 values (10, E'row 1 \r... and row 2 with a '' (quote) character',null);
-insert into mytbl2 values (11, E'row 1 with a true \\ character\r... and row 2 with two \\n true and a '' (quote) characters',null);
--- and manupulate NULL characters
-insert into mytbl1 values (200, E'Start\tEnd ', E'A\\000B'::BYTEA);
-update mytbl1 set col12 = E' Start\tEnd' where col11 = 200;
-delete from mytbl1 where col13 = E'A\\000B'::BYTEA;
--- also apply some changes in sequence characteristics
-alter sequence myschema2.myseq1 minvalue 1 maxvalue 100 increment 10 start 21 restart 11 cache 2 cycle;
--- create the directory for the first snaps set
+SET search_path TO public, myschema1;
+INSERT INTO mytbl2b (col21) VALUES (10), (11);
+UPDATE mytbl2b SET col21 = 12 WHERE col21 = 11;
+DELETE FROM mytbl2b WHERE col21 >= 10;
+-- Add some updates for tables with unusual types (arrays, geometric).
+SET search_path TO public, myschema2;
+INSERT INTO myTbl5 VALUES (10, '{"abc", "def", "ghi"}', '{1, 2, 3}', NULL, '{}', NULL, '{"id":1000}', '[2020-01-01, 2021-01-01)', NULL);
+INSERT INTO myTbl5 VALUES (20, ARRAY['abc', 'def', 'ghi'], ARRAY[3, 4, 5], ARRAY['2000/02/01'::DATE,
+                           '2000/02/28'::DATE], '{"id":1001, "c1":"abc"}', NULL, '{"id":1001}', NULL, XMLPARSE (CONTENT '<foo>bar</foo>'));
+UPDATE myTbl5 SET col54 = '{"2010/11/28", "2010/12/03"}', col55 = '{"id":1001, "c2":"def"}', col57 = '{"id":1001, "c3":"ghi"}' WHERE col54 is NULL;
+INSERT INTO myTbl6 SELECT i+10, point(i, 1.3), box(point(i, 2), point(i+0.2, 3)), circle(point(5, 5), i), '((-2, -2), (3, 0), (1, 4))',
+                          '10.20.30.40/27', 'EXECUTING', (i+10, point(i, 1.3))::mycomposite FROM generate_series (1, 8) AS i;
+UPDATE myTbl6 SET col64 = '<(5, 6), 3.5>', col65 = NULL, col67 = 'COMPLETED' WHERE col61 <= 13;
+-- Also add rows with unusual text content.
+INSERT INTO mytbl2 VALUES (10, E'row 1 \r... AND row 2 with a '' (quote) character', NULL);
+INSERT INTO mytbl2 VALUES (11, E'row 1 with a TRUE \\ character\r... AND row 2 with two \\n TRUE AND a '' (quote) characters', NULL);
+-- And manupulate NULL characters.
+INSERT INTO mytbl1 VALUES (200, E'Start\tEnd ', E'A\\000B'::BYTEA);
+UPDATE mytbl1 SET col12 = E' Start\tEnd' WHERE col11 = 200;
+DELETE FROM mytbl1 WHERE col13 = E'A\\000B'::BYTEA;
+-- Also apply some changes in sequence characteristics.
+ALTER SEQUENCE myschema2.myseq1 MINVALUE 1 MAXVALUE 100 INCREMENT 10 START 21 RESTART 11 CACHE 2 CYCLE;
+-- Create the directory for the first snaps set.
 \! mkdir -p $EMAJTESTTMPDIR/snaps1
--- ... and snap all groups
-set session_authorization to _regress_emaj_adm1;
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
+-- ... and snap all groups.
+SET session_authorization TO _regress_emaj_adm1;
+SELECT emaj.emaj_snap_group('myGroup1', :'EMAJTESTTMPDIR' || '/snaps1', 'CSV HEADER');
  emaj_snap_group 
 -----------------
                7
 (1 row)
 
-select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
+SELECT emaj.emaj_snap_group('myGroup2', :'EMAJTESTTMPDIR' || '/snaps1', 'CSV HEADER');
  emaj_snap_group 
 -----------------
                8
 (1 row)
 
-select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
+SELECT emaj.emaj_snap_group('phil''s group#3",', :'EMAJTESTTMPDIR' || '/snaps1', 'CSV HEADER');
  emaj_snap_group 
 -----------------
                4
@@ -1402,62 +1414,62 @@ phil_s_schema_3_myTbl2_.snap
 phil_s_schema_3_myTbl2__col21_seq.snap
 phil_s_schema_3_phil_s_seq_1.snap
 phil_s_schema_3_phil_s_tbl1.snap
--- generate a sql script for each active group (and check the result with detailed log statistics + number of sequences)
-select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
+-- Generate a sql script for each active group (and check the result with detailed log statistics + number of sequences).
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
  emaj_gen_sql_group 
 --------------------
                   6
 (1 row)
 
-select coalesce(sum(stat_rows),0) + 1 /* sequence change */ as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
+SELECT coalesce(sum(stat_rows), 0) + 1 /* sequence change */ as check FROM emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
  check 
 -------
      6
 (1 row)
 
-select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup2.sql', array[
-     'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
-     'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup2.sql', ARRAY[
+     'myschema2.mytbl1', 'myschema2.mytbl2', 'myschema2.myTbl3', 'myschema2.mytbl4',
+     'myschema2.mytbl5', 'myschema2.mytbl6', 'myschema2.myseq1', 'myschema2.myTbl3_col31_seq']);
  emaj_gen_sql_group 
 --------------------
                  26
 (1 row)
 
-select sum(stat_rows) + 1 /* sequence change */ as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
+SELECT sum(stat_rows) + 1 /* sequence change */ AS check FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
  check 
 -------
     26
 (1 row)
 
-select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, :'EMAJTESTTMPDIR' || '/Group3.sql');
+SELECT emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, :'EMAJTESTTMPDIR' || '/Group3.sql');
  emaj_gen_sql_group 
 --------------------
                  56
 (1 row)
 
-select sum(stat_rows) + 1 /* sequence change*/ as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
+SELECT sum(stat_rows) + 1 /* sequence change*/ AS check FROM emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
  check 
 -------
     56
 (1 row)
 
--- generate another sql script for myGroup1 but with a manual export and check both scripts are the same
-select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
+-- Generate another sql script for myGroup1 but with a manual export and check both scripts are the same.
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
  emaj_gen_sql_group 
 --------------------
                   6
 (1 row)
 
 \setenv FILE1 :EMAJTESTTMPDIR'/myGroup1_2.sql'
-\copy (select * from emaj_sql_script) to program 'cat >$FILE1'
--- mask timestamp in initial comment and compare
+\copy (SELECT * FROM emaj_sql_script) TO PROGRAM 'cat >$FILE1'
+-- Mask timestamp in initial comment and compare.
 \! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
 \! diff $EMAJTESTTMPDIR/myGroup1.sql $EMAJTESTTMPDIR/myGroup1_2.sql
--- process \\ characters in script files
+-- Process \\ characters in script files.
 \! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i_s -s 's/\\\\/\\/g'
--- comment transaction commands for the need of the current test
+-- Comment transaction commands for the need of the current test.
 \! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
--- mask timestamp in initial comment
+-- Mask timestamp in initial comment.
 \! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
 \! ls $EMAJTESTTMPDIR
 Group3.sql
@@ -1469,12 +1481,12 @@ myGroup1_2.sql_s
 myGroup2.sql
 myGroup2.sql_s
 snaps1
--- create the directory for the second snaps set
+-- Create the directory for the second snaps set.
 \! mkdir $EMAJTESTTMPDIR/snaps2
--- in a single transaction and as superuser:
---   rollback groups, replay updates with generated scripts, snap groups again and cancel the transaction
-begin;
-  select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
+-- In a single transaction and as superuser:
+--   Rollback groups, replay updates with generated scripts, snap groups again and cancel the transaction.
+BEGIN;
+  SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'Multi-1', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
@@ -1482,7 +1494,7 @@ begin;
  Notice        | Rollback id = 14400.
 (3 rows)
 
-  select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
+  SELECT * FROM emaj.emaj_rollback_group('myGroup2', 'Multi-1', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
@@ -1490,7 +1502,7 @@ begin;
  Notice        | Rollback id = 14401.
 (3 rows)
 
-  select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
+  SELECT * FROM emaj.emaj_rollback_group('phil''s group#3",', 'M1_rollbackable', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
@@ -1516,7 +1528,7 @@ ALTER SEQUENCE myschema1.mytbl2b_col20_seq  RESTART 8;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
 RESET datestyle;
-  reset session_authorization;
+  RESET session_authorization;
   \set FILE1 :EMAJTESTTMPDIR '/myGroup1.sql'
   \i :FILE1
 -- SQL script generated by E-Maj at [ts]$
@@ -1566,8 +1578,8 @@ UPDATE ONLY myschema2.mytbl6 SET col61 = 8, col62 = '(8,1.3)', col63 = '(8.2,1),
 UPDATE ONLY myschema2.mytbl6 SET col61 = 11, col62 = '(1,1.3)', col63 = '(1.2,3),(1,2)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(11,"(1,1.3)")' WHERE col61 = 11;
 UPDATE ONLY myschema2.mytbl6 SET col61 = 12, col62 = '(2,1.3)', col63 = '(2.2,3),(2,2)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(12,"(2,1.3)")' WHERE col61 = 12;
 UPDATE ONLY myschema2.mytbl6 SET col61 = 13, col62 = '(3,1.3)', col63 = '(3.2,3),(3,2)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(13,"(3,1.3)")' WHERE col61 = 13;
-INSERT INTO myschema2.mytbl2 VALUES (10, 'row 1 \r... and row 2 with a '' (quote) character', NULL);
-INSERT INTO myschema2.mytbl2 VALUES (11, E'row 1 with a true \\ character\r... and row 2 with two \\n true and a '' (quote) characters', NULL);
+INSERT INTO myschema2.mytbl2 VALUES (10, 'row 1 \r... AND row 2 with a '' (quote) character', NULL);
+INSERT INTO myschema2.mytbl2 VALUES (11, E'row 1 with a TRUE \\ character\r... AND row 2 with two \\n TRUE AND a '' (quote) characters', NULL);
 INSERT INTO myschema2.mytbl1 VALUES (200, 'Start\tEnd', E'\\x410042');
 UPDATE ONLY myschema2.mytbl1 SET col11 = 200, col12 = ' Start\tEnd', col13 = E'\\x410042' WHERE col11 = 200 AND col12 = 'Start\tEnd';
 DELETE FROM ONLY myschema2.mytbl1 WHERE col11 = 200 AND col12 = ' Start\tEnd';
@@ -1645,32 +1657,32 @@ ALTER SEQUENCE "phil's schema""3"."phil's""seq\1"  RESTART 1002;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
 RESET datestyle;
-  set session_authorization to _regress_emaj_adm1;
-  select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
+  SET session_authorization TO _regress_emaj_adm1;
+  SELECT emaj.emaj_snap_group('myGroup1', :'EMAJTESTTMPDIR' || '/snaps2', 'CSV HEADER');
  emaj_snap_group 
 -----------------
                7
 (1 row)
 
-  select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
+  SELECT emaj.emaj_snap_group('myGroup2', :'EMAJTESTTMPDIR' || '/snaps2', 'CSV HEADER');
  emaj_snap_group 
 -----------------
                8
 (1 row)
 
-  select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
+  SELECT emaj.emaj_snap_group('phil''s group#3",', :'EMAJTESTTMPDIR' || '/snaps2', 'CSV HEADER');
  emaj_snap_group 
 -----------------
                4
 (1 row)
 
-rollback;
--- mask timestamp in _INFO files
+ROLLBACK;
+-- Mask timestamp in _INFO files.
 \! sed -i_s -s 's/at .*/at [ts]/' $EMAJTESTTMPDIR/snaps1/_INFO $EMAJTESTTMPDIR/snaps2/_INFO
--- and compare both snaps sets
--- sequences are detected as different because of :
--- - the effect of RESTART on is_called and next_val attributes
--- - internal log_cnt value being reset
+-- And compare both snaps sets.
+-- Sequences are detected as different because of :
+-- - the effect of RESTART on is_called and next_val attributes,
+-- - internal log_cnt value being reset.
 \! diff --exclude _INFO_s $EMAJTESTTMPDIR/snaps1 $EMAJTESTTMPDIR/snaps2
 diff --exclude _INFO_s /tmp/emaj_14/adm2/snaps1/myschema1_mytbl2b_col20_seq.snap /tmp/emaj_14/adm2/snaps2/myschema1_mytbl2b_col20_seq.snap
 2c2
@@ -1682,14 +1694,14 @@ diff --exclude _INFO_s /tmp/emaj_14/adm2/snaps1/phil_s_schema_3_phil_s_seq_1.sna
 < "phil's""seq\1",1001,1000,1,2000,1000,1,t,t
 ---
 > "phil's""seq\1",1002,1000,1,2000,1000,1,t,f
--- reset the sequence myschema2.myseq1 to its previous characteristics
-reset session_authorization;
-alter sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 9223372036854775807 minvalue 1000 cache 1 no cycle;
-set session_authorization to _regress_emaj_adm2;
+-- Reset the sequence myschema2.myseq1 to its previous characteristics.
+RESET session_authorization;
+ALTER sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 9223372036854775807 minvalue 1000 cache 1 no cycle;
+SET session_authorization TO _regress_emaj_adm2;
 -----------------------------
--- Checking step 11
+-- Checking step 11.
 -----------------------------
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14400 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 14400 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    14400 |           14400030 | R
@@ -1697,13 +1709,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    14402 |           14400030 | R
 (3 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
        hist_user
-  from emaj.emaj_hist where hist_id >= 14400 order by hist_id;
+  FROM emaj.emaj_hist WHERE hist_id >= 14400 ORDER BY hist_id;
  hist_function | hist_event |   hist_object    |                                regexp_replace                                 |     hist_user      
 ---------------+------------+------------------+-------------------------------------------------------------------------------+--------------------
  SNAP_GROUP    | BEGIN      | myGroup1         | /tmp/emaj_14/adm2/snaps1                                                      | _regress_emaj_adm1
@@ -1722,40 +1734,40 @@ select hist_function, hist_event, hist_object,
  GEN_SQL_GROUP | END        | myGroup1         | 6 generated statements - script not exported                                  | _regress_emaj_adm1
 (14 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(14500);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(14500);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- Step 12 : test use of a table with a very long name (63 characters long)
+-- Step 12 : test use of a table with a very long name (63 characters long).
 -----------------------------
-select emaj.emaj_stop_group('phil''s group#3",');
+SELECT emaj.emaj_stop_group('phil''s group#3",');
  emaj_stop_group 
 -----------------
                4
 (1 row)
 
--- remove the "phil's tbl1" table, rename it and reassign it to its group
-select emaj.emaj_remove_table('phil''s schema"3','phil''s tbl1');
+-- Remove the "phil's tbl1" table, rename it and reassign it to its group.
+SELECT emaj.emaj_remove_table('phil''s schema"3', 'phil''s tbl1');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-reset session_authorization;
-alter table "phil's schema""3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
-set session_authorization to _regress_emaj_adm1;
-select emaj.emaj_assign_table('phil''s schema"3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
+RESET session_authorization;
+ALTER table "phil's schema""3"."phil's tbl1" RENAME TO table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
+SET session_authorization TO _regress_emaj_adm1;
+SELECT emaj.emaj_assign_table('phil''s schema"3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
--- use the table and its group
-select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
+-- Use the table and its group.
+SELECT emaj.emaj_start_group('phil''s group#3",', 'M1_after_table_rename');
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey_nv" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema"3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "my"tbl4_col44_fkey" on the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
@@ -1763,19 +1775,19 @@ WARNING:  _check_fk_groups: The table "phil's schema"3.table_with_very_loooooooo
                 4
 (1 row)
 
-reset session_authorization;
-update "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
-set session_authorization to _regress_emaj_adm1;
-select emaj.emaj_set_mark_group('phil''s group#3",','M2');
+RESET session_authorization;
+UPDATE "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name SET "phil's col12" = 'GHI' WHERE "phil's col11" between 6 AND 9;
+SET session_authorization TO _regress_emaj_adm1;
+SELECT emaj.emaj_set_mark_group('phil''s group#3",', 'M2');
  emaj_set_mark_group 
 ---------------------
                    4
 (1 row)
 
-reset session_authorization;
-delete from "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
-set session_authorization to _regress_emaj_adm1;
-select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_table_rename',false) order by 1,2;
+RESET session_authorization;
+DELETE FROM "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name WHERE "phil's col11" > 18;
+SET session_authorization TO _regress_emaj_adm1;
+SELECT * FROM emaj.emaj_rollback_group('phil''s group#3",', 'M1_after_table_rename', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -1783,26 +1795,26 @@ select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_table_renam
  Notice        | Rollback id = 14500.
 (3 rows)
 
-select emaj.emaj_stop_group('phil''s group#3",');
+SELECT emaj.emaj_stop_group('phil''s group#3",');
  emaj_stop_group 
 -----------------
                4
 (1 row)
 
-select emaj.emaj_drop_group('phil''s group#3",');
+SELECT emaj.emaj_drop_group('phil''s group#3",');
  emaj_drop_group 
 -----------------
                4
 (1 row)
 
 --
-reset session_authorization;
-alter table "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
+RESET session_authorization;
+ALTER TABLE "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name RENAME TO "phil's tbl1";
 -----------------------------
--- Checking step 12
+-- Checking step 12.
 -----------------------------
-set session_authorization to _regress_emaj_adm1;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14500 order by time_id;
+SET session_authorization TO _regress_emaj_adm1;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 14500 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    14500 |           14500000 | X
@@ -1815,13 +1827,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    14507 |           14500006 | D
 (8 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
        hist_user
-  from emaj.emaj_hist where hist_id >= 14500 order by hist_id;
+  FROM emaj.emaj_hist WHERE hist_id >= 14500 ORDER BY hist_id;
    hist_function    |     hist_event     |                                    hist_object                                     |                       regexp_replace                        |     hist_user      
 --------------------+--------------------+------------------------------------------------------------------------------------+-------------------------------------------------------------+--------------------
  STOP_GROUP         | BEGIN              | phil's group#3",                                                                   | Without logs reset                                          | _regress_emaj_adm2
@@ -1884,75 +1896,75 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP         | END                | phil's group#3",                                                                   | 4 tables/sequences processed                                | _regress_emaj_adm1
 (58 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(14600);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(14600);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- Step 13 : test use of groups or marks protection
+-- Step 13 : test use of groups or marks protection.
 -----------------------------
-set session_authorization to _regress_emaj_adm2;
--- try to rollback a protected group
-select emaj.emaj_protect_group('myGroup2');
+SET session_authorization TO _regress_emaj_adm2;
+-- Try to rollback a protected group.
+SELECT emaj.emaj_protect_group('myGroup2');
  emaj_protect_group 
 --------------------
                   1
 (1 row)
 
-select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
+SELECT * FROM emaj.emaj_rollback_group('myGroup2', 'M3', FALSE) ORDER BY 1, 2;
 ERROR:  _check_group_names: The group "myGroup2" is currently protected against rollback operations.
-select emaj.emaj_unprotect_group('myGroup2');
+SELECT emaj.emaj_unprotect_group('myGroup2');
  emaj_unprotect_group 
 ----------------------
                     1
 (1 row)
 
--- try to rollback over a protected mark
-select emaj.emaj_set_mark_group('myGroup1','Mark_to_protect');
+-- Try to rollback over a protected mark.
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Mark_to_protect');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-select emaj.emaj_protect_mark_group('myGroup1','Mark_to_protect');
+SELECT emaj.emaj_protect_mark_group('myGroup1', 'Mark_to_protect');
  emaj_protect_mark_group 
 -------------------------
                        1
 (1 row)
 
-select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
+SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'Multi-1', FALSE) ORDER BY 1, 2;
 ERROR:  _rlbk_check: Protected marks (Mark_to_protect) for the group "myGroup1" block the rollback to the mark "Multi-1".
-select emaj.emaj_unprotect_mark_group('myGroup1','Mark_to_protect');
+SELECT emaj.emaj_unprotect_mark_group('myGroup1', 'Mark_to_protect');
  emaj_unprotect_mark_group 
 ---------------------------
                          1
 (1 row)
 
-select emaj.emaj_delete_mark_group('myGroup1','Mark_to_protect');
+SELECT emaj.emaj_delete_mark_group('myGroup1', 'Mark_to_protect');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
 -----------------------------
--- Checking step 13
+-- Checking step 13.
 -----------------------------
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14600 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 14600 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    14600 |           14600000 | M
 (1 row)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
        hist_user
-  from emaj.emaj_hist where hist_id >= 14600 order by hist_id;
+  FROM emaj.emaj_hist WHERE hist_id >= 14600 ORDER BY hist_id;
     hist_function     |   hist_event   | hist_object |         regexp_replace          |     hist_user      
 ----------------------+----------------+-------------+---------------------------------+--------------------
  PROTECT_GROUP        |                | myGroup2    | Status 1                        | _regress_emaj_adm2
@@ -1968,49 +1980,49 @@ select hist_function, hist_event, hist_object,
  DELETE_MARK_GROUP    | END            | myGroup1    | Mark_to_protect                 | _regress_emaj_adm2
 (11 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(14700);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(14700);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- Step 14 : test complex use of rollbacks consolidations, with an application trigger kept enabled
+-- Step 14 : test complex use of rollbacks consolidations, with an application trigger kept enabled.
 -----------------------------
-set search_path=public,myschema1;
-select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":["mytbl2trg2"]}');
+SET search_path TO public, myschema1;
+SELECT emaj.emaj_modify_table('myschema1', 'mytbl2', '{"ignored_triggers":["mytbl2trg2"]}');
  emaj_modify_table 
 -------------------
                  1
 (1 row)
 
--- 2 consolidations of 2 logged rollbacks
--- Multi-1 MC1 MC2 RMC1S RMC1D      MC3 MC4 MC5 RMC3S RMC3D
---         ^       lrg(MC1)         ^           lrg(MC3)
---         xxxxxxxxxxxxxxx conso(RMC1D)
--- 	       	                        xxxxxxxxxxxxxxxxxxx conso(RMC3D)
-select emaj.emaj_set_mark_group('myGroup1','MC1');
+-- 2 consolidations of 2 logged rollbacks.
+-- Multi-1 MC1 MC2 RMC1S RMC1D      MC3 MC4 MC5 RMC3S RMC3D.
+--         ^       lrg(MC1)         ^           lrg(MC3).
+--         Xxxxxxxxxxxxxxx conso(RMC1D).
+--                                        Xxxxxxxxxxxxxxxxxxx conso(RMC3D).
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC1');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-insert into myTbl1 select i, 'Test', 'Conso' from generate_series (2000,2012) as i;
-insert into myTbl2 values (2000,'TC1',NULL);
-delete from myTbl1 where col11 > 2010;
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_set_mark_group('myGroup1','MC2');
+RESET session_authorization;
+INSERT INTO myTbl1 SELECT i, 'Test', 'Conso' FROM generate_series (2000, 2012) as i;
+INSERT INTO myTbl2 VALUES (2000, 'TC1', NULL);
+DELETE FROM myTbl1 WHERE col11 > 2010;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC2');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-update myTbl2 set col22 = 'TC2' WHERE col22 ='TC1';
-set session_authorization to _regress_emaj_adm2;
-select * from emaj.emaj_logged_rollback_group('myGroup1','MC1',false) order by 1,2;
+RESET session_authorization;
+UPDATE myTbl2 SET col22 = 'TC2' WHERE col22 ='TC1';
+SET session_authorization TO _regress_emaj_adm2;
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'MC1', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
@@ -2018,39 +2030,39 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC1',false) order by 1
  Notice        | Rollback id = 14700.
 (3 rows)
 
-reset session_authorization;
-insert into myTbl2 values (2000,'TC3',NULL);
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC1_DONE');
+RESET session_authorization;
+INSERT INTO myTbl2 VALUES (2000, 'TC3', NULL);
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'EMAJ_LAST_MARK', 'RLBK_MC1_DONE');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup1','MC3');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC3');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
-insert into myTbl4 values (2000,'FK...',1,10,'ABC');
-update myTbl4 set col44 = NULL where col41 = 2000;
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_set_mark_group('myGroup1','MC4');
+RESET session_authorization;
+INSERT INTO "myTbl3" (col33) SELECT generate_series(2000, 2039, 4)/100;
+INSERT INTO myTbl4 VALUES (2000, 'FK...', 1, 10, 'ABC');
+UPDATE myTbl4 SET col44 = NULL WHERE col41 = 2000;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC4');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup1','MC5');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC5');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-select * from emaj.emaj_logged_rollback_group('myGroup1','MC3',false) order by 1,2;
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'MC3', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
@@ -2058,37 +2070,36 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC3',false) order by 1
  Notice        | Rollback id = 14701.
 (3 rows)
 
-select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), 
+SELECT cons_group, regexp_replace(cons_end_rlbk_mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
        cons_target_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_target_rlbk_mark_time_id, cons_rows, cons_marks, cons_marks
-  from emaj.emaj_get_consolidable_rollbacks();
+  FROM emaj.emaj_get_consolidable_rollbacks();
  cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_target_rlbk_mark_time_id | cons_rows | cons_marks | cons_marks 
 ------------+-----------------+----------------------------+----------------------------+-------------------------------+-----------+------------+------------
  myGroup1   | RLBK_MC1_DONE   | MC1                        |                      14704 |                         14701 |        33 |          2 |          2
  myGroup1   | RLBK_14701_DONE | MC3                        |                      14709 |                         14705 |        23 |          3 |          3
 (2 rows)
 
-  
--- consolidate both logged rollback at once
-select cons_target_rlbk_mark_name, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), 
+-- Consolidate both logged rollback at once.
+SELECT cons_target_rlbk_mark_name, regexp_replace(cons_end_rlbk_mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
        emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark_name)
-  from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
+  FROM emaj.emaj_get_consolidable_rollbacks() WHERE cons_group = 'myGroup1';
  cons_target_rlbk_mark_name | regexp_replace  | emaj_consolidate_rollback_group 
 ----------------------------+-----------------+---------------------------------
  MC1                        | RLBK_MC1_DONE   |                               5
  MC3                        | RLBK_14701_DONE |                               4
 (2 rows)
 
-select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), 
+SELECT cons_group, regexp_replace(cons_end_rlbk_mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
        cons_target_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_target_rlbk_mark_time_id, cons_rows, cons_marks
-  from emaj.emaj_get_consolidable_rollbacks();
+  FROM emaj.emaj_get_consolidable_rollbacks();
  cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_target_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+-----------------+----------------------------+----------------------------+-------------------------------+-----------+------------
  myGroup1   | RLBK_MC1_DONE   | MC1                        |                      14704 |                         14701 |         0 |          0
  myGroup1   | RLBK_14701_DONE | MC3                        |                      14709 |                         14705 |         0 |          0
 (2 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup1   | myschema1   | mytbl2     | Multi-1         |              14008 |                |                   | postgres  | INSERT    |         1
@@ -2100,39 +2111,39 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
 -- 2 consolidations of 2 nested logged rollbacks
 -- MC6 MC7 MC8  RMC8S RMC8D M9 RMC6S RMC6D
 --         ^    lrg(MC8)
---         xxxxxxxxxxxx conso(RMC8D)
+--         Xxxxxxxxxxxx conso(RMC8D)
 -- ^                           lrb(MC6)
--- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx conso(RMC6D)
-select emaj.emaj_set_mark_group('myGroup1','MC6');
+-- Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx conso(RMC6D)
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC6');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
 reset session_authorization;
-insert into myTbl1 select i, 'Test', 'Conso' from generate_series (2000,2012) as i;
-insert into myTbl2 values (3000,'TC6',NULL);
-delete from myTbl1 where col11 > 2010;
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_set_mark_group('myGroup1','MC7');
+INSERT INTO myTbl1 SELECT i, 'Test', 'Conso' FROM generate_series (2000, 2012) AS i;
+INSERT INTO myTbl2 VALUES (3000, 'TC6', NULL);
+DELETE FROM myTbl1 WHERE col11 > 2010;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC7');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_set_mark_group('myGroup1','MC8');
+RESET session_authorization;
+UPDATE myTbl2 SET col22 = 'TC7' WHERE col22 ='TC6';
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC8');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-insert into myTbl2 values (3001,'TC8',NULL);
-set session_authorization to _regress_emaj_adm2;
-select * from emaj.emaj_logged_rollback_group('myGroup1','MC8',false) order by 1,2;
+RESET session_authorization;
+INSERT INTO myTbl2 VALUES (3001, 'TC8', NULL);
+SET session_authorization TO _regress_emaj_adm2;
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'MC8', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
@@ -2140,24 +2151,24 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC8',false) order by 1
  Notice        | Rollback id = 14702.
 (3 rows)
 
-select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
+SELECT emaj.emaj_consolidate_rollback_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                4
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup1','MC9');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC9');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
-insert into myTbl4 values (2000,'FK...',1,10,'ABC');
-update myTbl4 set col44 = NULL where col41 = 2000;
-set session_authorization to _regress_emaj_adm2;
-select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
+RESET session_authorization;
+INSERT INTO "myTbl3" (col33) SELECT generate_series(2000, 2039, 4)/100;
+INSERT INTO myTbl4 VALUES (2000, 'FK...', 1, 10, 'ABC');
+UPDATE myTbl4 SET col44 = NULL WHERE col41 = 2000;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'MC6', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 2 / 2 sequences effectively processed.
@@ -2165,14 +2176,14 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1
  Notice        | Rollback id = 14703.
 (3 rows)
 
-select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
+SELECT emaj.emaj_consolidate_rollback_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                7
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup1   | myschema1   | mytbl2     | Multi-1         |              14008 |                |                   | postgres  | INSERT    |         1
@@ -2181,22 +2192,22 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup1   | myschema1   | mytbl2b    | Multi-1         |              14008 |                |                   | postgres  | UPDATE    |         1
 (4 rows)
 
--- consolidation of 2 logged rollbacks referencing the same mark
+-- Consolidation of 2 logged rollbacks referencing the same mark
 -- MC10  RMC10S RMC10D M11 RMC10S RMC10D
 -- ^     lrg(MC10)
 -- ^                       lrb(MC10)
--- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx conso(RMC10D)
-select emaj.emaj_set_mark_group('myGroup1','MC10');
+-- Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx conso(RMC10D)
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC10');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-insert into myTbl1 select i, 'Test', 'Conso' from generate_series (3000,3010) as i;
-delete from myTbl1 where col11 > 3005;
-set session_authorization to _regress_emaj_adm2;
-select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
+RESET session_authorization;
+INSERT INTO myTbl1 SELECT i, 'Test', 'Conso' FROM generate_series (3000, 3010) AS i;
+DELETE FROM myTbl1 WHERE col11 > 3005;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'MC10', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -2204,20 +2215,20 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 
  Notice        | Rollback id = 14704.
 (3 rows)
 
-reset session_authorization;
-update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_set_mark_group('myGroup1','MC11');
+RESET session_authorization;
+UPDATE myTbl2 SET col22 = 'TC7' WHERE col22 ='TC6';
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC11');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-insert into myTbl4 values (3000,'FK...',1,10,'ABC');
-update myTbl4 set col44 = NULL where col41 = 3000;
-set session_authorization to _regress_emaj_adm2;
-select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
+RESET session_authorization;
+INSERT INTO myTbl4 VALUES (3000, 'FK...', 1, 10, 'ABC');
+UPDATE myTbl4 SET col44 = NULL WHERE col41 = 3000;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'MC10', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -2225,14 +2236,14 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 
  Notice        | Rollback id = 14705.
 (3 rows)
 
-select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
+SELECT emaj.emaj_consolidate_rollback_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                4
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup1   | myschema1   | mytbl2     | Multi-1         |              14008 |                |                   | postgres  | INSERT    |         1
@@ -2241,32 +2252,32 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup1   | myschema1   | mytbl2b    | Multi-1         |              14008 |                |                   | postgres  | UPDATE    |         1
 (4 rows)
 
--- consolidation of 1 from 2 overlapping logged rollbacks
+-- Consolidation of 1 from 2 overlapping logged rollbacks
 -- MC15 MC16 RMC15S RMC15D MC17 RMC16S RMC16D
 -- ^         lrg(MC15)
 --      ^                       lrg(MC16)
--- xxxxxxxxxxxxxxxxx conso(RMC15D)
-select emaj.emaj_set_mark_group('myGroup1','MC15');
+-- Xxxxxxxxxxxxxxxxx conso(RMC15D)
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC15');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-insert into myTbl1 select i, 'Test', 'Conso' from generate_series (4000,4012) as i;
-insert into myTbl2 values (4000,'TC15',NULL);
-delete from myTbl1 where col11 > 4010;
-set session_authorization to _regress_emaj_adm2;
-select emaj.emaj_set_mark_group('myGroup1','MC16');
+RESET session_authorization;
+INSERT INTO myTbl1 SELECT i, 'Test', 'Conso' FROM generate_series (4000, 4012) as i;
+INSERT INTO myTbl2 VALUES (4000, 'TC15', NULL);
+DELETE FROM myTbl1 WHERE col11 > 4010;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC16');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-update myTbl2 set col22 = 'TC16' WHERE col22 ='TC15';
-set session_authorization to _regress_emaj_adm2;
-select * from emaj.emaj_logged_rollback_group('myGroup1','MC15',false) order by 1,2;
+RESET session_authorization;
+UPDATE myTbl2 SET col22 = 'TC16' WHERE col22 ='TC15';
+SET session_authorization TO _regress_emaj_adm2;
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'MC15', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
@@ -2274,22 +2285,22 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC15',false) order by 
  Notice        | Rollback id = 14706.
 (3 rows)
 
-select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC15_DONE');
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'EMAJ_LAST_MARK', 'RLBK_MC15_DONE');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup1','MC17');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'MC17');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-reset session_authorization;
-insert into myTbl2 values (4001,'TC15',NULL);
-set session_authorization to _regress_emaj_adm2;
-select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 1,2;
+RESET session_authorization;
+INSERT INTO myTbl2 VALUES (4001, 'TC15', NULL);
+SET session_authorization TO _regress_emaj_adm2;
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'MC16', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -2297,14 +2308,14 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 
  Notice        | Rollback id = 14707.
 (3 rows)
 
-select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
+SELECT emaj.emaj_consolidate_rollback_group('myGroup1', 'RLBK_MC15_DONE');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                5
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id |     stat_role      | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+--------------------+-----------+-----------
  myGroup1   | myschema1   | mytbl1     | Multi-1         |              14008 |                |                   | _regress_emaj_adm2 | INSERT    |        11
@@ -2318,8 +2329,8 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup1   | myschema1   | mytbl2b    | Multi-1         |              14008 |                |                   | postgres           | UPDATE    |         1
 (9 rows)
 
-reset session_authorization;
-select * from myTbl1 order by col11;
+RESET session_authorization;
+SELECT * FROM myTbl1 ORDER BY col11;
  col11 |   col12    |    col13     
 -------+------------+--------------
      2 | ABC        | \x1c
@@ -2355,7 +2366,7 @@ select * from myTbl1 order by col11;
   4010 | Test       | \x436f6e736f
 (31 rows)
 
-select * from myTbl2 order by col21;
+SELECT * FROM myTbl2 ORDER BY col21;
  col21 | col22 |   col23    
 -------+-------+------------
      1 | ABC   | 12-31-2010
@@ -2366,17 +2377,19 @@ select * from myTbl2 order by col21;
 (5 rows)
 
 -----------------------------
--- Checking step 14
+-- Checking step 14.
 -----------------------------
-set session_authorization to _regress_emaj_adm2;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+SET session_authorization TO _regress_emaj_adm2;
+SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_time_id, mark_is_rlbk_protected,
+       mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+  FROM emaj.emaj_mark WHERE mark_group = 'myGroup1' ORDER BY mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                   mark_comment                   | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+------------------------+--------------------------------------------------+---------------------------+------------------------------
  myGroup1   | M4                           |        12501 | f                      |                                                  |                        10 | 
  myGroup1   | M5                           |        12502 | f                      |                                                  |                         3 | 
  myGroup1   | Before logged rollback to M4 |        12701 | f                      | Automatically set at rollback to mark M4 start   |                        28 | 
  myGroup1   | STOP_%                       |        14000 | f                      |                                                  |                         0 | 
- myGroup1   | Stop after rollback          |        14007 | f                      |                                                  |                         0 | 
+ myGroup1   | Stop after ROLLBACK          |        14007 | f                      |                                                  |                         0 | 
  myGroup1   | Multi-1                      |        14008 | f                      |                                                  |                        10 | 
  myGroup1   | MODIFY_%                     |        14700 | f                      |                                                  |                         0 | 
  myGroup1   | MC1                          |        14701 | f                      |                                                  |                         0 | 
@@ -2394,12 +2407,14 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup1   | RLBK_14707_DONE              |        14730 | f                      | Automatically set at rollback to mark MC16 end   |                           | 
 (20 rows)
 
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
+SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
+  FROM emaj.emaj_sequence WHERE sequ_schema = 'emaj_myschema1' ORDER BY sequ_time_id, sequ_schema, sequ_name;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------
 (0 rows)
 
-select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table where tbl_schema = 'myschema1' order by tbl_time_id, tbl_schema, tbl_name;
+SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val
+  FROM emaj.emaj_table WHERE tbl_schema = 'myschema1' ORDER BY tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
  myschema1  | myTbl3   |       12501 |                   10
@@ -2509,7 +2524,8 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1  | mytbl4   |       14730 |                   23
 (105 rows)
 
-select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
+SELECT sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size
+  FROM emaj.emaj_seq_hole WHERE sqhl_schema = 'myschema1' ORDER BY 1, 2, 3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | myTbl3     |              14705 |            14709 |             20
@@ -2532,7 +2548,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
  myschema1   | mytbl4     |              14718 |            14723 |              3
 (18 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14700 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 14700 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    14700 |           14700000 | A
@@ -2568,13 +2584,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    14730 |           14700193 | M
 (31 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
        hist_user
-  from emaj.emaj_hist where hist_id >= 14700 order by hist_id;
+  FROM emaj.emaj_hist WHERE hist_id >= 14700 ORDER BY hist_id;
      hist_function      |         hist_event         |         hist_object          |                                           regexp_replace                                           |     hist_user      
 ------------------------+----------------------------+------------------------------+----------------------------------------------------------------------------------------------------+--------------------
  MODIFY_TABLE           | BEGIN                      |                              |                                                                                                    | _regress_emaj_adm2
@@ -2848,7 +2864,7 @@ select hist_function, hist_event, hist_object,
  CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted                                               | _regress_emaj_adm2
 (269 rows)
 
-select * from emaj.emaj_rollback_group('myGroup1','Multi-1',true) order by 1,2;
+SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'Multi-1', TRUE) ORDER BY 1, 2;
  rlbk_severity |                                  rlbk_message                                   
 ---------------+---------------------------------------------------------------------------------
  Notice        | 2 / 2 sequences effectively processed.
@@ -2857,6 +2873,6 @@ select * from emaj.emaj_rollback_group('myGroup1','Multi-1',true) order by 1,2;
  Warning       | Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
 (4 rows)
 
--- remove the temp directory
+-- Remove the temp directory.
 \! rm -R $EMAJTESTTMPDIR
-reset session_authorization;
+RESET session_authorization;

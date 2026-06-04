@@ -1,28 +1,28 @@
--- alterLogging.sql : test groups structure changes with groups in LOGGING state
+-- AlterLogging.sql : test groups structure changes with groups in LOGGING state.
 --
 -- It follows alter.sql that tests the same functions but with groups in IDLE state.
--- It uses the same tables and groups, and the same sequences range
--- It includes the final checks for both alter.sql and alterLogging.sql scenarios
--- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+-- It uses the same tables and groups, and the same sequences range.
+-- It includes the final checks for both alter.sql and alterLogging.sql scenarios.
+-- Do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement).
 \set VERBOSITY terse
--- set sequence restart value
-select public.handle_emaj_sequences(9000);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(9000);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
--- define and create the temp file directory to be used by the script
+-- Define and create the temp file directory to be used by the script.
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/alter_logging'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
-select emaj.emaj_remove_tables('myschema2', array['mytbl7','mytbl8']);
+SELECT emaj.emaj_remove_tables('myschema2', ARRAY['mytbl7', 'mytbl8']);
  emaj_remove_tables 
 --------------------
                   2
 (1 row)
 
-select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
+SELECT emaj.emaj_start_groups('{"myGroup1", "myGroup2"}', 'Mk1');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_start_groups 
@@ -30,64 +30,64 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                 15
 (1 row)
 
--- Save the groups configuration
-select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json');
+-- Save the groups configuration.
+SELECT emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json');
  emaj_export_groups_configuration 
 ----------------------------------
                                 5
 (1 row)
 
 -----------------------------
--- change attributes
+-- Change attributes.
 -----------------------------
--- bad mark (duplicate name)
-select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,emaj.emaj_get_previous_mark_group('myGroup1',now()));
+-- Bad mark (duplicate name).
+SELECT emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority":30}'::JSONB, emaj.emaj_get_previous_mark_group('myGroup1', now()));
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "Mk1".
--- change the priority
-select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,'Priority Changed');
+-- Change the priority.
+SELECT emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority":30}'::JSONB, 'Priority Changed');
  emaj_modify_table 
 -------------------
                  1
 (1 row)
 
--- change the log data tablespace and the log index tablespace for different tables
+-- Change the log data tablespace and the log index tablespace for different tables.
 set default_tablespace = tspemaj_renamed;
-select emaj.emaj_modify_table('myschema1','mytbl2b','{"log_data_tablespace":null}'::jsonb,'Attributes_changed_1');
+SELECT emaj.emaj_modify_table('myschema1', 'mytbl2b', '{"log_data_tablespace":null}'::JSONB, 'Attributes_changed_1');
  emaj_modify_table 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_modify_table('myschema2','mytbl6','{"log_index_tablespace":"tsplog1"}'::jsonb,'Attributes_changed_2');
+SELECT emaj.emaj_modify_table('myschema2', 'mytbl6', '{"log_index_tablespace":"tsplog1"}'::JSONB, 'Attributes_changed_2');
  emaj_modify_table 
 -------------------
                  1
 (1 row)
 
 reset default_tablespace;
--- change the triggers to ignore at rollback time
-select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles":["trg1", "trg2"]}');
+-- Change the triggers to ignore at rollback time.
+SELECT emaj.emaj_modify_table('myschema1', 'mytbl2', '{"ignored_triggers_profiles":["trg1", "trg2"]}');
  emaj_modify_table 
 -------------------
                  1
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
+SELECT rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers FROM emaj.emaj_relation WHERE rel_ignored_triggers IS NOT NULL ORDER BY 1, 2, 3;
  rel_schema | rel_tblseq | rel_time_range |  rel_ignored_triggers   
 ------------+------------+----------------+-------------------------
  myschema1  | mytbl2     | [8203,)        | {mytbl2trg1,mytbl2trg2}
 (1 row)
 
--- perform some operations: set an intermediate mark, update myTbl3 and rollback
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk2');
+-- Perform some operations: set an intermediate mark, update myTbl3 and rollback.
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}', 'Mk2');
  emaj_set_mark_groups 
 ----------------------
                    15
 (1 row)
 
-insert into myschema1."myTbl3" values (11, now(), 11.0);
-update myschema2."myTbl3" set col33 = 11.0 where col31 = 10;
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
+INSERT INTO myschema1."myTbl3" VALUES (11, now(), 11.0);
+UPDATE myschema2."myTbl3" SET col33 = 11.0 WHERE col31 = 10;
+SELECT * FROM emaj.emaj_rollback_groups('{"myGroup1", "myGroup2"}', 'Mk2');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | Rollback id = 9000.
@@ -95,8 +95,8 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
  Notice        | 0 / 4 sequences effectively processed.
 (3 rows)
 
--- revert the properties changes
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
+-- Revert the properties changes.
+SELECT emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1", "myGroup2"}', TRUE);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_import_groups_configuration 
@@ -104,8 +104,8 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                                 2
 (1 row)
 
--- checks for attributes changes
-select * from emaj.emaj_relation_change where rlchg_time_id >= 9000 order by 1,2,3,4;
+-- Checks for attributes changes.
+SELECT * FROM emaj.emaj_relation_change WHERE rlchg_time_id >= 9000 ORDER BY 1, 2, 3, 4;
  rlchg_time_id | rlchg_schema | rlchg_tblseq |      rlchg_change_kind      | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers  | rlchg_new_ignored_triggers 
 ---------------+--------------+--------------+-----------------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+-------------------------+----------------------------
           9000 | myschema2    | mytbl7       | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                         | 
@@ -120,7 +120,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 9000 order by 1,2
           9008 | myschema2    | mytbl6       | CHANGE_LOG_INDEX_TABLESPACE | myGroup2    |                  |                  |                 |                |                    |                    |                        | tsplog1             |                         |                         | 
 (10 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9000 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 9000 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     9000 |            9000000 | A
@@ -134,13 +134,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     9008 |            9000002 | I
 (9 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
-       hist_user 
-  from emaj.emaj_hist where hist_id >= 9000 order by hist_id;
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 9000 ORDER BY hist_id;
    hist_function    |          hist_event          |    hist_object     |                        regexp_replace                         | hist_user 
 --------------------+------------------------------+--------------------+---------------------------------------------------------------+-----------
  REMOVE_TABLES      | BEGIN                        |                    |                                                               | postgres
@@ -220,98 +220,99 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS      | END                          |                    | 2 created or altered tables groups                            | postgres
 (75 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(9100);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(9100);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- add sequences
+-- Add sequences.
 -----------------------------
--- add myschema2.mySeq2 to the myGroup2 group
--- first perform changes and set marks
-select emaj.emaj_set_mark_group('myGroup2','ADD_SEQ test');
+-- Add myschema2.mySeq2 to the myGroup2 group.
+-- First perform changes and set marks.
+SELECT emaj.emaj_set_mark_group('myGroup2', 'ADD_SEQ test');
  emaj_set_mark_group 
 ---------------------
                    8
 (1 row)
 
-select nextval('myschema2.myseq2');
+SELECT nextval('myschema2.myseq2');
  nextval 
 ---------
        1
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup2','Before ADD_SEQ');
+SELECT emaj.emaj_set_mark_group('myGroup2', 'Before ADD_SEQ');
  emaj_set_mark_group 
 ---------------------
                    8
 (1 row)
 
-select nextval('myschema2.myseq2');
+SELECT nextval('myschema2.myseq2');
  nextval 
 ---------
        2
 (1 row)
 
--- then add the sequence to the group
-select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Add myseq2');
+-- Then add the sequence to the group.
+SELECT emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Add myseq2');
  emaj_assign_sequence 
 ----------------------
                     1
 (1 row)
 
-select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
-  from emaj.emaj_group where group_name = 'myGroup2';
+SELECT group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
+  FROM emaj.emaj_group WHERE group_name = 'myGroup2';
  group_name | group_last_alter_time_id | group_nb_table | group_nb_sequence 
 ------------+--------------------------+----------------+-------------------
  myGroup2   |                     9102 |              6 |                 3
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
-  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
+SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+  FROM emaj.emaj_relation WHERE rel_schema = 'myschema2' AND rel_tblseq = 'myseq2' ORDER BY rel_time_range;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind 
 ------------+------------+----------------+-----------+----------
  myschema2  | myseq2     | [9102,)        | myGroup2  | S
 (1 row)
 
-select * from emaj.emaj_sequence where sequ_name = 'myseq2';
+SELECT * FROM emaj.emaj_sequence WHERE sequ_name = 'myseq2';
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
 (1 row)
 
--- perform some other updates
-select nextval('myschema2.myseq2');
+-- Perform some other updates.
+SELECT nextval('myschema2.myseq2');
  nextval 
 ---------
        3
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup2','After ADD_SEQ');
+SELECT emaj.emaj_set_mark_group('myGroup2', 'After ADD_SEQ');
  emaj_set_mark_group 
 ---------------------
                    9
 (1 row)
 
-select nextval('myschema2.myseq2');
+SELECT nextval('myschema2.myseq2');
  nextval 
 ---------
        4
 (1 row)
 
-select nextval('myschema2.myseq2');
+SELECT nextval('myschema2.myseq2');
  nextval 
 ---------
        5
 (1 row)
 
--- get statistics
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
-  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+-- Get statistics.
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
+  ORDER BY stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | ADD_SEQ test    |               9100 |                |                   |               0 | f
@@ -319,17 +320,18 @@ select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_
  myGroup2   | myschema2   | myseq2           | Add myseq2      |               9102 |                |                   |               3 | f
 (3 rows)
 
-select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-  from emaj.emaj_log_stat_sequence('myschema2', 'myseq2', 'myGroup2', 'Mk1');
+SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments,
+       stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq2', 'myGroup2', 'Mk1');
  stat_group | stat_first_mark | stat_is_log_start | stat_last_mark  | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+-------------------+-----------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Add myseq2      | t                 | After ADD_SEQ   | f                |               1 | f                          |              0
  myGroup2   | After ADD_SEQ   | f                 | [current state] | f                |               2 | f                          |              0
 (2 rows)
 
---testing snap, dump changes and sql generation
+--testing snap, dump changes and sql generation.
 \! mkdir $EMAJTESTTMPDIR/snap
-select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
+SELECT emaj.emaj_snap_group('myGroup2', :'EMAJTESTTMPDIR' || '/snap', '');
  emaj_snap_group 
 -----------------
                9
@@ -338,13 +340,13 @@ select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
 \! cat $EMAJTESTTMPDIR/snap/myschema2_myseq2.snap
 myseq2	5	1	1	9223372036854775807	1	1	f	t
 \! rm $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','After ADD_SEQ','SEQUENCES_ONLY',NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mk1', 'After ADD_SEQ', 'SEQUENCES_ONLY', NULL);
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
  3 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-select sql_text from emaj_temp_sql where sql_line_number = 0;
+SELECT sql_text FROM emaj_temp_sql WHERE sql_line_number = 0;
                                                                sql_text                                                                
 ---------------------------------------------------------------------------------------------------------------------------------------
  -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mk1" and "After ADD_SEQ" using options: SEQUENCES_ONLY
@@ -353,73 +355,74 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
  -- Dump changes for sequence myschema2.myseq2 between marks "Add myseq2" and "After ADD_SEQ"
 (4 rows)
 
-select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile');
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile');
  emaj_gen_sql_group 
 --------------------
                   0
 (1 row)
 
 \! grep myseq2 $EMAJTESTTMPDIR/myFile
-select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile',array['myschema2.myseq2']);
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile', ARRAY['myschema2.myseq2']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.myseq2) did not belong to any of the selected tables groups at start mark time.
 \! rm $EMAJTESTTMPDIR/myFile
--- testing mark deletions
-begin;
-  -- testing delete a single mark set after the sequence addition
-  select emaj.emaj_delete_mark_group('myGroup2','After ADD_SEQ');
+-- Testing mark deletions.
+BEGIN;
+  -- testing DELETE a single mark set after the sequence addition
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'After ADD_SEQ');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select 'Should not exist' from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'After ADD_SEQ';
+  SELECT 'Should not exist' FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'After ADD_SEQ';
  ?column? 
 ----------
 (0 rows)
 
-  -- testing delete all marks up to a mark set after the alter_group
-  select emaj.emaj_delete_before_mark_group('myGroup2','EMAJ_LAST_MARK');
+  -- testing DELETE all marks up TO a mark set after the alter_group
+  SELECT emaj.emaj_delete_before_mark_group('myGroup2', 'EMAJ_LAST_MARK');
  emaj_delete_before_mark_group 
 -------------------------------
                              6
 (1 row)
 
-  select * from emaj.emaj_mark where mark_group = 'myGroup2';
+  SELECT * FROM emaj.emaj_mark WHERE mark_group = 'myGroup2';
  mark_group | mark_name  | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------+--------------+------------------------+--------------+---------------------------+------------------------------
  myGroup2   | Add myseq2 |         9102 | f                      |              |                           | 
 (1 row)
 
-  select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_id;
+  SELECT * FROM emaj.emaj_sequence WHERE sequ_name = 'myseq2' ORDER BY sequ_time_id;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
 (1 row)
 
-rollback;
-begin;
+ROLLBACK;
+BEGIN;
   -- testing the alter_group mark deletion
-  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add myseq2';
+  SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'Add myseq2';
  mark_time_id 
 --------------
          9102
 (1 row)
 
-  select emaj.emaj_delete_mark_group('myGroup2','Add myseq2');
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'Add myseq2');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_id limit 1;
+  SELECT * FROM emaj.emaj_sequence WHERE sequ_name = 'myseq2' ORDER BY sequ_time_id LIMIT 1;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
 (1 row)
 
-  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-    from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
-    order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+  SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+         stat_last_time_id, stat_increments, stat_has_structure_changed
+    FROM emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
+    ORDER BY stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | ADD_SEQ test    |               9100 |                |                   |               0 | f
@@ -427,32 +430,33 @@ begin;
  myGroup2   | myschema2   | myseq2           | [deleted mark]  |               9102 |                |                   |               3 | f
 (3 rows)
 
-  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq2', 'myGroup2', 'Mk1');
+  SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments,
+         stat_has_structure_changed, stat_rollbacks
+    FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq2', 'myGroup2', 'Mk1');
  stat_group | stat_first_mark | stat_is_log_start | stat_last_mark  | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+-------------------+-----------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | [deleted mark]  | t                 | After ADD_SEQ   | f                |               1 | f                          |              0
  myGroup2   | After ADD_SEQ   | f                 | [current state] | f                |               2 | f                          |              0
 (2 rows)
 
-rollback;
--- test sequences at bounds following a rollback targeting a mark set before an ADD_SEQ
-begin;
-  select emaj.emaj_set_param('dblink_user_password', NULL);
+ROLLBACK;
+-- Test sequences at bounds following a rollback targeting a mark set before an ADD_SEQ.
+BEGIN;
+  SELECT emaj.emaj_set_param('dblink_user_password', NULL);
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add myseq2';
+  SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'Add myseq2';
  mark_time_id 
 --------------
          9102
 (1 row)
 
--- beware, the sequence changes generated by the E-Maj rollback will not be rollback by the transaction rollback
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_rollback_group('myGroup2','Before ADD_SEQ',true);
+-- Beware, the sequence changes generated by the E-Maj rollback will not be rollback by the transaction rollback.
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_rollback_group('myGroup2', 'Before ADD_SEQ', TRUE);
  rlbk_severity |                                               regexp_replace                                               
 ---------------+------------------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 9100.
@@ -461,23 +465,23 @@ begin;
  Warning       | The sequence myschema2.myseq2 has only been rolled back to its latest group attachment state (<timestamp>)
 (4 rows)
 
-  select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq2';
+  SELECT * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq2';
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
 (1 row)
 
-rollback;
--- estimate and then perform a logged rollback to reach a mark prior the ADD_SEQ operation and check
-delete from emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
-select * from emaj.emaj_estimate_rollback_group('myGroup2','Before ADD_SEQ',true);
+ROLLBACK;
+-- Estimate and then perform a logged rollback to reach a mark prior the ADD_SEQ operation and check.
+DELETE FROM emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
+SELECT * FROM emaj.emaj_estimate_rollback_group('myGroup2', 'Before ADD_SEQ', TRUE);
  emaj_estimate_rollback_group 
 ------------------------------
  @ 0.0165 secs
 (1 row)
 
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_logged_rollback_group('myGroup2','Before ADD_SEQ',true);
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_logged_rollback_group('myGroup2', 'Before ADD_SEQ', TRUE);
  rlbk_severity |                                               regexp_replace                                               
 ---------------+------------------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 9101.
@@ -486,13 +490,13 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The sequence myschema2.myseq2 has only been rolled back to its latest group attachment state (<timestamp>)
 (4 rows)
 
-select * from myschema2.myseq2;
+SELECT * FROM myschema2.myseq2;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           3 |       0 | f
 (1 row)
 
-select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_id;
+SELECT * FROM emaj.emaj_sequence WHERE sequ_name = 'myseq2' ORDER BY sequ_time_id;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
@@ -501,69 +505,69 @@ select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_i
  myschema2   | myseq2    |         9106 |             3 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | f
 (4 rows)
 
--- consolidate this logged rollback
-select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','Logged_Rlbk_End');
+-- Consolidate this logged rollback.
+SELECT emaj.emaj_rename_mark_group('myGroup2', 'EMAJ_LAST_MARK', 'Logged_Rlbk_End');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add myseq2';
+SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'Add myseq2';
  mark_time_id 
 --------------
          9102
 (1 row)
 
-select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
+SELECT * FROM emaj.emaj_get_consolidable_rollbacks() WHERE cons_group = 'myGroup2'; -- should report 1 row TO consolidate
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
  myGroup2   | Before ADD_SEQ             |                          9101 | Logged_Rlbk_End         |                       9106 |         0 |          3
 (1 row)
 
-select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
+SELECT * FROM emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                3
 (1 row)
 
-select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq2' order by sequ_schema, sequ_name, sequ_time_id;
+SELECT * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq2' ORDER BY sequ_schema, sequ_name, sequ_time_id;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
  myschema2   | myseq2    |         9106 |             3 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | f
 (2 rows)
 
--- remove mySeq2 from the group, then re-add it
-select emaj.emaj_remove_sequence('myschema2', 'myseq2', 'Remove myseq2');
+-- Remove mySeq2 from the group, then re-add it.
+SELECT emaj.emaj_remove_sequence('myschema2', 'myseq2', 'Remove myseq2');
  emaj_remove_sequence 
 ----------------------
                     1
 (1 row)
 
-select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Re-add myseq2');
+SELECT emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Re-add myseq2');
  emaj_assign_sequence 
 ----------------------
                     1
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
-  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
+SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+  FROM emaj.emaj_relation WHERE rel_schema = 'myschema2' AND rel_tblseq = 'myseq2' ORDER BY rel_time_range;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind 
 ------------+------------+----------------+-----------+----------
  myschema2  | myseq2     | [9102,9107)    | myGroup2  | S
  myschema2  | myseq2     | [9108,)        | myGroup2  | S
 (2 rows)
 
--- finaly remove mySeq2 from the group
-select emaj.emaj_remove_sequence('myschema2', 'myseq2', 'Really remove myseq2');
+-- Finaly remove mySeq2 from the group.
+SELECT emaj.emaj_remove_sequence('myschema2', 'myseq2', 'Really remove myseq2');
  emaj_remove_sequence 
 ----------------------
                     1
 (1 row)
 
--- and perform a full rollback (that do not process mySeq2)
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_rollback_group('myGroup2', 'ADD_SEQ test',true);
+-- And perform a full rollback (that do not process mySeq2).
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_rollback_group('myGroup2', 'ADD_SEQ test', TRUE);
  rlbk_severity |                                         regexp_replace                                         
 ---------------+------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 9102.
@@ -572,17 +576,17 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The sequence myschema2.myseq2 has been left unchanged (not in group anymore since <timestamp>)
 (4 rows)
 
-select * from myschema2.myseq2;
+SELECT * FROM myschema2.myseq2;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           3 |       0 | f
 (1 row)
 
--- verify that all time range bounds of emaj_relation has its corresponding row into emaj_sequence
-select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq2' and sequ_time_id in
-  (select lower(rel_time_range) from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' union 
-   select upper(rel_time_range) from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2')
-  order by sequ_time_id;
+-- Verify that all time range bounds of emaj_relation has its corresponding row into emaj_sequence.
+SELECT * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq2' AND sequ_time_id IN
+  (SELECT lower(rel_time_range) FROM emaj.emaj_relation WHERE rel_schema = 'myschema2' AND rel_tblseq = 'myseq2' UNION
+   SELECT upper(rel_time_range) FROM emaj.emaj_relation WHERE rel_schema = 'myschema2' AND rel_tblseq = 'myseq2')
+  ORDER BY sequ_time_id;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
@@ -591,8 +595,8 @@ select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name =
  myschema2   | myseq2    |         9109 |             3 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | f
 (4 rows)
 
--- checks for add sequences test
-select * from emaj.emaj_relation_change where rlchg_time_id >= 9100 order by 1,2,3,4;
+-- Checks for add sequences test.
+SELECT * FROM emaj.emaj_relation_change WHERE rlchg_time_id >= 9100 ORDER BY 1, 2, 3, 4;
  rlchg_time_id | rlchg_schema | rlchg_tblseq | rlchg_change_kind | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
 ---------------+--------------+--------------+-------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------
           9102 | myschema2    | myseq2       | ADD_SEQUENCE      | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
@@ -601,7 +605,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 9100 order by 1,2
           9109 | myschema2    | myseq2       | REMOVE_SEQUENCE   | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
 (4 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9100 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 9100 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     9100 |            9100000 | M
@@ -616,13 +620,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     9110 |            9100000 | R
 (10 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
-       hist_user 
-  from emaj.emaj_hist where hist_id >= 9100 order by hist_id;
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 9100 ORDER BY hist_id;
      hist_function      |    hist_event    |   hist_object    |                                               regexp_replace                                               | hist_user 
 ------------------------+------------------+------------------+------------------------------------------------------------------------------------------------------------+-----------
  SET_MARK_GROUP         | BEGIN            | myGroup2         | ADD_SEQ test                                                                                               | postgres
@@ -716,63 +720,63 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP         | END              | myGroup2         | Rollback_id 9102                                                                                           | postgres
 (89 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(9300);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(9300);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- remove sequences
+-- Remove sequences.
 -----------------------------
-select emaj.emaj_set_mark_group('myGroup1','Mk2b');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Mk2b');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-select emaj.emaj_set_mark_group('myGroup1','Before_remove');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Before_remove');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
-  from emaj.emaj_group where group_name = 'myGroup1';
+SELECT group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
+  FROM emaj.emaj_group WHERE group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_nb_table | group_nb_sequence 
 ------------+--------------------------+----------------+-------------------
  myGroup1   |                     9008 |              5 |                 2
 (1 row)
 
-select emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq', 'Sequence_removed');
+SELECT emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq', 'Sequence_removed');
  emaj_remove_sequence 
 ----------------------
                     1
 (1 row)
 
-select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
-  from emaj.emaj_group where group_name = 'myGroup1';
+SELECT group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
+  FROM emaj.emaj_group WHERE group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_nb_table | group_nb_sequence 
 ------------+--------------------------+----------------+-------------------
  myGroup1   |                     9302 |              5 |                 1
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
-  from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
+SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+  FROM emaj.emaj_relation WHERE rel_schema = 'myschema1' AND rel_tblseq = 'myTbl3_col31_seq' ORDER BY rel_time_range;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind 
 ------------+------------------+----------------+-----------+----------
  myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S
 (1 row)
 
-select * from emaj.emaj_verify_all() as t(msg) where msg not like '%foreign key%';
+SELECT * FROM emaj.emaj_verify_all() AS t(msg) WHERE msg NOT LIKE '%foreign key%';
         msg        
 -------------------
  No error detected
 (1 row)
 
---testing snap, dump changes and sql generation
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
+--testing snap, dump changes and sql generation.
+SELECT emaj.emaj_snap_group('myGroup1', :'EMAJTESTTMPDIR' || '/snap', '');
  emaj_snap_group 
 -----------------
                6
@@ -787,19 +791,19 @@ myschema1_mytbl2b.snap
 myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
 \! rm -R $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_set_mark_group('myGroup1','After_remove');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'After_remove');
  emaj_set_mark_group 
 ---------------------
                    6
 (1 row)
 
-select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK','SEQUENCES_ONLY',NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', 'SEQUENCES_ONLY', NULL);
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
  2 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-select sql_text from emaj_temp_sql where sql_line_number = 0;
+SELECT sql_text FROM emaj_temp_sql WHERE sql_line_number = 0;
                                                                sql_text                                                               
 --------------------------------------------------------------------------------------------------------------------------------------
  -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Mk1" and "After_remove" using options: SEQUENCES_ONLY
@@ -807,26 +811,28 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
  -- Dump changes for sequence myschema1.mytbl2b_col20_seq between marks "Mk1" and "After_remove"
 (3 rows)
 
--- testing statistics
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
-  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+-- Testing statistics.
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
+  ORDER BY stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
  stat_group | stat_schema |   stat_sequence   | stat_first_mark | stat_first_time_id |  stat_last_mark  | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+-------------------+-----------------+--------------------+------------------+-------------------+-----------------+----------------------------
  myGroup1   | myschema1   | myTbl3_col31_seq  | Before_remove   |               9301 | Sequence_removed |              9302 |               0 | f
  myGroup1   | myschema1   | mytbl2b_col20_seq | Before_remove   |               9301 |                  |                   |               0 | f
 (2 rows)
 
-select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-  from emaj.emaj_log_stat_sequence('myschema1', 'myTbl3_col31_seq', 'myGroup1', 'Mk2b');
+SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments,
+       stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema1', 'myTbl3_col31_seq', 'myGroup1', 'Mk2b');
  stat_group | stat_first_mark | stat_is_log_start |  stat_last_mark  | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+-------------------+------------------+------------------+-----------------+----------------------------+----------------
  myGroup1   | Mk2b            | f                 | Before_remove    | f                |               0 | f                          |              0
  myGroup1   | Before_remove   | f                 | Sequence_removed | t                |               0 | f                          |              0
 (2 rows)
 
--- testing sql script generation
-select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3_col31_seq']);
+-- Testing sql script generation.
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql', ARRAY['myschema1.myTbl3_col31_seq']);
  emaj_gen_sql_group 
 --------------------
                   0
@@ -845,65 +851,66 @@ RESET standard_conforming_strings;
 RESET escape_string_warning;
 RESET datestyle;
 \! rm $EMAJTESTTMPDIR/script.sql
-begin;
+BEGIN;
   -- testing the alter_group mark deletion
-  select emaj.emaj_delete_mark_group('myGroup1','Sequence_removed');
+  SELECT emaj.emaj_delete_mark_group('myGroup1', 'Sequence_removed');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-    from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
-    order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+  SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
+    FROM emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
+    ORDER BY stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
  stat_group | stat_schema |   stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+-------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup1   | myschema1   | myTbl3_col31_seq  | Before_remove   |               9301 | [deleted mark] |              9302 |               0 | f
  myGroup1   | myschema1   | mytbl2b_col20_seq | Before_remove   |               9301 |                |                   |               0 | f
 (2 rows)
 
-  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema1', 'myTbl3_col31_seq', 'myGroup1', 'Mk2b');
+  SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments,
+         stat_has_structure_changed, stat_rollbacks
+    FROM emaj.emaj_log_stat_sequence('myschema1', 'myTbl3_col31_seq', 'myGroup1', 'Mk2b');
  stat_group | stat_first_mark | stat_is_log_start | stat_last_mark | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+-------------------+----------------+------------------+-----------------+----------------------------+----------------
  myGroup1   | Mk2b            | f                 | Before_remove  | f                |               0 | f                          |              0
  myGroup1   | Before_remove   | f                 | [deleted mark] | t                |               0 | f                          |              0
 (2 rows)
 
-  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
-    from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
+  SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+    FROM emaj.emaj_relation WHERE rel_schema = 'myschema1' AND rel_tblseq = 'myTbl3_col31_seq' ORDER BY rel_time_range;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind 
 ------------+------------------+----------------+-----------+----------
  myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S
 (1 row)
 
-  select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
-    mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
-    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
+  SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_time_id,
+         mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+    FROM emaj.emaj_mark WHERE mark_group = 'myGroup1' ORDER BY mark_time_id DESC LIMIT 2;
  mark_group | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
  myGroup1   | After_remove   |         9303 | f                      |              |                           | 
  myGroup1   | Before_remove  |         9301 | f                      |              |                         0 | 
 (2 rows)
 
-rollback;
-begin;
-  -- testing delete a single mark set before the sequence removal
-  select emaj.emaj_delete_mark_group('myGroup1','Before_remove');
+ROLLBACK;
+BEGIN;
+  -- testing DELETE a single mark set before the sequence removal
+  SELECT emaj.emaj_delete_mark_group('myGroup1', 'Before_remove');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select * from emaj.emaj_sequence where sequ_schema = 'myschema1'
-    and sequ_time_id not in (select distinct mark_time_id from emaj.emaj_mark where mark_group = 'myGroup1');
+  SELECT * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1'
+    AND sequ_time_id NOT IN (SELECT distinct mark_time_id FROM emaj.emaj_mark WHERE mark_group = 'myGroup1');
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment | sequ_max_val | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+--------------+--------------+----------------+----------------+----------------
 (0 rows)
 
-  -- testing rollback
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+  -- testing ROLLBACK
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_logged_rollback_group('myGroup1', 'Mk2b', TRUE) ORDER BY 1, 2;
  rlbk_severity |                                               regexp_replace                                               
 ---------------+------------------------------------------------------------------------------------------------------------
  Notice        | 0 / 1 sequences effectively processed.
@@ -912,8 +919,8 @@ begin;
  Warning       | The sequence myschema1."myTbl3_col31_seq" has been left unchanged (not in group anymore since <timestamp>)
 (4 rows)
 
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_rollback_group('myGroup1', 'Mk2b', TRUE) ORDER BY 1, 2;
  rlbk_severity |                                               regexp_replace                                               
 ---------------+------------------------------------------------------------------------------------------------------------
  Notice        | 0 / 1 sequences effectively processed.
@@ -922,92 +929,92 @@ begin;
  Warning       | The sequence myschema1."myTbl3_col31_seq" has been left unchanged (not in group anymore since <timestamp>)
 (4 rows)
 
-  savepoint svp1;
+  SAVEPOINT svp1;
   -- testing group's reset
-    select emaj.emaj_stop_group('myGroup1');
+    SELECT emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
                6
 (1 row)
 
-    select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
-      from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+    SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      FROM emaj.emaj_relation WHERE rel_group = 'myGroup1' AND NOT upper_inf(rel_time_range) ORDER BY 1, 2, 3;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind 
 ------------+------------------+----------------+-----------+----------
  myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S
 (1 row)
 
-    select emaj.emaj_reset_group('myGroup1');
+    SELECT emaj.emaj_reset_group('myGroup1');
  emaj_reset_group 
 ------------------
                 6
 (1 row)
 
-    select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+    SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = 'myGroup1' AND NOT upper_inf(rel_time_range);
  count 
 -------
      0
 (1 row)
 
-  rollback to svp1;
+  ROLLBACK TO svp1;
   -- testing marks deletion
-  select emaj.emaj_set_mark_group('myGroup1','Mk2d');
+  SELECT emaj.emaj_set_mark_group('myGroup1', 'Mk2d');
  emaj_set_mark_group 
 ---------------------
                    6
 (1 row)
 
-  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
+  SELECT emaj.emaj_delete_before_mark_group('myGroup1', 'Mk2b');
  emaj_delete_before_mark_group 
 -------------------------------
                              6
 (1 row)
 
-  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
-    from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+    FROM emaj.emaj_relation WHERE rel_group = 'myGroup1' AND NOT upper_inf(rel_time_range) ORDER BY 1, 2, 3;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind 
 ------------+------------------+----------------+-----------+----------
  myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S
 (1 row)
 
-  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
+  SELECT emaj.emaj_delete_before_mark_group('myGroup1', 'Mk2d');
  emaj_delete_before_mark_group 
 -------------------------------
                              1
 (1 row)
 
-  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = 'myGroup1' AND NOT upper_inf(rel_time_range);
  count 
 -------
      0
 (1 row)
 
-  -- testing the sequence drop
-  drop sequence mySchema1."myTbl3_col31_seq" cascade;
+  -- testing the sequence DROP
+  DROP SEQUENCE mySchema1."myTbl3_col31_seq" CASCADE;
 NOTICE:  drop cascades to default value for column col31 of table myschema1."myTbl3"
-rollback;
--- revert the changes
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true, 'Revert_sequences_removal');
+ROLLBACK;
+-- Revert the changes.
+SELECT emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', TRUE, 'Revert_sequences_removal');
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
 (1 row)
 
-select emaj.emaj_cleanup_rollback_state();
+SELECT emaj.emaj_cleanup_rollback_state();
  emaj_cleanup_rollback_state 
 -----------------------------
                            0
 (1 row)
 
--- checks for remove sequences test
-select * from emaj.emaj_relation_change where rlchg_time_id >= 9300 order by 1,2,3,4;
+-- Checks for remove sequences test.
+SELECT * FROM emaj.emaj_relation_change WHERE rlchg_time_id >= 9300 ORDER BY 1, 2, 3, 4;
  rlchg_time_id | rlchg_schema |   rlchg_tblseq   | rlchg_change_kind | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
 ---------------+--------------+------------------+-------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------
           9302 | myschema1    | myTbl3_col31_seq | REMOVE_SEQUENCE   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           9309 | myschema1    | myTbl3_col31_seq | ADD_SEQUENCE      | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
 (2 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9300 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 9300 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     9300 |            9300000 | M
@@ -1020,13 +1027,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     9309 |            9300000 | I
 (8 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
-       hist_user 
-  from emaj.emaj_hist where hist_id >= 9300 order by hist_id;
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 9300 ORDER BY hist_id;
    hist_function    |    hist_event    |         hist_object          |                                   regexp_replace                                    | hist_user 
 --------------------+------------------+------------------------------+-------------------------------------------------------------------------------------+-----------
  SET_MARK_GROUP     | BEGIN            | myGroup1                     | Mk2b                                                                                | postgres
@@ -1070,66 +1077,66 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS      | END              |                              | 1 created or altered tables groups                                                  | postgres
 (39 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(9500);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(9500);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- add tables
+-- Add tables.
 -----------------------------
--- add myschema2.mytbl7 to the myGroup2 group
--- first perform updates and set marks
-select emaj.emaj_set_mark_group('myGroup2','ADD_TBL test');
+-- Add myschema2.mytbl7 to the myGroup2 group.
+-- First perform updates and set marks.
+SELECT emaj.emaj_set_mark_group('myGroup2', 'ADD_TBL test');
  emaj_set_mark_group 
 ---------------------
                    8
 (1 row)
 
-insert into myschema2.mytbl7 values (1),(2),(3);
-select emaj.emaj_set_mark_group('myGroup2','Before ADD_TBL');
+INSERT INTO myschema2.mytbl7 VALUES (1), (2), (3);
+SELECT emaj.emaj_set_mark_group('myGroup2', 'Before ADD_TBL');
  emaj_set_mark_group 
 ---------------------
                    8
 (1 row)
 
-delete from myschema2.mytbl7 where col71 = 3;
--- then add the table to the group
-select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Add mytbl7');
+DELETE FROM myschema2.mytbl7 WHERE col71 = 3;
+-- Then add the table to the group.
+SELECT emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', NULL, 'Add mytbl7');
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
-select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
-  from emaj.emaj_group where group_name = 'myGroup2';
+SELECT group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
+  FROM emaj.emaj_group WHERE group_name = 'myGroup2';
  group_name | group_last_alter_time_id | group_nb_table | group_nb_sequence 
 ------------+--------------------------+----------------+-------------------
  myGroup2   |                     9502 |              7 |                 2
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table
-  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
+SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table
+  FROM emaj.emaj_relation WHERE rel_schema = 'myschema2' AND rel_tblseq = 'mytbl7' ORDER BY rel_time_range;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table 
 ------------+------------+----------------+-----------+----------+----------------+---------------
  myschema2  | mytbl7     | [9502,)        | myGroup2  | r        | emaj_myschema2 | mytbl7_log
 (1 row)
 
--- perform some other updates
-insert into myschema2.mytbl7 values (4),(5);
--- remove the alter group mark just after the alter operation and then get statistics and set a mark
-begin;
-  select emaj.emaj_delete_mark_group('myGroup2','Add mytbl7');
+-- Perform some other updates.
+INSERT INTO myschema2.mytbl7 VALUES (4), (5);
+-- Remove the alter group mark just after the alter operation and then get statistics and set a mark.
+BEGIN;
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'Add mytbl7');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
-    from emaj.emaj_log_stat_group('myGroup2','Before ADD_TBL',NULL);
+  SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+    FROM emaj.emaj_log_stat_group('myGroup2', 'Before ADD_TBL', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | Before ADD_TBL  |               9501 |                |                   |         0
@@ -1141,28 +1148,28 @@ begin;
  myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               9502 |                |                   |         2
 (7 rows)
 
-  select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
+  SELECT emaj.emaj_set_mark_group('myGroup2', 'Just after ADD_TBL');
  emaj_set_mark_group 
 ---------------------
                    9
 (1 row)
 
-  select mark_log_rows_before_next from emaj.emaj_mark where mark_name = 'Before ADD_TBL';
+  SELECT mark_log_rows_before_next FROM emaj.emaj_mark WHERE mark_name = 'Before ADD_TBL';
  mark_log_rows_before_next 
 ---------------------------
                          2
 (1 row)
 
-rollback;
--- set marks and look at statistics
-select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
+ROLLBACK;
+-- Set marks and look at statistics.
+SELECT emaj.emaj_set_mark_group('myGroup2', 'Just after ADD_TBL');
  emaj_set_mark_group 
 ---------------------
                    9
 (1 row)
 
-update myschema2.mytbl7 set col71 = 6 where col71 = 2;
-select col71, emaj_verb, emaj_tuple from emaj_myschema2.mytbl7_log order by emaj_gid;
+UPDATE myschema2.mytbl7 SET col71 = 6 WHERE col71 = 2;
+SELECT col71, emaj_verb, emaj_tuple FROM emaj_myschema2.mytbl7_log ORDER BY emaj_gid;
  col71 | emaj_verb | emaj_tuple 
 -------+-----------+------------
      4 | INS       | NEW
@@ -1171,8 +1178,8 @@ select col71, emaj_verb, emaj_tuple from emaj_myschema2.mytbl7_log order by emaj
      6 | UPD       | NEW
 (4 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup2', 'ADD_TBL test', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |               9500 |                |                   |         0
@@ -1184,22 +1191,23 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl7     | Add mytbl7      |               9502 |                |                   |         3
 (7 rows)
 
-select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
+SELECT emaj.emaj_set_mark_group('myGroup2', 'After ADD_TBL');
  emaj_set_mark_group 
 ---------------------
                    9
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test','After ADD_TBL');
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'ADD_TBL test', 'After ADD_TBL');
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | mytbl7     | Add mytbl7      |               9502 | After ADD_TBL  |              9505 | postgres  | INSERT    |         2
  myGroup2   | myschema2   | mytbl7     | Add mytbl7      |               9502 | After ADD_TBL  |              9505 | postgres  | UPDATE    |         1
 (2 rows)
 
-select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
-  from emaj.emaj_log_stat_table('myschema2', 'mytbl7', 'myGroup2', 'Mk1');
+SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl7', 'myGroup2', 'Mk1');
  stat_group |  stat_first_mark   | stat_is_log_start |   stat_last_mark   | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+--------------------+-------------------+--------------------+------------------+--------------+----------------
  myGroup2   | Add mytbl7         | t                 | Just after ADD_TBL | f                |            2 |              0
@@ -1207,8 +1215,8 @@ select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_l
  myGroup2   | After ADD_TBL      | f                 | [current state]    | f                |            0 |              0
 (3 rows)
 
---testing snap, dump changes and sql generation
-select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
+--testing snap, dump changes and sql generation.
+SELECT emaj.emaj_snap_group('myGroup2', :'EMAJTESTTMPDIR' || '/snap', '');
  emaj_snap_group 
 -----------------
                9
@@ -1226,13 +1234,13 @@ myschema2_mytbl5.snap
 myschema2_mytbl6.snap
 myschema2_mytbl7.snap
 \! rm $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','After ADD_TBL','TABLES_ONLY',NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mk1', 'After ADD_TBL', 'TABLES_ONLY', NULL);
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
  7 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-select sql_text from emaj_temp_sql where sql_line_number = 0;
+SELECT sql_text FROM emaj_temp_sql WHERE sql_line_number = 0;
                                                               sql_text                                                              
 ------------------------------------------------------------------------------------------------------------------------------------
  -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mk1" and "After ADD_TBL" using options: TABLES_ONLY
@@ -1245,69 +1253,69 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
  -- Dump changes for table myschema2.mytbl7 between marks "Add mytbl7" and "After ADD_TBL" (3 changes)
 (8 rows)
 
-select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema2.mytbl7']);
+SELECT emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMPDIR' || '/script.sql', ARRAY['myschema2.mytbl7']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.mytbl7) did not belong to any of the selected tables groups at start mark time.
 \! rm $EMAJTESTTMPDIR/script.sql
 rm: cannot remove '/tmp/emaj_13/alter_logging/script.sql': No such file or directory
--- testing mark deletions
-begin;
-  -- testing delete a single mark set after the table addition
-  select emaj.emaj_delete_mark_group('myGroup2','After ADD_TBL');
+-- Testing mark deletions.
+BEGIN;
+-- Testing delete a single mark set after the table addition.
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'After ADD_TBL');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select 'Should not exist' from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'After ADD_TBL';
+  SELECT 'Should NOT exist' FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'After ADD_TBL';
  ?column? 
 ----------
 (0 rows)
 
-  -- testing delete all marks up to a mark set after the alter_group
-  select emaj.emaj_delete_before_mark_group('myGroup2','EMAJ_LAST_MARK');
+-- Testing delete all marks up TO a mark set after the alter_group.
+  SELECT emaj.emaj_delete_before_mark_group('myGroup2', 'EMAJ_LAST_MARK');
  emaj_delete_before_mark_group 
 -------------------------------
                              8
 (1 row)
 
-  select * from emaj.emaj_mark where mark_group = 'myGroup2';
+  SELECT * FROM emaj.emaj_mark WHERE mark_group = 'myGroup2';
  mark_group |     mark_name      | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+--------------------+--------------+------------------------+--------------+---------------------------+------------------------------
  myGroup2   | Just after ADD_TBL |         9504 | f                      |              |                           | 
 (1 row)
 
-  select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
-    where tbl_name = 'mytbl7' order by tbl_time_id;
+  SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table
+    WHERE tbl_name = 'mytbl7' ORDER BY tbl_time_id;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
  myschema2  | mytbl7   |        9502 |                    0
  myschema2  | mytbl7   |        9504 |                    2
 (2 rows)
 
-rollback;
-begin;
+ROLLBACK;
+BEGIN;
   -- testing the add table mark deletion
-  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add mytbl7';
+  SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'Add mytbl7';
  mark_time_id 
 --------------
          9502
 (1 row)
 
-  select emaj.emaj_delete_mark_group('myGroup2','Add mytbl7');
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'Add mytbl7');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
-    where tbl_name = 'mytbl7' order by tbl_time_id limit 1;
+  SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table
+    WHERE tbl_name = 'mytbl7' ORDER BY tbl_time_id LIMIT 1;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
  myschema2  | mytbl7   |        9502 |                    0
 (1 row)
 
-  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl7', 'myGroup2', 'Mk1');
+  SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+    FROM emaj.emaj_log_stat_table('myschema2', 'mytbl7', 'myGroup2', 'Mk1');
  stat_group |  stat_first_mark   | stat_is_log_start |   stat_last_mark   | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+--------------------+-------------------+--------------------+------------------+--------------+----------------
  myGroup2   | [deleted mark]     | t                 | Just after ADD_TBL | f                |            2 |              0
@@ -1315,23 +1323,23 @@ begin;
  myGroup2   | After ADD_TBL      | f                 | [current state]    | f                |            0 |              0
 (3 rows)
 
-rollback;
--- test sequences and holes at bounds following a rollback targeting a mark set before an ADD_TBL
-begin;
-  select emaj.emaj_set_param('dblink_user_password', NULL);
+ROLLBACK;
+-- Test sequences and holes at bounds following a rollback targeting a mark set before an ADD_TBL.
+BEGIN;
+  SELECT emaj.emaj_set_param('dblink_user_password', NULL);
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add mytbl7';
+  SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'Add mytbl7';
  mark_time_id 
 --------------
          9502
 (1 row)
 
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_rollback_group('myGroup2','Before ADD_TBL',true);
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_rollback_group('myGroup2', 'Before ADD_TBL', TRUE);
  rlbk_severity |                                          regexp_replace                                           
 ---------------+---------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 9500.
@@ -1340,21 +1348,21 @@ begin;
  Warning       | The table myschema2.mytbl7 has only been rolled back to its latest group attachment (<timestamp>)
 (4 rows)
 
-  select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
-    where tbl_schema = 'myschema2' and tbl_name = 'mytbl7' order by tbl_time_id;
+  SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table
+    WHERE tbl_schema = 'myschema2' AND tbl_name = 'mytbl7' ORDER BY tbl_time_id;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
  myschema2  | mytbl7   |        9502 |                    0
 (1 row)
 
-  select * from emaj.emaj_seq_hole where sqhl_schema = 'myschema2' and sqhl_table = 'mytbl7';
+  SELECT * FROM emaj.emaj_seq_hole WHERE sqhl_schema = 'myschema2' AND sqhl_table = 'mytbl7';
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema2   | mytbl7     |               9502 |             9506 |              3
 (1 row)
 
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-    from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+  SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+    FROM emaj.emaj_log_stat_group('myGroup2', 'ADD_TBL test', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |               9500 |                |                   |         0
@@ -1366,17 +1374,17 @@ begin;
  myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               9502 |                |                   |         0
 (7 rows)
 
-rollback;
--- estimate and then perform a logged rollback to reach a mark prior the ADD_TBL operation and check
-delete from emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
-select * from emaj.emaj_estimate_rollback_group('myGroup2','Before ADD_TBL',true);
+ROLLBACK;
+-- Estimate and then perform a logged rollback to reach a mark prior the ADD_TBL operation and check.
+DELETE FROM emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
+SELECT * FROM emaj.emaj_estimate_rollback_group('myGroup2', 'Before ADD_TBL', TRUE);
  emaj_estimate_rollback_group 
 ------------------------------
  @ 0.0358 secs
 (1 row)
 
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_logged_rollback_group('myGroup2','Before ADD_TBL',true);
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_logged_rollback_group('myGroup2', 'Before ADD_TBL', TRUE);
  rlbk_severity |                                          regexp_replace                                           
 ---------------+---------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 9501.
@@ -1385,7 +1393,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The table myschema2.mytbl7 has only been rolled back to its latest group attachment (<timestamp>)
 (4 rows)
 
-select col71, emaj_verb, emaj_tuple from emaj_myschema2.mytbl7_log order by emaj_gid;
+SELECT col71, emaj_verb, emaj_tuple FROM emaj_myschema2.mytbl7_log ORDER BY emaj_gid;
  col71 | emaj_verb | emaj_tuple 
 -------+-----------+------------
      4 | INS       | NEW
@@ -1398,97 +1406,98 @@ select col71, emaj_verb, emaj_tuple from emaj_myschema2.mytbl7_log order by emaj
      2 | INS       | NEW
 (8 rows)
 
-select * from myschema2.mytbl7 order by col71;
+SELECT * FROM myschema2.mytbl7 ORDER BY col71;
  col71 
 -------
      1
      2
 (2 rows)
 
--- consolidate this logged rollback
-select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','Logged_Rlbk_End');
+-- Consolidate this logged rollback.
+SELECT emaj.emaj_rename_mark_group('myGroup2', 'EMAJ_LAST_MARK', 'Logged_Rlbk_End');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add mytbl7';
+SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND mark_name = 'Add mytbl7';
  mark_time_id 
 --------------
          9502
 (1 row)
 
-select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
+SELECT * FROM emaj.emaj_get_consolidable_rollbacks() WHERE cons_group = 'myGroup2'; -- should report 1 row TO consolidate
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
  myGroup2   | Before ADD_TBL             |                          9501 | Logged_Rlbk_End         |                       9508 |         7 |          4
 (1 row)
 
-select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
+SELECT * FROM emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                3
 (1 row)
 
-select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
-  where tbl_schema = 'myschema2' and tbl_name = 'mytbl7' order by tbl_time_id;
+SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table
+  WHERE tbl_schema = 'myschema2' AND tbl_name = 'mytbl7' ORDER BY tbl_time_id;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
  myschema2  | mytbl7   |        9502 |                    0
  myschema2  | mytbl7   |        9508 |                    7
 (2 rows)
 
--- perform some other updates
-insert into myschema2.myTbl7 values (7),(8),(9);
--- verify the group and detect the lack of the new log table
-begin;
-  select emaj.emaj_disable_protection_by_event_triggers();
+-- Perform some other updates.
+INSERT INTO myschema2.myTbl7 VALUES (7), (8), (9);
+-- Verify the group and detect the lack of the new log table.
+BEGIN;
+  SELECT emaj.emaj_disable_protection_by_event_triggers();
  emaj_disable_protection_by_event_triggers 
 -------------------------------------------
                                          3
 (1 row)
 
-  drop table emaj_myschema2.mytbl7_log;
-  select * from emaj.emaj_verify_all() as t(msg) where msg not like '%foreign key%';
+  DROP TABLE emaj_myschema2.mytbl7_log;
+  SELECT * FROM emaj.emaj_verify_all() as t(msg) WHERE msg NOT LIKE '%foreign key%';
                                                                  msg                                                                 
 -------------------------------------------------------------------------------------------------------------------------------------
  Error: In tables group "myGroup2", the log table "emaj_myschema2"."mytbl7_log" is not found.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (2 rows)
 
-  select emaj.emaj_enable_protection_by_event_triggers();
+  SELECT emaj.emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
 ------------------------------------------
                                         3
 (1 row)
 
-rollback;
--- remove myTbl7 from the group, then re-add it
-select emaj.emaj_remove_table('myschema2', 'mytbl7', 'Remove mytbl7');
+ROLLBACK;
+-- Remove myTbl7 from the group, then re-add it.
+SELECT emaj.emaj_remove_table('myschema2', 'mytbl7', 'Remove mytbl7');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Re-add mytbl7');
+SELECT emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', NULL, 'Re-add mytbl7');
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
-  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
+SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+  FROM emaj.emaj_relation WHERE rel_schema = 'myschema2' AND rel_tblseq = 'mytbl7' ORDER BY rel_time_range;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
  myschema2  | mytbl7     | [9502,9509)    | myGroup2  | r        | emaj_myschema2 | mytbl7_log_1  |                     10
  myschema2  | mytbl7     | [9510,)        | myGroup2  | r        | emaj_myschema2 | mytbl7_log    |                       
 (2 rows)
 
-delete from myschema2.myTbl7 where col71 = 9;
--- get statistics
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
-  from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+DELETE FROM myschema2.myTbl7 WHERE col71 = 9;
+-- Get statistics.
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup2', 'ADD_TBL test', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |               9500 |                |                   |         0
@@ -1501,22 +1510,23 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl7     | Re-add mytbl7   |               9510 |                |                   |         1
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows 
-  from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test',NULL);
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'ADD_TBL test', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               9502 | Remove mytbl7  |              9509 | postgres  | INSERT    |         3
  myGroup2   | myschema2   | mytbl7     | Re-add mytbl7   |               9510 |                |                   | postgres  | DELETE    |         1
 (2 rows)
 
--- dump changes
-select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','EMAJ_LAST_MARK','TABLES_ONLY',NULL);
+-- Dump changes.
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mk1', 'EMAJ_LAST_MARK', 'TABLES_ONLY', NULL);
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
  7 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-select sql_text from emaj_temp_sql where sql_line_number = 0;
+SELECT sql_text FROM emaj_temp_sql WHERE sql_line_number = 0;
                                                               sql_text                                                              
 ------------------------------------------------------------------------------------------------------------------------------------
  -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mk1" and "Re-add mytbl7" using options: TABLES_ONLY
@@ -1529,8 +1539,8 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
  -- Dump changes for table myschema2.mytbl7 between marks "[deleted mark]" and "Remove mytbl7" (3 changes)
 (8 rows)
 
--- and finaly revert the group configuration changes
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
+-- And finaly revert the group configuration changes.
+SELECT emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', TRUE);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_import_groups_configuration 
@@ -1538,9 +1548,9 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                                 1
 (1 row)
 
--- and perform a full rollback (that do not process myTbl7)
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_rollback_group('myGroup2', 'ADD_TBL test',true);
+-- And perform a full rollback (that do not process myTbl7).
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_rollback_group('myGroup2', 'ADD_TBL test', TRUE);
  rlbk_severity |                                       regexp_replace                                        
 ---------------+---------------------------------------------------------------------------------------------
  Notice        | Rollback id = 9502.
@@ -1549,7 +1559,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The table myschema2.mytbl7 has been left unchanged (not in group anymore since <timestamp>)
 (4 rows)
 
-select * from myschema2.mytbl7 order by col71;
+SELECT * FROM myschema2.mytbl7 ORDER BY col71;
  col71 
 -------
      1
@@ -1558,8 +1568,8 @@ select * from myschema2.mytbl7 order by col71;
      8
 (4 rows)
 
--- checks for add tables tests
-select * from emaj.emaj_relation_change where rlchg_time_id >= 9500 order by 1,2,3,4;
+-- Checks for add tables tests.
+SELECT * FROM emaj.emaj_relation_change WHERE rlchg_time_id >= 9500 ORDER BY 1, 2, 3, 4;
  rlchg_time_id | rlchg_schema | rlchg_tblseq | rlchg_change_kind | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
 ---------------+--------------+--------------+-------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------
           9502 | myschema2    | mytbl7       | ADD_TABLE         | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
@@ -1568,7 +1578,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 9500 order by 1,2
           9511 | myschema2    | mytbl7       | REMOVE_TABLE      | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
 (4 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9500 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 9500 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     9500 |            9500000 | M
@@ -1584,13 +1594,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     9512 |            9500011 | R
 (11 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
-       hist_user 
-  from emaj.emaj_hist where hist_id >= 9500 order by hist_id;
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 9500 ORDER BY hist_id;
      hist_function      |   hist_event   |   hist_object    |                                          regexp_replace                                           | hist_user 
 ------------------------+----------------+------------------+---------------------------------------------------------------------------------------------------+-----------
  SET_MARK_GROUP         | BEGIN          | myGroup2         | ADD_TBL test                                                                                      | postgres
@@ -1688,53 +1698,53 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP         | END            | myGroup2         | Rollback_id 9502                                                                                  | postgres
 (93 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(9700);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(9700);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- remove tables
+-- Remove tables.
 -----------------------------
-insert into myschema1."myTbl3" (col33) values (1.);
-select emaj.emaj_set_mark_group('myGroup1','Mk2c');
+INSERT INTO myschema1."myTbl3" (col33) VALUES (1.);
+SELECT emaj.emaj_set_mark_group('myGroup1', 'Mk2c');
  emaj_set_mark_group 
 ---------------------
                    7
 (1 row)
 
-insert into myschema1."myTbl3" (col33) values (1.);
-select emaj.emaj_remove_tables('myschema1', '^(myTbl3|mytbl2b)$', null, '2 tables removed from myGroup1');
+INSERT INTO myschema1."myTbl3" (col33) VALUES (1.);
+SELECT emaj.emaj_remove_tables('myschema1', '^(myTbl3|mytbl2b)$', NULL, '2 tables removed from myGroup1');
  emaj_remove_tables 
 --------------------
                   2
 (1 row)
 
-select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
-  from emaj.emaj_group where group_name = 'myGroup1';
+SELECT group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
+  FROM emaj.emaj_group WHERE group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_nb_table | group_nb_sequence 
 ------------+--------------------------+----------------+-------------------
  myGroup1   |                     9701 |              3 |                 2
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
-  from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2,3;
+SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+  FROM emaj.emaj_relation WHERE rel_schema = 'myschema1' AND (rel_tblseq = 'myTbl3' OR rel_tblseq = 'mytbl2b') ORDER BY 1, 2, 3;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
  myschema1  | myTbl3     | [8019,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
  myschema1  | mytbl2b    | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (2 rows)
 
-delete from myschema1."myTbl3" where col33 = 1.;
-select count(*) from emaj_myschema1."myTbl3_log_1";
+DELETE FROM myschema1."myTbl3" WHERE col33 = 1.;
+SELECT count(*) FROM emaj_myschema1."myTbl3_log_1";
  count 
 -------
      2
 (1 row)
 
-select * from emaj.emaj_verify_all() as t(msg) where msg not like '%foreign key%';
+SELECT * FROM emaj.emaj_verify_all() AS t(msg) WHERE msg NOT LIKE '%foreign key%';
                                                                                         msg                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
@@ -1742,16 +1752,16 @@ select * from emaj.emaj_verify_all() as t(msg) where msg not like '%foreign key%
  No error detected
 (3 rows)
 
--- test statistics following a rollback targeting a mark set before a REMOVE_TBL
-begin;
-  select emaj.emaj_set_param('dblink_user_password', NULL);
+-- Test statistics following a rollback targeting a mark set before a REMOVE_TBL.
+BEGIN;
+  SELECT emaj.emaj_set_param('dblink_user_password', NULL);
  emaj_set_param 
 ----------------
               1
 (1 row)
 
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_rollback_group('myGroup1','Mk2c',true);
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_rollback_group('myGroup1', 'Mk2c', TRUE);
  rlbk_severity |                                        regexp_replace                                         
 ---------------+-----------------------------------------------------------------------------------------------
  Notice        | Rollback id = 9700.
@@ -1761,8 +1771,8 @@ begin;
  Warning       | The table myschema1.mytbl2b has been left unchanged (not in group anymore since <timestamp>)
 (5 rows)
 
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-    from emaj.emaj_log_stat_group('myGroup1','Mk2b',NULL) order by 1,2,3,4;
+  SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+    FROM emaj.emaj_log_stat_group('myGroup1', 'Mk2b', NULL) ORDER BY 1, 2, 3, 4;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup1   | myschema1   | myTbl3     | Mk2b            |               9300 | [deleted mark] |              9701 |         2
@@ -1772,10 +1782,11 @@ begin;
  myGroup1   | myschema1   | mytbl4     | Mk2b            |               9300 |                |                   |         0
 (5 rows)
 
-rollback;
--- get statistics
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows 
-  from emaj.emaj_log_stat_group('myGroup1','Mk1',NULL);
+ROLLBACK;
+-- Get statistics.
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup1', 'Mk1', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id |         stat_last_mark         | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+--------------------------------+-------------------+-----------
  myGroup1   | myschema1   | myTbl3     | Mk1             |               9001 | 2 tables removed from myGroup1 |              9701 |         2
@@ -1785,23 +1796,24 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup1   | myschema1   | mytbl4     | Mk1             |               9001 |                                |                   |         0
 (5 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows 
-  from emaj.emaj_detailed_log_stat_group('myGroup1','Mk1',NULL);
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup1', 'Mk1', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id |         stat_last_mark         | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+--------------------------------+-------------------+-----------+-----------+-----------
  myGroup1   | myschema1   | myTbl3     | Mk1             |               9001 | 2 tables removed from myGroup1 |              9701 | postgres  | INSERT    |         2
 (1 row)
 
-select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
-  from emaj.emaj_log_stat_table('myschema1', 'myTbl3', 'myGroup1', 'Revert_sequences_removal');
+SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema1', 'myTbl3', 'myGroup1', 'Revert_sequences_removal');
  stat_group |     stat_first_mark      | stat_is_log_start |         stat_last_mark         | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+--------------------------+-------------------+--------------------------------+------------------+--------------+----------------
  myGroup1   | Revert_sequences_removal | f                 | Mk2c                           | f                |            1 |              0
  myGroup1   | Mk2c                     | f                 | 2 tables removed from myGroup1 | t                |            1 |              0
 (2 rows)
 
---testing snap, dump changes and sql generation
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
+--testing snap, dump changes and sql generation.
+SELECT emaj.emaj_snap_group('myGroup1', :'EMAJTESTTMPDIR' || '/snap', '');
  emaj_snap_group 
 -----------------
                5
@@ -1815,19 +1827,19 @@ myschema1_mytbl2.snap
 myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
 \! rm $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_set_mark_group('myGroup1','After_2_tables_removed');
+SELECT emaj.emaj_set_mark_group('myGroup1', 'After_2_tables_removed');
  emaj_set_mark_group 
 ---------------------
                    5
 (1 row)
 
-select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK','TABLES_ONLY',NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', 'TABLES_ONLY', NULL);
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
  5 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-select sql_text from emaj_temp_sql where sql_line_number = 0;
+SELECT sql_text FROM emaj_temp_sql WHERE sql_line_number = 0;
                                                                   sql_text                                                                   
 ---------------------------------------------------------------------------------------------------------------------------------------------
  -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Mk1" and "After_2_tables_removed" using options: TABLES_ONLY
@@ -1838,48 +1850,48 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
  -- Dump changes for table myschema1.mytbl4 between marks "Mk1" and "After_2_tables_removed" (0 changes)
 (6 rows)
 
-select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3']);
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'Mk1', NULL, :'EMAJTESTTMPDIR' || '/script.sql', ARRAY['myschema1.myTbl3']);
  emaj_gen_sql_group 
 --------------------
                   2
 (1 row)
 
 \! rm $EMAJTESTTMPDIR/script.sql
--- test marks deletions
-begin;
--- testing delete a single mark set before the table removal
-  select emaj.emaj_delete_mark_group('myGroup1','Mk2c');
+-- Test marks deletions.
+BEGIN;
+-- Testing delete a single mark set before the table removal.
+  SELECT emaj.emaj_delete_mark_group('myGroup1', 'Mk2c');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'Mk2b';
+  SELECT * FROM emaj.emaj_mark WHERE mark_group = 'myGroup1' AND mark_name = 'Mk2b';
  mark_group | mark_name | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------+--------------+------------------------+--------------+---------------------------+------------------------------
  myGroup1   | Mk2b      |         9300 | f                      |              |                         0 | 
 (1 row)
 
--- testing marks deletion (delete all marks before the alter_group)
-  select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
+-- Testing marks deletion (delete all marks before the alter_group).
+  SELECT emaj.emaj_delete_before_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_delete_before_mark_group 
 -------------------------------
                             12
 (1 row)
 
-  select 'should not exist' from pg_class, pg_namespace 
-    where relnamespace = pg_namespace.oid and nspname = 'emaj_myschema1' and relname in ('myTbl3_log','mytbl2b_log');
+  SELECT 'should not exist' FROM pg_class, pg_namespace
+    WHERE relnamespace = pg_namespace.oid AND nspname = 'emaj_myschema1' AND relname IN ('myTbl3_log', 'mytbl2b_log');
  ?column? 
 ----------
 (0 rows)
 
-  select count(*) from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq in ('myTbl3','mytbl2b');
+  SELECT count(*) FROM emaj.emaj_relation WHERE rel_schema = 'myschema1' AND rel_tblseq IN ('myTbl3', 'mytbl2b');
  count 
 -------
      0
 (1 row)
 
-  select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq in ('myTbl3','mytbl2b') order by 1,2,3;
+  SELECT * FROM emaj.emaj_rel_hist WHERE relh_schema = 'myschema1' AND relh_tblseq IN ('myTbl3', 'mytbl2b') ORDER BY 1, 2, 3;
  relh_schema | relh_tblseq | relh_time_range | relh_group | relh_kind 
 -------------+-------------+-----------------+------------+-----------
  myschema1   | myTbl3      | [2000,8001)     | myGroup1   | r
@@ -1892,61 +1904,61 @@ begin;
  myschema1   | mytbl2b     | [8202,9701)     | myGroup1   | r
 (8 rows)
 
-rollback;
-begin;
--- testing the alter group mark deletion
-  select emaj.emaj_delete_mark_group('myGroup1','2 tables removed from myGroup1');
+ROLLBACK;
+BEGIN;
+-- Testing the alter group mark deletion.
+  SELECT emaj.emaj_delete_mark_group('myGroup1', '2 tables removed from myGroup1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
-    from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
+  SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+    FROM emaj.emaj_relation WHERE rel_schema = 'myschema1' AND (rel_tblseq = 'myTbl3' OR rel_tblseq = 'mytbl2b') ORDER BY rel_tblseq;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
  myschema1  | myTbl3     | [8019,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
  myschema1  | mytbl2b    | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (2 rows)
 
-  select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
-    where tbl_name in ('mytbl2b', 'myTbl3') order by tbl_time_id desc, tbl_name limit 2;
+  SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table
+    WHERE tbl_name IN ('mytbl2b', 'myTbl3') ORDER BY tbl_time_id DESC, tbl_name LIMIT 2;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
  myschema1  | myTbl3   |        9701 |                    3
  myschema1  | mytbl2b  |        9701 |                    0
 (2 rows)
 
-  select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = '2 tables removed from myGroup1';
+  SELECT * FROM emaj.emaj_mark WHERE mark_group = 'myGroup1' AND mark_name = '2 tables removed from myGroup1';
  mark_group | mark_name | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------+--------------+------------------------+--------------+---------------------------+------------------------------
 (0 rows)
 
-  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema1', 'myTbl3', 'myGroup1', 'Revert_sequences_removal');
+  SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+    FROM emaj.emaj_log_stat_table('myschema1', 'myTbl3', 'myGroup1', 'Revert_sequences_removal');
  stat_group |     stat_first_mark      | stat_is_log_start | stat_last_mark | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+--------------------------+-------------------+----------------+------------------+--------------+----------------
  myGroup1   | Revert_sequences_removal | f                 | Mk2c           | f                |            1 |              0
  myGroup1   | Mk2c                     | f                 | [deleted mark] | t                |            1 |              0
 (2 rows)
 
-rollback;
-begin;
--- testing marks deletion (other cases)
-  select emaj.emaj_set_mark_group('myGroup1','Mk2d');
+ROLLBACK;
+BEGIN;
+-- Testing marks deletion (other cases).
+  SELECT emaj.emaj_set_mark_group('myGroup1', 'Mk2d');
  emaj_set_mark_group 
 ---------------------
                    5
 (1 row)
 
-  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
+  SELECT emaj.emaj_delete_before_mark_group('myGroup1', 'Mk2b');
  emaj_delete_before_mark_group 
 -------------------------------
                              6
 (1 row)
 
-  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
-    from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+    FROM emaj.emaj_relation WHERE rel_group = 'myGroup1' AND NOT upper_inf(rel_time_range) ORDER BY 1, 2, 3;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------------+----------------+-----------+----------+----------------+---------------+------------------------
  myschema1  | myTbl3           | [8019,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
@@ -1954,7 +1966,7 @@ begin;
  myschema1  | mytbl2b          | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (3 rows)
 
-  select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
+  SELECT * FROM emaj.emaj_rel_hist WHERE relh_schema = 'myschema1' AND relh_tblseq = 'mytbl2b' ORDER BY 1, 2, 3;
  relh_schema | relh_tblseq | relh_time_range | relh_group | relh_kind 
 -------------+-------------+-----------------+------------+-----------
  myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
@@ -1963,30 +1975,31 @@ begin;
  myschema1   | mytbl2b     | [8201,8202)     | myGroup2   | r
 (4 rows)
 
-  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log_1' and nspname = 'emaj_myschema1';
+  SELECT 'found' FROM pg_class, pg_namespace WHERE relnamespace = pg_namespace.oid AND relname = 'mytbl2b_log_1' AND nspname = 'emaj_myschema1';
  ?column? 
 ----------
  found
 (1 row)
 
-  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
+  SELECT emaj.emaj_delete_before_mark_group('myGroup1', 'Mk2d');
  emaj_delete_before_mark_group 
 -------------------------------
                              8
 (1 row)
 
-  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
+  SELECT 'should not exist' FROM pg_class, pg_namespace
+    WHERE relnamespace = pg_namespace.oid AND relname = 'mytbl2b_log' AND nspname = 'emaj_myschema1';
  ?column? 
 ----------
 (0 rows)
 
-  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = 'myGroup1' AND NOT upper_inf(rel_time_range);
  count 
 -------
      0
 (1 row)
 
-  select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
+  SELECT * FROM emaj.emaj_rel_hist WHERE relh_schema = 'myschema1' AND relh_tblseq = 'mytbl2b' ORDER BY 1, 2, 3;
  relh_schema | relh_tblseq | relh_time_range | relh_group | relh_kind 
 -------------+-------------+-----------------+------------+-----------
  myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
@@ -1996,11 +2009,11 @@ begin;
  myschema1   | mytbl2b     | [8202,9701)     | myGroup1   | r
 (5 rows)
 
-rollback;
--- testing rollback and consolidation
-insert into myschema1.mytbl1 values (100, 'Alter_logg', E'\\000'::bytea);
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+ROLLBACK;
+-- Testing rollback and consolidation.
+INSERT INTO myschema1.mytbl1 VALUES (100, 'Alter_logg', E'\\000'::bytea);
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_logged_rollback_group('myGroup1', 'Mk2b', TRUE) ORDER BY 1, 2;
  rlbk_severity |                                                     regexp_replace                                                     
 ---------------+------------------------------------------------------------------------------------------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
@@ -2011,38 +2024,38 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The table myschema1.mytbl2b has been left unchanged (not in group anymore since <timestamp>)
 (6 rows)
 
-select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Logged_Rlbk_End');
+SELECT emaj.emaj_rename_mark_group('myGroup1', 'EMAJ_LAST_MARK', 'Logged_Rlbk_End');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_remove_table('myschema1', 'mytbl1','2nd remove_tbl');
+SELECT emaj.emaj_remove_table('myschema1', 'mytbl1', '2nd remove_tbl');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
+SELECT * FROM emaj.emaj_get_consolidable_rollbacks() WHERE cons_group = 'myGroup1';
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
  myGroup1   | Mk2b                       |                          9300 | Logged_Rlbk_End         |                       9706 |         2 |          8
 (1 row)
 
-select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
+SELECT * FROM emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                3
 (1 row)
 
-select count(*) from emaj_myschema1.mytbl1_log_1;   -- the log table should be empty
+SELECT count(*) FROM emaj_myschema1.mytbl1_log_1;   -- the log table should be empty
  count 
 -------
      0
 (1 row)
 
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_rollback_group('myGroup1', 'Mk2b', TRUE) ORDER BY 1, 2;
  rlbk_severity |                                                     regexp_replace                                                     
 ---------------+------------------------------------------------------------------------------------------------------------------------
  Notice        | 0 / 2 sequences effectively processed.
@@ -2054,21 +2067,21 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The table myschema1.mytbl2b has been left unchanged (not in group anymore since <timestamp>)
 (7 rows)
 
--- testing group's reset
-begin;
-  select emaj.emaj_stop_group('myGroup1');
+-- Testing group's reset.
+BEGIN;
+  SELECT emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
                4
 (1 row)
 
-  select emaj.emaj_reset_group('myGroup1');
+  SELECT emaj.emaj_reset_group('myGroup1');
  emaj_reset_group 
 ------------------
                 4
 (1 row)
 
-  select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and upper(relh_time_range) > 6050 order by 1,2,3;
+  SELECT * FROM emaj.emaj_rel_hist WHERE relh_schema = 'myschema1' AND upper(relh_time_range) > 6050 ORDER BY 1, 2, 3;
  relh_schema |    relh_tblseq    | relh_time_range | relh_group | relh_kind 
 -------------+-------------------+-----------------+------------+-----------
  myschema1   | myTbl3            | [2000,8001)     | myGroup1   | r
@@ -2095,71 +2108,71 @@ begin;
  myschema1   | mytbl4            | [8010,8014)     | myGroup1   | r
 (22 rows)
 
-rollback;
--- testing group's stop and start
-begin;
-  select emaj.emaj_stop_group('myGroup1');
+ROLLBACK;
+-- Testing group's stop and start.
+BEGIN;
+  SELECT emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
                4
 (1 row)
 
-  select emaj.emaj_start_group('myGroup1');
+  SELECT emaj.emaj_start_group('myGroup1');
 WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
  emaj_start_group 
 ------------------
                 4
 (1 row)
 
-  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
-    from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+    FROM emaj.emaj_relation WHERE rel_group = 'myGroup1' AND NOT upper_inf(rel_time_range) ORDER BY 1, 2, 3;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
 (0 rows)
 
-  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
+  SELECT 'should not exist' FROM pg_class, pg_namespace WHERE relnamespace = pg_namespace.oid AND relname = 'mytbl2b_log' AND nspname = 'emaj_myschema1';
  ?column? 
 ----------
 (0 rows)
 
-rollback;
--- testing the table drop (remove first the sequence linked to the table, otherwise an event triger fires)
-begin;
-  select emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq','remove_seq_before_drop_mytbl3');
+ROLLBACK;
+-- Testing the table drop (remove first the sequence linked to the table, otherwise an event triger fires).
+BEGIN;
+  SELECT emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq', 'remove_seq_before_drop_mytbl3');
  emaj_remove_sequence 
 ----------------------
                     1
 (1 row)
 
-  drop table mySchema1."myTbl3";
-rollback;
--- testing an ALTER TABLE leading to a table rewrite
-begin;
-  alter table mySchema1."myTbl3" alter column col33 type decimal (10,1);
-rollback;
--- re-add all removed tables
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true, 'Revert_tables_removal');
+  DROP TABLE mySchema1."myTbl3";
+ROLLBACK;
+-- Testing an ALTER TABLE leading to a table rewrite.
+BEGIN;
+  ALTER TABLE mySchema1."myTbl3" ALTER COLUMN col33 type decimal (10, 1);
+ROLLBACK;
+-- Re-add all removed tables.
+SELECT emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', ARRAY['myGroup1'], TRUE, 'Revert_tables_removal');
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
 (1 row)
 
-select emaj.emaj_cleanup_rollback_state();
+SELECT emaj.emaj_cleanup_rollback_state();
  emaj_cleanup_rollback_state 
 -----------------------------
                            0
 (1 row)
 
--- set an intermediate mark
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
+-- Set an intermediate mark.
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}', 'Mk3');
  emaj_set_mark_groups 
 ----------------------
                    15
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
+SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), mark_time_id,
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
-  from emaj.emaj_mark order by mark_time_id, mark_group;
+  FROM emaj.emaj_mark ORDER BY mark_time_id, mark_group;
  mark_group |    regexp_replace     | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------------------+--------------+------------------------+--------------+---------------------------+------------------------------
  myGroup1   | Mk1                   |         9001 | f                      |              |                         0 | 
@@ -2180,16 +2193,16 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2   | Mk3                   |         9714 | f                      |              |                           | 
 (16 rows)
 
--- estimate a rollback crossing alter group operations
-delete from emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
-select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
+-- Estimate a rollback crossing alter group operations.
+DELETE FROM emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
+SELECT emaj.emaj_estimate_rollback_groups('{"myGroup1", "myGroup2"}', 'Mk1', FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
  @ 0.0225 secs
 (1 row)
 
--- execute a rollback not crossing any alter group operation
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) order by 1,2;
+-- Execute a rollback not crossing any alter group operation.
+SELECT * FROM emaj.emaj_rollback_groups('{"myGroup1", "myGroup2"}', 'Mk3', FALSE) ORDER BY 1, 2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -2197,13 +2210,13 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) o
  Notice        | Rollback id = 9703.
 (3 rows)
 
--- execute rollbacks crossing alter group operations
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
+-- Execute rollbacks crossing alter group operations.
+SELECT * FROM emaj.emaj_logged_rollback_groups('{"myGroup1", "myGroup2"}', 'Mk2');
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
+SELECT * FROM emaj.emaj_logged_rollback_groups('{"myGroup1", "myGroup2"}', 'Mk2', FALSE) ORDER BY 1, 2;
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_logged_rollback_groups('{"myGroup1", "myGroup2"}', 'Mk2', TRUE) ORDER BY 1, 2;
  rlbk_severity |                                                     regexp_replace                                                     
 ---------------+------------------------------------------------------------------------------------------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -2221,8 +2234,8 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The table myschema2.mytbl7 has been left unchanged (not in group anymore since <timestamp>)
 (13 rows)
 
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true,'Rollback 2 groups crossing an alter group') order by 1,2;
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_rollback_groups('{"myGroup1", "myGroup2"}', 'Mk1', TRUE, 'Rollback 2 groups crossing an ALTER group') ORDER BY 1, 2;
  rlbk_severity |                                                     regexp_replace                                                     
 ---------------+------------------------------------------------------------------------------------------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -2240,8 +2253,8 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The table myschema2.mytbl7 has been left unchanged (not in group anymore since <timestamp>)
 (13 rows)
 
--- checks for remove tables tests
-select * from emaj.emaj_relation_change where rlchg_time_id >= 9700 order by 1,2,3,4;
+-- Checks for remove tables tests.
+SELECT * FROM emaj.emaj_relation_change WHERE rlchg_time_id >= 9700 ORDER BY 1, 2, 3, 4;
  rlchg_time_id | rlchg_schema | rlchg_tblseq | rlchg_change_kind | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
 ---------------+--------------+--------------+-------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------
           9701 | myschema1    | myTbl3       | REMOVE_TABLE      | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
@@ -2252,7 +2265,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 9700 order by 1,2
           9713 | myschema1    | mytbl2b      | ADD_TABLE         | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
 (6 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9700 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 9700 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     9700 |            9700001 | M
@@ -2270,13 +2283,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     9718 |            9700004 | R
 (13 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
-       hist_user 
-  from emaj.emaj_hist where hist_id >= 9700 order by hist_id;
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 9700 ORDER BY hist_id;
      hist_function      |   hist_event   |         hist_object          |                                                     regexp_replace                                                     | hist_user 
 ------------------------+----------------+------------------------------+------------------------------------------------------------------------------------------------------------------------+-----------
  SET_MARK_GROUP         | BEGIN          | myGroup1                     | Mk2c                                                                                                                   | postgres
@@ -2445,44 +2458,45 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS        | END            | myGroup1,myGroup2            | Rollback_id 9705                                                                                                       | postgres
 (164 rows)
 
--- set sequence restart value
-select public.handle_emaj_sequences(10000);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(10000);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- change the group ownership of a table and a sequence (and some other attributes)
+-- Change the group ownership of a table and a sequence (and some other attributes).
 -----------------------------
--- case when the source group is idle and the destination group is logging
-begin;
-  select emaj.emaj_stop_group('myGroup2');
+-- Case when the source group is idle and the destination group is logging.
+BEGIN;
+  SELECT emaj.emaj_stop_group('myGroup2');
  emaj_stop_group 
 -----------------
                8
 (1 row)
 
-  select emaj.emaj_move_table('myschema2', 'myTbl3', 'myGroup1', 'move table to myGroup1 while logging');
+  SELECT emaj.emaj_move_table('myschema2', 'myTbl3', 'myGroup1', 'move table to myGroup1 while logging');
  emaj_move_table 
 -----------------
                1
 (1 row)
 
-  select emaj.emaj_move_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup1', 'move seq to myGroup1 while logging');
+  SELECT emaj.emaj_move_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup1', 'move seq to myGroup1 while logging');
  emaj_move_sequence 
 --------------------
                   1
 (1 row)
 
-  select emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb, 'modify table to myGroup1 while logging');
+  SELECT emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::JSONB,
+                                'modify table TO myGroup1 while logging');
  emaj_modify_table 
 -------------------
                  1
 (1 row)
 
-  select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
-    where hist_function like 'MO%' order by hist_id desc limit 13;
+  SELECT hist_function, hist_event, hist_object, hist_wording FROM emaj.emaj_hist
+    WHERE hist_function LIKE 'MO%' ORDER BY hist_id DESC LIMIT 13;
  hist_function |          hist_event          |         hist_object          |                        hist_wording                        
 ---------------+------------------------------+------------------------------+------------------------------------------------------------
  MODIFY_TABLE  | END                          |                              | 1 tables effectively modified
@@ -2500,41 +2514,41 @@ begin;
  MOVE_TABLE    | BEGIN                        |                              | 
 (13 rows)
 
-rollback;
--- case when both groups are logging
--- generates updates before the group change
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','before move');
+ROLLBACK;
+-- Case when both groups are logging.
+-- Generates updates before the group change.
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}', 'before move');
  emaj_set_mark_groups 
 ----------------------
                    15
 (1 row)
 
-update myschema2."myTbl3" set col32 = col32 + '1 day' where col31 >= 8;
-select emaj.emaj_move_table('myschema2', 'myTbl3', 'myGroup1', 'move table to myGroup1');
+UPDATE myschema2."myTbl3" set col32 = col32 + '1 day' WHERE col31 >= 8;
+SELECT emaj.emaj_move_table('myschema2', 'myTbl3', 'myGroup1', 'move table to myGroup1');
  emaj_move_table 
 -----------------
                1
 (1 row)
 
-select emaj.emaj_move_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup1', 'move seq to myGroup1');
+SELECT emaj.emaj_move_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup1', 'move seq to myGroup1');
  emaj_move_sequence 
 --------------------
                   1
 (1 row)
 
-begin;
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_rollback_group('myGroup1','before move',false);
+BEGIN;
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_rollback_group('myGroup1', 'before move', FALSE);
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-rollback;
-begin;
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_rollback_group('myGroup2','before move',false);
+ROLLBACK;
+BEGIN;
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_rollback_group('myGroup2', 'before move', FALSE);
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-rollback;
-begin;
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_rollback_group('myGroup1','before move',true);
+ROLLBACK;
+BEGIN;
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_rollback_group('myGroup1', 'before move', TRUE);
  rlbk_severity |                                                     regexp_replace                                                     
 ---------------+------------------------------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 10000.
@@ -2544,10 +2558,10 @@ begin;
  Warning       | The sequence myschema2."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>)
 (5 rows)
 
-rollback;
-begin;
-  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-    from emaj.emaj_rollback_group('myGroup2','before move',true);
+ROLLBACK;
+BEGIN;
+  SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+    FROM emaj.emaj_rollback_group('myGroup2', 'before move', TRUE);
  rlbk_severity |                                               regexp_replace                                               
 ---------------+------------------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 10001.
@@ -2557,14 +2571,15 @@ begin;
  Warning       | The sequence myschema2."myTbl3_col31_seq" has been left unchanged (not in group anymore since <timestamp>)
 (5 rows)
 
-rollback;
-select emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1", "priority":100}'::jsonb, 'modify table');
+ROLLBACK;
+SELECT emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1", "priority":100}'::JSONB,
+                              'modify table');
  emaj_modify_table 
 -------------------
                  1
 (1 row)
 
-select * from emaj.emaj_relation where rel_schema = 'myschema2' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'myTbl3_col31_seq') order by 1,2,3,4;
+SELECT * FROM emaj.emaj_relation WHERE rel_schema = 'myschema2' AND (rel_tblseq = 'myTbl3' OR rel_tblseq = 'myTbl3_col31_seq') ORDER BY 1, 2, 3, 4;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp |  rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_ignored_triggers | rel_pk_cols | rel_gen_expr_cols | rel_emaj_verb_attnum | rel_has_always_ident_col |     rel_sql_rlbk_columns      | rel_sql_gen_ins_col |                                                  rel_sql_gen_ins_val                                                  |                                                               rel_sql_gen_upd_set                                                               | rel_sql_gen_pk_conditions | rel_log_seq_last_value 
 ------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+------------------+-----------------+------------------+------------------+----------------------+-------------+-------------------+----------------------+--------------------------+-------------------------------+---------------------+-----------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+------------------------
  myschema2  | myTbl3           | [8010,10005)   | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_1  |                 | myTbl3_log_idx_1 |                 | myTbl3_log_seq   | myTbl3_log_fnct  |                      | {col31}     |                   |                    4 | f                        | tbl.col31,tbl.col32,tbl.col33 |                     | ' || coalesce(o.col31::TEXT,'NULL') || ', ' || quote_nullable(o.col32) || ', ' || coalesce(o.col33::TEXT,'NULL') || ' | col31 = ' || coalesce(n.col31::TEXT, 'NULL') || ', col32 = ' || quote_nullable(n.col32) || ', col33 = ' || coalesce(n.col33::TEXT, 'NULL') || ' | col31 = ' || o.col31 || ' |                       
@@ -2573,35 +2588,38 @@ select * from emaj.emaj_relation where rel_schema = 'myschema2' and (rel_tblseq 
  myschema2  | myTbl3_col31_seq | [10006,)       | myGroup1  | S        |              |                |               |                 |                  |                 |                  |                  |                      |             |                   |                      |                          |                               |                     |                                                                                                                       |                                                                                                                                                 |                           |                       
 (4 rows)
 
--- perform various tasks on the groups
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','after move');
+-- Perform various tasks on the groups.
+SELECT emaj.emaj_set_mark_groups('{"myGroup1", "myGroup2"}', 'after move');
  emaj_set_mark_groups 
 ----------------------
                    15
 (1 row)
 
-update myschema2."myTbl3" set col33 = 12.0 where col31 >= 9;
--- groups statistics
-select  stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL)
-  where stat_schema = 'myschema2' and stat_table = 'myTbl3';
+UPDATE myschema2."myTbl3" SET col33 = 12.0 WHERE col31 >= 9;
+-- Groups statistics.
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_groups('{"myGroup1", "myGroup2"}', 'before move', NULL)
+  WHERE stat_schema = 'myschema2' AND stat_table = 'myTbl3';
  stat_group | stat_schema | stat_table |    stat_first_mark     | stat_first_time_id |     stat_last_mark     | stat_last_time_id | stat_rows 
 ------------+-------------+------------+------------------------+--------------------+------------------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | before move            |              10004 | move table to myGroup1 |             10005 |         3
  myGroup1   | myschema2   | myTbl3     | move table to myGroup1 |              10005 |                        |                   |         2
 (2 rows)
 
-select  stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_verb, stat_role, stat_rows
-  from emaj.emaj_detailed_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL) where stat_schema = 'myschema2' and stat_table = 'myTbl3';
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_verb, stat_role, stat_rows
+  FROM emaj.emaj_detailed_log_stat_groups('{"myGroup1", "myGroup2"}', 'before move', NULL)
+  WHERE stat_schema = 'myschema2' AND stat_table = 'myTbl3';
  stat_group | stat_schema | stat_table |    stat_first_mark     | stat_first_time_id |     stat_last_mark     | stat_last_time_id | stat_verb | stat_role | stat_rows 
 ------------+-------------+------------+------------------------+--------------------+------------------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | myTbl3     | before move            |              10004 | move table to myGroup1 |             10005 | UPDATE    | postgres  |         3
  myGroup1   | myschema2   | myTbl3     | move table to myGroup1 |              10005 |                        |                   | UPDATE    | postgres  |         2
 (2 rows)
 
--- table and sequence statistics
-select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
-  from emaj.emaj_log_stat_table('myschema2', 'myTbl3', 'myGroup2', 'Mk1');
+-- Table and sequence statistics.
+SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'myTbl3', 'myGroup2', 'Mk1');
  stat_group |    stat_first_mark     | stat_is_log_start |     stat_last_mark     | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+-------------------+------------------------+------------------+--------------+----------------
  myGroup2   | Mk1                    | t                 | before move            | f                |            0 |              8
@@ -2612,8 +2630,8 @@ select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_l
  myGroup1   | after move             | f                 | [current state]        | f                |            2 |              0
 (6 rows)
 
-select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-  from emaj.emaj_log_stat_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup2', 'Mk1');
+SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup2', 'Mk1');
  stat_group |    stat_first_mark     | stat_is_log_start |     stat_last_mark     | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+-------------------+------------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mk1                    | t                 | before move            | f                |               0 | f                          |              8
@@ -2624,34 +2642,34 @@ select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_l
  myGroup1   | after move             | f                 | [current state]        | f                |               0 | f                          |              0
 (6 rows)
 
--- delete both move marks
-begin;
-  select emaj.emaj_delete_mark_group('myGroup2','move table to myGroup1');
+-- Delete both move marks.
+BEGIN;
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'move table to myGroup1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select emaj.emaj_delete_mark_group('myGroup1','move table to myGroup1');
+  SELECT emaj.emaj_delete_mark_group('myGroup1', 'move table to myGroup1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select emaj.emaj_delete_mark_group('myGroup2','move seq to myGroup1');
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'move seq to myGroup1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select emaj.emaj_delete_mark_group('myGroup1','move seq to myGroup1');
+  SELECT emaj.emaj_delete_mark_group('myGroup1', 'move seq to myGroup1');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'myTbl3', 'myGroup2', 'Mk1');
+  SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_changes, stat_rollbacks
+    FROM emaj.emaj_log_stat_table('myschema2', 'myTbl3', 'myGroup2', 'Mk1');
  stat_group | stat_first_mark | stat_is_log_start | stat_last_mark  | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+-----------------+-------------------+-----------------+------------------+--------------+----------------
  myGroup2   | Mk1             | t                 | before move     | f                |            0 |              8
@@ -2661,8 +2679,8 @@ begin;
  myGroup1   | after move      | f                 | [current state] | f                |            2 |              0
 (5 rows)
 
-  select stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup2', 'Mk1');
+  SELECT stat_group, stat_first_mark, stat_is_log_start, stat_last_mark, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    FROM emaj.emaj_log_stat_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup2', 'Mk1');
  stat_group | stat_first_mark | stat_is_log_start | stat_last_mark  | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+-------------------+-----------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mk1             | t                 | before move     | f                |               0 | f                          |              8
@@ -2672,17 +2690,17 @@ begin;
  myGroup1   | after move      | f                 | [current state] | f                |               0 | f                          |              0
 (5 rows)
 
-rollback;
--- generate a sql script crossing the move (before rollback)
-select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script1.sql',
-  array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+ROLLBACK;
+-- Generate a sql script crossing the move (before rollback).
+SELECT emaj.emaj_gen_sql_groups('{"myGroup1", "myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script1.sql',
+                                ARRAY['myschema2.myTbl3', 'myschema2.myTbl3_col31_seq']);
  emaj_gen_sql_groups 
 ---------------------
                    3
 (1 row)
 
--- rollback to a mark set after the group change
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','after move',false,'Logged rollback on 2 groups');
+-- Rollback to a mark set after the group change.
+SELECT * FROM emaj.emaj_logged_rollback_groups('{"myGroup1", "myGroup2"}', 'after move', FALSE, 'Logged rollback on 2 groups');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | Rollback id = 10002.
@@ -2690,9 +2708,9 @@ select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','after 
  Notice        | 0 / 4 sequences effectively processed.
 (3 rows)
 
--- rollback to a mark set before the group change
-select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','before move',true);
+-- Rollback to a mark set before the group change.
+SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g')
+  FROM emaj.emaj_rollback_groups('{"myGroup1", "myGroup2"}', 'before move', TRUE);
  rlbk_severity |                                                     regexp_replace                                                     
 ---------------+------------------------------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 10003.
@@ -2705,40 +2723,40 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | Tables group change not rolled back: E-Maj priority for myschema2."myTbl3"
 (8 rows)
 
--- generate a sql script crossing the move (after rollback)
-select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script2.sql',
-  array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+-- Generate a sql script crossing the move (after rollback).
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script2.sql',
+  ARRAY['myschema2.myTbl3', 'myschema2.myTbl3_col31_seq']);
 ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at start mark time.
-select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script3.sql',
-  array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+SELECT emaj.emaj_gen_sql_groups('{"myGroup1", "myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script3.sql',
+  ARRAY['myschema2.myTbl3', 'myschema2.myTbl3_col31_seq']);
  emaj_gen_sql_groups 
 ---------------------
                    3
 (1 row)
 
 \! rm $EMAJTESTTMPDIR/script*
--- revert the changes and apply with a destination group in idle state
-select emaj.emaj_stop_group('myGroup2');
+-- Revert the changes and apply with a destination group in idle state.
+SELECT emaj.emaj_stop_group('myGroup2');
  emaj_stop_group 
 -----------------
                6
 (1 row)
 
--- This first import try fails because myGroup1 is missing in the groups to process list
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
+-- This first import try fails because myGroup1 is missing in the groups to process list.
+SELECT emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', ARRAY['myGroup2'], TRUE);
 WARNING:  _import_groups_conf (2): In tables group "myGroup2", the table myschema2."myTbl3" is already assigned to the group ""myGroup1"".
 WARNING:  _import_groups_conf (2): In tables group "myGroup2", the sequence myschema2."myTbl3_col31_seq" is already assigned to the group "myGroup1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
+SELECT emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1", "myGroup2"}', TRUE);
  emaj_import_groups_configuration 
 ----------------------------------
                                 2
 (1 row)
 
 -----------------------------
--- some extra tests with tables and sequences removal and addition
+-- Some extra tests with tables and sequences removal and addition.
 -----------------------------
-select emaj.emaj_start_group('myGroup2','Start');
+SELECT emaj.emaj_start_group('myGroup2', 'Start');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_start_group 
@@ -2746,28 +2764,28 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                 8
 (1 row)
 
-insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
-select nextval('myschema2.myseq1');
+INSERT INTO myschema2.mytbl1 VALUES (100, 'Started', E'\\000'::bytea);
+SELECT nextval('myschema2.myseq1');
  nextval 
 ---------
     1003
 (1 row)
 
--- remove and assign somes tables and sequences in a single transaction
-begin;
-  select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'REMOVE_3_TABLES');
+-- Remove and assign somes tables and sequences in a single transaction.
+BEGIN;
+  SELECT emaj.emaj_remove_tables('myschema2', '{"mytbl1", "mytbl2", "myTbl3"}'::TEXT[], 'REMOVE_3_TABLES');
  emaj_remove_tables 
 --------------------
                   3
 (1 row)
 
-  select emaj.emaj_remove_sequence('myschema2','myseq1','REMOVE_1_SEQUENCES');
+  SELECT emaj.emaj_remove_sequence('myschema2', 'myseq1', 'REMOVE_1_SEQUENCES');
  emaj_remove_sequence 
 ----------------------
                     1
 (1 row)
 
-  select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'myGroup2',null,'ASSIGN_3_TABLES');
+  SELECT emaj.emaj_assign_tables('myschema2', '{"mytbl1", "mytbl2", "myTbl3"}'::TEXT[], 'myGroup2', NULL, 'ASSIGN_3_TABLES');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_assign_tables 
@@ -2775,36 +2793,36 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                   3
 (1 row)
 
-  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2','ASSIGN_2_SEQUENCES');
+  SELECT emaj.emaj_assign_sequences('myschema2', '{"myseq1", "myseq2"}'::TEXT[], 'myGroup2', 'ASSIGN_2_SEQUENCES');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
-  insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
-  select nextval('myschema2.myseq1');
+  INSERT INTO myschema2.mytbl1 VALUES (110, 'Assigned', E'\\000'::bytea);
+  SELECT nextval('myschema2.myseq1');
  nextval 
 ---------
     1004
 (1 row)
 
   -- what if some (all but the emaj sequence) emaj components are missing at remove_table time ?
-  select emaj.emaj_disable_protection_by_event_triggers();
+  SELECT emaj.emaj_disable_protection_by_event_triggers();
  emaj_disable_protection_by_event_triggers 
 -------------------------------------------
                                          3
 (1 row)
 
-  drop table emaj_myschema2.mytbl1_log;
-  drop function emaj_myschema2.mytbl1_log_fnct() cascade;
+  DROP TABLE emaj_myschema2.mytbl1_log;
+  DROP FUNCTION emaj_myschema2.mytbl1_log_fnct() CASCADE;
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2.mytbl1
-  select emaj.emaj_enable_protection_by_event_triggers();
+  SELECT emaj.emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
 ------------------------------------------
                                         3
 (1 row)
 
-  select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
+  SELECT emaj.emaj_remove_tables('myschema2', '{"mytbl1", "mytbl2", "myTbl3"}');
 NOTICE:  relation "mytbl1_log" does not exist, skipping
 NOTICE:  relation "mytbl1_log_idx" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
@@ -2814,14 +2832,14 @@ NOTICE:  function emaj_myschema2.mytbl1_log_fnct() does not exist, skipping
                   3
 (1 row)
 
-  select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}');
+  SELECT emaj.emaj_remove_sequences('myschema2', '{"myseq1", "myseq2"}');
  emaj_remove_sequences 
 -----------------------
                      2
 (1 row)
 
-  select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
-                                 '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
+  SELECT emaj.emaj_assign_tables('myschema2', '{"mytbl1", "mytbl2", "myTbl3"}', 'myGroup2',
+                                 '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::JSONB);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_assign_tables 
@@ -2829,57 +2847,57 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                   3
 (1 row)
 
-  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2','Mark_assign_sequences');
+  SELECT emaj.emaj_assign_sequences('myschema2', '{"myseq1", "myseq2"}'::TEXT[], 'myGroup2', 'Mark_assign_sequences');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
-commit;
--- remove tables and sequences with bad marks
-select emaj.emaj_remove_table('myschema2','mytbl1','Mark_assign_sequences');
+COMMIT;
+-- Remove tables and sequences with bad marks.
+SELECT emaj.emaj_remove_table('myschema2', 'mytbl1', 'Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
-select emaj.emaj_remove_sequence('myschema2','myseq1','Mark_assign_sequences');
+SELECT emaj.emaj_remove_sequence('myschema2', 'myseq1', 'Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
--- alter a table in a logging group
-select emaj.emaj_remove_table('myschema1','mytbl4');
+-- Alter a table in a logging group.
+SELECT emaj.emaj_remove_table('myschema1', 'mytbl4');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-alter table myschema1.mytbl4 alter column col45 type varchar(15);
-select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
+ALTER TABLE myschema1.mytbl4 ALTER COLUMN col45 TYPE VARCHAR(15);
+SELECT emaj.emaj_assign_table('myschema1', 'mytbl4', 'myGroup1');
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
-begin;
-  select emaj.emaj_remove_table('myschema1','mytbl4');
+BEGIN;
+  SELECT emaj.emaj_remove_table('myschema1', 'mytbl4');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-  alter table myschema1.mytbl4 alter column col45 type varchar(10);
-  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1',NULL,'Assign_mytbl4');
+  ALTER TABLE myschema1.mytbl4 ALTER COLUMN col45 TYPE VARCHAR(10);
+  SELECT emaj.emaj_assign_table('myschema1', 'mytbl4', 'myGroup1', NULL, 'Assign_mytbl4');
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
-commit;
--- checks
-select count(*) from emaj.emaj_mark where mark_group = 'myGroup2' and (mark_name like 'REMOVE%' or mark_name like 'ASSIGN%');
+COMMIT;
+-- Checks.
+SELECT count(*) FROM emaj.emaj_mark WHERE mark_group = 'myGroup2' AND (mark_name LIKE 'REMOVE%' OR mark_name LIKE 'ASSIGN%');
  count 
 -------
      7
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
-  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3','myseq1','myseq2')
-  order by rel_schema, rel_tblseq, rel_time_range;
+SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+  FROM emaj.emaj_relation WHERE rel_schema = 'myschema2' AND rel_tblseq IN ('mytbl1', 'mytbl2', 'myTbl3', 'myseq1', 'myseq2')
+  ORDER BY rel_schema, rel_tblseq, rel_time_range;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
  myschema2  | myTbl3     | [10005,10015)  | myGroup1  | r        | emaj_myschema2 | myTbl3_log_2  |                       
@@ -2900,8 +2918,8 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
  myschema2  | mytbl2     | [10023,)       | myGroup2  | r        | emaj_myschema2 | mytbl2_log    |                       
 (16 rows)
 
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence
-  where sequ_schema = 'myschema2' and sequ_name like 'myseq%' order by sequ_name, sequ_time_id;
+SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called FROM emaj.emaj_sequence
+  WHERE sequ_schema = 'myschema2' AND sequ_name LIKE 'myseq%' ORDER BY sequ_name, sequ_time_id;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------
  myschema2   | myseq1    |        10016 |          1003 | f
@@ -2917,8 +2935,8 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2   | myseq2    |        10024 |             3 | f
 (11 rows)
 
-select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
-  where tbl_schema = 'myschema2' and tbl_name = 'mytbl1' order by tbl_time_id;
+SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val FROM emaj.emaj_table
+  WHERE tbl_schema = 'myschema2' AND tbl_name = 'mytbl1' ORDER BY tbl_time_id;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
  myschema2  | mytbl1   |       10016 |                    0
@@ -2930,35 +2948,35 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl1   |       10024 |                    2
 (7 rows)
 
--- referential integrity violation attempt while rollbacking to a mark set before an ADD_TBL with a FK involved in the operation.
-insert into myschema1.mytbl2 values (1000,'a',current_date);
-insert into myschema1.mytbl4 values (100,'b',1000,2,'ABC');
-begin;
-  select emaj.emaj_remove_table('myschema1','mytbl4','Remove_mytbl4');
+-- Referential integrity violation attempt while rollbacking to a mark set before an ADD_TBL with a FK involved in the operation.
+INSERT INTO myschema1.mytbl2 VALUES (1000, 'a', current_date);
+INSERT INTO myschema1.mytbl4 VALUES (100, 'b', 1000, 2, 'ABC');
+BEGIN;
+  SELECT emaj.emaj_remove_table('myschema1', 'mytbl4', 'Remove_mytbl4');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1',NULL,'Reassign_mytbl4');
+  SELECT emaj.emaj_assign_table('myschema1', 'mytbl4', 'myGroup1', NULL, 'Reassign_mytbl4');
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
--- deactivate the dblink usage to avoid deadlock, the assign_table and the rollback being executed in the same transaction,
---   they conflict on the emaj_myschema1.mytbl4_log_seq log sequence
-  select emaj.emaj_set_param('dblink_user_password', NULL);
+-- Deactivate the dblink usage to avoid deadlock, the assign_table and the rollback being executed in the same transaction,
+--   They conflict on the emaj_myschema1.mytbl4_log_seq log sequence.
+  SELECT emaj.emaj_set_param('dblink_user_password', NULL);
  emaj_set_param 
 ----------------
               1
 (1 row)
 
--- the rollback should fail at FK check
-  select * from emaj.emaj_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1','Remove_mytbl4'),true);
+-- The rollback should fail at FK check.
+  SELECT * FROM emaj.emaj_rollback_group('myGroup1', emaj.emaj_get_previous_mark_group('myGroup1', 'Remove_mytbl4'), TRUE);
 ERROR:  update or delete on table "mytbl2" violates foreign key constraint "mytbl4_col43_fkey" on table "mytbl4"
-rollback;
-select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
+ROLLBACK;
+SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'EMAJ_LAST_MARK');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | Rollback id = 10005.
@@ -2967,94 +2985,94 @@ select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 (3 rows)
 
 -----------------------------
--- some extra tests with group ownership change for some tables and sequences
+-- Some extra tests with group ownership change for some tables and sequences.
 -----------------------------
--- from an idle to a logging group
-select emaj.emaj_move_tables('myschema4','.*','','myGroup1','MOVE_TBL_idle_to_logging');
+-- From an idle to a logging group.
+SELECT emaj.emaj_move_tables('myschema4', '.*', '', 'myGroup1', 'MOVE_TBL_idle_to_logging');
  emaj_move_tables 
 ------------------
                 6
 (1 row)
 
-select emaj.emaj_move_sequences('myschema2','.*','','myGroup1','MOVE_SEQ_idle_to_logging');
+SELECT emaj.emaj_move_sequences('myschema2', '.*', '', 'myGroup1', 'MOVE_SEQ_idle_to_logging');
  emaj_move_sequences 
 ---------------------
                    3
 (1 row)
 
--- bad mark
-select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
+-- Bad mark.
+SELECT emaj.emaj_move_tables('myschema4', '.*', '', 'myGroup2', emaj.emaj_get_previous_mark_group('myGroup1', now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
-select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
+SELECT emaj.emaj_move_sequences('myschema2', '.*', '', 'myGroup2', emaj.emaj_get_previous_mark_group('myGroup1', now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
--- from a logging group to another logging group
-select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
+-- From a logging group to another logging group.
+SELECT emaj.emaj_move_tables('myschema4', '.*', '', 'myGroup2', 'MOVE_TBL_logging_to_logging');
  emaj_move_tables 
 ------------------
                 6
 (1 row)
 
-select emaj.emaj_move_sequences('myschema2','.*','','myGroup2','MOVE_SEQ_logging_to_logging');
+SELECT emaj.emaj_move_sequences('myschema2', '.*', '', 'myGroup2', 'MOVE_SEQ_logging_to_logging');
  emaj_move_sequences 
 ---------------------
                    3
 (1 row)
 
--- reset an idle group to check the emaj_sequence cleaning
-begin;
-  select emaj.emaj_reset_group('myGroup4');
+-- Reset an idle group to check the emaj_sequence cleaning.
+BEGIN;
+  SELECT emaj.emaj_reset_group('myGroup4');
  emaj_reset_group 
 ------------------
                 0
 (1 row)
 
-  select rel_group, count(*) from emaj.emaj_sequence, emaj.emaj_relation
-    where sequ_schema = rel_schema and sequ_name = rel_tblseq and sequ_time_id <@ rel_time_range
-      and sequ_schema = 'myschema2' and sequ_name = 'myseq1'
-    group by 1;
+  SELECT rel_group, count(*) FROM emaj.emaj_sequence, emaj.emaj_relation
+    WHERE sequ_schema = rel_schema AND sequ_name = rel_tblseq AND sequ_time_id <@ rel_time_range
+      AND sequ_schema = 'myschema2' AND sequ_name = 'myseq1'
+    group BY 1;
  rel_group | count 
 -----------+-------
  myGroup1  |     2
  myGroup2  |     6
 (2 rows)
 
-rollback;
--- and back to the idle group
-select emaj.emaj_move_tables('myschema4','.*','','myGroup4','MOVE_TBL_logging_to_idle');
+ROLLBACK;
+-- And back to the idle group.
+SELECT emaj.emaj_move_tables('myschema4', '.*', '', 'myGroup4', 'MOVE_TBL_logging_to_idle');
  emaj_move_tables 
 ------------------
                 6
 (1 row)
 
-select emaj.emaj_move_sequences('myschema2','.*','','myGroup4','MOVE_SEQ_logging_to_idle');
+SELECT emaj.emaj_move_sequences('myschema2', '.*', '', 'myGroup4', 'MOVE_SEQ_logging_to_idle');
  emaj_move_sequences 
 ---------------------
                    3
 (1 row)
 
--- move a table with fkey and verify all
-select emaj.emaj_move_table('myschema2','mytbl2','myGroup1','Move a table with fkey');
+-- Move a table with fkey and verify all.
+SELECT emaj.emaj_move_table('myschema2', 'mytbl2', 'myGroup1', 'Move a table with fkey');
  emaj_move_table 
 -----------------
                1
 (1 row)
 
-select * from emaj.emaj_verify_all() as t(msg) where msg not like '%foreign key%';
+SELECT * FROM emaj.emaj_verify_all() AS t(msg) WHERE msg NOT LIKE '%foreign key%';
                                                                                            msg                                                                                           
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In tables group "myGroup2", the log table "emaj_myschema2"."mytbl1_log_2" is not found.
  Warning: In tables group "myGroup4", the sequence "myschema2"."myTbl3_col31_seq" is linked to the table "myschema2"."myTbl3" but this table belongs to another tables group (myGroup2).
 (2 rows)
 
-select emaj.emaj_move_table('myschema2','mytbl2','myGroup2','Move a table with fkey back');
+SELECT emaj.emaj_move_table('myschema2', 'mytbl2', 'myGroup2', 'Move a table with fkey back');
  emaj_move_table 
 -----------------
                1
 (1 row)
 
--- rename a table and/or change its schema
-alter table myschema1.mytbl1 rename to mytbl1_new_name;
-select emaj.emaj_remove_table('myschema1','mytbl1');
+-- Rename a table and/or change its schema.
+ALTER TABLE myschema1.mytbl1 RENAME TO mytbl1_new_name;
+SELECT emaj.emaj_remove_table('myschema1', 'mytbl1');
 WARNING:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl1) do not exist.
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1_new_name
  emaj_remove_table 
@@ -3062,14 +3080,14 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1_new_nam
                  1
 (1 row)
 
-select emaj.emaj_assign_table('myschema1','mytbl1_new_name','myGroup1');
+SELECT emaj.emaj_assign_table('myschema1', 'mytbl1_new_name', 'myGroup1');
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
-alter table myschema1.mytbl1_new_name set schema public;
-select emaj.emaj_remove_table('myschema1','mytbl1_new_name');
+ALTER TABLE myschema1.mytbl1_new_name SET SCHEMA public;
+SELECT emaj.emaj_remove_table('myschema1', 'mytbl1_new_name');
 WARNING:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl1_new_name) do not exist.
 NOTICE:  drop cascades to trigger emaj_log_trg on table public.mytbl1_new_name
  emaj_remove_table 
@@ -3077,15 +3095,15 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table public.mytbl1_new_name
                  1
 (1 row)
 
-select emaj.emaj_assign_table('public','mytbl1_new_name','myGroup1');
+SELECT emaj.emaj_assign_table('public', 'mytbl1_new_name', 'myGroup1');
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
-alter table public.mytbl1_new_name rename to mytbl1;
-alter table public.mytbl1 set schema myschema1;
-select emaj.emaj_remove_table('public','mytbl1_new_name');
+ALTER TABLE public.mytbl1_new_name RENAME TO mytbl1;
+ALTER TABLE public.mytbl1 SET SCHEMA myschema1;
+SELECT emaj.emaj_remove_table('public', 'mytbl1_new_name');
 WARNING:  _check_tblseqs_array: In schema "public", some tables (mytbl1_new_name) do not exist.
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
  emaj_remove_table 
@@ -3093,34 +3111,34 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
                  1
 (1 row)
 
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
+SELECT emaj.emaj_assign_table('myschema1', 'mytbl1', 'myGroup1');
  emaj_assign_table 
 -------------------
                  1
 (1 row)
 
 -----------------------------
--- test end: check
+-- Test end: check.
 -----------------------------
-select emaj.emaj_stop_group('myGroup1');
+SELECT emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
                7
 (1 row)
 
-select emaj.emaj_stop_group('myGroup2');
+SELECT emaj.emaj_stop_group('myGroup2');
  emaj_stop_group 
 -----------------
                6
 (1 row)
 
-select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK',NULL,NULL);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', NULL, NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
  28 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-select regexp_replace(sql_text, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','<timestamp>','g') from emaj_temp_sql where sql_line_number = 0;
+SELECT regexp_replace(sql_text, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '<timestamp>', 'g') FROM emaj_temp_sql WHERE sql_line_number = 0;
                                                             regexp_replace                                                            
 --------------------------------------------------------------------------------------------------------------------------------------
  -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Mk1" and "STOP_<timestamp>"
@@ -3154,39 +3172,39 @@ select regexp_replace(sql_text, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','<time
  -- Dump changes for sequence myschema2.myseq2 between marks "MOVE_SEQ_idle_to_logging" and "MOVE_SEQ_logging_to_logging"
 (29 rows)
 
-select emaj.emaj_drop_group('myGroup1');
+SELECT emaj.emaj_drop_group('myGroup1');
  emaj_drop_group 
 -----------------
                7
 (1 row)
 
-select emaj.emaj_drop_group('myGroup2');
+SELECT emaj.emaj_drop_group('myGroup2');
 NOTICE:  table "mytbl1_log_2" does not exist, skipping
  emaj_drop_group 
 -----------------
                6
 (1 row)
 
-select emaj.emaj_drop_group('myGroup4');
+SELECT emaj.emaj_drop_group('myGroup4');
  emaj_drop_group 
 -----------------
                9
 (1 row)
 
-select emaj.emaj_drop_group('myGroup5');
+SELECT emaj.emaj_drop_group('myGroup5');
  emaj_drop_group 
 -----------------
                2
 (1 row)
 
-select emaj.emaj_drop_group('emptyGroup');
+SELECT emaj.emaj_drop_group('emptyGroup');
  emaj_drop_group 
 -----------------
                0
 (1 row)
 
--- checks for group ownership change tests
-select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,2,3,4;
+-- Checks for group ownership change tests.
+SELECT * FROM emaj.emaj_relation_change WHERE rlchg_time_id >= 10000 ORDER BY 1, 2, 3, 4;
  rlchg_time_id |  rlchg_schema   |   rlchg_tblseq    |      rlchg_change_kind      | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
 ---------------+-----------------+-------------------+-----------------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------
          10005 | myschema2       | myTbl3            | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
@@ -3283,7 +3301,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,
          10052 | phil's schema"3 | myTbl2\           | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
 (92 rows)
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
+SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp WHERE time_id >= 10000 ORDER BY time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
    10004 |           10000000 | M
@@ -3335,13 +3353,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10053 |           10000014 | D
 (47 rows)
 
-select hist_function, hist_event, hist_object,
+SELECT hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
-            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
-            E'\\[.+\\]','(timestamp)','g'), 
-       hist_user 
-  from emaj.emaj_hist where hist_id >= 10000 order by hist_id;
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)', '<timestamp>)', 'g'),
+            E'\\[.+\\]', '(timestamp)', 'g'),
+       hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 10000 ORDER BY hist_id;
    hist_function    |          hist_event          |         hist_object          |                                                     regexp_replace                                                     | hist_user 
 --------------------+------------------------------+------------------------------+------------------------------------------------------------------------------------------------------------------------+-----------
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | before move                                                                                                            | postgres
@@ -3759,19 +3777,19 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP         | END                          | emptyGroup                   | 0 tables/sequences processed                                                                                           | postgres
 (413 rows)
 
-select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+SELECT nspname FROM pg_namespace WHERE nspname LIKE 'emaj%' ORDER BY nspname;
  nspname 
 ---------
  emaj
 (1 row)
 
-select * from emaj.emaj_schema order by 1;
+SELECT * FROM emaj.emaj_schema ORDER BY 1;
  sch_name | sch_time_id 
 ----------+-------------
  emaj     |            
 (1 row)
 
-select * from emaj.emaj_rel_hist order by 1,2,3;
+SELECT * FROM emaj.emaj_rel_hist ORDER BY 1, 2, 3;
    relh_schema   |    relh_tblseq    | relh_time_range |    relh_group    | relh_kind 
 -----------------+-------------------+-----------------+------------------+-----------
  myschema1       | myTbl3            | [2000,8001)     | myGroup1         | r
@@ -3904,16 +3922,16 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  public          | mytbl1_new_name   | [10044,10045)   | myGroup1         | r
 (128 rows)
 
-select rlbk_id, rlbk_status, rlbk_comment from emaj.emaj_rlbk where rlbk_comment is not null order by 1;
+SELECT rlbk_id, rlbk_status, rlbk_comment FROM emaj.emaj_rlbk WHERE rlbk_comment IS NOT NULL ORDER BY 1;
  rlbk_id | rlbk_status |                  rlbk_comment                  
 ---------+-------------+------------------------------------------------
     4010 | COMMITTED   | Rollback set by the 'rollback.sql' script
     4012 | COMMITTED   | Logged rollback set by the rollback.sql script
     4019 | COMMITTED   | my comment
-    9705 | COMMITTED   | Rollback 2 groups crossing an alter group
+    9705 | COMMITTED   | Rollback 2 groups crossing an ALTER group
    10002 | COMMITTED   | Logged rollback on 2 groups
 (5 rows)
 
-truncate emaj.emaj_hist;
--- remove the temp directory
+TRUNCATE emaj.emaj_hist;
+-- Remove the temp directory.
 \! rm -R $EMAJTESTTMPDIR

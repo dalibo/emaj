@@ -1,141 +1,141 @@
--- stat.sql : test statistics functions
---   emaj_log_stat_group(), emaj_log_stat_groups()
+-- Stat.sql : test statistics functions.
+--   emaj_log_stat_group(), emaj_log_stat_groups().
 --   emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups(),
---   emaj_sequence_stat_group() and emaj_sequence_stat_groups()
---   _get_sequences_last_value()
+--   emaj_sequence_stat_group() and emaj_sequence_stat_groups().
+--   _get_sequences_last_value().
 --
--- do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement)
+-- Do not display DETAIL and CONTEXT outputs when an error is raised (\errverbose can be used to debug a statement).
 \set VERBOSITY terse
--- set sequence restart value
-select public.handle_emaj_sequences(5000);
+-- Set sequence restart value.
+SELECT public.handle_emaj_sequences(5000);
  handle_emaj_sequences 
 -----------------------
  
 (1 row)
 
 -----------------------------
--- log updates on myschema2 between 3 mono-group and multi-groups marks
+-- Log updates on myschema2 between 3 mono-group and multi-groups marks.
 -----------------------------
-set search_path=public,myschema2;
--- set a multi-groups mark
-select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-1');
+SET search_path TO public, myschema2;
+-- Set a multi-groups mark.
+SELECT emaj.emaj_set_mark_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1');
  emaj_set_mark_groups 
 ----------------------
                    17
 (1 row)
 
--- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger) and increment myseq1
-insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,10100) as i;
-update myTbl1 set col13=E'\\034'::bytea where col11 <= 500;
-delete from myTbl1 where col11 > 10000;
-insert into myTbl2 select i, 'DEF', current_date from generate_series (1,900) as i;
-select nextval('myschema2.myseq1');
+-- Inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger) and increment myseq1.
+INSERT INTO myTbl1 SELECT i, 'ABC', E'\\014'::bytea FROM generate_series (1, 10100) AS i;
+UPDATE myTbl1 SET col13=E'\\034'::bytea WHERE col11 <= 500;
+DELETE FROM myTbl1 WHERE col11 > 10000;
+INSERT INTO myTbl2 SELECT i, 'DEF', current_date FROM generate_series (1, 900) AS i;
+SELECT nextval('myschema2.myseq1');
  nextval 
 ---------
     1000
 (1 row)
 
-select nextval('myschema2.myseq1');
+SELECT nextval('myschema2.myseq1');
  nextval 
 ---------
     1001
 (1 row)
 
--- set marks
-select emaj.emaj_set_mark_group('myGroup2','Mark22');
+-- Set marks.
+SELECT emaj.emaj_set_mark_group('myGroup2', 'Mark22');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
-select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
+SELECT emaj.emaj_set_mark_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-2');
  emaj_set_mark_groups 
 ----------------------
                    17
 (1 row)
 
--- inserts/updates/deletes in myTbl3 and myTbl4and increment and alter myseq1
-insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
-insert into myTbl4 select i,'FK...',i,1,'ABC' from generate_series (1,100) as i;
-select nextval('myschema2.myseq1');
+-- Inserts/updates/deletes in myTbl3 and myTbl4and increment and alter myseq1.
+INSERT INTO "myTbl3" (col33) SELECT generate_series(1000, 1039, 4)/100;
+INSERT INTO myTbl4 SELECT i, 'FK...', i, 1, 'ABC' FROM generate_series (1, 100) AS i;
+SELECT nextval('myschema2.myseq1');
  nextval 
 ---------
     1002
 (1 row)
 
-alter sequence myschema2.myseq1 MAXVALUE 10000;
--- set marks
-select emaj.emaj_set_mark_group('myGroup2','Mark23');
+ALTER SEQUENCE myschema2.myseq1 MAXVALUE 10000;
+-- Set marks.
+SELECT emaj.emaj_set_mark_group('myGroup2', 'Mark23');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
-select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
+SELECT emaj.emaj_set_mark_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-3');
  emaj_set_mark_groups 
 ----------------------
                    17
 (1 row)
 
--- reset the sequence alter
-alter sequence myschema2.myseq1 MAXVALUE 2000;
+-- Reset the sequence alter.
+ALTER SEQUENCE myschema2.myseq1 MAXVALUE 2000;
 -----------------------------
--- emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups() test
+-- emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups() test.
 -----------------------------
--- group is unknown
-select * from emaj.emaj_log_stat_group(null,null,null);
+-- Group is unknown.
+SELECT * FROM emaj.emaj_log_stat_group(NULL, NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select * from emaj.emaj_log_stat_groups(array['unknownGroup'],null,null);
+SELECT * FROM emaj.emaj_log_stat_groups(ARRAY['unknownGroup'], NULL, NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-select * from emaj.emaj_detailed_log_stat_group(null,null,null);
+SELECT * FROM emaj.emaj_detailed_log_stat_group(NULL, NULL, NULL);
 ERROR:  _check_group_names: No group to process.
-select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],null,null);
+SELECT * FROM emaj.emaj_detailed_log_stat_groups(ARRAY['unknownGroup'], NULL, NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
--- invalid marks
-select * from emaj.emaj_log_stat_group('myGroup2',null,null);
+-- Invalid marks.
+SELECT * FROM emaj.emaj_log_stat_group('myGroup2', NULL, NULL);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-select * from emaj.emaj_log_stat_group('myGroup2','',null);
+SELECT * FROM emaj.emaj_log_stat_group('myGroup2', '', NULL);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',null);
+SELECT * FROM emaj.emaj_log_stat_group('myGroup2', 'dummyStartMark', NULL);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
-select * from emaj.emaj_log_stat_group('myGroup2','Mark22','dummyEndMark');
+SELECT * FROM emaj.emaj_log_stat_group('myGroup2', 'Mark22', 'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',null);
+SELECT * FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'dummyStartMark', NULL);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','dummyEndMark');
+SELECT * FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Mark22', 'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
-select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],null,null);
+SELECT * FROM emaj.emaj_log_stat_groups(ARRAY['myGroup1', 'myGroup2'], NULL, NULL);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
+SELECT * FROM emaj.emaj_log_stat_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', 'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
-select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],null,null);
+SELECT * FROM emaj.emaj_detailed_log_stat_groups(ARRAY['myGroup1', 'myGroup2'], NULL, NULL);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
+SELECT * FROM emaj.emaj_detailed_log_stat_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', 'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
--- start mark > end mark
--- original test (uncomment for unit test)
---  select * from emaj.emaj_log_stat_group('myGroup2','Mark23','Mark22');
---  select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark23','Mark22');
--- just check the error is trapped, because the error message contains timestamps
-create function test_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) returns void language plpgsql as 
+-- Start mark > end mark.
+-- Original test (uncomment for unit test).
+--  SELECT * FROM emaj.emaj_log_stat_group('myGroup2', 'Mark23', 'Mark22');
+--  SELECT * FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Mark23', 'Mark22');
+-- Just check the error is trapped, because the error message contains timestamps.
+CREATE FUNCTION test_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) returns void language plpgsql as
 $$
-begin
-  begin
-    perform count(*) from emaj.emaj_log_stat_group(v_groupName,v_firstMark,v_lastMark);
-    return;
-  exception when raise_exception then
-    raise notice 'Error trapped on emaj_log_stat_group() call';
-  end;
-  begin
-    perform count(*) from emaj.emaj_detailed_log_stat_group(v_groupName,v_firstMark,v_lastMark);
-    return;
-  exception when raise_exception then
-    raise notice 'Error trapped on emaj_detailed_log_stat_group() call';
-  end;
-  return;
-end;
+BEGIN
+  BEGIN
+    PERFORM count(*) FROM emaj.emaj_log_stat_group(v_groupName, v_firstMark, v_lastMark);
+    RETURN;
+  EXCEPTION WHEN raise_exception THEN
+    RAISE NOTICE 'Error trapped on emaj_log_stat_group() call';
+  END;
+  BEGIN
+    PERFORM count(*) FROM emaj.emaj_detailed_log_stat_group(v_groupName, v_firstMark, v_lastMark);
+    RETURN;
+  EXCEPTION WHEN raise_exception THEN
+    RAISE NOTICE 'Error trapped on emaj_detailed_log_stat_group() call';
+  END;
+  RETURN;
+END;
 $$;
-select test_log('myGroup2','Mark23','Mark22');
+SELECT test_log('myGroup2', 'Mark23', 'Mark22');
 NOTICE:  Error trapped on emaj_log_stat_group() call
 NOTICE:  Error trapped on emaj_detailed_log_stat_group() call
  test_log 
@@ -143,7 +143,7 @@ NOTICE:  Error trapped on emaj_detailed_log_stat_group() call
  
 (1 row)
 
-select test_log('myGroup2','EMAJ_LAST_MARK','Mark22');
+SELECT test_log('myGroup2', 'EMAJ_LAST_MARK', 'Mark22');
 NOTICE:  Error trapped on emaj_log_stat_group() call
 NOTICE:  Error trapped on emaj_detailed_log_stat_group() call
  test_log 
@@ -151,11 +151,11 @@ NOTICE:  Error trapped on emaj_detailed_log_stat_group() call
  
 (1 row)
 
-drop function test_log(text,text,text);
--- should be ok
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_group('myGroup2','Mark21',null)
-  order by stat_group, stat_schema, stat_table;
+DROP FUNCTION test_log(TEXT, TEXT, TEXT);
+-- Should be ok.
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup2', 'Mark21', NULL)
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | Mark21          |               4029 |                |                   |        10
@@ -168,9 +168,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl8     | Mark21          |               4029 |                |                   |         0
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | Mark21          |               4029 | Multi-3        |              5004 |        10
@@ -183,9 +183,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl8     | Mark21          |               4029 | Multi-3        |              5004 |         0
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup2', 'Mark22', 'Mark22')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | Mark22          |               5001 | Mark22         |              5001 |         0
@@ -198,9 +198,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl8     | Mark22          |               5001 | Mark22         |              5001 |         0
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark23')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup2', 'Mark22', 'Mark23')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | Mark22          |               5001 | Mark23         |              5003 |        10
@@ -213,9 +213,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl8     | Mark22          |               5001 | Mark23         |              5003 |         0
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup2', 'EMAJ_LAST_MARK', '')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup2   | myschema2   | myTbl3     | Multi-3         |               5004 |                |                   |         0
@@ -228,9 +228,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl8     | Multi-3         |               5004 |                |                   |         0
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1',null)
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', NULL)
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup1   | myschema1   | myTbl3     | Multi-1         |               5000 |                |                   |         0
@@ -248,9 +248,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl8     | Multi-1         |               5000 |                |                   |         0
 (13 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','Multi-3')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', 'Multi-3')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup1   | myschema1   | myTbl3     | Multi-1         |               5000 | Multi-3        |              5004 |         0
@@ -268,9 +268,10 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl8     | Multi-1         |               5000 | Multi-3        |              5004 |         0
 (13 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',null)
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Mark21', NULL)
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | myTbl3     | Mark21          |               4029 |                |                   | postgres  | INSERT    |        10
@@ -281,9 +282,10 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl4     | Mark21          |               4029 |                |                   | postgres  | INSERT    |       100
 (6 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | myTbl3     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | INSERT    |        10
@@ -294,32 +296,36 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl4     | Mark21          |               4029 | Multi-3        |              5004 | postgres  | INSERT    |       100
 (6 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark22')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Mark22', 'Mark22')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
 (0 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark23')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'Mark22', 'Mark23')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | myTbl3     | Mark22          |               5001 | Mark23         |              5003 | postgres  | INSERT    |        10
  myGroup2   | myschema2   | mytbl4     | Mark22          |               5001 | Mark23         |              5003 | postgres  | INSERT    |       100
 (2 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_group('myGroup2', 'EMAJ_LAST_MARK', '')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
 (0 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1',null)
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id,
+       stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', NULL)
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | myTbl3     | Multi-1         |               5000 |                |                   | postgres  | INSERT    |        10
@@ -330,9 +336,10 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl4     | Multi-1         |               5000 |                |                   | postgres  | INSERT    |       100
 (6 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','Multi-3')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id,
+       stat_role, stat_verb, stat_rows
+  FROM emaj.emaj_detailed_log_stat_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', 'Multi-3')
+  ORDER BY stat_group, stat_schema, stat_table;
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------+-----------+-----------
  myGroup2   | myschema2   | myTbl3     | Multi-1         |               5000 | Multi-3        |              5004 | postgres  | INSERT    |        10
@@ -343,33 +350,33 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id,
  myGroup2   | myschema2   | mytbl4     | Multi-1         |               5000 | Multi-3        |              5004 | postgres  | INSERT    |       100
 (6 rows)
 
--- empty group
-select * from emaj.emaj_log_stat_group('emptyGroup','SM2',null);
+-- Empty group.
+SELECT * FROM emaj.emaj_log_stat_group('emptyGroup', 'SM2', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_first_time_id | stat_last_mark | stat_last_mark_datetime | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------------+--------------------+----------------+-------------------------+-------------------+-----------
 (0 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('emptyGroup','SM2',null);
+SELECT * FROM emaj.emaj_detailed_log_stat_group('emptyGroup', 'SM2', NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_first_time_id | stat_last_mark | stat_last_mark_datetime | stat_last_time_id | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+--------------------------+--------------------+----------------+-------------------------+-------------------+-----------+-----------+-----------
 (0 rows)
 
--- warning on marks range too wide to be contained by a single log session
-select emaj.emaj_stop_group('myGroup4', 'myGroup4_stop');
+-- Warning on marks range too wide to be contained by a single log session.
+SELECT emaj.emaj_stop_group('myGroup4', 'myGroup4_stop');
  emaj_stop_group 
 -----------------
                8
 (1 row)
 
-select emaj.emaj_start_group('myGroup4', 'myGroup4_restart', false);
+SELECT emaj.emaj_start_group('myGroup4', 'myGroup4_restart', FALSE);
  emaj_start_group 
 ------------------
                 8
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_group('myGroup4','myGroup4_start','myGroup4_restart')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup4', 'myGroup4_start', 'myGroup4_restart')
+  ORDER BY stat_group, stat_schema, stat_table;
 WARNING:  Between marks "myGroup4_start" and "myGroup4_restart", the tables group "myGroup4" has not been always in logging state. Some data changes may not have been recorded.
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id |  stat_last_mark  | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+------------------+-------------------+-----------
@@ -383,9 +390,9 @@ WARNING:  Between marks "myGroup4_start" and "myGroup4_restart", the tables grou
  myGroup4   | myschema4   | mytblr2    | myGroup4_start  |               4047 | myGroup4_restart |              5006 |         0
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
-  from emaj.emaj_log_stat_group('myGroup4','myGroup4_start','')
-  order by stat_group, stat_schema, stat_table;
+SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
+  FROM emaj.emaj_log_stat_group('myGroup4', 'myGroup4_start', '')
+  ORDER BY stat_group, stat_schema, stat_table;
 WARNING:  Since mark "myGroup4_start", the tables group "myGroup4" has not been always in logging state. Some data changes may not have been recorded.
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
@@ -400,75 +407,81 @@ WARNING:  Since mark "myGroup4_start", the tables group "myGroup4" has not been 
 (8 rows)
 
 -----------------------------
--- emaj_sequence_stat_group(), emaj_sequence_stat_groups() test
+-- emaj_sequence_stat_group(), emaj_sequence_stat_groups() test.
 -----------------------------
--- group is unknown
-select * from emaj.emaj_sequence_stat_group('dummy', null, null);
+-- Group is unknown.
+SELECT * FROM emaj.emaj_sequence_stat_group('dummy', NULL, NULL);
 ERROR:  _check_group_names: The group "dummy" does not exist.
--- start mark is null or unknown
-select * from emaj.emaj_sequence_stat_group('myGroup1', null, null);
+-- Start mark is null or unknown.
+SELECT * FROM emaj.emaj_sequence_stat_group('myGroup1', NULL, NULL);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-select * from emaj.emaj_sequence_stat_groups(ARRAY['myGroup1'], 'dummy', null);
+SELECT * FROM emaj.emaj_sequence_stat_groups(ARRAY['myGroup1'], 'dummy', NULL);
 ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup1".
--- end mark is unknown
-select * from emaj.emaj_sequence_stat_group('myGroup1', 'EMAJ_LAST_MARK', 'dummy');
+-- End mark is unknown.
+SELECT * FROM emaj.emaj_sequence_stat_group('myGroup1', 'EMAJ_LAST_MARK', 'dummy');
 ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup1".
--- end mark is prior start mark (not tested as this is the same piece of code as for emaj_log_stat_group()
--- empty group
-select * from emaj.emaj_sequence_stat_group('emptyGroup','SM2',null);
+-- End mark is prior start mark (not tested as this is the same piece of code as for emaj_log_stat_group().
+-- Empty group.
+SELECT * FROM emaj.emaj_sequence_stat_group('emptyGroup', 'SM2', NULL);
  stat_group | stat_schema | stat_sequence | stat_first_mark | stat_first_mark_datetime | stat_first_time_id | stat_last_mark | stat_last_mark_datetime | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+---------------+-----------------+--------------------------+--------------------+----------------+-------------------------+-------------------+-----------------+----------------------------
 (0 rows)
 
--- should be ok
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup2','Mark21',null)
-  order by stat_group, stat_schema, stat_sequence;
+-- Should be ok.
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup2', 'Mark21', NULL)
+  ORDER BY stat_group, stat_schema, stat_sequence;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | Mark21          |               4029 |                |                   |              10 | f
  myGroup2   | myschema2   | myseq1           | Mark21          |               4029 |                |                   |               3 | f
 (2 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
-  order by stat_group, stat_schema, stat_sequence;
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK')
+  ORDER BY stat_group, stat_schema, stat_sequence;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | Mark21          |               4029 | Multi-3        |              5004 |              10 | f
  myGroup2   | myschema2   | myseq1           | Mark21          |               4029 | Multi-3        |              5004 |               3 | t
 (2 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup2','Mark22','Mark22')
-  order by stat_group, stat_schema, stat_sequence;
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup2', 'Mark22', 'Mark22')
+  ORDER BY stat_group, stat_schema, stat_sequence;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | Mark22          |               5001 | Mark22         |              5001 |               0 | f
  myGroup2   | myschema2   | myseq1           | Mark22          |               5001 | Mark22         |              5001 |               0 | f
 (2 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup2','Mark22','Mark23')
-  order by stat_group, stat_schema, stat_sequence;
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup2', 'Mark22', 'Mark23')
+  ORDER BY stat_group, stat_schema, stat_sequence;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | Mark22          |               5001 | Mark23         |              5003 |              10 | f
  myGroup2   | myschema2   | myseq1           | Mark22          |               5001 | Mark23         |              5003 |               1 | t
 (2 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_group('myGroup2','EMAJ_LAST_MARK','')
-  order by stat_group, stat_schema, stat_sequence;
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_group('myGroup2', 'EMAJ_LAST_MARK', '')
+  ORDER BY stat_group, stat_schema, stat_sequence;
  stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup2   | myschema2   | myTbl3_col31_seq | Multi-3         |               5004 |                |                   |               0 | f
  myGroup2   | myschema2   | myseq1           | Multi-3         |               5004 |                |                   |               0 | t
 (2 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_groups(array['myGroup1','myGroup2'],'Multi-1',null)
-  order by stat_group, stat_schema, stat_sequence;
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', NULL)
+  ORDER BY stat_group, stat_schema, stat_sequence;
  stat_group | stat_schema |   stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+-------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup1   | myschema1   | myTbl3_col31_seq  | Multi-1         |               5000 |                |                   |               0 | f
@@ -477,9 +490,10 @@ select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_
  myGroup2   | myschema2   | myseq1            | Multi-1         |               5000 |                |                   |               3 | f
 (4 rows)
 
-select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_increments, stat_has_structure_changed
-  from emaj.emaj_sequence_stat_groups(array['myGroup1','myGroup2'],'Multi-1','Multi-3')
-  order by stat_group, stat_schema, stat_sequence;
+SELECT stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_id, stat_last_mark,
+       stat_last_time_id, stat_increments, stat_has_structure_changed
+  FROM emaj.emaj_sequence_stat_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', 'Multi-3')
+  ORDER BY stat_group, stat_schema, stat_sequence;
  stat_group | stat_schema |   stat_sequence   | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_increments | stat_has_structure_changed 
 ------------+-------------+-------------------+-----------------+--------------------+----------------+-------------------+-----------------+----------------------------
  myGroup1   | myschema1   | myTbl3_col31_seq  | Multi-1         |               5000 | Multi-3        |              5004 |               0 | f
@@ -489,63 +503,64 @@ select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_first_time_
 (4 rows)
 
 ----------------------------------------------------------
--- emaj_log_stat_table() and emaj_log_stat_sequence() test
+-- emaj_log_stat_table() and emaj_log_stat_sequence() test.
 ----------------------------------------------------------
-select emaj.emaj_set_mark_group('myGroup2', 'before_log_stat_tblseq');
+SELECT emaj.emaj_set_mark_group('myGroup2', 'before_log_stat_tblseq');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
--- Test errors with input parameters
--- schema is unknown
-select * from emaj.emaj_log_stat_table('dummy', 'mytbl1');
+-- Test errors with input parameters.
+-- Schema is unknown.
+SELECT * FROM emaj.emaj_log_stat_table('dummy', 'mytbl1');
 ERROR:  emaj_log_stat_table: The table dummy.mytbl1 is not known by E-Maj.
-select * from emaj.emaj_log_stat_sequence('dummy', 'mytbl1');
+SELECT * FROM emaj.emaj_log_stat_sequence('dummy', 'mytbl1');
 ERROR:  emaj_log_stat_sequence: The sequence dummy.mytbl1 is not known by E-Maj.
--- table/sequence is unknown
-select * from emaj.emaj_log_stat_table('myschema2', null);
+-- Table/sequence is unknown.
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', NULL);
 ERROR:  emaj_log_stat_table: The table myschema2.<NULL> is not known by E-Maj.
-select * from emaj.emaj_log_stat_table('myschema2', 'dummy', 'myGroup1', 'M1');
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'dummy', 'myGroup1', 'M1');
 ERROR:  emaj_log_stat_table: Table myschema2.dummy is not known by E-Maj.
-select * from emaj.emaj_log_stat_sequence('myschema2', null);
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', NULL);
 ERROR:  emaj_log_stat_sequence: The sequence myschema2.<NULL> is not known by E-Maj.
-select * from emaj.emaj_log_stat_sequence('myschema2', 'dummy', 'myGroup1', 'M1');
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'dummy', 'myGroup1', 'M1');
 ERROR:  emaj_log_stat_sequence: Sequence myschema2.dummy is not known by E-Maj.
--- bad timestamp or marks interval
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', '2030/01/01'::TIMESTAMPTZ, '2020/01/01'::TIMESTAMPTZ);
+-- Bad timestamp or marks interval.
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', '2030/01/01'::TIMESTAMPTZ, '2020/01/01'::TIMESTAMPTZ);
 ERROR:  emaj_log_stat_table: The start timestamp is greater than the end timestamp.
-select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', '2030/01/01'::TIMESTAMPTZ, '2020/01/01'::TIMESTAMPTZ);
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', '2030/01/01'::TIMESTAMPTZ, '2020/01/01'::TIMESTAMPTZ);
 ERROR:  emaj_log_stat_sequence: The start timestamp is greater than the end timestamp.
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark23', 'myGroup2', 'Mark22');
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark23', 'myGroup2', 'Mark22');
 ERROR:  emaj_log_stat_table: The start mark has been set after the end mark.
-select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark23', 'myGroup2', 'Mark22');
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark23', 'myGroup2', 'Mark22');
 ERROR:  emaj_log_stat_sequence: The start mark has been set after the end mark.
--- bad group or mark names
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'dummy_group', 'M1', 'myGroup2', 'M3');
+-- Bad group or mark names.
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'dummy_group', 'M1', 'myGroup2', 'M3');
 ERROR:  _check_group_names: The group "dummy_group" does not exist.
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'dummy_mark', 'myGroup2', 'M3');
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'dummy_mark', 'myGroup2', 'M3');
 ERROR:  _check_mark_name: The mark "dummy_mark" does not exist for the group "myGroup2".
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', null);
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup2".
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'M1', 'dummy_group', 'M3');
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'M1', 'dummy_group', 'M3');
 ERROR:  _check_mark_name: The mark "M1" does not exist for the group "myGroup2".
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'M1', 'myGroup2', 'dummy_mark');
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'M1', 'myGroup2', 'dummy_mark');
 ERROR:  _check_mark_name: The mark "M1" does not exist for the group "myGroup2".
-select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'dummy_group', 'M1', 'myGroup2', 'M3');
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'dummy_group', 'M1', 'myGroup2', 'M3');
 ERROR:  _check_group_names: The group "dummy_group" does not exist.
-select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'dummy_mark', 'myGroup2', 'M3');
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'dummy_mark', 'myGroup2', 'M3');
 ERROR:  _check_mark_name: The mark "dummy_mark" does not exist for the group "myGroup2".
-select * from emaj.emaj_log_stat_sequence('myschema2', 'mytbl1', 'myGroup2', null);
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'mytbl1', 'myGroup2', NULL);
 ERROR:  emaj_log_stat_sequence: Sequence myschema2.mytbl1 is not known by E-Maj.
-select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'M1', 'dummy_group', 'M3');
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'M1', 'dummy_group', 'M3');
 ERROR:  _check_mark_name: The mark "M1" does not exist for the group "myGroup2".
-select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'M1', 'myGroup2', 'dummy_mark');
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'M1', 'myGroup2', 'dummy_mark');
 ERROR:  _check_mark_name: The mark "M1" does not exist for the group "myGroup2".
--- Should be OK
--- no bounds
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1');
+-- Should be OK.
+-- No bounds.
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+--------------+----------------
  myGroup2   | Mark21                 |               4029 | t                 | Multi-1                |              5000 | f                |            0 |              0
@@ -557,8 +572,9 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | [current state]        |                   | f                |            0 |              0
 (7 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mark21                 |               4029 | t                 | Multi-1                |              5000 | f                |               0 | f                          |              0
@@ -570,9 +586,10 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | [current state]        |                   | f                |               0 | f                          |              0
 (7 rows)
 
--- limit the timeframe with marks range
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark23');
+-- Limit the timeframe with marks range.
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark23');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+--------------+----------------
  myGroup2   | Mark23                 |               5003 | f                 | Multi-3                |              5004 | f                |            0 |              0
@@ -580,8 +597,9 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | [current state]        |                   | f                |            0 |              0
 (3 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark23');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark23');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mark23                 |               5003 | f                 | Multi-3                |              5004 | f                |               0 | f                          |              0
@@ -589,54 +607,60 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | [current state]        |                   | f                |               0 | f                          |              0
 (3 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1', null, null, 'myGroup2', 'Mark22');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', NULL, NULL, 'myGroup2', 'Mark22');
  stat_group | stat_first_mark | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+-----------------+--------------------+-------------------+----------------+-------------------+------------------+--------------+----------------
  myGroup2   | Mark21          |               4029 | t                 | Multi-1        |              5000 | f                |            0 |              0
  myGroup2   | Multi-1         |               5000 | f                 | Mark22         |              5001 | f                |        10700 |              0
 (2 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', null, null, 'myGroup2', 'Mark22');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', NULL, NULL, 'myGroup2', 'Mark22');
  stat_group | stat_first_mark | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+--------------------+-------------------+----------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mark21          |               4029 | t                 | Multi-1        |              5000 | f                |               0 | f                          |              0
  myGroup2   | Multi-1         |               5000 | f                 | Mark22         |              5001 | f                |               2 | f                          |              0
 (2 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark22', 'myGroup2', 'Mark23');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark22', 'myGroup2', 'Mark23');
  stat_group | stat_first_mark | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+-----------------+--------------------+-------------------+----------------+-------------------+------------------+--------------+----------------
  myGroup2   | Mark22          |               5001 | f                 | Multi-2        |              5002 | f                |            0 |              0
  myGroup2   | Multi-2         |               5002 | f                 | Mark23         |              5003 | f                |            0 |              0
 (2 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark22', 'myGroup2', 'Mark23');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark22', 'myGroup2', 'Mark23');
  stat_group | stat_first_mark | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+--------------------+-------------------+----------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mark22          |               5001 | f                 | Multi-2        |              5002 | f                |               0 | f                          |              0
  myGroup2   | Multi-2         |               5002 | f                 | Mark23         |              5003 | f                |               1 | t                          |              0
 (2 rows)
 
--- marks range from another group
-select emaj.emaj_set_mark_group('emptyGroup', 'log_stat_1');
+-- Marks range from another group.
+SELECT emaj.emaj_set_mark_group('emptyGroup', 'log_stat_1');
  emaj_set_mark_group 
 ---------------------
                    0
 (1 row)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'emptyGroup', 'log_stat_1');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'emptyGroup', 'log_stat_1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark  | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+-----------------+-------------------+------------------+--------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | [current state] |                   | f                |            0 |              0
 (1 row)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark22', 'emptyGroup', 'log_stat_1');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark22', 'emptyGroup', 'log_stat_1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+--------------+----------------
  myGroup2   | Mark22                 |               5001 | f                 | Multi-2                |              5002 | f                |            0 |              0
@@ -646,15 +670,17 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | [current state]        |                   | f                |            0 |              0
 (5 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'emptyGroup', 'log_stat_1');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'emptyGroup', 'log_stat_1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark  | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+-----------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | [current state] |                   | f                |               0 | f                          |              0
 (1 row)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark22', 'emptyGroup', 'log_stat_1');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark22', 'emptyGroup', 'log_stat_1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mark22                 |               5001 | f                 | Multi-2                |              5002 | f                |               0 | f                          |              0
@@ -664,90 +690,96 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | [current state]        |                   | f                |               0 | f                          |              0
 (5 rows)
 
--- Same mark as lower and upper bounds
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark22', 'myGroup2', 'Mark22');
+-- Same mark as lower and upper bounds.
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark22', 'myGroup2', 'Mark22');
  stat_group | stat_first_mark | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+-----------------+--------------------+-------------------+----------------+-------------------+------------------+--------------+----------------
 (0 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark22', 'myGroup2', 'Mark22');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark22', 'myGroup2', 'Mark22');
  stat_group | stat_first_mark | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+--------------------+-------------------+----------------+-------------------+------------------+-----------------+----------------------------+----------------
 (0 rows)
 
--- No data on the requested time or marks interval
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', '2020/01/01'::TIMESTAMPTZ, '2020/01/02'::TIMESTAMPTZ);
+-- No data on the requested time or marks interval.
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', '2020/01/01'::TIMESTAMPTZ, '2020/01/02'::TIMESTAMPTZ);
  stat_group | stat_first_mark | stat_first_mark_datetime | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_mark_datetime | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+-----------------+--------------------------+--------------------+-------------------+----------------+-------------------------+-------------------+------------------+--------------+----------------
 (0 rows)
 
-select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', '2020/01/01'::TIMESTAMPTZ, '2020/01/02'::TIMESTAMPTZ);
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', '2020/01/01'::TIMESTAMPTZ, '2020/01/02'::TIMESTAMPTZ);
  stat_group | stat_first_mark | stat_first_mark_datetime | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_mark_datetime | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+--------------------------+--------------------+-------------------+----------------+-------------------------+-------------------+------------------+-----------------+----------------------------+----------------
 (0 rows)
 
-select * from emaj.emaj_log_stat_table('myschema2', 'mytbl1', null, null, 'emptyGroup', 'SM2');    -- very old upper bound mark
+SELECT * FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', NULL, NULL, 'emptyGroup', 'SM2');    -- very old upper bound mark
  stat_group | stat_first_mark | stat_first_mark_datetime | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_mark_datetime | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+-----------------+--------------------------+--------------------+-------------------+----------------+-------------------------+-------------------+------------------+--------------+----------------
 (0 rows)
 
-select * from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', null, null, 'emptyGroup', 'SM2');
+SELECT * FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', NULL, NULL, 'emptyGroup', 'SM2');
  stat_group | stat_first_mark | stat_first_mark_datetime | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_mark_datetime | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+--------------------------+--------------------+-------------------+----------------+-------------------------+-------------------+------------------+-----------------+----------------------------+----------------
 (0 rows)
 
--- limit the timeframe with timestamps
-begin transaction;
-  select emaj.emaj_set_mark_group('myGroup2', 'tmp_mark');
+-- Limit the timeframe with timestamps.
+BEGIN TRANSACTION;
+  SELECT emaj.emaj_set_mark_group('myGroup2', 'tmp_mark');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
-  insert into myTbl1 select i, 'TMP', 'TMP' from generate_series (100000,100005) AS i;
-  select nextval('myschema2.myseq1');
+  INSERT INTO myTbl1 SELECT i, 'TMP', 'TMP' FROM generate_series (100000, 100005) AS i;
+  SELECT nextval('myschema2.myseq1');
  nextval 
 ---------
     1003
 (1 row)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-      from emaj.emaj_log_stat_table('myschema2', 'mytbl1', transaction_timestamp(), null);
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_changes, stat_rollbacks
+    FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', transaction_timestamp(), NULL);
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark  | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+-----------------+-------------------+------------------+--------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | tmp_mark        |              5009 | f                |            0 |              0
  myGroup2   | tmp_mark               |               5009 | f                 | [current state] |                   | f                |            6 |              0
 (2 rows)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-      from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', transaction_timestamp(), null);
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', transaction_timestamp(), NULL);
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark  | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+-----------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | tmp_mark        |              5009 | f                |               0 | f                          |              0
  myGroup2   | tmp_mark               |               5009 | f                 | [current state] |                   | f                |               1 | f                          |              0
 (2 rows)
 
--- Same timestamp as lower and upper bounds
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-      from emaj.emaj_log_stat_table('myschema2', 'mytbl1', transaction_timestamp(), transaction_timestamp());
+-- Same timestamp as lower and upper bounds.
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_changes, stat_rollbacks
+    FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', transaction_timestamp(), transaction_timestamp());
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+----------------+-------------------+------------------+--------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | tmp_mark       |              5009 | f                |            0 |              0
 (1 row)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-      from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', transaction_timestamp(), transaction_timestamp());
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', transaction_timestamp(), transaction_timestamp());
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+----------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | tmp_mark       |              5009 | f                |               0 | f                          |              0
 (1 row)
 
-commit;
--- perform rollbacks
---   a logged rollback ...
-select * from emaj.emaj_logged_rollback_group('myGroup2', 'Multi-1');
+COMMIT;
+-- Perform rollbacks.
+--   A logged rollback ...
+SELECT * FROM emaj.emaj_logged_rollback_group('myGroup2', 'Multi-1');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | Rollback id = 5000.
@@ -755,20 +787,21 @@ select * from emaj.emaj_logged_rollback_group('myGroup2', 'Multi-1');
  Notice        | 2 / 2 sequences effectively processed.
 (3 rows)
 
-select emaj.emaj_rename_mark_group('myGroup2', emaj.emaj_get_previous_mark_group('myGroup2', 'EMAJ_LAST_MARK'), 'RLBK_START');
+SELECT emaj.emaj_rename_mark_group('myGroup2', emaj.emaj_get_previous_mark_group('myGroup2', 'EMAJ_LAST_MARK'), 'RLBK_START');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_rename_mark_group('myGroup2', 'EMAJ_LAST_MARK', 'RLBK_DONE');
+SELECT emaj.emaj_rename_mark_group('myGroup2', 'EMAJ_LAST_MARK', 'RLBK_DONE');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+--------------+----------------
  myGroup2   | Mark21                 |               4029 | t                 | Multi-1                |              5000 | f                |            0 |              0
@@ -783,8 +816,9 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | RLBK_DONE              |               5011 | f                 | [current state]        |                   | f                |            0 |              0
 (10 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mark21                 |               4029 | t                 | Multi-1                |              5000 | f                |               0 | f                          |              0
@@ -799,16 +833,17 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | RLBK_DONE              |               5011 | f                 | [current state]        |                   | f                |               0 | f                          |              0
 (10 rows)
 
---    ... to consolidate
-begin transaction;
-  select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'RLBK_DONE');
+--    ... to consolidate.
+BEGIN TRANSACTION;
+  SELECT * FROM emaj.emaj_consolidate_rollback_group('myGroup2', 'RLBK_DONE');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                6
 (1 row)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-      from emaj.emaj_log_stat_table('myschema2', 'mytbl1');
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_changes, stat_rollbacks
+    FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1');
  stat_group | stat_first_mark | stat_first_time_id | stat_is_log_start | stat_last_mark  | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+-----------------+--------------------+-------------------+-----------------+-------------------+------------------+--------------+----------------
  myGroup2   | Mark21          |               4029 | t                 | Multi-1         |              5000 | f                |            0 |              0
@@ -816,8 +851,9 @@ begin transaction;
  myGroup2   | RLBK_DONE       |               5011 | f                 | [current state] |                   | f                |            0 |              0
 (3 rows)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-      from emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
  stat_group | stat_first_mark | stat_first_time_id | stat_is_log_start | stat_last_mark  | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+-----------------+--------------------+-------------------+-----------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mark21          |               4029 | t                 | Multi-1         |              5000 | f                |               0 | f                          |              0
@@ -825,9 +861,9 @@ begin transaction;
  myGroup2   | RLBK_DONE       |               5011 | f                 | [current state] |                   | f                |               0 | f                          |              0
 (3 rows)
 
-rollback;
---   an unlogged rollback
-select * from emaj.emaj_rollback_group('myGroup2', 'RLBK_DONE');
+ROLLBACK;
+--   An unlogged rollback.
+SELECT * FROM emaj.emaj_rollback_group('myGroup2', 'RLBK_DONE');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | Rollback id = 5001.
@@ -835,8 +871,9 @@ select * from emaj.emaj_rollback_group('myGroup2', 'RLBK_DONE');
  Notice        | 0 / 2 sequences effectively processed.
 (3 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark23');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Mark23');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+--------------+----------------
  myGroup2   | Mark23                 |               5003 | f                 | Multi-3                |              5004 | f                |            0 |              0
@@ -847,8 +884,9 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | RLBK_DONE              |               5011 | f                 | [current state]        |                   | f                |            0 |              1
 (6 rows)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark23');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Mark23');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Mark23                 |               5003 | f                 | Multi-3                |              5004 | f                |               0 | f                          |              0
@@ -859,43 +897,46 @@ select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_
  myGroup2   | RLBK_DONE              |               5011 | f                 | [current state]        |                   | f                |               0 | f                          |              1
 (6 rows)
 
--- delete an intermediate mark (the mark and table/sequence state are deleted)
-select emaj.emaj_delete_mark_group('myGroup2', 'tmp_mark');
+-- Delete an intermediate mark (the mark and table/sequence state are deleted).
+SELECT emaj.emaj_delete_mark_group('myGroup2', 'tmp_mark');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-    from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'before_log_stat_tblseq', 'myGroup2', 'RLBK_START');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_changes, stat_rollbacks
+  FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'before_log_stat_tblseq', 'myGroup2', 'RLBK_START');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+----------------+-------------------+------------------+--------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | RLBK_START     |              5010 | f                |            6 |              0
 (1 row)
 
-select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-    from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'before_log_stat_tblseq', 'myGroup2', 'RLBK_START');
+SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+       stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+  FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'before_log_stat_tblseq', 'myGroup2', 'RLBK_START');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+----------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | RLBK_START     |              5010 | f                |               1 | f                          |              0
 (1 row)
 
--- perform group stop and restart
-begin transaction;
-  select emaj.emaj_stop_group('myGroup2', 'stop');
+-- Perform group stop and restart.
+BEGIN TRANSACTION;
+  SELECT emaj.emaj_stop_group('myGroup2', 'stop');
  emaj_stop_group 
 -----------------
               10
 (1 row)
 
-  select emaj.emaj_start_group('myGroup2', 'restart', false);
+  SELECT emaj.emaj_start_group('myGroup2', 'restart', FALSE);
  emaj_start_group 
 ------------------
                10
 (1 row)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-      from emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Multi-3');
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_changes, stat_rollbacks
+    FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1', 'myGroup2', 'Multi-3');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+--------------+----------------
  myGroup2   | Multi-3                |               5004 | f                 | before_log_stat_tblseq |              5007 | f                |            0 |              0
@@ -905,8 +946,9 @@ begin transaction;
  myGroup2   | restart                |               5014 | t                 | [current state]        |                   | f                |            0 |              0
 (5 rows)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-      from emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Multi-3');
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1', 'myGroup2', 'Multi-3');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start |     stat_last_mark     | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+------------------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | Multi-3                |               5004 | f                 | before_log_stat_tblseq |              5007 | f                |               0 | t                          |              0
@@ -916,33 +958,34 @@ begin transaction;
  myGroup2   | restart                |               5014 | t                 | [current state]        |                   | f                |               0 | f                          |              0
 (5 rows)
 
--- delete oldest marks and marks at log session boundaries
-  select emaj.emaj_set_mark_group('myGroup2', '1 after start');
+-- Delete oldest marks and marks at log session boundaries.
+  SELECT emaj.emaj_set_mark_group('myGroup2', '1 after start');
  emaj_set_mark_group 
 ---------------------
                   10
 (1 row)
 
-  select emaj.emaj_delete_before_mark_group('myGroup2', 'before_log_stat_tblseq');
+  SELECT emaj.emaj_delete_before_mark_group('myGroup2', 'before_log_stat_tblseq');
  emaj_delete_before_mark_group 
 -------------------------------
                              6
 (1 row)
 
-  select emaj.emaj_delete_mark_group('myGroup2', 'stop');
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'stop');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select emaj.emaj_delete_mark_group('myGroup2', 'restart');
+  SELECT emaj.emaj_delete_mark_group('myGroup2', 'restart');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
-      from emaj.emaj_log_stat_table('myschema2', 'mytbl1');
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_changes, stat_rollbacks
+    FROM emaj.emaj_log_stat_table('myschema2', 'mytbl1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark  | stat_last_time_id | stat_is_log_stop | stat_changes | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+-----------------+-------------------+------------------+--------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | RLBK_START      |              5010 | f                |            6 |              0
@@ -952,8 +995,9 @@ begin transaction;
  myGroup2   | 1 after start          |               5015 | f                 | [current state] |                   | f                |            0 |              0
 (5 rows)
 
-  select stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id, stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
-      from emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
+  SELECT stat_group, stat_first_mark, stat_first_time_id, stat_is_log_start, stat_last_mark, stat_last_time_id,
+         stat_is_log_stop, stat_increments, stat_has_structure_changed, stat_rollbacks
+    FROM emaj.emaj_log_stat_sequence('myschema2', 'myseq1');
  stat_group |    stat_first_mark     | stat_first_time_id | stat_is_log_start | stat_last_mark  | stat_last_time_id | stat_is_log_stop | stat_increments | stat_has_structure_changed | stat_rollbacks 
 ------------+------------------------+--------------------+-------------------+-----------------+-------------------+------------------+-----------------+----------------------------+----------------
  myGroup2   | before_log_stat_tblseq |               5007 | f                 | RLBK_START      |              5010 | f                |               1 | f                          |              0
@@ -963,8 +1007,8 @@ begin transaction;
  myGroup2   | 1 after start          |               5015 | f                 | [current state] |                   | f                |               0 | f                          |              0
 (5 rows)
 
-rollback;
-select * from emaj.emaj_rollback_group('myGroup2', 'before_log_stat_tblseq');
+ROLLBACK;
+SELECT * FROM emaj.emaj_rollback_group('myGroup2', 'before_log_stat_tblseq');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | Rollback id = 5002.
@@ -972,18 +1016,18 @@ select * from emaj.emaj_rollback_group('myGroup2', 'before_log_stat_tblseq');
  Notice        | 2 / 2 sequences effectively processed.
 (3 rows)
 
-select * from emaj.emaj_delete_mark_group('myGroup2', 'before_log_stat_tblseq');
+SELECT * FROM emaj.emaj_delete_mark_group('myGroup2', 'before_log_stat_tblseq');
  emaj_delete_mark_group 
 ------------------------
                       1
 (1 row)
 
 -----------------------------
--- _get_sequences_last_value() test
+-- _get_sequences_last_value() test.
 -----------------------------
--- get all groups, tables and sequences
-select * from emaj._get_sequences_last_value(null, null, null, null, null, null)
-  where p_key <> 'current_epoch' order by 1;
+-- Get all groups, tables and sequences.
+SELECT * FROM emaj._get_sequences_last_value(NULL, NULL, NULL, NULL, NULL, NULL)
+  WHERE p_key <> 'current_epoch' ORDER BY 1;
                p_key               | p_value 
 -----------------------------------+---------
  emaj.emaj_global_seq              | 5022732
@@ -1019,8 +1063,8 @@ select * from emaj._get_sequences_last_value(null, null, null, null, null, null)
  phil's schema"3.phil's"seq\1      | 999
 (31 rows)
 
--- filter on groups
-select p_key from emaj._get_sequences_last_value('Group', null, null, null, null, null) order by 1;
+-- Filter on groups.
+SELECT p_key FROM emaj._get_sequences_last_value('Group', NULL, NULL, NULL, NULL, NULL) ORDER BY 1;
               p_key               
 ----------------------------------
  current_epoch
@@ -1053,7 +1097,7 @@ select p_key from emaj._get_sequences_last_value('Group', null, null, null, null
  myschema4.mytblr2
 (28 rows)
 
-select p_key from emaj._get_sequences_last_value(null, 'Group', null, null, null, null) order by 1;
+SELECT p_key FROM emaj._get_sequences_last_value(NULL, 'Group', NULL, NULL, NULL, NULL) ORDER BY 1;
                p_key               
 -----------------------------------
  current_epoch
@@ -1065,8 +1109,8 @@ select p_key from emaj._get_sequences_last_value(null, 'Group', null, null, null
  phil's schema"3.phil's"seq\1
 (7 rows)
 
--- filter on tables and sequences
-select p_key from emaj._get_sequences_last_value(null, null, 'tbl2|tbl4', '2b', 'col', 'myschema2') order by 1;
+-- Filter on tables and sequences.
+SELECT p_key FROM emaj._get_sequences_last_value(NULL, NULL, 'tbl2|tbl4', '2b', 'col', 'myschema2') ORDER BY 1;
                p_key               
 -----------------------------------
  current_epoch
@@ -1081,10 +1125,10 @@ select p_key from emaj._get_sequences_last_value(null, null, 'tbl2|tbl4', '2b', 
  phil's schema"3.myTbl2\_col21_seq
 (10 rows)
 
--- check for statistics functions family
-select hist_id, hist_function, hist_event, hist_object, 
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5000 order by hist_id) as t;
+-- Check for statistics functions family.
+SELECT hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d', '%', 'g'), E'\\[.+\\]', '(timestamp)', 'g'), hist_user
+  FROM emaj.emaj_hist WHERE hist_id >= 5000 ORDER BY hist_id;
  hist_id |   hist_function   |   hist_event   |         hist_object          |                                          regexp_replace                                          | hist_user 
 ---------+-------------------+----------------+------------------------------+--------------------------------------------------------------------------------------------------+-----------
     5000 | SET_MARK_GROUPS   | BEGIN          | myGroup1,myGroup2            | Multi-1                                                                                          | postgres
