@@ -47,12 +47,14 @@ SELECT sch_name FROM emaj.emaj_schema WHERE sch_name NOT IN (SELECT DISTINCT rel
 -- Some functions are excluded:
 --   _emaj_param_before_stmt_fnct and _emaj_default_param_before_stmt_fnct are called by triggers but always raise an exception.
 --       (and thus are not listed in pg_stat_user_functions for PG14- versions),
---   _build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics,
+--   _build_path_name() and _quote_nullable() are executed but are inlined in calling statements, and so it is not counted in statistics,
 --   emaj_drop_extension() is not called by the standart test scenarios, but a dedicated scenario tests it.
 SELECT proname FROM pg_proc, pg_namespace
   WHERE pronamespace = pg_namespace.oid
     AND nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
-    AND proname NOT IN ('_emaj_default_param_before_stmt_fnct', '_emaj_param_before_stmt_fnct', '_build_path_name', 'emaj_drop_extension')
+    AND proname NOT IN ('_emaj_default_param_before_stmt_fnct', '_emaj_param_before_stmt_fnct',
+                        '_build_path_name', '_quote_nullable',
+                        'emaj_drop_extension')
 EXCEPT
 SELECT funcname FROM pg_stat_user_functions
   WHERE schemaname = 'emaj' AND (funcname LIKE E'emaj\\_%' OR funcname LIKE E'\\_%')

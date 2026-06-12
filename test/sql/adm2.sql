@@ -285,7 +285,7 @@ UPDATE myTbl6 SET col64 = '<(5, 6), 3.5>', col65 = NULL, col67 = 'COMPLETED' WHE
 -- Also add rows with unusual text content.
 INSERT INTO mytbl2 VALUES (10, E'row 1 \r... AND row 2 with a '' (quote) character', NULL);
 INSERT INTO mytbl2 VALUES (11, E'row 1 with a TRUE \\ character\r... AND row 2 with two \\n TRUE AND a '' (quote) characters', NULL);
--- And manupulate NULL characters.
+-- And manipulate NULL characters.
 INSERT INTO mytbl1 VALUES (200, E'Start\tEnd ', E'A\\000B'::BYTEA);
 UPDATE mytbl1 SET col12 = E' Start\tEnd' WHERE col11 = 200;
 DELETE FROM mytbl1 WHERE col13 = E'A\\000B'::BYTEA;

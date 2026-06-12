@@ -8,7 +8,7 @@ SELECT count(*) FROM pg_proc, pg_namespace
   WHERE pg_namespace.oid=pronamespace AND nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%');
  count 
 -------
-   217
+   218
 (1 row)
 
 SELECT count(*) FROM pg_proc, pg_namespace
@@ -62,12 +62,14 @@ SELECT sch_name FROM emaj.emaj_schema WHERE sch_name NOT IN (SELECT DISTINCT rel
 -- Some functions are excluded:
 --   _emaj_param_before_stmt_fnct and _emaj_default_param_before_stmt_fnct are called by triggers but always raise an exception.
 --       (and thus are not listed in pg_stat_user_functions for PG14- versions),
---   _build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics,
+--   _build_path_name() and _quote_nullable() are executed but are inlined in calling statements, and so it is not counted in statistics,
 --   emaj_drop_extension() is not called by the standart test scenarios, but a dedicated scenario tests it.
 SELECT proname FROM pg_proc, pg_namespace
   WHERE pronamespace = pg_namespace.oid
     AND nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
-    AND proname NOT IN ('_emaj_default_param_before_stmt_fnct', '_emaj_param_before_stmt_fnct', '_build_path_name', 'emaj_drop_extension')
+    AND proname NOT IN ('_emaj_default_param_before_stmt_fnct', '_emaj_param_before_stmt_fnct',
+                        '_build_path_name', '_quote_nullable',
+                        'emaj_drop_extension')
 EXCEPT
 SELECT funcname FROM pg_stat_user_functions
   WHERE schemaname = 'emaj' AND (funcname LIKE E'emaj\\_%' OR funcname LIKE E'\\_%')
@@ -102,10 +104,10 @@ SELECT funcname, calls FROM pg_stat_user_functions
  _change_log_index_tsp_tbl                 |     9
  _change_priority_tbl                      |    15
  _check_can_copy_from                      |    30
- _check_can_copy_to                        |    98
+ _check_can_copy_to                        |   101
  _check_can_exec_program                   |    26
  _check_fk_groups                          |    99
- _check_group_names                        |  1237
+ _check_group_names                        |  1240
  _check_json_groups_conf                   |    54
  _check_json_param_conf                    |    19
  _check_json_table_properties              |    44
@@ -116,7 +118,7 @@ SELECT funcname, calls FROM pg_stat_user_functions
  _check_tables_for_rollbackable_group      |    73
  _check_tblseqs_array                      |   111
  _check_tblseqs_filter                     |    29
- _clean_array                              |  1594
+ _clean_array                              |  1597
  _cleanup_rollback_state                   |   382
  _create_log_schemas                       |    22
  _create_seq                               |    48
@@ -294,7 +296,7 @@ SELECT funcname, calls FROM pg_stat_user_functions
  emaj_set_mark_group                       |    82
  emaj_set_mark_groups                      |    25
  emaj_set_param                            |    36
- emaj_snap_group                           |    11
+ emaj_snap_group                           |    14
  emaj_start_group                          |    47
  emaj_start_groups                         |    12
  emaj_stop_group                           |    46
@@ -308,7 +310,7 @@ SELECT funcname, calls FROM pg_stat_user_functions
 SELECT sum(calls) FROM pg_stat_user_functions WHERE funcname LIKE E'emaj\\_%';
  sum  
 ------
- 1249
+ 1252
 (1 row)
 
 -----------------------------

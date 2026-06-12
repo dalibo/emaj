@@ -2292,6 +2292,20 @@ $_build_path_name$
 -- Both names are concatenated with a / character between.
 SELECT p_dir || '/' || translate(p_file, E' /\\|$<>*\'"', '__________');
 $_build_path_name$;
+CREATE OR REPLACE FUNCTION emaj._quote_nullable(p_data TEXT)
+RETURNS TEXT LANGUAGE SQL IMMUTABLE AS
+$$
+-- This function calls the quote_nullable() function and adds a 'E' letter at the beginning of a string literal if:
+--   - it is not null and
+--   - the 'E' doesn't exist yet and
+--   - it contains special characters.
+-- It is used when exporting a sql script by COPY in order to process strings having '\' characters correctly.
+SELECT CASE
+         WHEN p_data IS NOT NULL AND substr(quote_nullable(p_data), 1, 1) <> 'E' AND p_data ~ '[\b\f\n\r\t\v]'
+           THEN 'E' || quote_nullable(p_data)
+         ELSE quote_nullable(p_data)
+       END;
+$$;
 ----------------------------------------------------------------
 --                                                            --
 --       Elementary functions for tables and sequences        --
@@ -3476,9 +3490,9 @@ $_build_sql_tbl$
     SELECT array_agg(attname),
            string_agg(
              CASE WHEN format_type = ANY(v_unquotedType) THEN
-               quote_ident(replace(attname, '''', '''''')) || ' = '' || o.' || quote_ident(attname) || ' || '''
+               quote_ident(replace(attname, '''', '''''')) || ' = '' || o.' || quote_ident(attname) || '::TEXT || '''
                   ELSE
-               quote_ident(replace(attname, '''', '''''')) || ' = '' || quote_literal(o.' || quote_ident(attname) || ') || '''
+               quote_ident(replace(attname, '''', '''''')) || ' = '' || emaj._quote_nullable(o.' || quote_ident(attname) || '::TEXT) || '''
              END, ' AND ')
       INTO p_pkCols, p_genPkConditions
       FROM
@@ -3521,7 +3535,7 @@ $_build_sql_tbl$
 -- Retrieve from pg_attribute all columns of the application table and build :
 -- - the VALUES list used in the INSERT statements
 -- - the SET list used in the UPDATE statements.
--- The logic is too complex to be build with aggregate functions. So loop on all columns.
+-- The logic is too complex to be built with aggregate functions. So loop on all columns.
       p_genValList = '';
       p_genSetList = '';
       FOR r_col IN EXECUTE format(
@@ -3546,11 +3560,11 @@ $_build_sql_tbl$
         ELSE
 -- Literal for this column must be quoted.
           IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
-            p_genValList = p_genValList || ''' || quote_nullable(o.' || quote_ident(r_col.attname) || ') || '', ';
+            p_genValList = p_genValList || ''' || emaj._quote_nullable(o.' || quote_ident(r_col.attname) || '::TEXT) || '', ';
           END IF;
           IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
-            p_genSetList = p_genSetList || quote_ident(replace(r_col.attname, '''', '''''')) || ' = '' || quote_nullable(n.'
-                                        || quote_ident(r_col.attname) || ') || '', ';
+            p_genSetList = p_genSetList || quote_ident(replace(r_col.attname, '''', '''''')) || ' = '' || emaj._quote_nullable(n.'
+                                        || quote_ident(r_col.attname) || '::TEXT) || '', ';
           END IF;
         END IF;
       END LOOP;
@@ -5060,25 +5074,25 @@ $_gen_sql_tbl$
     v_rqUpdate               TEXT;
     v_rqDelete               TEXT;
     v_rqTruncate             TEXT;
-    v_conditions             TEXT;
+    v_gidRange               TEXT;
     v_lastEmajGidRel         BIGINT;
     v_nbSQL                  BIGINT;
   BEGIN
 -- Build schema specified table name and log table name.
-    v_fullTableName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+    v_fullTableName = replace(quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq), '''', '''''');
     v_logTableName = quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
 -- Prepare sql skeletons for each statement type, using the pieces of sql recorded in the emaj_relation row at table assignment time.
-    v_rqInsert = '''INSERT INTO ' || replace(v_fullTableName, '''', '''''')
+    v_rqInsert = '''INSERT INTO ' || v_fullTableName
               || CASE WHEN r_rel.rel_sql_gen_ins_col <> '' THEN ' (' || r_rel.rel_sql_gen_ins_col || ')' ELSE '' END
               || CASE WHEN r_rel.rel_has_always_ident_col THEN ' OVERRIDING SYSTEM VALUE' ELSE '' END
               || ' VALUES (' || r_rel.rel_sql_gen_ins_val || ');''';
-    v_rqUpdate = '''UPDATE ONLY ' || replace(v_fullTableName, '''', '''''')
+    v_rqUpdate = '''UPDATE ONLY ' || v_fullTableName
               || ' SET ' || r_rel.rel_sql_gen_upd_set || ' WHERE ' || r_rel.rel_sql_gen_pk_conditions || ';''';
-    v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName, '''', '''''')
+    v_rqDelete = '''DELETE FROM ONLY ' || v_fullTableName
               || ' WHERE ' || r_rel.rel_sql_gen_pk_conditions || ';''';
-    v_rqTruncate = '''TRUNCATE ONLY ' || replace(v_fullTableName, '''', '''''') || ' CASCADE;''';
+    v_rqTruncate = '''TRUNCATE ONLY ' || v_fullTableName || ' CASCADE;''';
 -- Build the restriction conditions on emaj_gid, depending on supplied marks range and the relation time range upper bound.
-    v_conditions = 'o.emaj_gid > ' || p_firstEmajGid;
+    v_gidRange = 'o.emaj_gid > ' || p_firstEmajGid;
 --   Get the EmajGid of the relation time range upper bound, if any.
     IF NOT upper_inf(r_rel.rel_time_range) THEN
       SELECT time_last_emaj_gid INTO v_lastEmajGidRel
@@ -5092,7 +5106,7 @@ $_gen_sql_tbl$
     END IF;
 --   Complete the restriction conditions.
     IF p_lastEmajGid IS NOT NULL THEN
-      v_conditions = v_conditions || ' AND o.emaj_gid <= ' || p_lastEmajGid;
+      v_gidRange = v_gidRange || ' AND o.emaj_gid <= ' || p_lastEmajGid;
     END IF;
 -- Now scan the log table to process all statement types at once.
     EXECUTE format('INSERT INTO emaj_temp_script '
@@ -5109,7 +5123,7 @@ $_gen_sql_tbl$
                    '  WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
                    '    AND NOT (o.emaj_verb = ''TRU'' AND o.emaj_tuple <> '''')'
                    '    AND %s',
-                   v_rqInsert, v_rqUpdate, v_rqDelete, v_rqTruncate, v_logTableName, v_logTableName, v_conditions);
+                   v_rqInsert, v_rqUpdate, v_rqDelete, v_rqTruncate, v_logTableName, v_logTableName, v_gidRange);
     GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
 --
     RETURN v_nbSQL;
@@ -12488,7 +12502,7 @@ $_gen_sql_dump_changes_tbl$
     v_r1PkColumns            TEXT;
     v_r1R2PkCond             TEXT;
     v_r1R2NonPkCond          TEXT;
-    v_conditions             TEXT;
+    v_gidRange               TEXT;
     v_template               TEXT;
   BEGIN
 -- Build columns arrays (identifier quoted).
@@ -12550,7 +12564,7 @@ $_gen_sql_dump_changes_tbl$
                       CASE WHEN v_extraEmajColumnsList <> '' THEN ',' || v_extraEmajColumnsList ELSE '' END;
     END IF;
 -- Build the conditions on emaj_gid.
-    v_conditions = 'emaj_gid > ' || p_firstEmajGid || coalesce(' AND emaj_gid <= ' || p_lastEmajGid, '');
+    v_gidRange = 'emaj_gid > ' || p_firstEmajGid || coalesce(' AND emaj_gid <= ' || p_lastEmajGid, '');
 -- Build the ORDER BY columns list.
     IF p_orderBy = 'TIME' THEN
       v_orderByColumns = 'emaj_gid, emaj_tuple DESC';
@@ -12567,7 +12581,7 @@ $_gen_sql_dump_changes_tbl$
            '    AND emaj_tuple IN (''OLD'', ''NEW'')\n'
            '  ORDER BY %s';
         v_stmt = format(v_template,
-                        v_columnsList, p_logSchema, p_logTable, v_conditions, v_orderByColumns);
+                        v_columnsList, p_logSchema, p_logTable, v_gidRange, v_orderByColumns);
       WHEN 'PARTIAL' THEN
         v_template =
           E'WITH keys AS (\n'
@@ -12584,7 +12598,7 @@ $_gen_sql_dump_changes_tbl$
            '     OR (tbl.emaj_tuple = ''NEW'' AND tbl.emaj_gid = keys.max_gid)\n'
            '  ORDER BY %s';
         v_stmt = format(v_template,
-                        v_pkColsList, p_logSchema, p_logTable, v_conditions, v_pkColsList,
+                        v_pkColsList, p_logSchema, p_logTable, v_gidRange, v_pkColsList,
                         v_columnsList, p_logSchema, p_logTable, v_pkConditions, v_orderByColumns);
       WHEN 'FULL' THEN
 -- Some additional SQL pieces for full consolidation.
@@ -12631,7 +12645,7 @@ $_gen_sql_dump_changes_tbl$
            '    WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE %s)\n'
            '    ORDER BY %s';
         v_stmt = format(v_template,
-                        v_pkColsList, p_logSchema, p_logTable, v_conditions, v_pkColsList,
+                        v_pkColsList, p_logSchema, p_logTable, v_gidRange, v_pkColsList,
                         p_logSchema, p_logTable, v_pkConditions,
                         v_r1PkColumns, v_r1R2PkCond, v_r1R2NonPkCond,
                         v_columnsList, v_pkConditions, v_orderByColumns);
@@ -12949,14 +12963,13 @@ $_gen_sql_groups$
                         p_location);
       END IF;
 -- End of checks.
--- Insert initial comments, some session parameters setting:
---    - the standard_conforming_strings option to properly handle special characters,
+-- Insert initial comments, a session parameters setting:
 --    - the DateStyle mode used at export time,
 -- and a transaction start.
       IF v_lastMarkTimeId IS NOT NULL THEN
-        v_endComment = ' and mark ' || p_lastMark;
+        v_endComment = '" and mark "' || p_lastMark || '"';
       ELSE
-        v_endComment = ' and the current state';
+        v_endComment = '" and the current state';
       END IF;
       SELECT setting INTO v_dateStyle
         FROM pg_catalog.pg_settings
@@ -12964,15 +12977,13 @@ $_gen_sql_groups$
       INSERT INTO emaj_temp_script VALUES
         (0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp()),
         (0, 2, 0, '--    for tables group(s): ' || array_to_string(p_groupNames, ',')),
-        (0, 3, 0, '--    processing logs between mark ' || p_firstMark || v_endComment);
+        (0, 3, 0, '--    processing logs between mark "' || p_firstMark || v_endComment);
       IF p_tblseqs IS NOT NULL THEN
         INSERT INTO emaj_temp_script VALUES
           (0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(p_tblseqs, ','));
       END IF;
       INSERT INTO emaj_temp_script VALUES
-        (0, 10, 0, 'SET standard_conforming_strings = OFF;'),
-        (0, 11, 0, 'SET escape_string_warning = OFF;'),
-        (0, 12, 0, 'SET datestyle = ' || quote_literal(v_dateStyle) || ';'),
+        (0, 10, 0, 'SET datestyle = ' || quote_literal(v_dateStyle) || ';'),
         (0, 20, 0, 'BEGIN TRANSACTION;');
 -- Process tables.
       FOR r_rel IN
@@ -13004,12 +13015,10 @@ $_gen_sql_groups$
 -- Process each sequence and increment the sequence counter.
         v_nbSeq = v_nbSeq + emaj._gen_sql_seq(r_rel, v_firstMarkTimeId, v_lastMarkTimeId, v_nbSeq);
       END LOOP;
--- Add command to commit the transaction and reset the modified session parameters.
+-- Add command to commit the transaction and reset the modified session parameter.
       INSERT INTO emaj_temp_script VALUES
         (NULL, 1, txid_current(), 'COMMIT;'),
-        (NULL, 10, txid_current(), 'RESET standard_conforming_strings;'),
-        (NULL, 11, txid_current(), 'RESET escape_string_warning;'),
-        (NULL, 11, txid_current(), 'RESET datestyle;');
+        (NULL, 10, txid_current(), 'RESET datestyle;');
 -- If an output file is supplied, write the SQL script on the external file and drop the temporary table.
       IF p_location IS NOT NULL THEN
         EXECUTE format ('COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid) TO %L',
@@ -15438,7 +15447,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:15723: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:15733: NOTICE:  E-Maj installation: E-Maj successfully installed.
 -- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
 WITH start_time_data AS (
   SELECT clock_timestamp() - lower(verh_time_range) AS duration

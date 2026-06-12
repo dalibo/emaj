@@ -20,17 +20,13 @@ REVOKE ALL ON ALL SEQUENCES IN SCHEMA mySchema1, mySchema2, "phil's schema""3", 
 SET session_authorization TO _regress_emaj_adm2;
 SELECT * FROM emaj.emaj_verify_all();
 
-SELECT * FROM emaj.emaj_log_session ORDER BY 1, 2;
+-- New or modified table contents.
 
-SELECT time_event, count(*) FROM emaj.emaj_time_stamp WHERE time_event in ('S', 'X') GROUP BY 1 ORDER BY 1;
+SELECT * FROM emaj.emaj_install_conf;
 
-SELECT group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging,
-       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
-  FROM emaj.emaj_group ORDER BY group_name;
+SELECT * FROM emaj.emaj_param ORDER BY param_key;
 
-SELECT * FROM emaj.emaj_group_hist ORDER BY grph_group, grph_time_range;
-
-SELECT * FROM emaj.emaj_relation_change ORDER BY 1, 2, 3, 4;
+SELECT rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions FROM emaj.emaj_relation ORDER BY rel_schema, rel_tblseq, rel_time_range;
 
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group.
@@ -109,10 +105,10 @@ SET session_authorization TO _regress_emaj_adm2;
 SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'M5', FALSE) ORDER BY 1, 2;
 --
 RESET session_authorization;
-INSERT INTO myTbl1 VALUES (1, 'Step 6', E'\\001'::BYTEA);
+INSERT INTO myTbl1 VALUES (1, E'Step\t6', E'\\001'::BYTEA);
 COPY myTbl4 FROM stdin CSV;
-11,,1,1,"Step 6"
-12,,1,1,"Step 6"
+11,,1,1,"Step	6"
+12,,1,1,"Step	6"
 \.
 --
 SET session_authorization TO _regress_emaj_adm2;
@@ -121,7 +117,8 @@ SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'M4', FALSE) ORDER BY 
 -----------------------------
 -- Step 7 : for myGroup1, generate a sql script on the whole time frame.
 -----------------------------
-SELECT emaj.emaj_gen_sql_group('myGroup1', 'M1', NULL, '/dev/null', ARRAY['myschema1.mytbl1', 'myschema1.mytbl2', 'myschema1.mytbl4']);
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'M1', NULL, NULL, ARRAY['myschema1.mytbl1', 'myschema1.mytbl2', 'myschema1.mytbl4']);
+SELECT * FROM emaj_sql_script;
 SELECT emaj.emaj_gen_sql_group('myGroup1', 'M1', NULL, '/dev/null', ARRAY['myschema1.myTbl3']);
 
 -----------------------------

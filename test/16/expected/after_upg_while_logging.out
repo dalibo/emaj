@@ -23,70 +23,42 @@ SELECT * FROM emaj.emaj_verify_all();
  No error detected
 (3 rows)
 
-SELECT * FROM emaj.emaj_log_session ORDER BY 1, 2;
-    lses_group    | lses_time_range | lses_marks | lses_log_rows 
-------------------+-----------------+------------+---------------
- myGroup1         | [15,)           |          5 |            40
- myGroup2         | [15,)           |          8 |            35
- myGroup6         | [29,32)         |          3 |             0
- phil's group#3", | [16,)           |          1 |             0
-(4 rows)
+-- New or modified table contents.
+SELECT * FROM emaj.emaj_install_conf;
+ inst_as_extension | inst_by_superuser | inst_installer_role | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
+-------------------+-------------------+---------------------+--------------------+-----------------------+--------------------------
+ t                 | t                 | postgres            | t                  | t                     | t
+(1 row)
 
-SELECT time_event, count(*) FROM emaj.emaj_time_stamp WHERE time_event in ('S', 'X') GROUP BY 1 ORDER BY 1;
- time_event | count 
-------------+-------
- S          |     3
- X          |     1
-(2 rows)
+SELECT * FROM emaj.emaj_param ORDER BY param_key;
+     param_key     | param_value 
+-------------------+-------------
+ history_retention | @ 1 day
+(1 row)
 
-SELECT group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging,
-       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
-  FROM emaj.emaj_group ORDER BY group_name;
-    group_name    | group_is_rollbackable | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
-------------------+-----------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
- myGroup1         | t                     |                       28 | t                | t                       |              4 |                 1 | 
- myGroup2         | t                     |                       11 | t                | f                       |              4 |                 2 | 
- myGroup6         | t                     |                       30 | f                | f                       |              3 |                 0 | 
- phil's group#3", | f                     |                       13 | t                | t                       |              2 |                 1 | 
-(4 rows)
-
-SELECT * FROM emaj.emaj_group_hist ORDER BY grph_group, grph_time_range;
-    grph_group    | grph_time_range | grph_is_rollbackable | grph_log_sessions 
-------------------+-----------------+----------------------+-------------------
- myGroup1         | [1,)            | t                    |                 1
- myGroup2         | [2,)            | t                    |                 1
- myGroup6         | [4,)            | t                    |                 1
- phil's group#3", | [3,)            | f                    |                 1
-(4 rows)
-
-SELECT * FROM emaj.emaj_relation_change ORDER BY 1, 2, 3, 4;
- rlchg_time_id |  rlchg_schema   |                      rlchg_tblseq                       | rlchg_change_kind |   rlchg_group    | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
----------------+-----------------+---------------------------------------------------------+-------------------+------------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------
-             5 | myschema1       | myTbl3                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             5 | myschema1       | mytbl1                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             5 | myschema1       | mytbl2                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             5 | myschema1       | mytbl2b                                                 | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             5 | myschema1       | mytbl4                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             6 | myschema1       | mytbl1                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 20 |                    |                        |                     |                         |                        | 
-             7 | myschema1       | myTbl3                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 10 |                    |                        |                     |                         |                        | 
-             8 | myschema1       | mytbl4                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 20 |                    |                        |                     |                         |                        | 
-             9 | myschema1       | myTbl3_col31_seq                                        | ADD_SEQUENCE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            10 | myschema2       | myTbl3                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            10 | myschema2       | mytbl1                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            10 | myschema2       | mytbl2                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            10 | myschema2       | mytbl4                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            11 | myschema2       | myTbl3_col31_seq                                        | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            11 | myschema2       | myseq1                                                  | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            12 | phil's schema"3 | myTbl2\                                                 | ADD_TABLE         | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            12 | phil's schema"3 | phil's tbl1                                             | ADD_TABLE         | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            13 | phil's schema"3 | phil's"seq\1                                            | ADD_SEQUENCE      | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            14 | myschema6       | table_with_50_characters_long_name_____0_________0      | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            14 | myschema6       | table_with_51_characters_long_name_____0_________0a     | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            14 | myschema6       | table_with_55_characters_long_name_____0_________0abcde | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            14 | myschema6       | table_with_55_characters_long_name_____0_________0fghij | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            28 | myschema1       | myTbl3                                                  | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            30 | myschema6       | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-(24 rows)
+SELECT rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions FROM emaj.emaj_relation ORDER BY rel_schema, rel_tblseq, rel_time_range;
+                                                                                                    rel_sql_gen_ins_val                                                                                                     |                                                                                                                          rel_sql_gen_upd_set                                                                                                                          |                                                 rel_sql_gen_pk_conditions                                                 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------
+ ' || coalesce(o.col31::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col32::TEXT) || ', ' || coalesce(o.col33::TEXT,'NULL') || '                                                                                          | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || emaj._quote_nullable(n.col32::TEXT) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || '                                                                                                           | col31 = ' || o.col31 || '
+                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                                       | 
+ ' || coalesce(o.col11::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col12::TEXT) || ', ' || emaj._quote_nullable(o.col13::TEXT) || '                                                                                     | col11 = ' || coalesce(n.col11 ::TEXT,'NULL') || ', col12 = ' || emaj._quote_nullable(n.col12::TEXT) || ', col13 = ' || emaj._quote_nullable(n.col13::TEXT) || '                                                                                                       | col11 = ' || o.col11 || ' AND col12 = ' || emaj._quote_nullable(o.col12::TEXT) || '
+ ' || coalesce(o.col21::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col22::TEXT) || ', ' || emaj._quote_nullable(o.col23::TEXT) || '                                                                                     | col21 = ' || coalesce(n.col21 ::TEXT,'NULL') || ', col22 = ' || emaj._quote_nullable(n.col22::TEXT) || ', col23 = ' || emaj._quote_nullable(n.col23::TEXT) || '                                                                                                       | col21 = ' || o.col21 || '
+ ' || coalesce(o.col20::TEXT,'NULL') || ', ' || coalesce(o.col21::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col24::TEXT) || '                                                                                          | col21 = ' || coalesce(n.col21 ::TEXT,'NULL') || ', col24 = ' || emaj._quote_nullable(n.col24::TEXT) || '                                                                                                                                                              | col20 = ' || o.col20 || '
+ ' || coalesce(o.col41::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col42::TEXT) || ', ' || coalesce(o.col43::TEXT,'NULL') || ', ' || coalesce(o.col44::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col45::TEXT) || ' | col41 = ' || coalesce(n.col41 ::TEXT,'NULL') || ', col42 = ' || emaj._quote_nullable(n.col42::TEXT) || ', col43 = ' || coalesce(n.col43 ::TEXT,'NULL') || ', col44 = ' || coalesce(n.col44 ::TEXT,'NULL') || ', col45 = ' || emaj._quote_nullable(n.col45::TEXT) || ' | col43 = ' || o.col43 || ' AND col41 = ' || o.col41 || '
+ ' || coalesce(o.col31::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col32::TEXT) || ', ' || coalesce(o.col33::TEXT,'NULL') || '                                                                                          | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || emaj._quote_nullable(n.col32::TEXT) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || '                                                                                                           | col31 = ' || o.col31 || '
+                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                                       | 
+                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                                       | 
+ ' || coalesce(o.col11::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col12::TEXT) || ', ' || emaj._quote_nullable(o.col13::TEXT) || '                                                                                     | col11 = ' || coalesce(n.col11 ::TEXT,'NULL') || ', col12 = ' || emaj._quote_nullable(n.col12::TEXT) || ', col13 = ' || emaj._quote_nullable(n.col13::TEXT) || '                                                                                                       | col11 = ' || o.col11 || ' AND col12 = ' || emaj._quote_nullable(o.col12::TEXT) || '
+ ' || coalesce(o.col21::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col22::TEXT) || ', ' || emaj._quote_nullable(o.col23::TEXT) || '                                                                                     | col21 = ' || coalesce(n.col21 ::TEXT,'NULL') || ', col22 = ' || emaj._quote_nullable(n.col22::TEXT) || ', col23 = ' || emaj._quote_nullable(n.col23::TEXT) || '                                                                                                       | col21 = ' || o.col21 || '
+ ' || coalesce(o.col41::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col42::TEXT) || ', ' || coalesce(o.col43::TEXT,'NULL') || ', ' || coalesce(o.col44::TEXT,'NULL') || ', ' || emaj._quote_nullable(o.col45::TEXT) || ' | col41 = ' || coalesce(n.col41 ::TEXT,'NULL') || ', col42 = ' || emaj._quote_nullable(n.col42::TEXT) || ', col43 = ' || coalesce(n.col43 ::TEXT,'NULL') || ', col44 = ' || coalesce(n.col44 ::TEXT,'NULL') || ', col45 = ' || emaj._quote_nullable(n.col45::TEXT) || ' | col41 = ' || o.col41 || '
+ ' || coalesce(o.col1::TEXT,'NULL') || '                                                                                                                                                                                    | col1 = ' || coalesce(n.col1 ::TEXT,'NULL') || '                                                                                                                                                                                                                       | col1 = ' || o.col1 || '
+ ' || coalesce(o.col1::TEXT,'NULL') || '                                                                                                                                                                                    | col1 = ' || coalesce(n.col1 ::TEXT,'NULL') || '                                                                                                                                                                                                                       | col1 = ' || o.col1 || '
+ ' || coalesce(o.col1::TEXT,'NULL') || '                                                                                                                                                                                    | col1 = ' || coalesce(n.col1 ::TEXT,'NULL') || '                                                                                                                                                                                                                       | col1 = ' || o.col1 || '
+ ' || coalesce(o.col1::TEXT,'NULL') || '                                                                                                                                                                                    | col1 = ' || coalesce(n.col1 ::TEXT,'NULL') || '                                                                                                                                                                                                                       | col1 = ' || o.col1 || '
+                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                                       | 
+ ' || coalesce(o."phil's col11"::TEXT,'NULL') || ', ' || emaj._quote_nullable(o."phil's col12"::TEXT) || ', ' || emaj._quote_nullable(o."phil\s""col13"::TEXT) || '                                                         | "phil''s col11" = ' || coalesce(n."phil's col11" ::TEXT,'NULL') || ', "phil''s col12" = ' || emaj._quote_nullable(n."phil's col12"::TEXT) || ', "phil\s""col13" = ' || emaj._quote_nullable(n."phil\s""col13"::TEXT) || '                                             | "phil''s col11" = ' || o."phil's col11" || ' AND "phil''s col12" = ' || emaj._quote_nullable(o."phil's col12"::TEXT) || '
+                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                                       | 
+(19 rows)
 
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group.
@@ -254,7 +226,7 @@ SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'M5', FALSE) ORDER BY 1, 2;
 
 --
 RESET session_authorization;
-INSERT INTO myTbl1 VALUES (1, 'Step 6', E'\\001'::BYTEA);
+INSERT INTO myTbl1 VALUES (1, E'Step\t6', E'\\001'::BYTEA);
 COPY myTbl4 FROM stdin CSV;
 --
 SET session_authorization TO _regress_emaj_adm2;
@@ -269,11 +241,60 @@ SELECT * FROM emaj.emaj_logged_rollback_group('myGroup1', 'M4', FALSE) ORDER BY 
 -----------------------------
 -- Step 7 : for myGroup1, generate a sql script on the whole time frame.
 -----------------------------
-SELECT emaj.emaj_gen_sql_group('myGroup1', 'M1', NULL, '/dev/null', ARRAY['myschema1.mytbl1', 'myschema1.mytbl2', 'myschema1.mytbl4']);
+SELECT emaj.emaj_gen_sql_group('myGroup1', 'M1', NULL, NULL, ARRAY['myschema1.mytbl1', 'myschema1.mytbl2', 'myschema1.mytbl4']);
  emaj_gen_sql_group 
 --------------------
                  36
 (1 row)
+
+SELECT * FROM emaj_sql_script;
+                                                    scr_sql                                                     
+----------------------------------------------------------------------------------------------------------------
+ -- SQL script generated by E-Maj at 2026-06-11 23:58:06.043039-07
+ --    for tables group(s): myGroup1
+ --    processing logs between mark "M1" and the current state
+ --    only for the following tables/sequences: myschema1.mytbl1,myschema1.mytbl2,myschema1.mytbl4
+ SET datestyle = 'ISO, YMD';
+ BEGIN TRANSACTION;
+ INSERT INTO myschema1.mytbl1 VALUES (1, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (2, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (3, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (4, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (5, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (6, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (7, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (8, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (9, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (10, 'ABC', E'\\x0c');
+ INSERT INTO myschema1.mytbl1 VALUES (11, 'ABC', E'\\x0c');
+ UPDATE ONLY myschema1.mytbl1 SET col11 = 1, col12 = 'ABC', col13 = E'\\x1c' WHERE col11 = 1 AND col12 = 'ABC';
+ UPDATE ONLY myschema1.mytbl1 SET col11 = 2, col12 = 'ABC', col13 = E'\\x1c' WHERE col11 = 2 AND col12 = 'ABC';
+ UPDATE ONLY myschema1.mytbl1 SET col11 = 3, col12 = 'ABC', col13 = E'\\x1c' WHERE col11 = 3 AND col12 = 'ABC';
+ INSERT INTO myschema1.mytbl2 VALUES (1, 'ABC', '2010-12-31');
+ DELETE FROM ONLY myschema1.mytbl1 WHERE col11 = 11 AND col12 = 'ABC';
+ INSERT INTO myschema1.mytbl2 VALUES (2, 'DEF', NULL);
+ INSERT INTO myschema1.mytbl1 VALUES (100, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (101, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (102, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (103, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (104, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (105, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (106, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (107, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (108, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (109, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl1 VALUES (110, 'DEF', E'\\x00');
+ INSERT INTO myschema1.mytbl2 VALUES (3, 'GHI', '2010-01-02');
+ DELETE FROM ONLY myschema1.mytbl1 WHERE col11 = 1 AND col12 = 'ABC';
+ INSERT INTO myschema1.mytbl1 VALUES (1, E'Step  6', E'\\x01');
+ INSERT INTO myschema1.mytbl4 VALUES (11, NULL, 1, 1, E'Step     6');
+ INSERT INTO myschema1.mytbl4 VALUES (12, NULL, 1, 1, E'Step     6');
+ DELETE FROM ONLY myschema1.mytbl4 WHERE col43 = 1 AND col41 = 11;
+ DELETE FROM ONLY myschema1.mytbl4 WHERE col43 = 1 AND col41 = 12;
+ DELETE FROM ONLY myschema1.mytbl1 WHERE col11 = 1 AND col12 = E'Step    6';
+ COMMIT;
+ RESET datestyle;
+(44 rows)
 
 SELECT emaj.emaj_gen_sql_group('myGroup1', 'M1', NULL, '/dev/null', ARRAY['myschema1.myTbl3']);
  emaj_gen_sql_group 
@@ -760,7 +781,7 @@ SELECT hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 10                                                    | 0 / 1 sequences effectively processed.                                                        | _regress_emaj_adm2
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 10                                                                                | _regress_emaj_adm2
  GEN_SQL_GROUP            | BEGIN              | myGroup1                                                          | From mark M1 to current state with tables/sequences filtering                                 | _regress_emaj_adm2
- GEN_SQL_GROUP            | END                | myGroup1                                                          | 36 generated statements - script exported into /dev/null                                      | _regress_emaj_adm2
+ GEN_SQL_GROUP            | END                | myGroup1                                                          | 36 generated statements - script not exported                                                 | _regress_emaj_adm2
  GEN_SQL_GROUP            | BEGIN              | myGroup1                                                          | From mark M1 to current state with tables/sequences filtering                                 | _regress_emaj_adm2
  GEN_SQL_GROUP            | END                | myGroup1                                                          | 10 generated statements - script exported into /dev/null                                      | _regress_emaj_adm2
  RENAME_MARK_GROUP        | BEGIN              | myGroup1                                                          | RLBK_10_START                                                                                 | _regress_emaj_adm2
