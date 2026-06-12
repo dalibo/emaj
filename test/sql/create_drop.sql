@@ -451,6 +451,10 @@ SELECT emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "m
 SELECT emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "tables": [ { "schema": "phil''s schema\"3", "table": "myTbl2\\" }] } ]}'::JSON, NULL, TRUE);
 
 --   Ok.
+
+-- An empty group configuration.
+SELECT emaj.emaj_import_groups_configuration('{ "tables_groups": []}'::JSON);
+
 -- A new group with a comment, then changed and finaly deleted.
 SELECT emaj.emaj_import_groups_configuration('{ "tables_groups": [
    { "group": "new_grp", "comment": "a nice comment for new_grp" }

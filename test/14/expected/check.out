@@ -106,9 +106,9 @@ SELECT funcname, calls FROM pg_stat_user_functions
  _check_can_copy_from                      |    30
  _check_can_copy_to                        |   101
  _check_can_exec_program                   |    26
- _check_fk_groups                          |    99
+ _check_fk_groups                          |   100
  _check_group_names                        |  1240
- _check_json_groups_conf                   |    54
+ _check_json_groups_conf                   |    55
  _check_json_param_conf                    |    19
  _check_json_table_properties              |    44
  _check_mark_name                          |   614
@@ -120,7 +120,7 @@ SELECT funcname, calls FROM pg_stat_user_functions
  _check_tblseqs_filter                     |    29
  _clean_array                              |  1597
  _cleanup_rollback_state                   |   382
- _create_log_schemas                       |    22
+ _create_log_schemas                       |    23
  _create_seq                               |    48
  _create_tbl                               |   176
  _dblink_close_cnx                         |   120
@@ -131,16 +131,16 @@ SELECT funcname, calls FROM pg_stat_user_functions
  _delete_intermediate_mark_group           |    31
  _delete_log_tbl                           |    67
  _detailed_log_stat_groups                 |    27
- _disable_event_triggers                   |   247
+ _disable_event_triggers                   |   248
  _drop_group                               |    34
  _drop_groups                              |    37
- _drop_log_schemas                         |    85
+ _drop_log_schemas                         |    86
  _drop_seq                                 |    73
  _drop_tbl                                 |   231
- _enable_event_triggers                    |   242
+ _enable_event_triggers                    |   243
  _estimate_rlbk_step_duration              |   784
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |   205
+ _event_trigger_sql_drop_fnct              |   207
  _event_trigger_table_rewrite_fnct         |     4
  _export_groups_conf                       |    11
  _export_param_conf                        |     8
@@ -156,11 +156,11 @@ SELECT funcname, calls FROM pg_stat_user_functions
  _get_lock_tblseqs_groups                  |   147
  _get_previous_mark_group                  |    47
  _get_sequences_last_value                 |     7
- _import_groups_conf                       |    21
- _import_groups_conf_alter                 |    21
- _import_groups_conf_check                 |    33
- _import_groups_conf_exec                  |    21
- _import_groups_conf_prepare               |    40
+ _import_groups_conf                       |    22
+ _import_groups_conf_alter                 |    22
+ _import_groups_conf_check                 |    34
+ _import_groups_conf_exec                  |    22
+ _import_groups_conf_prepare               |    41
  _import_param_conf                        |    10
  _lock_groups                              |   333
  _log_stat_groups                          |    31
@@ -198,7 +198,7 @@ SELECT funcname, calls FROM pg_stat_user_functions
  _set_mark_groups_exec                     |   371
  _set_mark_groups_init                     |   107
  _set_mark_groups_lock                     |   107
- _set_time_stamp                           |   604
+ _set_time_stamp                           |   605
  _start_groups_exec                        |    59
  _start_groups_init                        |    59
  _start_groups_lock                        |    59
@@ -253,7 +253,7 @@ SELECT funcname, calls FROM pg_stat_user_functions
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |    11
  emaj_get_version                          |    21
- emaj_import_groups_configuration          |     4
+ emaj_import_groups_configuration          |     5
  emaj_import_groups_configuration          |    17
  emaj_import_parameters_configuration      |     7
  emaj_import_parameters_configuration      |     3
@@ -308,7 +308,7 @@ SELECT funcname, calls FROM pg_stat_user_functions
 SELECT sum(calls) FROM pg_stat_user_functions WHERE funcname LIKE E'emaj\\_%';
  sum  
 ------
- 1252
+ 1253
 (1 row)
 
 -----------------------------

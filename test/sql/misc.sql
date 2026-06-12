@@ -659,6 +659,8 @@ SELECT public.handle_emaj_sequences(5600);
 -- Test a table reclustering (it will use the pkey index as clustered index) and a vacuum full.
 -----------------------------
 CLUSTER emaj_myschema1.mytbl1_log;
+REPACK (ANALYZE, CONCURRENTLY) emaj_myschema1.mytbl1_log;    -- PG19+
+
 VACUUM FULL emaj_myschema1.mytbl1_log;
 
 -----------------------------
