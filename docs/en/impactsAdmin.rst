@@ -88,7 +88,7 @@ Tables reorganisation
 Reorganisation of application tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Application tables protected by E-Maj can be reorganised using the SQL *CLUSTER* command. Whether or not log triggers are enabled, the organisation process has no impact on log tables content.
+Application tables protected by E-Maj can be reorganised using the *CLUSTER* or *REPACK* SQL commands. Whether or not log triggers are enabled, the organisation process has no impact on log tables content.
 
 Reorganisation of E-Maj tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -96,7 +96,7 @@ Reorganisation of E-Maj tables
 The index corresponding to the primary key of each table from E-Maj schemas (neither log tables nor technical tables) is declared “*cluster*”.
 
 .. caution::
-   So using E-Maj may have an operational impact regarding the execution of *CLUSTER* SQL commands at database level.
+   So using E-Maj may have an operational impact regarding the execution of *CLUSTER* or *REPACK* SQL commands at database level.
 
 When E-Maj is used in continuous mode (with deletion of oldest marks instead of regular tables groups stop and restart), it is recommended to regularly reorganize E-Maj log tables. This reclaims unused disk space following mark deletions.
 

@@ -90,7 +90,7 @@ Réorganisation des tables de la base de données
 Réorganisation des tables applicatives
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Les tables applicatives protégées par E-Maj peuvent être réorganisées par une commande SQL *CLUSTER*. Que les triggers de logs soient actifs ou non, le processus de réorganisation n'a pas d'impact pas le contenu des tables de log.
+Les tables applicatives protégées par E-Maj peuvent être réorganisées par des commandes SQL *CLUSTER* ou *REPACK*. Que les triggers de logs soient actifs ou non, le processus de réorganisation n'a pas d'impact pas le contenu des tables de log.
 
 Réorganisation des tables E-Maj
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -98,7 +98,7 @@ Réorganisation des tables E-Maj
 L'index correspondant à la clé primaire de chaque table des schémas d'E-Maj est déclaré « *cluster* », que ce soit les tables de log ou les quelques tables internes.
 
 .. caution::
-   Aussi, l'installation d'E-Maj peut avoir un impact opérationnel sur l'exécution des commandes SQL *CLUSTER* au niveau de la base de données.
+   Aussi, l'installation d'E-Maj peut avoir un impact opérationnel sur l'exécution des commandes SQL *CLUSTER* ou *REPACK* au niveau de la base de données.
 
 Dans le cas d'une utilisation en mode continu d'E-Maj, c'est à dire sans arrêt et relance réguliers des groupes de tables, mais avec suppression des marques les plus anciennes, il est recommandé de procéder régulièrement à des réorganisations des tables de log E-Maj. Ceci permet ainsi de récupérer de l'espace disque inutilisé suite aux suppressions des marques.
 

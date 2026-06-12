@@ -55,7 +55,7 @@ Changes in the PostgreSQL instance configuration
 
 Two configuration parameters may need to be changed in the postgresql.conf file:
 
-  * **max_locks_per_transaction** to manage tables groups with a high number of tables. Main E-Maj functions set a lock on each table of a processed tables group. If an E-Maj operation fails with a message indicating that all entries of the *shared lock table* have been used, this parameter must be increased. Its default value equals 64.
+  * **max_locks_per_transaction** to manage tables groups with a high number of tables. Main E-Maj functions set a lock on each table of a processed tables group. If an E-Maj operation fails with a message indicating that all entries of the *shared lock table* have been used, this parameter must be increased. Its default value equals 128 (as of PostgreSQL 19 and 64 in earlier versions).
 
   * **max_prepared_transactions**, to use the :doc:`E-Maj parallel rollback client<parallelRollbackClient>`. Its default value is 0, blocking the use of this tool. Its value must be greater or equal the maximum number of concurrent parallel rollbacks operations.
 

@@ -56,7 +56,7 @@ Adaptation du fichier de configuration postgresql.conf
 
 Deux paramètres de configuration peuvent devoir être modifiés dans le fichier *postgresql.conf* :
 
-  * **max_locks_per_transaction**, pour gérer des groupes de tables comprenant un nombre élevé de tables. Les fonctions principales d'E-Maj posent un verrou sur chacune des tables des groupes traités. Si une opération E-Maj échoue et retourne un message d'erreur indiquant que toutes les entrées de la table des verrous sont utilisées, la valeur de ce paramètre doit être augmentée. Sa valeur par défaut est de 64.
+  * **max_locks_per_transaction**, pour gérer des groupes de tables comprenant un nombre élevé de tables. Les fonctions principales d'E-Maj posent un verrou sur chacune des tables des groupes traités. Si une opération E-Maj échoue et retourne un message d'erreur indiquant que toutes les entrées de la table des verrous sont utilisées, la valeur de ce paramètre doit être augmentée. Sa valeur par défaut est de 128 (à partir de PostgreSQL 19 et 64 dans les versions précédentes).
 
   * **max_prepared_transactions**, pour pouvoir utiliser l'outil de :doc:`rollback E-Maj parallélisé<parallelRollbackClient>`. Par défaut, la valeur du paramètre est 0, bloquant l’utilisation de transactions préparées. La valeur du paramètre doit être au moins égale au nombre de rollbacks E-Maj parallélisés concurrents.
 
