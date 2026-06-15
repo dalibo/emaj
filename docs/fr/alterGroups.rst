@@ -42,6 +42,8 @@ Le tableau suivant liste les actions possibles.
 +--------------------------------------------------------+---------------------------------------------------+
 | Changer la structure d’une table                       | Sortie du groupe + ALTER TABLE + Ajout            |
 +--------------------------------------------------------+---------------------------------------------------+
+| SPLIT ou MERGE de partitions d’une table partitionnée  | Sortie du groupe + ALTER TABLE + Ajout            |
++--------------------------------------------------------+---------------------------------------------------+
 | Autres formes d’ALTER TABLE                            | Sans impact E-Maj                                 |
 +--------------------------------------------------------+---------------------------------------------------+
 | Autres formes d’ALTER SEQUENCE                         | Sans impact E-Maj                                 |

@@ -39,6 +39,8 @@ Here are the possible actions.
 +------------------------------------------------------+----------------------------------------------+
 | Change a table’s structure                           | Remove from the group + ALTER TABLE + Add    |
 +------------------------------------------------------+----------------------------------------------+
+| SPLIT or MERGE partitions of a partitionned table    | Remove from the group + ALTER TABLE + Add    |
++------------------------------------------------------+----------------------------------------------+
 | Other forms of ALTER TABLE                           | No E-Maj impact                              |
 +------------------------------------------------------+----------------------------------------------+
 | Other forms of ALTER SEQUENCE                        | No E-Maj impact                              |
@@ -46,7 +48,7 @@ Here are the possible actions.
 
 Adjusting the structure of in *LOGGING* state groups may have consequences on E-Maj rollback or SQL script generation (see below).
 
-Even if the tables group is in *LOGGING* state, an E-Maj rollback operation targeting a mark set before a group’s change do NOT automatically revert this group’s change. However the E-Maj administrator can perform by himself the changes that would reset the group to its previous state.
+Even if the tables group is in *LOGGING* state, an E-Maj rollback operation targeting a mark set before a group’s change does NOT automatically revert this group’s change. However the E-Maj administrator can perform by himself the changes that would reset the group to its previous state.
 
 .. _dynamic_ajustment:
 
@@ -242,7 +244,7 @@ If the structure of an application table has been inadvertently changed while it
 
 When a table changes its affected group, the impact on the ability to generate a SQL script or to rollback the source and destination tables groups is similar to removing the table from its source group and then adding the table to the destination group.
 
-Repare a tables group
+Repair a tables group
 ---------------------
 
 Eventhough the event triggers created by E-Maj limit the risk, some E-Maj components that support an application table (log table, function or trigger) may have been dropped. In such a case, the associated tables group cannot work correctly anymore.
