@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * E-Maj now supports postgreSQL 19.
   * Writing idempotent administration scripts:
     * Allow to start tables groups that are already in LOGGING state, using
       a new parameter in emaj_start_group() and emaj_start_groups() functions.
