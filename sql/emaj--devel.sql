@@ -25,9 +25,9 @@
 DO LANGUAGE plpgsql
 $do$
   BEGIN
--- Check postgres version is >= 11.
-    IF pg_catalog.current_setting('server_version_num')::INT < 110000 THEN
-      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 11.',
+-- Check postgres version is >= 14.
+    IF pg_catalog.current_setting('server_version_num')::INT < 140000 THEN
+      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 14.',
         pg_catalog.current_setting('server_version');
     END IF;
 --
@@ -14445,9 +14445,9 @@ $emaj_verify_all$
     SELECT inst_with_event_triggers INTO STRICT v_supportEventTriggers
       FROM emaj.emaj_install_conf;
 -- Check the postgres version compatibility.
-    IF emaj._pg_version_num() < 120000 THEN
+    IF emaj._pg_version_num() < 140000 THEN
       RETURN NEXT 'Error: The current postgres version (' || version()
-               || ') is not compatible with this E-Maj version. It should be at least 12';
+               || ') is not compatible with this E-Maj version. It should be at least 14';
       v_errorFound = TRUE;
     END IF;
 -- Check all E-Maj schemas.

@@ -192,29 +192,27 @@ Then, it displays the list of available tests in a menu. ::
 	
 	Available tests:
 	----------------
-	a- pg 12 (port 5412) standart test
-	b- pg 13 (port 5413) standart test
-	c- pg 14 (port 5414) standart test
-	d- pg 15 (port 5415) standart test
-	e- pg 16 (port 5416) standart test
-	f- pg 18 (port 5418) standart test
-	m- pg 13 dump and 17 restore
+	a- pg 14 (port 5414) standart test
+	b- pg 15 (port 5415) standart test
+	c- pg 16 (port 5416) standart test
+	d- pg 18 (port 5418) standart test
+	e- pg 19 (port 5419) standart test
+	m- pg 15 dump and 19 restore
 	p- pg 17 (port 5417) psql install test
 	q- pg 18 (port 5418) psql non superuser install test
-	r- pg 16 (port 5416) uninstall test
+	r- pg 18 (port 5418) uninstall test
 	s- pg 17 (port 5417) uninstall from psql test
-	t- all tests, from a to f
-	u- pg 13 upgraded to pg 17
-	A- pg 12 (port 5412) starting with E-Maj upgrade
-	B- pg 13 (port 5413) starting with E-Maj upgrade
-	C- pg 14 (port 5414) starting with E-Maj upgrade
-	D- pg 15 (port 5415) starting with E-Maj upgrade
-	E- pg 16 (port 5416) starting with E-Maj upgrade
-	F- pg 18 (port 5418) starting with E-Maj upgrade
-	T- all tests with E-Maj upgrade, from A to F
-	U- pg 12 (port 5412) mixed with E-Maj upgrade from oldest version
-	V- pg 14 (port 5414) mixed with E-Maj upgrade
-	W- pg 16 (port 5416) mixed with E-Maj upgrade
+	t- all tests, from a to e
+	u- pg 14 upgraded to pg 19
+	A- pg 14 (port 5414) starting with E-Maj upgrade
+	B- pg 15 (port 5415) starting with E-Maj upgrade
+	C- pg 16 (port 5416) starting with E-Maj upgrade
+	D- pg 18 (port 5418) starting with E-Maj upgrade
+	E- pg 19 (port 5419) starting with E-Maj upgrade
+	T- all tests with E-Maj upgrade, from A to E
+	U- pg 14 (port 5414) mixed with E-Maj upgrade from oldest version
+	V- pg 16 (port 5416) mixed with E-Maj upgrade
+	W- pg 18 (port 5418) mixed with E-Maj upgrade
 	
 	Test to run ?
 
@@ -227,7 +225,7 @@ After having executed a *psql* script, *regress.sh* compares the outputs of the 
 
 Here is an example of the display issued by the test tool (in this case with the scenario chaining the installation and a version upgrade, and with a detected difference)::
 
-	Run regression test
+	Run regression test on Postgres 18
 	============== dropping database "regression"         ==============
 	DROP DATABASE
 	============== creating database "regression"         ==============

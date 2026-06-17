@@ -32,10 +32,10 @@ $do$
     IF v_emajVersion <> '4.7.1' THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not 4.7.1',v_emajVersion;
     END IF;
--- The installed postgres version must be at least 12.
-    IF current_setting('server_version_num')::int < 120000 THEN
+-- The installed postgres version must be at least 14.
+    IF current_setting('server_version_num')::int < 140000 THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL '
-                      'version should be at least 12.', current_setting('server_version');
+                      'version should be at least 14.', current_setting('server_version');
     END IF;
 -- Check the E-Maj environment state, if not yet done by a previous upgrade in the same transaction.
     SELECT current_setting('emaj.upgrade_verify_txid', TRUE) INTO v_txid;
@@ -10080,9 +10080,9 @@ $emaj_verify_all$
     SELECT inst_with_event_triggers INTO STRICT v_supportEventTriggers
       FROM emaj.emaj_install_conf;
 -- Check the postgres version compatibility.
-    IF emaj._pg_version_num() < 120000 THEN
+    IF emaj._pg_version_num() < 140000 THEN
       RETURN NEXT 'Error: The current postgres version (' || version()
-               || ') is not compatible with this E-Maj version. It should be at least 12';
+               || ') is not compatible with this E-Maj version. It should be at least 14';
       v_errorFound = TRUE;
     END IF;
 -- Check all E-Maj schemas.

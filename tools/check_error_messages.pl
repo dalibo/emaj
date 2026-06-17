@@ -145,7 +145,7 @@ use warnings; use strict;
 # Do not report some messages known to not be present in the regression test suite
                             # installation conditions that are not met during the tests
       if ($msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current user (%) is not a superuser.'
-       && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 11.'
+       && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 14.'
        && $msgs{$fnctId} ne 'WARNING:E-Maj installation: emaj_viewer role is not supported.'
        && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
        && $msgs{$fnctId} ne 'WARNING:emaj_gen_sql_dump_changes_group: the shell sed command does not seem to exist.'
