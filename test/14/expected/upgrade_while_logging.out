@@ -12,7 +12,7 @@ SELECT * FROM pg_available_extension_versions WHERE name = 'emaj' ORDER BY versi
  name | version | installed | superuser | trusted | relocatable | schema |      requires       |                                            comment                                             
 ------+---------+-----------+-----------+---------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
  emaj | devel   | f         | t         | f       | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
- emaj | 4.7.1   | t         | t         | f       | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 4.7.1   | f         | t         | f       | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
 SELECT relname FROM pg_catalog.pg_class, 
@@ -21,17 +21,17 @@ SELECT relname FROM pg_catalog.pg_class,
   ORDER BY 1;
            relname           
 -----------------------------
+ emaj_alter_plan
  emaj_global_seq
  emaj_group
- emaj_group_hist
+ emaj_group_def
  emaj_hist
  emaj_hist_hist_id_seq
- emaj_log_session
+ emaj_ignored_app_trigger
  emaj_mark
  emaj_param
  emaj_rel_hist
  emaj_relation
- emaj_relation_change
  emaj_rlbk
  emaj_rlbk_plan
  emaj_rlbk_rlbk_id_seq
@@ -40,25 +40,94 @@ SELECT relname FROM pg_catalog.pg_class,
  emaj_schema
  emaj_seq_hole
  emaj_sequence
- emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
- emaj_version_hist
-(23 rows)
+(21 rows)
 
 -- Check the emaj integrity before upgrading.
 SELECT * FROM emaj.emaj_verify_all();
-                                                                                 emaj_verify_all                                                                                  
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
- Warning: the emaj_param table contains unknown parameters (unknown_key).
- Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+  emaj_verify_all  
+-------------------
  No error detected
-(4 rows)
+(1 row)
 
 -- Process the extension update.
 ALTER EXTENSION emaj UPDATE TO 'devel';
+NOTICE:  drop cascades to 8 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
+NOTICE:  drop cascades to function _check_conf_groups(text[])
+NOTICE:  function emaj._check_conf_groups(text[]) does not exist, skipping
+NOTICE:  drop cascades to 8 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
+NOTICE:  type "emaj._rlbk_step_enum_old" does not exist, skipping
+NOTICE:  function emaj._drop_tbl(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._drop_seq(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._rlbk_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int4,pg_catalog.bool) does not exist, skipping
+NOTICE:  function emaj._delete_log_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._rlbk_seq(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._log_stat_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._gen_sql_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._gen_sql_seq(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+NOTICE:  drop cascades to function _estimate_rlbk_step_duration(_rlbk_step_enum_old,text,text,text,bigint,interval,interval)
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function emaj_rollback_activity()
+drop cascades to function _rollback_activity()
+NOTICE:  drop cascades to 8 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function emaj_rollback_activity()
+drop cascades to function _rollback_activity()
+WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
+NOTICE:  Starting the rows generation for the new emaj_group_hist table.
+NOTICE:  Based on existing history and logs content, #log_sessions statistics may be inaccurate.
+NOTICE:  Starting the rows generation for the new emaj_log_session table.
+NOTICE:  Based on existing history and logs content, #marks and #changes statistics may be inaccurate.
+NOTICE:  drop cascades to function _log_stat_groups(text[],boolean,text,text)
+NOTICE:  drop cascades to function _detailed_log_stat_groups(text[],boolean,text,text)
+NOTICE:  function emaj._log_stat_groups(text[],pg_catalog.bool,text,text) does not exist, skipping
+NOTICE:  function emaj._detailed_log_stat_groups(text[],pg_catalog.bool,text,text) does not exist, skipping
+WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to constraint emaj_relation_rel_log_schema_fkey on table emaj_relation
+NOTICE:  drop cascades to 9 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _sequence_stat_seq(emaj_relation,bigint,bigint)
 NOTICE:  drop cascades to view emaj_visible_param
 -----------------------------
 -- Check installation.
@@ -105,9 +174,23 @@ SELECT relname FROM pg_catalog.pg_class,
 SELECT verh_version FROM emaj.emaj_version_hist ORDER BY verh_time_range;
  verh_version 
 --------------
+ 3.1.0
+ 3.2.0
+ 3.3.0
+ 3.4.0
+ 4.0.0
+ 4.0.1
+ 4.1.0
+ 4.2.0
+ 4.3.0
+ 4.3.1
+ 4.4.0
+ 4.5.0
+ 4.6.0
+ 4.7.0
  4.7.1
  <devel>
-(2 rows)
+(16 rows)
 
 SELECT * FROM emaj.emaj_install_conf;
  inst_as_extension | inst_by_superuser | inst_installer_role | inst_with_emaj_adm | inst_with_emaj_viewer | inst_with_event_triggers 
@@ -949,7 +1032,8 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                      |           |          | txid_current()
  emaj_user    | character varying(32)       |           |          | SESSION_USER
 Indexes:
-    "myTbl3_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "myTbl3_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
         Index "emaj_myschema1.myTbl3_log_idx_1"
    Column   |         Type         | Key? | Definition 
@@ -957,6 +1041,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema1.myTbl3_log_1", clustered
+Tablespace: "tspemaj"
 
                                      Table "emaj_myschema1.mytbl1_log"
     Column    |           Type           | Collation | Nullable |                  Default                  
@@ -971,7 +1056,8 @@ primary key, btree, for table "emaj_myschema1.myTbl3_log_1", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
          Index "emaj_myschema1.mytbl1_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -979,6 +1065,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema1.mytbl1_log", clustered
+Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl1_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -998,7 +1085,8 @@ primary key, btree, for table "emaj_myschema1.mytbl1_log", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
          Index "emaj_myschema1.mytbl2_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1006,6 +1094,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema1.mytbl2_log", clustered
+Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl2_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1027,7 +1116,8 @@ primary key, btree, for table "emaj_myschema1.mytbl2_log", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2b_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "mytbl2b_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
         Index "emaj_myschema1.mytbl2b_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1035,6 +1125,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema1.mytbl2b_log", clustered
+Tablespace: "tspemaj"
 
                   Sequence "emaj_myschema1.mytbl2b_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1056,7 +1147,8 @@ primary key, btree, for table "emaj_myschema1.mytbl2b_log", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
          Index "emaj_myschema1.mytbl4_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1064,6 +1156,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema1.mytbl4_log", clustered
+Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl4_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1083,7 +1176,8 @@ primary key, btree, for table "emaj_myschema1.mytbl4_log", clustered
  emaj_txid    | bigint                      |           |          | txid_current()
  emaj_user    | character varying(32)       |           |          | SESSION_USER
 Indexes:
-    "myTbl3_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "myTbl3_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
          Index "emaj_myschema2.myTbl3_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1091,6 +1185,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema2.myTbl3_log", clustered
+Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.myTbl3_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1110,7 +1205,8 @@ primary key, btree, for table "emaj_myschema2.myTbl3_log", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
          Index "emaj_myschema2.mytbl1_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1118,6 +1214,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema2.mytbl1_log", clustered
+Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl1_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1137,7 +1234,8 @@ primary key, btree, for table "emaj_myschema2.mytbl1_log", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
          Index "emaj_myschema2.mytbl2_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1145,6 +1243,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema2.mytbl2_log", clustered
+Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl2_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1166,7 +1265,8 @@ primary key, btree, for table "emaj_myschema2.mytbl2_log", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
          Index "emaj_myschema2.mytbl4_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1174,6 +1274,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema2.mytbl4_log", clustered
+Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl4_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1191,7 +1292,8 @@ primary key, btree, for table "emaj_myschema2.mytbl4_log", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_50_characters_long_name_____0_________0_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "table_with_50_characters_long_name_____0_________0_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1199,6 +1301,7 @@ Index "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_idx
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log", clustered
+Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1216,7 +1319,8 @@ Sequence "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_51_characters_long_name_____0_________0#1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "table_with_51_characters_long_name_____0_________0#1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1224,6 +1328,7 @@ Index "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_i
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log", clustered
+Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1241,7 +1346,8 @@ Sequence "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_lo
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_55_characters_long_name_____0_________0#1_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "table_with_55_characters_long_name_____0_________0#1_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_idx_1"
    Column   |         Type         | Key? | Definition 
@@ -1249,6 +1355,7 @@ Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_i
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_1", clustered
+Tablespace: "tspemaj"
 
               Table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log"
     Column    |           Type           | Collation | Nullable |                  Default                  
@@ -1261,7 +1368,8 @@ primary key, btree, for table "emaj_myschema6.table_with_55_characters_long_name
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_55_characters_long_name_____0_________0#2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "table_with_55_characters_long_name_____0_________0#2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1269,6 +1377,7 @@ Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_i
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log", clustered
+Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1289,7 +1398,8 @@ Sequence "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_lo
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "myTbl2\_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "myTbl2\_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
      Index "emaj_phil's schema"3.myTbl2\_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1297,6 +1407,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_phil's schema"3.myTbl2\_log", clustered
+Tablespace: "tspemaj"
 
                Sequence "emaj_phil's schema"3.myTbl2\_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1316,7 +1427,8 @@ primary key, btree, for table "emaj_phil's schema"3.myTbl2\_log", clustered
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "phil's tbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
+    "phil's tbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
 
    Index "emaj_phil's schema"3.phil's tbl1_log_idx"
    Column   |         Type         | Key? | Definition 
@@ -1324,6 +1436,7 @@ Indexes:
  emaj_gid   | bigint               | yes  | emaj_gid
  emaj_tuple | character varying(3) | yes  | emaj_tuple
 primary key, btree, for table "emaj_phil's schema"3.phil's tbl1_log", clustered
+Tablespace: "tspemaj"
 
              Sequence "emaj_phil's schema"3.phil's tbl1_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1340,19 +1453,19 @@ SELECT * FROM emaj.emaj_global_seq;
 SELECT * FROM emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-        205 |      26 | t
+        150 |      16 | t
 (1 row)
 
 SELECT * FROM emaj.emaj_time_stamp_time_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-         31 |       2 | t
+         22 |       0 | f
 (1 row)
 
 SELECT * FROM emaj.emaj_rlbk_rlbk_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-          4 |      29 | t
+          3 |       0 | t
 (1 row)
 
 -- Check log sequences position.

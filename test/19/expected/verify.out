@@ -483,7 +483,7 @@ BEGIN;
                                                                  msg                                                                 
 -------------------------------------------------------------------------------------------------------------------------------------
  Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" miss some technical columns (emaj_tuple, emaj_verb).
- Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" miss some technical columns (emaj_gid, emaj_user).
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" miss some technical columns (emaj_user, emaj_gid).
 (2 rows)
 
 ROLLBACK;

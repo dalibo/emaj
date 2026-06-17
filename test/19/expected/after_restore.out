@@ -114,8 +114,8 @@ SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\
  myGroup1   | Before logged rollback to M4 |        12701 | f                      | Automatically set at rollback to mark M4 start      |                        28 | 
  myGroup1   | STOP_%                       |        14000 | f                      |                                                     |                         0 | 
  myGroup2   | STOP_%                       |        14000 | f                      |                                                     |                         0 | 
- myGroup1   | Stop after rollback          |        14007 | f                      |                                                     |                         0 | 
- myGroup2   | Stop after rollback          |        14007 | f                      |                                                     |                         0 | 
+ myGroup1   | Stop after ROLLBACK          |        14007 | f                      |                                                     |                         0 | 
+ myGroup2   | Stop after ROLLBACK          |        14007 | f                      |                                                     |                         0 | 
  myGroup1   | Multi-1                      |        14008 | f                      |                                                     |                           | 
  myGroup2   | Multi-1                      |        14008 | f                      |                                                     |                        92 | 
  myGroup2   | RLBK_20000_START             |        20001 | f                      | Automatically set at rollback to mark Multi-1 start |                        32 | 
@@ -365,10 +365,10 @@ SELECT col21, col22, col23, emaj_verb, emaj_tuple FROM emaj_myschema2.mytbl2_log
      1 | ABC                                                                                      | 2010-01-01 | INS       | NEW
      2 | DEF                                                                                      |            | DEL       | OLD
      2 | DEF                                                                                      |            | INS       | NEW
-    10 | row 1 \r... and row 2 with a ' (quote) character                                         |            | INS       | NEW
-    10 | row 1 \r... and row 2 with a ' (quote) character                                         |            | DEL       | OLD
-    11 | row 1 with a true \ character\r... and row 2 with two \n true and a ' (quote) characters |            | INS       | NEW
-    11 | row 1 with a true \ character\r... and row 2 with two \n true and a ' (quote) characters |            | DEL       | OLD
+    10 | row 1 \r... AND row 2 with a ' (quote) character                                         |            | INS       | NEW
+    10 | row 1 \r... AND row 2 with a ' (quote) character                                         |            | DEL       | OLD
+    11 | row 1 with a TRUE \ character\r... AND row 2 with two \n TRUE AND a ' (quote) characters |            | INS       | NEW
+    11 | row 1 with a TRUE \ character\r... AND row 2 with two \n TRUE AND a ' (quote) characters |            | DEL       | OLD
    100 | KLM                                                                                      | 2012-12-31 | INS       | NEW
 (9 rows)
 
@@ -446,8 +446,8 @@ SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\
  myGroup1   | Before logged rollback to M4 |        12701 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
  myGroup1   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
  myGroup2   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
- myGroup1   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
- myGroup2   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup1   | Stop after ROLLBACK          |        14007 | f                      |                                                |                         0 | 
+ myGroup2   | Stop after ROLLBACK          |        14007 | f                      |                                                |                         0 | 
  myGroup1   | Multi-1                      |        14008 | f                      |                                                |                           | 
  myGroup2   | Multi-1                      |        14008 | f                      |                                                |                           | 
 (10 rows)
@@ -485,33 +485,34 @@ SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp ORDER B
     1030 |            1000000 | I
     1031 |            1000000 | I
     1032 |            1000000 | I
-    1033 |            1000000 | D
-    1034 |            1000000 | I
+    1033 |            1000000 | I
+    1034 |            1000000 | D
     1035 |            1000000 | I
     1036 |            1000000 | I
     1037 |            1000000 | I
     1038 |            1000000 | I
-    1039 |            1000000 | D
-    1041 |            1000000 | S
-    1042 |            1000000 | I
+    1039 |            1000000 | I
+    1040 |            1000000 | D
+    1042 |            1000000 | S
     1043 |            1000000 | I
     1044 |            1000000 | I
-    1045 |            1000000 | A
-    1046 |            1000000 | S
-    1047 |            1000000 | X
-    1049 |            1000000 | D
+    1045 |            1000000 | I
+    1046 |            1000000 | A
+    1047 |            1000000 | S
+    1048 |            1000000 | X
     1050 |            1000000 | D
     1051 |            1000000 | D
     1052 |            1000000 | D
     1053 |            1000000 | D
-    1054 |            1000000 | C
-    1055 |            1000000 | A
-    1056 |            1000000 | S
-    1057 |            1000000 | D
-    1058 |            1000000 | C
-    1059 |            1000000 | A
-    1060 |            1000000 | S
-    1061 |            1000000 | D
+    1054 |            1000000 | D
+    1055 |            1000000 | C
+    1056 |            1000000 | A
+    1057 |            1000000 | S
+    1058 |            1000000 | D
+    1059 |            1000000 | C
+    1060 |            1000000 | A
+    1061 |            1000000 | S
+    1062 |            1000000 | D
     2000 |            2000000 | I
     2001 |            2000000 | S
     2002 |            2000000 | S
@@ -976,7 +977,7 @@ SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp ORDER B
    20003 |           20000142 | R
    20004 |           20000161 | M
    20005 |           20000161 | R
-(521 rows)
+(522 rows)
 
 SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
   FROM emaj.emaj_sequence ORDER BY sequ_time_id, sequ_schema, sequ_name;

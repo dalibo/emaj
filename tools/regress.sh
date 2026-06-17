@@ -30,23 +30,23 @@
 # EMAJ_REGTEST_MENU_ACTIONS        : Contains the functions to be executed according to the regression test and the PostgreSQL version (do not fill this array)
 # EMAJ_REGTEST_MENU                : Contains the menu's entries (do not fill this array)
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'stat' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
-typeset -r EMAJ_REGTEST_STANDART_PGVER='12 13 14 15 16 18 19'
+typeset -r EMAJ_REGTEST_STANDART_PGVER='14 15 16 18 19'
 typeset -r EMAJ_REGTEST_PSQL=('install_psql' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'stat' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
-typeset -r EMAJ_REGTEST_PSQL_PGVER=(17)
+typeset -r EMAJ_REGTEST_PSQL_PGVER='17'
 typeset -r EMAJ_REGTEST_NON_SUPERUSER=('non_superuser_install')
-typeset -r EMAJ_REGTEST_NON_SUPERUSER_PGVER=(18)
+typeset -r EMAJ_REGTEST_NON_SUPERUSER_PGVER='18'
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'stat' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
-typeset -r EMAJ_REGTEST_UPGRADE_PGVER='12 13 14 15 16 18 19'
+typeset -r EMAJ_REGTEST_UPGRADE_PGVER='14 15 16 18 19'
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
-typeset -r EMAJ_REGTEST_MIXED_PGVER=(14 16)
+typeset -r EMAJ_REGTEST_MIXED_PGVER='16 18'
 typeset -r EMAJ_REGTEST_UPG_OLDEST=('install_oldest' 'setup' 'before_upg_oldest' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
-typeset -r EMAJ_REGTEST_UPG_OLDEST_PGVER=(12)
-typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('13!17')
-typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='13!17'
+typeset -r EMAJ_REGTEST_UPG_OLDEST_PGVER='14'
+typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER='15>19'
+typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='14>19'
 typeset -r EMAJ_REGTEST_UNINSTALL=('install' 'setup' 'before_uninstall' 'uninstall' 'install' 'cleanup')
-typeset -r EMAJ_REGTEST_UNINSTALL_PGVER=(16)
+typeset -r EMAJ_REGTEST_UNINSTALL_PGVER='18'
 typeset -r EMAJ_REGTEST_UNINST_PSQL=('install_psql' 'setup' 'before_uninstall' 'uninstall_psql' 'install_psql' 'cleanup')
-typeset -r EMAJ_REGTEST_UNINST_PSQL_PGVER=(17)
+typeset -r EMAJ_REGTEST_UNINST_PSQL_PGVER='17'
 
 declare -A EMAJ_REGTEST_MENU_ACTIONS
 declare -A EMAJ_REGTEST_MENU
@@ -346,8 +346,8 @@ fi
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_DUMP_RESTORE}`
 for PGMENUVER in ${EMAJ_REGTEST_DUMP_RESTORE_PGVER[@]}; do
   TODISPLAY=0
-  PGVERINIT=${PGMENUVER%%'!'*}
-  PGVERTRGT=${PGMENUVER##*'!'}
+  PGVERINIT=${PGMENUVER%%'>'*}
+  PGVERTRGT=${PGMENUVER##*'>'}
   for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
     if [ "${PGVERINIT//.}" == "${PGUSERVER}" -o "${PGVERTRGT//.}" == "${PGUSERVER}" ]; then
       let TODISPLAY++
@@ -443,8 +443,8 @@ done
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_PGUPGRADE}`
 for PGMENUVER in ${EMAJ_REGTEST_PGUPGRADE_PGVER[@]}; do
   TODISPLAY=0
-  PGVERINIT=${PGMENUVER%%'!'*}
-  PGVERTRGT=${PGMENUVER##*'!'}
+  PGVERINIT=${PGMENUVER%%'>'*}
+  PGVERTRGT=${PGMENUVER##*'>'}
   for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
     if [ "${PGVERINIT//.}" == "${PGUSERVER}" -o "${PGVERTRGT//.}" == "${PGUSERVER}" ]; then
       let TODISPLAY++

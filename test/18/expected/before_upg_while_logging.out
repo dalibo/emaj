@@ -588,10 +588,10 @@ SELECT col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema1.
 (2 rows)
 
 SELECT col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid FROM emaj_mySchema1.myTbl2b_log ORDER BY emaj_gid, emaj_tuple DESC;
- col20 | col21 | col22 |         col23         | col24 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-----------------------+-------+-----------+------------+----------
-     1 |     1 |     1 |    0.7071067811865476 | t     | INS       | NEW        |       16
-     2 |     2 |   0.5 | 6.123233995736766e-17 | t     | INS       | NEW        |       19
+ col20 | col21 | col22 | col23 | col24 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-------+-----------+------------+----------
+     1 |     1 |     1 |       | t     | INS       | NEW        |       16
+     2 |     2 |   0.5 |       | t     | INS       | NEW        |       19
 (2 rows)
 
 SELECT col31, col33, emaj_verb, emaj_tuple, emaj_gid FROM emaj_myschema1."myTbl3_log_1" ORDER BY emaj_gid, emaj_tuple DESC;

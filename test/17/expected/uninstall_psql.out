@@ -16,7 +16,7 @@ drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl4
 drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl2b
 drop cascades to function emaj_parallel_rollback_test_app_schema.mytbl2trgfct()
 NOTICE:  extension "emaj" does not exist, skipping
-NOTICE:  drop cascades to 255 other objects
+NOTICE:  drop cascades to 256 other objects
 DETAIL:  drop cascades to table emaj.emaj_version_hist
 drop cascades to table emaj.emaj_install_conf
 drop cascades to type emaj._relation_change_kind_enum
@@ -82,6 +82,7 @@ drop cascades to function emaj._truncate_trigger_fnct()
 drop cascades to function emaj._create_log_schemas(text,bigint)
 drop cascades to function emaj._drop_log_schemas(text,boolean)
 drop cascades to function emaj._build_path_name(text,text)
+drop cascades to function emaj._quote_nullable(text)
 drop cascades to function emaj.emaj_assign_table(text,text,text,jsonb,text)
 drop cascades to function emaj.emaj_assign_tables(text,text[],text,jsonb,text)
 drop cascades to function emaj.emaj_assign_tables(text,text,text,text,jsonb,text)
@@ -116,8 +117,7 @@ drop cascades to function emaj.emaj_assign_sequences(text,text[],text,text)
 drop cascades to function emaj.emaj_assign_sequences(text,text,text,text,text)
 drop cascades to function emaj._assign_sequences(text,text[],text,text,boolean,boolean)
 drop cascades to function emaj.emaj_get_assigned_group_sequence(text,text)
-drop cascades to function emaj.emaj_remove_sequence(text,text,text)
-and 155 other objects (see server log for list)
+and 156 other objects (see server log for list)
 NOTICE:  drop cascades to event trigger emaj_protection_trg
 WARNING:  emaj_drop_extension: The emaj_adm role is also referenced in some other databases (regression_1, regression_2)
 WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_adm1, _regress_emaj_adm2) who have been granted emaj_adm role.
