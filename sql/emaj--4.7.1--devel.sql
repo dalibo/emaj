@@ -9886,7 +9886,7 @@ $_verify_all_groups$
         (SELECT DISTINCT rel_schema, rel_tblseq,
                 'Error: In tables group "' || rel_group || '", the log table "' ||
                 rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
-                string_agg(attname, ', ') || ').' AS msg
+                string_agg(attname, ', ' ORDER BY attname) || ').' AS msg
            FROM
              (  SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
                   FROM emaj.emaj_relation,
