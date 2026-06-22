@@ -39,7 +39,7 @@ Here are the possible actions.
 +------------------------------------------------------+----------------------------------------------+
 | Change a table’s structure                           | Remove from the group + ALTER TABLE + Add    |
 +------------------------------------------------------+----------------------------------------------+
-| SPLIT or MERGE partitions of a partitionned table    | Remove from the group + ALTER TABLE + Add    |
+| SPLIT or MERGE partitions of a partitioned table     | Remove from the group + ALTER TABLE + Add    |
 +------------------------------------------------------+----------------------------------------------+
 | Other forms of ALTER TABLE                           | No E-Maj impact                              |
 +------------------------------------------------------+----------------------------------------------+

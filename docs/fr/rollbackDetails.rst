@@ -75,17 +75,11 @@ Dans ce second cas de figure, ce contrôle d’intégrité est réalisé :
 
 La première option est choisie si la clé étrangère est déclarée *DEFERRABLE* et si elle ne porte pas de clause *ON DELETE* ou *ON UPDATE*.
 
-.. _fk_on_partitionned_tables:
+Une :ref:`clé étrangère définie au niveau d‘une table partitionnée<fk_on_partitionned_tables>` n’est supportée par les opérations de rollback E-Maj que si :
 
-Les clés étrangères définies au niveau des tables partitionnées ne sont pas supportées par les opérations de rollback E-Maj si :
-
-* les tables/partitions reliées par ces clés n’appartiennent pas toutes aux mêmes groupes de tables à traiter,
-* et les clés sont de type *IMMEDIATE* ou bien portent des clauses *ON DELETE* ou *ON UPDATE*.
-
-En effet, il n’est pas possible de supprimer puis recréer une clé étrangère sur une seule partition. Pour contourner ces limites :
-
-* les clés étrangères de type *IMMEDIATE* (état par défaut) peuvent facilement être créées *DEFERRABLE INITIALY IMMEDIATE*,
-* les clés étrangères ayant des clauses *ON DELETE* ou *ON UPDATE* peuvent être créées au niveau de chaque partition élémentaire.
+* les tables/partitions reliées par cette clé étrangère appartiennent toutes aux mêmes groupes de tables à traiter,
+* la clé étrangère est de type *DEFERRABLE*
+* et la clé étrangère ne portent pas de clause *ON DELETE* ou *ON UPDATE*.
 
 Autres contraintes d’intégrité
 ------------------------------
@@ -105,4 +99,4 @@ Si *session_replication_role* a la valeur ‘replica’, alors les triggers acti
 
 Si *session_replication_role* garde sa valeur standard, alors les triggers actifs à désactiver le sont temporairement pour la durée de l’opération.
 
-Dans un contexte de partitionnement déclaratif, il est possible de créer un trigger sur une table partitionnée. Chacune des partitions de la table hérite alors automatiquement du trigger. Cette pratique ne pose pas de problème particulier dans le fonctionnement des rollbacks E-Maj. Si on souhaite que les triggers restent actifs durant les rollbacks, il faut les déclarer comme tel pour chacune des partitions concernées.
+Dans un contexte de partitionnement déclaratif, il est possible de créer un :ref:`trigger sur une table partitionnée<trigger_on_partitionned_tables>`. Cette pratique ne pose pas de problème particulier dans le fonctionnement des rollbacks E-Maj.

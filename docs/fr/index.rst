@@ -59,6 +59,7 @@ Bienvenue dans la documentation E-Maj !
    idempotentScripts
    logTables
    reliability
+   partitioning
    generatedColumns
    traces
    rollbackDetails

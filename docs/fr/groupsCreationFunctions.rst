@@ -32,7 +32,7 @@ Mais à **un instant donné**, une table ou une séquence ne peut être affecté
 
 Toute table appartenant à un groupe de tables non créé en mode *AUDIT_ONLY* doit posséder une clé primaire explicite (clause *PRIMARY KEY* des *CREATE TABLE* ou *ALTER TABLE*). 
 
-E-Maj gère les partitions élémentaires de tables partitionnées créées avec le DDL déclaratif. Elles sont gérées comme n’importe quelle autre table. En revanche, comme les tables mères restent toujours vides, E-Maj refuse qu’elles soient assignées à un groupe de tables. Toutes les partitions d’une même table partitionnée n’ont pas nécessairement besoin d’être couvertes par E-Maj. Des partitions d’une même table partitionnée peuvent être affectées à des groupes de tables différents.
+E-Maj gère les partitions élémentaires de :doc:`tables partitionnées<partitioning>` créées avec le DDL déclaratif. Toutes les partitions d’une même table partitionnée n’ont pas nécessairement besoin d’être couvertes par E-Maj. Des partitions d’une même table partitionnée peuvent être affectées à des groupes de tables différents.
 
 De par leur nature, les tables temporaires (*TEMPORARY TABLE*) ne peuvent être supportées par E-Maj. Et les tables de type *UNLOGGED* ne peuvent appartenir qu’à un groupe de tables de type *AUDIT_ONLY*.
 

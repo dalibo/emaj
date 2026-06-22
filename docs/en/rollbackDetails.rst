@@ -74,17 +74,11 @@ In this second case, checking the referential integrity is performed:
 
 The first option is choosen if the foreign key is declared *DEFERRABLE* and does not hold an *ON DELETE* or *ON UPDATE* clause.
 
-.. _fk_on_partitionned_tables:
+A :ref:`foreign key defined on a partitioned table<fk_on_partitioned_tables>` is only supported by E-Maj rollback operations if:
 
-*FOREIGN KEYs* defined on partitionned tables are not supported by E-Maj rollback operations if:
-
-* tables/partitions linked by these keys do not all belong to the same tables groups to process,
-* and these keys are of type *IMMEDIATE* or hold *ON DELETE* or *ON UPDATE* clauses.
-
-Indeed, it is impossible to drop and recreate such a foreign key for just a partition. As a workaround:
-
-* foreign keys of type *IMMEDIATE* (the default state) can easily be declared as *DEFERRABLE INITIALY IMMEDIATE*,
-* foreign keys having *ON DELETE* or *ON UPDATE* clauses can be created on each elementary partition.
+    • tables/partitions linked by the foreign key all belong to the same tables groups to process
+    • and the foreign key is of type *DEFFERABLE*
+    • and the foreign key does not hold a *ON DELETE* or *ON UPDATE* clause.
 
 Other integrity constraints
 ---------------------------
@@ -104,4 +98,4 @@ If *session_replication_role* equals *'replica'*, then the enabled triggers at t
 
 If *session_replication_role* keeps its default value, enabled triggers to neutralize are just temporarily disabled during the operation.
 
-In a declarative partitionning context, it is possible to create a trigger on a partitionned table. As a result, each partition of the table inherits the trigger. There is no pratical issue with this on E-Maj rollbacks. If one wishes to let the trigger enabled during the rollback, it must be declared as such for each partition.
+In a declarative partitioning context, it is possible to create a :ref:`trigger on a partitioned table<trigger_on_partitioned_tables>`. As a result, each partition of the table inherits the trigger. There is no pratical issue with this on E-Maj rollbacks.
