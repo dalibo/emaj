@@ -165,9 +165,9 @@ CREATE TRIGGER myTbl2trg
 \echo '---'
 SELECT emaj.emaj_create_group('emaj parallel rollback test group');
 
--- populate tables groups
+-- populate table groups
 \echo '---'
-\echo '--- Now the E-Maj administrator populates the tables groups'
+\echo '--- Now the E-Maj administrator populates the table groups'
 \echo '---'
 SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl1', 'emaj parallel rollback test group');
 SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl2', 'emaj parallel rollback test group');

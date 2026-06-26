@@ -23,11 +23,11 @@ CREATE EXTENSION btree_gist;
 CREATE EXTENSION dblink;
 CREATE EXTENSION emaj;
 
--- create the tables group
+-- create the table group
 SELECT emaj.emaj_create_group('bench', false);     -- the group is created in AUDIT_ONLY mode because pgbench_history has no PK
 SELECT emaj.emaj_assign_tables('public','.*','','bench');
 
--- start the tables group
+-- start the table group
 SELECT emaj.emaj_start_group('bench','start');
 
 VACUUM;

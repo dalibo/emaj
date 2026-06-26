@@ -48,13 +48,13 @@ ROLLBACK;
 
 -- Warnings on foreign keys.
 BEGIN;
--- FK with one of both tables outside the tables group.
+-- FK with one of both tables outside the table group.
   SELECT emaj.emaj_remove_tables('myschema2', '{"mytbl7", "mytbl8"}');
   SELECT * FROM emaj.emaj_verify_all();
 ROLLBACK;
 
 BEGIN;
--- FK with both tables in different tables groups.
+-- FK with both tables in different table groups.
   SELECT emaj.emaj_move_table('myschema2', 'mytbl7', 'myGroup1');
   SELECT * FROM emaj.emaj_verify_all();
 ROLLBACK;
@@ -403,7 +403,7 @@ SELECT emaj.emaj_enable_protection_by_event_triggers();
 -- Drop or alter various components.
 --
 
--- Drop application components (the related tables group is currently in logging state).
+-- Drop application components (the related table group is currently in logging state).
 BEGIN;
   DROP TABLE myschema1.mytbl1 CASCADE;
 ROLLBACK;
@@ -417,11 +417,11 @@ ROLLBACK;
 RESET client_min_messages;
 
 -- Drop primary keys.
--- Drop a primary key for a table belonging to a rollbackable tables group (should be blocked).
+-- Drop a primary key for a table belonging to a rollbackable table group (should be blocked).
 BEGIN;
   ALTER TABLE myschema1.mytbl4 DROP CONSTRAINT mytbl4_pkey;
 ROLLBACK;
--- Drop a primary key for a table belonging to an audit_only tables group (should not fail).
+-- Drop a primary key for a table belonging to an audit_only table group (should not fail).
 BEGIN;
   ALTER TABLE "phil's schema""3"."phil's tbl1" DROP CONSTRAINT "phil's tbl1_pkey" CASCADE;
 ROLLBACK;
@@ -470,7 +470,7 @@ BEGIN;
   ALTER TABLE myschema1.mytbl1 ADD COLUMN another_newcol BOOLEAN;
 ROLLBACK;
 
--- Perform changes on application components with the related tables group stopped (the event triggers should accept).
+-- Perform changes on application components with the related table group stopped (the event triggers should accept).
 BEGIN;
   SELECT emaj.emaj_stop_groups(ARRAY['myGroup1', 'myGroup2']);
   ALTER TABLE myschema1.mytbl1 ALTER column col13 type varchar(10);

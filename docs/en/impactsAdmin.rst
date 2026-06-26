@@ -9,16 +9,16 @@ Using E-Maj doesn't bring any particular constraint regarding stopping and resta
 General rule
 ^^^^^^^^^^^^
 
-At instance restart, all E-Maj objects are in the same state as at instance stop: log triggers of tables groups in *LOGGING* state remains enabled and log tables contain cancel-able updates already recorded.
+At instance restart, all E-Maj objects are in the same state as at instance stop: log triggers of table groups in *LOGGING* state remains enabled and log tables contain cancel-able updates already recorded.
 
 If a transaction with table updates were not committed at instance stop, it would be rolled back during the recovery phase of the instance start, the application tables updates and the log tables updates being cancelled at the same time. 
 
-This rule also applies of course to transactions that execute E-Maj functions, like a tables group start or stop, a rollback, a mark deletion,...
+This rule also applies of course to transactions that execute E-Maj functions, like a table group start or stop, a rollback, a mark deletion,...
 
 Sequences rollback
 ^^^^^^^^^^^^^^^^^^
 
-Due to a PostgreSQL constraint, the rollback of application sequences assigned to a tables group is the only operation that is not protected by transactions. That is the reason why application sequences are processed at the very end of the :ref:`rollback operations <emaj_rollback_group>`. (For the same reason, at set mark time, application sequences are processed at the beginning of the operation.) 
+Due to a PostgreSQL constraint, the rollback of application sequences assigned to a table group is the only operation that is not protected by transactions. That is the reason why application sequences are processed at the very end of the :ref:`rollback operations <emaj_rollback_group>`. (For the same reason, at set mark time, application sequences are processed at the beginning of the operation.) 
 
 In case of an instance stop during an E-Maj rollback execution, it is recommended to rerun this rollback just after the instance restart, to ensure that application sequences and tables remain properly synchronised.
 
@@ -33,16 +33,16 @@ File level saves and restores
 
 When saving or restoring instances at file level, it is essential to save or restore **ALL** instance files, including those stored on dedicated tablespaces.
 
-After a file level restore, tables groups are in the very same state as at the save time, and the database activity can be restarted without any particular E-Maj operation.
+After a file level restore, table groups are in the very same state as at the save time, and the database activity can be restarted without any particular E-Maj operation.
 
 Logical saves and restores of entire database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To properly save and restore a database with E-Maj, using *pg_dump*, and *psql* or *pg_restore*, it is essential that both source and restored databases use the **same E-Maj version**. If this is not the case, the content of some technical tables may be not synchronised with their structure. The :ref:`emaj_get_version()<emaj_get_version>` function allows to know the current version of the *emaj* extension.
 
-Regarding stopped tables groups (in *IDLE* state), as log triggers are disabled and the content of related log tables is meaningless, there is no action required to find them in the same state as at save time.
+Regarding stopped table groups (in *IDLE* state), as log triggers are disabled and the content of related log tables is meaningless, there is no action required to find them in the same state as at save time.
 
-Concerning tables groups in *LOGGING* state at save time, it is important to be sure that log triggers will only be activated after the application tables rebuild. Otherwise, during the tables rebuild, tables updates would also be recorded in log tables!
+Concerning table groups in *LOGGING* state at save time, it is important to be sure that log triggers will only be activated after the application tables rebuild. Otherwise, during the tables rebuild, tables updates would also be recorded in log tables!
 
 When using *pg_dump* command for saves and *psql* or *pg_restore* commands for restores, and processing full databases (schema + data), these tools recreate triggers, E-Maj log triggers among them, after tables have been rebuilt. So there is no specific precaution to take.
 
@@ -68,7 +68,7 @@ With *pg_dump* and *pg_restore* tools, database administrators can perform on a 
 
 Restoring a subset of application tables and/or log tables generates a heavy risk of data corruption in case of later E-Maj rollback of concerned tables. Indeed, it is impossible to guarantee in this case that application tables, log tables and internal E-Maj tables that contain essential data for rollback, remain coherent. 
 
-If it is necessary to perform partial application tables restores, a drop and recreation of all tables groups concerned by the operation must be performed just after. 
+If it is necessary to perform partial application tables restores, a drop and recreation of all table groups concerned by the operation must be performed just after. 
 
 The same way, it is strongly recommended to NOT restore a partial *emaj* schema content.
 
@@ -98,7 +98,7 @@ The index corresponding to the primary key of each table from E-Maj schemas (nei
 .. caution::
    So using E-Maj may have an operational impact regarding the execution of *CLUSTER* or *REPACK* SQL commands at database level.
 
-When E-Maj is used in continuous mode (with deletion of oldest marks instead of regular tables groups stop and restart), it is recommended to regularly reorganize E-Maj log tables. This reclaims unused disk space following mark deletions.
+When E-Maj is used in continuous mode (with deletion of oldest marks instead of regular table groups stop and restart), it is recommended to regularly reorganize E-Maj log tables. This reclaims unused disk space following mark deletions.
 
 
 Using E-Maj with replication
@@ -114,21 +114,21 @@ However, because of the way PostgreSQL manages sequences, the sequences' current
 Integrated logical replication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-PostgreSQL includes logical replication mechanisms. The replication granularity is the table. The *publication* object used with the logical replication is quite close to the E-Maj tables group concept, except that a *publication* cannot contain sequences.
+PostgreSQL includes logical replication mechanisms. The replication granularity is the table. The *publication* object used with the logical replication is quite close to the E-Maj table group concept, except that a *publication* cannot contain sequences.
 
 **Replication of application tables managed by E-Maj**
 
 .. image:: images/logical_repl1.png
    :align: center
 
-An application table that belongs to a tables group can be replicated. The effect of any rollback operation that may occur would be simply replicated on *subscriber* side, as long as no filter has been applied on replicated SQL verbs types.
+An application table that belongs to a table group can be replicated. The effect of any rollback operation that may occur would be simply replicated on *subscriber* side, as long as no filter has been applied on replicated SQL verbs types.
 
 **Replication of application tables with E-Maj activated on subscriber side**
 
 .. image:: images/logical_repl2.png
    :align: center
 
-As of E-Maj 4.0, it is possible to include an application table into a tables group, with updates coming from a logical replication flow. But all E-Maj operations (starting/stopping the group, setting marks,…) must of course be executed on the *subscriber* side. An E-Maj rollback operation can be launched once the replication flow has been stopped (to avoid updates conflicts). But then, tables on both *publisher* and *subscriber* sides are not coherent anymore.
+As of E-Maj 4.0, it is possible to include an application table into a table group, with updates coming from a logical replication flow. But all E-Maj operations (starting/stopping the group, setting marks,…) must of course be executed on the *subscriber* side. An E-Maj rollback operation can be launched once the replication flow has been stopped (to avoid updates conflicts). But then, tables on both *publisher* and *subscriber* sides are not coherent anymore.
 
 **Replication of E-Maj log tables**
 

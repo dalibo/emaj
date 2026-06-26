@@ -38,11 +38,11 @@ Use the extension
 
 You can now log on the database with the role having the E-Maj administration rights.
 
-Then, an empty (here *ROLLBACKABLE*) tables group must be created::
+Then, an empty (here *ROLLBACKABLE*) table group must be created::
 
    SELECT emaj.emaj_create_group('my_group', true);
 
-The tables group can now be populated with tables and sequences, using statements like::
+The table group can now be populated with tables and sequences, using statements like::
 
    SELECT emaj.emaj_assign_table('my_schema', 'my_table', 'my_group');
 
@@ -74,7 +74,7 @@ Then the typical commands sequence::
 
    SELECT emaj.emaj_drop_group('my_group');
 
-will start the tables group, log updates and set several intermediate marks, go back to one of them, stop the recording and finally drop the group.
+will start the table group, log updates and set several intermediate marks, go back to one of them, stop the recording and finally drop the group.
 
 For more details, main functions are described :doc:`here <mainFunctions>`.
 

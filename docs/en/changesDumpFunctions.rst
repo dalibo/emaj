@@ -10,7 +10,7 @@ Log tables and the internal sequences states table are a real gold mine for the 
 
 First of all, any user having *emaj_adm* or *emaj_viewer* privileges can directly query log tables. Their structure is described :ref:`here<logTableStructure>`.
 
-But two functions, :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` and :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>`, may help this examination. They allow to visualize data content changes for each table and sequence belonging to a tables group, for a period of time framed by two marks.
+But two functions, :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` and :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>`, may help this examination. They allow to visualize data content changes for each table and sequence belonging to a table group, for a period of time framed by two marks.
 
 Output types
 ------------
@@ -111,15 +111,15 @@ The **4th parameter** is a list of options, separated by commas. Options can be 
 * EMAJ_COLUMNS = ALL | MIN | (columns list): restricts the returned E-Maj technical columns: ALL = all existing columns, MIN = a minimum number of columns, or an explicit columns list, set between parenthesis;
 * NO_EMPTY_FILES: removes files that do not contain any data;
 * ORDER_BY = PK | TIME: defines the rows sort order in files; PK = the primary key order, TIME = the entry into the table log order;
-* SEQUENCES_ONLY: only process sequences of the tables group; by default, tables are processed;
-* TABLES_ONLY: only process tables of the tables groups; by default, sequences are processed.
+* SEQUENCES_ONLY: only process sequences of the table group; by default, tables are processed;
+* TABLES_ONLY: only process tables of the table groups; by default, sequences are processed.
 
 The default value of the three COLS_ORDER, EMAJ_COLUMNS and ORDER_BY options depends on the consolidation level:
 
 * when CONSOLIDATION = NONE, COLS_ORDER = LOG_TABLE, EMAJ_COLUMNS = ALL and ORDER_BY = TIME;
 * when CONSOLIDATION = PARTIAL or FULL, COLS_ORDER = PK, EMAJ_COLUMNS = MIN and ORDER_BY = PK.
 
-The **5th parameter** allows to filter the tables and sequences to process. If the parameter is set to NULL, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
+The **5th parameter** allows to filter the tables and sequences to process. If the parameter is set to NULL, all tables and sequences of the table group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
@@ -133,11 +133,11 @@ The output directory/folder set as **6th parameter** must be an absolute pathnam
 
 The function returns a textual message containing the number of generated files and their location.
 
-When the tables group structure is stable between both targeted marks, the *emaj_dump_changes_group()* function generates one file per application table and sequence. Its name profile looks like::
+When the table group structure is stable between both targeted marks, the *emaj_dump_changes_group()* function generates one file per application table and sequence. Its name profile looks like::
 
    <schema.name>_<table/sequence.name>.changes
 
-The impact of tables group structure changes is presented below.
+The impact of table group structure changes is presented below.
 
 In order to manipulate generated files more easily, any unconvenient in file name characters, namely spaces, “/”, “\”, “$”, “>”, “<”, “|”, single or double quotes and “*” are replaced by “_”. Beware, these file names adjusment may lead to duplicates, the last generated file overwriting then the previous ones.
 
@@ -145,10 +145,10 @@ All files are stored into the directory/folder set as 6th parameter. Already exi
 
 At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains:
 
-* the operation characteristics, including the tables group, both selected marks, the options and the operation date and time;
+* the operation characteristics, including the table group, both selected marks, the options and the operation date and time;
 * one line per created file, indicating the table or sequence name and the associated marks range.
 
-During the extraction, the tables group may be in any idle or logging state.
+During the extraction, the table group may be in any idle or logging state.
 
 As this function may generate large or very large files, it is user's responsibility to provide a sufficient disk space.
 
@@ -181,16 +181,16 @@ The **4th parameter** is a list of options, separated by commas. Options can be 
 * ORDER_BY = PK | TIME: defines the rows sort order in output results; PK = the primary key order, TIME = the entry into the table log order;
 * PSQL_COPY_DIR = (directory): generates a *psql* *\\copy* meta-command for each statement, using the directory name provided by the option; the diretory name must be surrounded by parenthesis;
 * PSQL_COPY_OPTIONS = (options): when PSQL_COPY_DIR is set, defines the options to be used by the generated *\\copy to* statements; the list must be set between parenthesis; refer to the PostgreSQL documentation for the available options details (https://www.postgresql.org/docs/current/sql-copy.html);
-* SEQUENCES_ONLY: only process sequences of the tables group; by default, tables are processed;
+* SEQUENCES_ONLY: only process sequences of the table group; by default, tables are processed;
 * SQL_FORMAT = RAW | PRETTY: defines how generated statements will be formatted: RAW = on a single line, PRETTY = on several lines and indended, for a better readability;
-* TABLES_ONLY: only process tables of the tables groups; by default, sequences are processed.
+* TABLES_ONLY: only process tables of the table groups; by default, sequences are processed.
 
 The default value of the three COLS_ORDER, EMAJ_COLUMNS and ORDER_BY options depends on the consolidation level:
 
 * when CONSOLIDATION = NONE, COLS_ORDER = LOG_TABLE, EMAJ_COLUMNS = ALL and ORDER_BY = TIME;
 * when CONSOLIDATION = PARTIAL or FULL, COLS_ORDER = PK, EMAJ_COLUMNS = MIN and ORDER_BY = PK.
 
-The **5th parameter** allows to filter the tables and sequences to process. If the parameter is set to NULL, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
+The **5th parameter** allows to filter the tables and sequences to process. If the parameter is set to NULL, all tables and sequences of the table group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
@@ -215,7 +215,7 @@ The *emaj_temp_sql* temporary table left at the caller’s disposal when the 6th
 * sql_tblseq (TEXT): table or sequence name
 * sql_first_mark (TEXT): the first mark for this table or sequence
 * sql_last_mark (TEXT): the last mark for this table or sequence
-* sql_group (TEXT): tables group owning the table or sequence
+* sql_group (TEXT): table group owning the table or sequence
 * sql_nb_changes (BIGINT): estimated number of changes to process (NULL for sequences)
 * sql_file_name_suffix (TEXT): file name suffix when the PSQL_COPY_DIR option has been set
 * sql_text (TEXT): a line of text of the generated statement
@@ -223,7 +223,7 @@ The *emaj_temp_sql* temporary table left at the caller’s disposal when the 6th
 
 The table contents:
 
-* a first statement which is a general comment, reporting the main SQL generation characteristics: tables group, marks, options, etc (*sql_stmt_number* = 0);
+* a first statement which is a general comment, reporting the main SQL generation characteristics: table group, marks, options, etc (*sql_stmt_number* = 0);
 * in case of full consolidation, a statement that changes the *enable_nestloop* configuration variable ; this statement is needed to optimize the log tables analysis (*sql_stmt_number* = 1);
 * then, for each table and sequence:
 
@@ -245,18 +245,18 @@ He can get the SQL statement for a given table with::
      WHERE sql_line_number >= 1
        AND sql_schema = '<schema>' AND sql_tblseq = '<table>';
 
-During the SQL generation, the tables group may be in any idle or logging state.
+During the SQL generation, the table group may be in any idle or logging state.
 
 The *emaj_gen_sql_dump_changes_group()* function can be called by any role who has been granted *emaj_viewer* but not *emaj_adm* if no file is directly written by the function (i.e. if the 6th parameter is not present).
 
-Impact of tables group structure changes
+Impact of table group structure changes
 ----------------------------------------
 
-It may happen that the tables group structure changes during the examined marks frame.
+It may happen that the table group structure changes during the examined marks frame.
 
 .. image:: images/logging_group_stat.png
    :align: center
 
-A table or a sequence may have been removed from the group or assigned to the group between the selected start mark and end mark. In this case, as for table t2 and t3 in the example above, the extraction frames the real period of time the table or sequence belonged to the tables group. For this reason, the *_INFO* file and the *emaj_temp_sql* table contain information about the real marks frame used for each table or sequence.
+A table or a sequence may have been removed from the group or assigned to the group between the selected start mark and end mark. In this case, as for table t2 and t3 in the example above, the extraction frames the real period of time the table or sequence belonged to the table group. For this reason, the *_INFO* file and the *emaj_temp_sql* table contain information about the real marks frame used for each table or sequence.
 
 A table or a sequence may even be removed from its group and reassigned to it later. In this case, as for table t4 above, there are several distinct extractions; the *emaj_dump_changes_group()* function generates several statements into the *emaj_temp_sql* table and the *emaj_gen_sql_dump_changes_group()* function writes several files for the same table or sequence. Then, the output file name suffix becomes *_1.changes*, *_2.changes*, etc.

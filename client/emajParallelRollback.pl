@@ -279,7 +279,7 @@ Connection options:
   
 Examples:
   $PROGRAM -g myGroup1 -m myMark -s 3 -c \"Revert aborted ABC chain\"
-              performs a parallel rollback of the tables group myGroup1 to the mark
+              performs a parallel rollback of the table group myGroup1 to the mark
               myMark, using 3 parallel sessions, with a comment.
   $PROGRAM -h localhost -p 5432 -d myDb -U emajadmin -l -g \"myGroup1,myGroup2\" -m myMark -s 5 -v
               lets the role emajadmin perform a parallel logged rollback of 2 table

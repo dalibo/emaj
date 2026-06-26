@@ -105,4 +105,4 @@ Tablespaces
 
 When the extension is installed, the E-Maj technical tables are stored into the default tablespace set at instance or database level or explicitely set for the current session.
 
-The same rule applies for log tables and index. But using :ref:`tables group parameters<table_emaj_properties>`, it is also possible to store log tables and/or their index into specific tablespaces.
+The same rule applies for log tables and index. But using :ref:`table group parameters<table_emaj_properties>`, it is also possible to store log tables and/or their index into specific tablespaces.

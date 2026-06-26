@@ -67,7 +67,7 @@ Coding rules
 
 Coding the *emaj- -devel.sql* script must follow these rules:
 
-* script structure: after some checks about the execution conditions that must be met, the objects are created in the following order: roles, enumerated types, sequences, tables (with their indexes and contraints), composite types, E-Maj parameters, low level functions, elementary functions that manage tables and sequences, functions that manage tables groups, general purpose functions, event triggers, grants, additional actions for the extensions. The script ends with some final operations.
+* script structure: after some checks about the execution conditions that must be met, the objects are created in the following order: roles, enumerated types, sequences, tables (with their indexes and contraints), composite types, E-Maj parameters, low level functions, elementary functions that manage tables and sequences, functions that manage table groups, general purpose functions, event triggers, grants, additional actions for the extensions. The script ends with some final operations.
 * all objects are created in the *emaj* schema, except the *_emaj_protection_event_trigger_fnct()* function, created in the *public* schema,
 * tables and sequences names are prefixed by *emaj_*
 * functions names are prefixed by *emaj_* when they are usable by end users, or by *_* for internal functions,
@@ -90,7 +90,7 @@ The development of this script follows these rules:
 
 * Develop/maintain the upgrade script at the same time as the main *emaj- -devel.sql* script, so that the tests of a change include upgrade version cases,
 * Apply the same coding rules as for the main script,
-* As far as possible, ensure that the upgrade operation is able to process tables groups in logging state, without loosing the capability to perform *E-Maj rollbacks* on marks set prior the version upgrade.
+* As far as possible, ensure that the upgrade operation is able to process table groups in logging state, without loosing the capability to perform *E-Maj rollbacks* on marks set prior the version upgrade.
 
 At the beginning of a version, the upgrade script is built using a template (the file *tools/emaj_upgrade.template*).
 
@@ -144,7 +144,7 @@ The test system contains several scenarios:
 * the same scenario but installing the extension with the *emaj-devel.sql* script provided for cases when a *“CREATE EXTENSION emaj*” statement is not possible,
 * the same scenario but installing the extension from the previous version with an immediate upgrade into the current version,
 * a shorter scenario installing the extension with the *emaj-devel.sql* script but with a role not having the *SUPERUSER* rights,
-* another shorter scenario but with an upgrade from the previous extension version to the current one while tables groups are in logging state,
+* another shorter scenario but with an upgrade from the previous extension version to the current one while table groups are in logging state,
 * a similar scenario but with an upgrade from the oldest E-Maj version that is available for the oldest supported Postgres version,
 * two scenarios testing the extension uninstall and re-install, using either the *“CREATE EXTENSION emaj”* statement, or the *emaj-devel.sql* script,
 * two scenarios testing a PostgreSQL version upgrade, using either *pg_dump* and *psql*, or the *pg_upgrade* tool.

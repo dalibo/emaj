@@ -26,7 +26,7 @@ DROP extension emaj CASCADE;
 -- Direct emaj schema drop attempt.
 DROP SCHEMA emaj CASCADE;
 
--- Look at the tables groups.
+-- Look at the table groups.
 SELECT group_name FROM emaj.emaj_group ORDER BY group_name;
 
 -- Look at the public and cleanup functions.

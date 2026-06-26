@@ -251,6 +251,14 @@ UPDATE emaj.emaj_relation
       rel_sql_gen_upd_set = regexp_replace(rel_sql_gen_upd_set, 'quote_nullable\((.*?)\)' ,'emaj._quote_nullable(\1::TEXT)', 'g'),
       rel_sql_gen_pk_conditions = regexp_replace(rel_sql_gen_pk_conditions, 'quote_literal\((.*?)\)' ,'emaj._quote_nullable(\1::TEXT)', 'g');
 
+--
+-- A few comments on table have changed
+--
+COMMENT ON TABLE emaj.emaj_relation_change IS
+$$Contains the changes in relations registered in table groups.$$;
+COMMENT ON TABLE emaj.emaj_mark IS
+$$Contains marks set on E-Maj table groups.$$;
+
 ----------------------------------------------------------------
 --                                                            --
 --                      Composite types                       --
@@ -590,6 +598,193 @@ $_check_group_names$
   END;
 $_check_group_names$;
 
+CREATE OR REPLACE FUNCTION emaj._check_json_groups_conf(p_groupsJson JSON)
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
+$_check_json_groups_conf$
+-- This function verifies that the JSON structure that contains a table groups configuration is correct.
+-- Any detected issue is reported as a message row. The caller defines what to do with them.
+-- It is called by the _import_groups_conf() function.
+-- The function is also directly called by Emaj_web.
+-- This function checks that:
+--   - the "tables_groups" attribute exists
+--   - "groups_name" attribute are defined
+--   - no unknow attribute are listed in the group level
+--   - the "is_rollbackable" attributes are boolean
+--   - the "priority" attributes are numeric
+--   - groups are not described several times
+-- Input: the JSON structure to check
+-- Output: _report_message_type records representing diagnostic messages
+  DECLARE
+    v_groupNumber            INT;
+    v_group                  TEXT;
+    v_tblseqNumber           INT;
+    v_schema                 TEXT;
+    v_tblseq                 TEXT;
+    v_triggerNumber          INT;
+    v_trigger                TEXT;
+    r_group                  RECORD;
+    r_table                  RECORD;
+    r_trigger                RECORD;
+    r_sequence               RECORD;
+  BEGIN
+-- Extract the "tables_groups" json path and check that the attribute exists.
+    p_groupsJson = p_groupsJson #> '{"tables_groups"}';
+    IF p_groupsJson IS NULL THEN
+      RETURN QUERY
+        VALUES (201, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                'The JSON structure does not contain any "tables_groups" array.');
+    ELSE
+-- Check that all keywords of the JSON structure are valid.
+-- Process groups attributes.
+      v_groupNumber = 0;
+      FOR r_group IN
+        SELECT value AS groupJson
+          FROM json_array_elements(p_groupsJson)
+      LOOP
+--   The group_name must be defined.
+        v_groupNumber = v_groupNumber + 1;
+        v_group = r_group.groupJson ->> 'group';
+        IF v_group IS NULL OR v_group = '' THEN
+          RETURN QUERY
+            VALUES (210, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_groupNumber,
+                    format('The table group #%s has no "group" attribute.',
+                           v_groupNumber::TEXT));
+        ELSE
+--   Other attributes of the group level must be known.
+          RETURN QUERY
+            SELECT 211, 1, v_group, NULL::TEXT, NULL::TEXT, key, NULL::INT,
+                 format('For the table group "%s", the keyword "%s" is unknown.',
+                        v_group, key)
+              FROM (
+                SELECT key
+                  FROM json_object_keys(r_group.groupJson) AS x(key)
+                  WHERE key NOT IN ('group', 'is_rollbackable', 'comment', 'tables', 'sequences')
+                ) AS t;
+--   If it exists, the "is_rollbackable" attribute must be a boolean
+          IF r_group.groupJson -> 'is_rollbackable' IS NOT NULL AND
+             json_typeof(r_group.groupJson -> 'is_rollbackable') <> 'boolean' THEN
+            RETURN QUERY
+              VALUES (212, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                      format('For the table group "%s", the "is_rollbackable" attribute is not a boolean.',
+                             v_group));
+          END IF;
+-- Process tables attributes.
+          v_tblseqNumber = 0;
+          FOR r_table IN
+            SELECT value AS tableJson
+              FROM json_array_elements(r_group.groupJson -> 'tables')
+          LOOP
+            v_tblseqNumber = v_tblseqNumber + 1;
+            v_schema = r_table.tableJson ->> 'schema';
+            v_tblseq = r_table.tableJson ->> 'table';
+--   The schema and table attributes must exists.
+            IF v_schema IS NULL OR v_schema = '' THEN
+              RETURN QUERY
+                VALUES (220, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
+                        format('In the table group "%s", the table #%s has no "schema" attribute.',
+                               v_group, v_tblseqNumber::TEXT));
+            ELSIF v_tblseq IS NULL OR v_tblseq = '' THEN
+              RETURN QUERY
+                VALUES (221, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
+                        format('In the table group "%s", the table #%s has no "table" attribute.',
+                               v_group, v_tblseqNumber::TEXT));
+            ELSE
+--   Attributes of the tables level must exist.
+              RETURN QUERY
+                SELECT 222, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
+                     format('In the table group "%s" and for the table %I.%I, the keyword "%s" is unknown.',
+                            v_group, quote_ident(v_schema), quote_ident(v_tblseq), key)
+                  FROM (
+                    SELECT key
+                      FROM json_object_keys(r_table.tableJson) AS x(key)
+                      WHERE key NOT IN ('schema', 'table', 'priority', 'log_data_tablespace',
+                                        'log_index_tablespace', 'ignored_triggers')
+                    ) AS t;
+--   If it exists, the "priority" attribute must be a number.
+              IF r_table.tableJson -> 'priority' IS NOT NULL AND
+                 json_typeof(r_table.tableJson -> 'priority') <> 'number' THEN
+                RETURN QUERY
+                  VALUES (223, 1, v_group, v_schema, v_tblseq, NULL::TEXT, NULL::INT,
+                          format('In the table group "%s" and for the table %I.%I, the "priority" attribute is not a number.',
+                                 v_group, quote_ident(v_schema), quote_ident(v_tblseq)));
+              END IF;
+-- Process triggers attributes.
+              IF r_table.tableJson -> 'ignored_triggers' IS NOT NULL THEN
+                IF json_typeof(r_table.tableJson -> 'ignored_triggers') = 'array' THEN
+                  v_triggerNumber = 0;
+                  FOR r_trigger IN
+                    SELECT value AS triggerJson
+                      FROM json_array_elements(r_table.tableJson -> 'ignored_triggers')
+                  LOOP
+                    v_triggerNumber = v_triggerNumber + 1;
+                    IF json_typeof(r_trigger.triggerJson) <> 'string' THEN
+                      RETURN QUERY
+                        VALUES (226, 1, v_group, v_schema, v_tblseq, NULL::TEXT, v_triggerNumber,
+                                format('In the table group "%s" and for the table %I.%I, the trigger #%s is not a string. '
+                                       'This is required since E-Maj 4.0.',
+                                       v_group, quote_ident(v_schema), quote_ident(v_tblseq), v_triggerNumber));
+                    END IF;
+                  END LOOP;
+                ELSE
+                  RETURN QUERY
+                    VALUES (227, 1, v_group, v_schema, v_tblseq, NULL::TEXT, NULL::INT,
+                            format('In the table group "%s" and for the table %I.%I, the "ignored_triggers" attribute is not an array.',
+                                   v_group, quote_ident(v_schema), quote_ident(v_tblseq)));
+                END IF;
+              END IF;
+            END IF;
+          END LOOP;
+-- Process sequences attributes.
+          v_tblseqNumber = 0;
+          FOR r_sequence IN
+            SELECT value AS sequenceJson
+              FROM json_array_elements(r_group.groupJson -> 'sequences')
+          LOOP
+            v_tblseqNumber = v_tblseqNumber + 1;
+            v_schema = r_sequence.sequenceJson ->> 'schema';
+            v_tblseq = r_sequence.sequenceJson ->> 'sequence';
+--   The schema and table attributes must exists.
+            IF v_schema IS NULL OR v_schema = '' THEN
+              RETURN QUERY
+                VALUES (230, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
+                        format('In the table group "%s", the sequence #%s has no "schema" attribute.',
+                               v_group, v_tblseqNumber::TEXT));
+            ELSIF v_tblseq IS NULL OR v_tblseq = '' THEN
+              RETURN QUERY
+                VALUES (231, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
+                        format('In the table group "%s", the sequence #%s has no "sequence" attribute.',
+                               v_group, v_tblseqNumber::TEXT));
+            ELSE
+--   No other attributes of the sequences level must exist.
+              RETURN QUERY
+                SELECT 232, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
+                     format('In the table group "%s" and for the sequence %I.%I, the keyword "%s" is unknown.',
+                            v_group, quote_ident(v_schema), quote_ident(v_tblseq), key)
+                  FROM (
+                    SELECT key
+                      FROM json_object_keys(r_sequence.sequenceJson) AS x(key)
+                      WHERE key NOT IN ('schema', 'sequence')
+                    ) AS t;
+            END IF;
+          END LOOP;
+        END IF;
+      END LOOP;
+-- Check that table groups are not configured more than once in the JSON structure.
+      RETURN QUERY
+        SELECT 202, 1, "group", NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+             format('The JSON structure references several times the table group "%s".',
+                    "group")
+          FROM (
+            SELECT "group", count(*)
+              FROM json_to_recordset(p_groupsJson) AS x("group" TEXT)
+              GROUP BY "group" HAVING count(*) > 1
+            ) AS t;
+    END IF;
+--
+    RETURN;
+  END;
+$_check_json_groups_conf$;
+
 CREATE OR REPLACE FUNCTION emaj._check_json_param_conf(p_paramsJson JSON)
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_check_json_param_conf$
@@ -687,7 +882,7 @@ CREATE OR REPLACE FUNCTION emaj._build_tblseqs_array_from_regexp(p_schema TEXT, 
                                                                  p_exceptionIfMissing BOOLEAN)
 RETURNS TEXT[] LANGUAGE plpgsql AS
 $_build_tblseqs_array_from_regexp$
--- The function builds the names array of tables or sequences belonging to any tables groups, based on include and exclude regexp filters.
+-- The function builds the names array of tables or sequences belonging to any table groups, based on include and exclude regexp filters.
 -- Depending on the p_exceptionIfMissing parameter, it warns or raises an error if the schema doesn't exist.
 -- (WARNING only is used by removal functions so that it is possible to remove from its group relations of a dropped or renamed schema)
 -- Inputs: schema,
@@ -713,6 +908,79 @@ $_build_tblseqs_array_from_regexp$
            ) AS t;
   END;
 $_build_tblseqs_array_from_regexp$;
+
+CREATE OR REPLACE FUNCTION emaj._check_tblseqs_array(p_schema TEXT, p_tblseqs TEXT[], p_relkind TEXT, p_exceptionIfMissing BOOLEAN)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_check_tblseqs_array$
+-- The function checks a names array of tables or sequences.
+-- Depending on the p_exceptionIfMissing parameter, it warns or raises an error if the schema or any table or sequence doesn't exist.
+-- (WARNING only is used by removal functions so that it is possible to remove a dropped or renamed relation from its group)
+-- It verifies that the schema and the tables or sequences belong to a table group (not necessary the same one).
+-- It returns the names array, duplicates and empty names being removed.
+-- Inputs: schema,
+--         tables or sequences names array,
+--         relation kind ('r' or 'S'),
+--         boolean indicating whether a missing schema or relation must raise an exception or just a warning.
+-- Outputs: tables or sequences names array.
+  DECLARE
+    v_relationKind           TEXT;
+    v_schemaExists           BOOLEAN;
+    v_list                   TEXT;
+    v_tblseqs                TEXT[];
+  BEGIN
+-- Setup constant.
+    IF p_relkind = 'r' THEN
+      v_relationKind = 'tables';
+    ELSE
+      v_relationKind = 'sequences';
+    END IF;
+-- Check that the schema exists.
+    v_schemaExists = emaj._check_schema(p_schema, p_exceptionIfMissing, FALSE);
+-- Clean up the relation names array: remove duplicates values, NULL and empty strings.
+    v_tblseqs = emaj._clean_array(p_tblseqs);
+-- If the schema exists, check that all relations exist.
+    IF v_schemaExists THEN
+      SELECT string_agg(quote_ident(tblseq), ', ' ORDER BY tblseq)
+        INTO v_list
+        FROM unnest(v_tblseqs) AS tblseq
+        WHERE NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = p_schema
+                     AND relname = tblseq
+                     AND relkind = p_relkind
+                );
+      IF v_list IS NOT NULL THEN
+        IF p_exceptionIfMissing THEN
+          RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not exist!', p_schema, v_relationKind, v_list;
+        ELSE
+          RAISE WARNING '_check_tblseqs_array: In schema "%", some % (%) do not exist.', p_schema, v_relationKind, v_list;
+        END IF;
+      END IF;
+    END IF;
+-- Check that the relations currently belong to a table group (not necessarily the same for all relations).
+    SELECT string_agg(quote_ident(tblseq), ', ' ORDER BY tblseq)
+      INTO v_list
+      FROM
+        (  SELECT tblseq
+             FROM unnest(v_tblseqs) AS tblseq
+         EXCEPT
+           SELECT rel_tblseq
+             FROM emaj.emaj_relation
+             WHERE rel_schema = p_schema
+               AND rel_tblseq = ANY(v_tblseqs)
+               AND rel_kind = p_relkind
+               AND upper_inf(rel_time_range)
+        ) AS t;
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not currently belong to any table group.',
+                      p_schema, v_relationKind, v_list;
+    END IF;
+--
+    RETURN v_tblseqs;
+  END;
+$_check_tblseqs_array$;
 
 CREATE OR REPLACE FUNCTION emaj._check_can_copy_from()
 RETURNS VOID LANGUAGE plpgsql AS
@@ -755,6 +1023,42 @@ $_check_can_exec_program$
     END IF;
   END;
 $_check_can_exec_program$;
+
+CREATE OR REPLACE FUNCTION emaj._get_lock_tblseqs_groups(p_schema TEXT, p_tblseqs TEXT[], p_newGroup TEXT,
+                                                         OUT p_groups TEXT[], OUT p_loggingGroups TEXT[], OUT p_nbAuditOnlyGroups INT)
+LANGUAGE plpgsql AS
+$_get_lock_tblseqs_groups$
+-- This function gets the lists of groups and logging groups holding a set of tables or sequences of a single schema.
+-- It also counts the number of AUDIT_ONLY groups.
+-- It is called by functions that change the table groups structure.
+-- For functions moving tables or sequences from a group to another, it handles the target table group.
+-- It locks the target and source table groups so that no other operation simultaneously occurs for these groups.
+-- Input: schema,
+--        array of table or sequence names,
+--        target table group for move functions (set to NULL for other functions).
+-- Output: table groups names array, logging table groups names array, number of AUDIT_ONLY table groups.
+  BEGIN
+-- Build the output data.
+-- The CTE is needed for the FOR UPDATE clause not allowed when aggregate functions.
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging, group_is_rollbackable FROM emaj.emaj_group
+        WHERE (p_newGroup IS NOT NULL AND group_name = p_newGroup) OR
+              group_name IN
+               (SELECT DISTINCT rel_group FROM emaj.emaj_relation
+                  WHERE rel_schema = p_schema
+                    AND rel_tblseq = ANY(p_tblseqs)
+                    AND upper_inf(rel_time_range))
+        FOR UPDATE OF emaj_group
+      )
+    SELECT array_agg(group_name ORDER BY group_name),
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging),
+           count(group_name) FILTER (WHERE NOT group_is_rollbackable AND (p_newGroup IS NULL OR group_name <> p_newGroup))
+      INTO p_groups, p_loggingGroups, p_nbAuditOnlyGroups
+      FROM tables_group;
+--
+    RETURN;
+  END;
+$_get_lock_tblseqs_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN DEFAULT FALSE)
 RETURNS TEXT LANGUAGE plpgsql AS
@@ -900,6 +1204,88 @@ $_check_new_mark$
   END;
 $_check_new_mark$;
 
+CREATE OR REPLACE FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
+                                                   p_finiteUpperBound BOOLEAN DEFAULT FALSE, p_checkLogSession BOOLEAN DEFAULT TRUE,
+                                                   OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
+                                                   OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
+                                                   OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT)
+LANGUAGE plpgsql AS
+$_check_marks_range$
+-- This function verifies that a marks range is valid for one or several groups and return useful data about both marks.
+-- It checks that both marks defining the bounds exist and are in chronological order.
+-- If required, it warns if the mark range is not contained by a log session.
+-- It processes the EMAJ_LAST_MARK keyword.
+-- A last mark (upper bound) set to NULL means "the current state". In this case, no specific checks is performed.
+-- When several groups are supplied, it checks that the marks represent the same point in time for all groups.
+-- Input: array of group names, name of the first mark, name of the last mark,
+--        2 booleans to perform or not additional checks
+-- Output: name, time id, clock timestamp and emaj_gid for both marks
+  DECLARE
+    v_groupName              TEXT;
+  BEGIN
+-- Check that the first mark is not NULL or empty.
+    IF p_firstMark IS NULL OR p_firstMark = '' THEN
+      RAISE EXCEPTION '_check_marks_range: The first mark cannot be NULL or empty.';
+    END IF;
+-- Checks the supplied first mark.
+    SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark) INTO p_firstMark;
+-- Get some additional data about the first mark.
+-- (use the first group of the array, as we are now sure that all groups share the same mark).
+    SELECT mark_time_id, time_clock_timestamp, time_last_emaj_gid INTO p_firstMarkTimeId, p_firstMarkTs, p_firstMarkEmajGid
+      FROM emaj.emaj_mark
+           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+      WHERE mark_group = p_groupNames[1]
+        AND mark_name = p_firstMark;
+    IF p_lastMark IS NULL OR p_lastMark = '' THEN
+      IF p_finiteUpperBound THEN
+        RAISE EXCEPTION '_check_marks_range: The last mark cannot be NULL or empty.';
+      END IF;
+    ELSE
+-- The last mark is not NULL or empty, so check it.
+      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark) INTO p_lastMark;
+-- Get some additional data about the last mark (that may be NULL)
+-- (use the first group of the array, as we are now sure that all groups share the same mark).
+      SELECT mark_time_id, time_clock_timestamp, time_last_emaj_gid INTO p_lastMarkTimeId, p_lastMarkTs, p_lastMarkEmajGid
+        FROM emaj.emaj_mark
+             JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+        WHERE mark_group = p_groupNames[1]
+          AND mark_name = p_lastMark;
+-- And check that the last mark has been set after the first mark.
+      IF p_firstMarkTimeId > p_lastMarkTimeId THEN
+        RAISE EXCEPTION '_check_marks_range: The start mark "%" (%) has been set after the end mark "%" (%).',
+          p_firstMark, p_firstMarkTs, p_lastMark, p_lastMarkTs;
+      END IF;
+    END IF;
+-- If required, warn if the mark range is not contained by a single log session for any table group.
+    IF p_checkLogSession THEN
+      FOREACH v_groupName IN ARRAY p_groupNames
+      LOOP
+        IF p_lastMark IS NULL OR p_lastMark = '' THEN
+          PERFORM 0
+            FROM emaj.emaj_log_session
+            WHERE lses_group = v_groupName
+              AND lses_time_range @> int8range(p_firstMarkTimeId, NULL, '[]');
+          IF NOT FOUND THEN
+            RAISE WARNING 'Since mark "%", the table group "%" has not been always in logging state. '
+                          'Some data changes may not have been recorded.', p_firstMark, v_groupName;
+          END IF;
+        ELSE
+          PERFORM 0
+            FROM emaj.emaj_log_session
+            WHERE lses_group = v_groupName
+              AND lses_time_range @> int8range(p_firstMarkTimeId, p_lastMarkTimeId, '[]');
+          IF NOT FOUND THEN
+            RAISE WARNING 'Between marks "%" and "%", the table group "%" has not been always in logging state. '
+                          'Some data changes may not have been recorded.', p_firstMark, p_lastMark, v_groupName;
+          END IF;
+        END IF;
+      END LOOP;
+    END IF;
+--
+    RETURN;
+  END;
+$_check_marks_range$;
+
 CREATE OR REPLACE FUNCTION emaj._check_tblseqs_filter(INOUT p_tblseqs TEXT[], p_groupNames TEXT[], p_firstMarkTimeId BIGINT,
                                                       p_lastMarkTimeId BIGINT, p_checkInGroupAtStartMark BOOLEAN DEFAULT FALSE)
 LANGUAGE plpgsql AS
@@ -931,7 +1317,7 @@ $_check_tblseqs_filter$
                  AND rel_group = ANY (p_groupNames)                   -- at the start mark time
           ) AS t2;
       IF v_tblseqErr IS NOT NULL THEN
-        RAISE EXCEPTION '_check_tblseqs_filter: % tables/sequences (%) did not belong to any of the selected tables groups '
+        RAISE EXCEPTION '_check_tblseqs_filter: % tables/sequences (%) did not belong to any of the selected table groups '
                         'at start mark time.', v_count, v_tblseqErr;
       END IF;
     ELSE
@@ -947,7 +1333,7 @@ $_check_tblseqs_filter$
                  AND rel_group = ANY (p_groupNames)
           ) AS t2;
       IF v_tblseqErr IS NOT NULL THEN
-        RAISE EXCEPTION '_check_tblseqs_filter: % tables/sequences (%) never belonged to any of the selected tables groups '
+        RAISE EXCEPTION '_check_tblseqs_filter: % tables/sequences (%) never belonged to any of the selected table groups '
                         'during the requested marks range.', v_count, v_tblseqErr;
       END IF;
     END IF;
@@ -961,7 +1347,7 @@ RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_create_log_schemas$
 -- The function creates all log schemas that will be needed to create new log tables.
--- The function is called at tables groups configuration import.
+-- The function is called at table groups configuration import.
 -- Input: calling function to record into the emaj_hist table and time_id
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
 --   the current database.
@@ -1081,14 +1467,44 @@ SELECT CASE
        END;
 $$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_table(p_schema TEXT, p_table TEXT, p_group TEXT, p_properties JSONB DEFAULT NULL,
+                                                  p_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_table$
+-- The function assigns a table into a table group.
+-- Inputs: schema name, table name, assignment group name, assignment properties (optional),
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively assigned to the table group, ie. 1
+  BEGIN
+    RETURN emaj._assign_tables(p_schema, ARRAY[p_table], p_group, p_properties, p_mark, FALSE, FALSE);
+  END;
+$emaj_assign_table$;
+COMMENT ON FUNCTION emaj.emaj_assign_table(TEXT, TEXT, TEXT, JSONB, TEXT) IS
+$$Assign a table into a table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(p_schema TEXT, p_tables TEXT[], p_group TEXT, p_properties JSONB DEFAULT NULL,
+                                                   p_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_tables$
+-- The function assigns several tables at once into a table group.
+-- Inputs: schema, array of table names, assignment group name, assignment properties (optional),
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively assigned to the table group
+  BEGIN
+    RETURN emaj._assign_tables(p_schema, p_tables, p_group, p_properties, p_mark, TRUE, FALSE);
+  END;
+$emaj_assign_tables$;
+COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT, TEXT[], TEXT, JSONB, TEXT) IS
+$$Assign several tables into a table group.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
                                                     p_group TEXT, p_properties JSONB DEFAULT NULL, p_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_tables$
--- The function assigns tables on name regexp pattern into a tables group.
+-- The function assigns tables on name regexp pattern into a table group.
 -- Inputs: schema name, 2 patterns to filter table names (one to include and another to exclude) , assignment group name,
 --         assignment properties (optional), mark name to set when logging groups (optional)
--- Outputs: number of tables effectively assigned to the tables group
+-- Outputs: number of tables effectively assigned to the table group
   DECLARE
     v_tables                 TEXT[];
   BEGIN
@@ -1110,18 +1526,18 @@ $emaj_assign_tables$
   END;
 $emaj_assign_tables$;
 COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT, TEXT, TEXT, TEXT, JSONB, TEXT) IS
-$$Assign tables on name patterns into a tables group.$$;
+$$Assign tables on name patterns into a table group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._assign_tables(p_schema TEXT, p_tables TEXT[], p_group TEXT, p_properties JSONB, p_mark TEXT,
                                                p_multiTable BOOLEAN, p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_assign_tables$
--- The function effectively assigns tables into a tables group.
+-- The function effectively assigns tables into a table group.
 -- Inputs: schema, array of table names, group name, properties as JSON structure
 --         mark to set for lonnging groups, a boolean indicating whether several tables need to be processed,
 --         a boolean indicating whether the tables array has been built from regex filters
--- Outputs: number of tables effectively assigned to the tables group
+-- Outputs: number of tables effectively assigned to the table group
 -- The JSONB p_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
 --   each properties being NULL by default
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
@@ -1411,10 +1827,10 @@ $_assign_tables$;
 CREATE OR REPLACE FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $emaj_get_assigned_group_table$
--- The function reports the tables group a table is assigned to.
+-- The function reports the table group a table is assigned to.
 -- It returns NULL if the table is not currently assigned to a group.
 -- Inputs: schema name, table name.
--- Outputs: tables group currently owning the table.
+-- Outputs: table group currently owning the table.
   DECLARE
     v_group                  TEXT;
   BEGIN
@@ -1431,7 +1847,7 @@ $emaj_get_assigned_group_table$
       RAISE EXCEPTION 'emaj_get_assigned_group_table: In schema %, the table % does not exist.',
                       quote_ident(p_schema), quote_ident(p_table);
     END IF;
--- Get the tables group the table is assignned to.
+-- Get the table group the table is assignned to.
     SELECT rel_group INTO v_group
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
@@ -1443,17 +1859,62 @@ $emaj_get_assigned_group_table$
   END;
 $emaj_get_assigned_group_table$;
 COMMENT ON FUNCTION emaj.emaj_get_assigned_group_table(TEXT, TEXT) IS
-$$Returns the tables group a table is assigned to.$$;
+$$Returns the table group a table is assigned to.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_table(p_schema TEXT, p_table TEXT, p_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_table$
+-- The function removes a table from its table group.
+-- Inputs: schema name, table name, mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively removed to the table group, ie. 1
+  BEGIN
+    RETURN emaj._remove_tables(p_schema, ARRAY[p_table], p_mark, FALSE, FALSE);
+  END;
+$emaj_remove_table$;
+COMMENT ON FUNCTION emaj.emaj_remove_table(TEXT, TEXT, TEXT) IS
+$$Remove a table from its table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_tables(p_schema TEXT, p_tables TEXT[], p_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_tables$
+-- The function removes several tables at once from their table group.
+-- Inputs: schema, array of table names, mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively removed from the table group
+  BEGIN
+    RETURN emaj._remove_tables(p_schema, p_tables, p_mark, TRUE, FALSE);
+  END;
+$emaj_remove_tables$;
+COMMENT ON FUNCTION emaj.emaj_remove_tables(TEXT, TEXT[], TEXT) IS
+$$Remove several tables from their table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                   p_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_tables$
+-- The function removes tables on name patterns from their table group.
+-- Inputs: schema, 2 patterns to filter table names (one to include and another to exclude),
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively removed from the table group
+  DECLARE
+    v_tables                 TEXT[];
+  BEGIN
+    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter, FALSE);
+-- Call the _remove_tables() function for execution.
+    RETURN emaj._remove_tables(p_schema, v_tables, p_mark, TRUE, TRUE);
+  END;
+$emaj_remove_tables$;
+COMMENT ON FUNCTION emaj.emaj_remove_tables(TEXT, TEXT, TEXT, TEXT) IS
+$$Remove several tables on name patterns from their table group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tables(p_schema TEXT, p_tables TEXT[], p_mark TEXT, p_multiTable BOOLEAN,
                                                p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
 $_remove_tables$
--- The function effectively removes tables from their tables group.
+-- The function effectively removes tables from their table group.
 -- Inputs: schema, array of table names, mark to set if for logging groups,
 --         boolean to indicate whether several tables need to be processed,
 --         a boolean indicating whether the tables array has been built from regex filters
--- Outputs: number of tables effectively removed to the tables group
+-- Outputs: number of tables effectively removed to the table group
   DECLARE
     v_function               TEXT;
     v_markName               TEXT;
@@ -1475,7 +1936,7 @@ $_remove_tables$
     IF NOT p_arrayFromRegex THEN
       p_tables = emaj._check_tblseqs_array(p_schema, p_tables, 'r', FALSE);
     END IF;
--- Get and lock the tables groups and logging groups holding these tables.
+-- Get and lock the table groups and logging groups holding these tables.
     SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
       FROM emaj._get_lock_tblseqs_groups(p_schema, p_tables, NULL);
 -- Check the supplied mark.
@@ -1549,15 +2010,60 @@ $_remove_tables$
   END;
 $_remove_tables$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_move_table(p_schema TEXT, p_table TEXT, p_newGroup TEXT, p_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_table$
+-- The function moves a table from its table group to another table group.
+-- Inputs: schema name, table name, new group name, mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively moved to the new table group, ie. 1
+  BEGIN
+    RETURN emaj._move_tables(p_schema, ARRAY[p_table], p_newGroup, p_mark, FALSE, FALSE);
+  END;
+$emaj_move_table$;
+COMMENT ON FUNCTION emaj.emaj_move_table(TEXT, TEXT, TEXT, TEXT) IS
+$$Move a table from its table group to another table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_move_tables(p_schema TEXT, p_tables TEXT[], p_newGroup TEXT, p_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_tables$
+-- The function moves several tables at once from their table group to another table group.
+-- Inputs: schema, array of table names, new group name, mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively moved to the new table group
+  BEGIN
+    RETURN emaj._move_tables(p_schema, p_tables, p_newGroup, p_mark, TRUE, FALSE);
+  END;
+$emaj_move_tables$;
+COMMENT ON FUNCTION emaj.emaj_move_tables(TEXT, TEXT[], TEXT, TEXT) IS
+$$Move several tables from their table group to another table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_move_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                 p_newGroup TEXT, p_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_tables$
+-- The function moves tables on name patterns from their table group to another table group.
+-- Inputs: schema, 2 patterns to filter table names (one to include and another to exclude), new group name,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively moved to the new table group
+  DECLARE
+    v_tables                 TEXT[];
+  BEGIN
+    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter, TRUE);
+-- Call the _move_tables() function for execution.
+    RETURN emaj._move_tables(p_schema, v_tables, p_newGroup, p_mark, TRUE, TRUE);
+  END;
+$emaj_move_tables$;
+COMMENT ON FUNCTION emaj.emaj_move_tables(TEXT, TEXT, TEXT, TEXT, TEXT) IS
+$$Move several tables on name patterns from their table group to another table group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._move_tables(p_schema TEXT, p_tables TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiTable BOOLEAN,
                                              p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
 $_move_tables$
--- The function effectively moves tables from their tables group to another tables group.
+-- The function effectively moves tables from their table group to another table group.
 -- Inputs: schema, array of table names, new group name, mark to set if for logging groups,
 --         boolean to indicate whether several tables need to be processed,
 --         a boolean indicating whether the tables array has been built from regex filters
--- Outputs: number of tables effectively moved to the tables group
+-- Outputs: number of tables effectively moved to the table group
   DECLARE
     v_function               TEXT;
     v_newGroupIsRollbackable BOOLEAN;
@@ -1596,12 +2102,12 @@ $_move_tables$
         AND upper_inf(rel_time_range);
 -- Warn only if the tables list has been supplied by the user.
     IF v_list IS NOT NULL AND NOT p_arrayFromRegex THEN
-      RAISE WARNING '_move_tables: In schema "%", some tables (%) already belong to the tables group "%".', p_schema, v_list, p_newGroup;
+      RAISE WARNING '_move_tables: In schema "%", some tables (%) already belong to the table group "%".', p_schema, v_list, p_newGroup;
     END IF;
--- Get and lock the tables groups and logging groups holding these tables, and count the number of AUDIT_ONLY groups.
+-- Get and lock the table groups and logging groups holding these tables, and count the number of AUDIT_ONLY groups.
     SELECT p_groups, p_loggingGroups, p_nbAuditOnlyGroups INTO v_groups, v_loggingGroups, v_nbAuditOnlyGroups
       FROM emaj._get_lock_tblseqs_groups(p_schema, p_tables, p_newGroup);
--- If at least 1 source tables group is of type AUDIT_ONLY and the target tables group is ROLLBACKABLE, add some checks on tables.
+-- If at least 1 source table group is of type AUDIT_ONLY and the target table group is ROLLBACKABLE, add some checks on tables.
 -- They may be incompatible with ROLLBACKABLE groups.
     IF v_nbAuditOnlyGroups > 0 AND v_newGroupIsRollbackable THEN
       p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex);
@@ -1651,7 +2157,7 @@ $_move_tables$
     END IF;
 -- Insert the end entry into the emaj_hist table.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (v_function, 'END', v_nbMovedTbl || ' tables moved to the tables group ' || p_newGroup);
+      VALUES (v_function, 'END', v_nbMovedTbl || ' tables moved to the table group ' || p_newGroup);
 --
     RETURN v_nbMovedTbl;
   END;
@@ -1708,7 +2214,7 @@ $_modify_tables$
       SELECT * INTO v_newPriority, v_newLogDatTsp, v_newLogIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
         FROM emaj._check_json_table_properties(p_changedProperties);
     END IF;
--- Get and lock the tables groups and logging groups holding these tables.
+-- Get and lock the table groups and logging groups holding these tables.
     SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
       FROM emaj._get_lock_tblseqs_groups(p_schema, p_tables, NULL);
 -- Check the supplied mark.
@@ -1822,6 +2328,28 @@ $_modify_tables$
     RETURN v_nbChangedTbl;
   END;
 $_modify_tables$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(p_app_schema TEXT, p_app_table TEXT,
+                                                           OUT log_schema TEXT, OUT log_table TEXT)
+LANGUAGE plpgsql AS
+$emaj_get_current_log_table$
+-- The function returns the current log table for a given application schema and table.
+-- It returns NULL values if the table doesn't currently belong to a table group.
+-- Inputs: schema and table names
+-- Outputs: schema and table of the currently associated log table
+  BEGIN
+-- Get the requested data from the emaj_relation table.
+    SELECT rel_log_schema, rel_log_table INTO log_schema, log_table
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_app_schema
+        AND rel_tblseq = p_app_table
+        AND upper_inf(rel_time_range);
+--
+    RETURN;
+  END;
+$emaj_get_current_log_table$;
+COMMENT ON FUNCTION emaj.emaj_get_current_log_table(TEXT, TEXT) IS
+$$Retrieve the current log table of a given application table.$$;
 
 CREATE OR REPLACE FUNCTION emaj._create_tbl(p_schema TEXT, p_tbl TEXT, p_groupName TEXT, p_priority INT, p_logDatTsp TEXT,
                                             p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT, p_groupIsLogging BOOLEAN)
@@ -2403,14 +2931,41 @@ $_move_tbl$
   END;
 $_move_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequence(p_schema TEXT, p_sequence TEXT, p_group TEXT, p_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_sequence$
+-- The function assigns a sequence into a table group.
+-- Inputs: schema name, sequence name, assignment group name, mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively assigned to the table group, ie. 1
+  BEGIN
+    RETURN emaj._assign_sequences(p_schema, ARRAY[p_sequence], p_group, p_mark , FALSE, FALSE);
+  END;
+$emaj_assign_sequence$;
+COMMENT ON FUNCTION emaj.emaj_assign_sequence(TEXT, TEXT, TEXT, TEXT) IS
+$$Assign a sequence into a table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(p_schema TEXT, p_sequences TEXT[], p_group TEXT, p_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_sequences$
+-- The function assigns several sequences at once into a table group.
+-- Inputs: schema, array of sequence names, assignment group name,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively assigned to the table group
+  BEGIN
+    RETURN emaj._assign_sequences(p_schema, p_sequences, p_group, p_mark, TRUE, FALSE);
+  END;
+$emaj_assign_sequences$;
+COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT, TEXT[], TEXT, TEXT) IS
+$$Assign several sequences into a table group.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
                                                       p_group TEXT, p_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_sequences$
--- The function assigns sequences on name regexp pattern into a tables group.
+-- The function assigns sequences on name regexp pattern into a table group.
 -- Inputs: schema name, 2 patterns to filter sequence names (one to include and another to exclude), assignment group name,
 --         mark name to set when logging groups (optional)
--- Outputs: number of sequences effectively assigned to the tables group
+-- Outputs: number of sequences effectively assigned to the table group
   DECLARE
     v_sequences              TEXT[];
   BEGIN
@@ -2432,17 +2987,17 @@ $emaj_assign_sequences$
   END;
 $emaj_assign_sequences$;
 COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT, TEXT, TEXT, TEXT, TEXT) IS
-$$Assign sequences on name patterns into a tables group.$$;
+$$Assign sequences on name patterns into a table group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._assign_sequences(p_schema TEXT, p_sequences TEXT[], p_group TEXT, p_mark TEXT,
                                                   p_multiSequence BOOLEAN, p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
 $_assign_sequences$
--- The function effectively assigns sequences into a tables group.
+-- The function effectively assigns sequences into a table group.
 -- Inputs: schema, array of sequence names, group name,
 --         mark to set for lonnging groups, a boolean indicating whether several sequences need to be processed,
 --         a boolean indicating whether the tables array has been built from regex filters
--- Outputs: number of sequences effectively assigned to the tables group
+-- Outputs: number of sequences effectively assigned to the table group
 -- The JSONB v_properties parameter has currenlty only one field '{"priority":...}' the properties being NULL by default
   DECLARE
     v_function               TEXT;
@@ -2572,10 +3127,10 @@ $_assign_sequences$;
 CREATE OR REPLACE FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p_sequence TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $emaj_get_assigned_group_sequence$
--- The function reports the tables group a sequence is assigned to.
+-- The function reports the table group a sequence is assigned to.
 -- It returns NULL if the sequence is not currently assigned to a group.
 -- Inputs: schema name, sequence name.
--- Outputs: tables group currently owning the sequence.
+-- Outputs: table group currently owning the sequence.
   DECLARE
     v_group                  TEXT;
   BEGIN
@@ -2592,7 +3147,7 @@ $emaj_get_assigned_group_sequence$
       RAISE EXCEPTION 'emaj_get_assigned_group_sequence: In schema %, the sequence % does not exist.',
                       quote_ident(p_schema), quote_ident(p_sequence);
     END IF;
--- Get the tables group the sequence is assignned to.
+-- Get the table group the sequence is assignned to.
     SELECT rel_group INTO v_group
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
@@ -2604,7 +3159,52 @@ $emaj_get_assigned_group_sequence$
   END;
 $emaj_get_assigned_group_sequence$;
 COMMENT ON FUNCTION emaj.emaj_get_assigned_group_sequence(TEXT, TEXT) IS
-$$Returns the tables group a sequence is assigned to.$$;
+$$Returns the table group a sequence is assigned to.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_sequence(p_schema TEXT, p_sequence TEXT, p_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_sequence$
+-- The function removes a sequence from its table group.
+-- Inputs: schema name, sequence name, mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively removed to the table group, id. 1
+  BEGIN
+    RETURN emaj._remove_sequences(p_schema, ARRAY[p_sequence], p_mark, FALSE, FALSE);
+  END;
+$emaj_remove_sequence$;
+COMMENT ON FUNCTION emaj.emaj_remove_sequence(TEXT, TEXT, TEXT) IS
+$$Remove a sequence from its table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_sequences(p_schema TEXT, p_sequences TEXT[], p_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_sequences$
+-- The function removes several sequences at once from their table group.
+-- Inputs: schema, array of sequence names, mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively removed from the table group
+  BEGIN
+    RETURN emaj._remove_sequences(p_schema, p_sequences, p_mark, TRUE, FALSE);
+  END;
+$emaj_remove_sequences$;
+COMMENT ON FUNCTION emaj.emaj_remove_sequences(TEXT, TEXT[], TEXT) IS
+$$Remove several sequences from their table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                      p_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_sequences$
+-- The function removes sequences on name patterns from their table group.
+-- Inputs: schema, 2 patterns to filter sequence names (one to include and another to exclude),
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively removed from the table group
+  DECLARE
+    v_sequences              TEXT[];
+  BEGIN
+    v_sequences = emaj._build_tblseqs_array_from_regexp(p_schema, 'S', p_sequencesIncludeFilter, p_sequencesExcludeFilter, FALSE);
+-- Call the _remove_sequences() function for execution.
+    RETURN emaj._remove_sequences(p_schema, v_sequences, p_mark, TRUE, TRUE);
+  END;
+$emaj_remove_sequences$;
+COMMENT ON FUNCTION emaj.emaj_remove_sequences(TEXT, TEXT, TEXT, TEXT) IS
+$$Remove several sequences on name patterns from their table group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_sequences(p_schema TEXT, p_sequences TEXT[], p_mark TEXT, p_multiSequence BOOLEAN,
                                                   p_arrayFromRegex BOOLEAN)
@@ -2635,7 +3235,7 @@ $_remove_sequences$
     IF NOT p_arrayFromRegex THEN
       p_sequences = emaj._check_tblseqs_array(p_schema, p_sequences, 'S', FALSE);
     END IF;
--- Get and lock the tables groups and logging groups holding these sequences.
+-- Get and lock the table groups and logging groups holding these sequences.
     SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
       FROM emaj._get_lock_tblseqs_groups(p_schema, p_sequences, NULL);
 -- Check the supplied mark.
@@ -2693,15 +3293,60 @@ $_remove_sequences$
   END;
 $_remove_sequences$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_move_sequence(p_schema TEXT, p_sequence TEXT, p_newGroup TEXT, p_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_sequence$
+-- The function moves a sequence from its table group to another table group.
+-- Inputs: schema name, sequence name, new group name, mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively moved to the new table group, ie. 1
+  BEGIN
+    RETURN emaj._move_sequences(p_schema, ARRAY[p_sequence], p_newGroup, p_mark, FALSE, FALSE);
+  END;
+$emaj_move_sequence$;
+COMMENT ON FUNCTION emaj.emaj_move_sequence(TEXT, TEXT, TEXT, TEXT) IS
+$$Move a sequence from its table group to another table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_move_sequences(p_schema TEXT, p_sequences TEXT[], p_newGroup TEXT, p_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_sequences$
+-- The function moves several sequences at once from their table group to another table group.
+-- Inputs: schema, array of sequence names, new group name, mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively moved to the new table group
+  BEGIN
+    RETURN emaj._move_sequences(p_schema, p_sequences, p_newGroup, p_mark, TRUE, FALSE);
+  END;
+$emaj_move_sequences$;
+COMMENT ON FUNCTION emaj.emaj_move_sequences(TEXT, TEXT[], TEXT, TEXT) IS
+$$Move several sequences from their table group to another table group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_move_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                 p_newGroup TEXT, p_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_sequences$
+-- The function moves sequences on name patterns from their table group to another table group.
+-- Inputs: schema, 2 patterns to filter sequence names (one to include and another to exclude), new group name,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively moved to the new table group
+  DECLARE
+    v_sequences              TEXT[];
+  BEGIN
+    v_sequences = emaj._build_tblseqs_array_from_regexp(p_schema, 'S', p_sequencesIncludeFilter, p_sequencesExcludeFilter, TRUE);
+-- Call the _move_sequences() function for execution.
+    RETURN emaj._move_sequences(p_schema, v_sequences, p_newGroup, p_mark, TRUE, TRUE);
+  END;
+$emaj_move_sequences$;
+COMMENT ON FUNCTION emaj.emaj_move_sequences(TEXT, TEXT, TEXT, TEXT, TEXT) IS
+$$Move several sequences on name patterns from their table group to another table group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._move_sequences(p_schema TEXT, p_sequences TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiSequence BOOLEAN,
                                              p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
 $_move_sequences$
--- The function effectively moves sequences from their tables group to another tables group.
+-- The function effectively moves sequences from their table group to another table group.
 -- Inputs: schema, array of sequence names, new group name, mark to set if for logging groups,
 --         boolean to indicate whether several sequences need to be processed,
 --         a boolean indicating whether the sequences array has been built from regex filters
--- Outputs: number of sequences effectively moved to the tables group
+-- Outputs: number of sequences effectively moved to the table group
   DECLARE
     v_function               TEXT;
     v_newGroupIsLogging      BOOLEAN;
@@ -2738,10 +3383,10 @@ $_move_sequences$
         AND upper_inf(rel_time_range);
 -- Warn only if the sequences list has been supplied by the user.
     IF v_list IS NOT NULL AND NOT p_arrayFromRegex THEN
-      RAISE WARNING '_move_sequences: In schema "%", some sequences (%) already belong to the tables group "%".',
+      RAISE WARNING '_move_sequences: In schema "%", some sequences (%) already belong to the table group "%".',
                     p_schema, v_list, p_newGroup;
     END IF;
--- Get and lock the tables groups and logging groups holding these sequences, and count the number of AUDIT_ONLY groups.
+-- Get and lock the table groups and logging groups holding these sequences, and count the number of AUDIT_ONLY groups.
     SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
       FROM emaj._get_lock_tblseqs_groups(p_schema, p_sequences, p_newGroup);
 -- Check the supplied mark.
@@ -2790,11 +3435,24 @@ $_move_sequences$
     END IF;
 -- Insert the end entry into the emaj_hist table.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (v_function, 'END', v_nbMovedSeq || ' sequences moved to the tables group ' || p_newGroup);
+      VALUES (v_function, 'END', v_nbMovedSeq || ' sequences moved to the table group ' || p_newGroup);
 --
     RETURN v_nbMovedSeq;
   END;
 $_move_sequences$;
+
+CREATE OR REPLACE FUNCTION emaj._create_seq(p_schema TEXT, p_seq TEXT, p_groupName TEXT, p_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_create_seq$
+-- The function records a sequence into a table group
+-- Required inputs: the application sequence to process, the group to add it into, the priority attribute, the time id of the operation.
+  BEGIN
+-- Record the sequence in the emaj_relation table.
+    INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind)
+      VALUES (p_schema, p_seq, int8range(p_timeId, NULL, '[)'), p_groupName, 'S');
+    RETURN;
+  END;
+$_create_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_seq(p_schema TEXT, p_sequence TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
                                             p_timeId BIGINT, p_function TEXT)
@@ -3252,8 +3910,8 @@ $_gen_sql_seq$;
 CREATE OR REPLACE FUNCTION emaj._verify_groups(p_groups TEXT[], p_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
 $_verify_groups$
--- The function verifies the consistency of a tables groups array.
--- Input: - tables groups array,
+-- The function verifies the consistency of a table groups array.
+-- Input: - table groups array,
 --        - a boolean indicating whether the function has to raise an exception in case of detected unconsistency.
 -- If onErrorStop boolean is false, it returns a set of _verify_groups_type records, one row per detected unconsistency, including
 -- the faulting schema and table or sequence names and a detailed message.
@@ -3270,7 +3928,7 @@ $_verify_groups$
 -- Check that all application relations referenced in the emaj_relation table still exist.
     FOR r_object IN
       SELECT t.rel_schema, t.rel_tblseq, r.rel_group,
-             'In tables group "' || r.rel_group || '", the ' ||
+             'In table group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
                t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
         FROM
@@ -3295,7 +3953,7 @@ $_verify_groups$
 -- Check that the log table for all tables referenced in the emaj_relation table still exist.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In tables group "' || rel_group || '", the log table "' ||
+             'In table group "' || rel_group || '", the log table "' ||
                rel_log_schema || '"."' || rel_log_table || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groups)
@@ -3316,7 +3974,7 @@ $_verify_groups$
     FOR r_object IN
                                                   -- the schema and table names are rebuilt from the returned function name
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In tables group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function ||
+             'In table group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function ||
              '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groups)
@@ -3337,7 +3995,7 @@ $_verify_groups$
 --   Start with the log trigger
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In tables group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+             'In table group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groups)
@@ -3360,7 +4018,7 @@ $_verify_groups$
 --   Then the truncate trigger.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In tables group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+             'In table group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
              rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groups)
@@ -3408,7 +4066,7 @@ $_verify_groups$
               AND rel_kind = 'r'
               AND upper_inf(rel_time_range))
       SELECT DISTINCT rel_schema, rel_tblseq, rel_group,
-             'In tables group "' || rel_group || '", the structure of the application table "' ||
+             'In table group "' || rel_group || '", the structure of the application table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
              rel_log_schema || '"."' || rel_log_table || '").' AS msg
         FROM
@@ -3437,7 +4095,7 @@ $_verify_groups$
 -- Check that all tables have their primary key if they belong to a rollbackable group.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In the rollbackable tables group "' || rel_group || '", the table "' ||
+             'In the rollbackable table group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" has no primary key anymore.' AS msg
         FROM emaj.emaj_relation
              JOIN emaj.emaj_group ON (group_name = rel_group)
@@ -3463,7 +4121,7 @@ $_verify_groups$
 -- groups creation.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In the rollbackable tables group "' || rel_group || '", the table "' ||
+             'In the rollbackable table group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
         FROM emaj.emaj_relation
              JOIN emaj.emaj_group ON (group_name = rel_group)
@@ -3482,7 +4140,7 @@ $_verify_groups$
 -- Check that the primary key structure of all tables belonging to rollbackable groups is unchanged.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In the rollbackable tables group "' || rel_group || '", the primary key of the table "' ||
+             'In the rollbackable table group "' || rel_group || '", the primary key of the table "' ||
              rel_schema || '"."' || rel_tblseq || '" has changed (' ||
              registered_pk_columns || ' => ' || current_pk_columns || ').' AS msg
         FROM
@@ -3513,7 +4171,7 @@ $_verify_groups$
 -- (The expression of virtual generated columns be changed, without generating any trouble)
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
-             'In tables group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
+             'In table group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
              rel_schema || '"."' || rel_tblseq || '" has changed (' ||
              registered_gen_columns || ' => ' || current_gen_columns || ').' AS msg
         FROM
@@ -3568,7 +4226,7 @@ $_verify_groups$
 -- Check that all log tables have the 6 required technical columns. It only returns one row per faulting table.
     FOR r_object IN
       SELECT DISTINCT rel_schema, rel_tblseq, rel_group,
-             'In tables group "' || rel_group || '", the log table "' ||
+             'In table group "' || rel_group || '", the log table "' ||
              rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
              string_agg(attname, ', ' ORDER BY attname) || ').' AS msg
         FROM
@@ -3785,7 +4443,7 @@ $_lock_groups$;
 CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_drop_group$
--- This function effectively processes a tables group deletion.
+-- This function effectively processes a table group deletion.
 -- It also drops log schemas that are not useful anymore.
 -- Input: group name, and a boolean indicating whether the group's state has to be checked
 -- Output: number of processed tables and sequences
@@ -3800,7 +4458,7 @@ $_drop_group$
     SELECT emaj._set_time_stamp(v_function, 'D') INTO v_timeId;
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
--- Effectively drop the tables group.
+-- Effectively drop the table group.
     SELECT emaj._drop_groups(ARRAY[p_groupName], v_timeId) INTO v_nbRel;
 -- Drop the E-Maj log schemas that are now useless (i.e. not used by any other created group).
     PERFORM emaj._drop_log_schemas(v_function, p_isForced);
@@ -3869,6 +4527,15 @@ $_drop_groups$
   END;
 $_drop_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_group(p_groupName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a table group already exists, otherwise FALSE.
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_group WHERE group_name = p_groupName);
+$$;
+COMMENT ON FUNCTION emaj.emaj_does_exist_group(TEXT) IS
+$$Returns a boolean indicating whether a table group exists.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_get_groups(p_includeFilter TEXT DEFAULT NULL, p_excludeFilter TEXT DEFAULT NULL)
 RETURNS TEXT[] LANGUAGE SQL STABLE AS
 $$
@@ -3882,14 +4549,75 @@ $$;
 COMMENT ON FUNCTION emaj.emaj_get_groups(TEXT, TEXT) IS
 $$Builds a groups array, filtered on their names.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_forget_group(p_groupName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_forget_group$
+-- This function deletes all traces of a dropped group from emaj_group_hist and emaj_log_sessions tables.
+-- Input: group name
+-- Output: number of deleted rows
+  DECLARE
+    v_nbDeletedSession       INT = 0;
+    v_nbDeletedHistory       INT = 0;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES ('FORGET_GROUP', 'BEGIN', p_groupName);
+-- Check that the group is not recorded in emaj_group table anymore
+    IF EXISTS
+         (SELECT 0
+            FROM emaj.emaj_group
+            WHERE group_name = p_groupName
+         ) THEN
+      RAISE EXCEPTION 'emaj_forget_group: The group "%" still exists.', p_groupName;
+    END IF;
+-- OK
+-- Delete rows from emaj_log_session.
+    DELETE FROM emaj.emaj_log_session
+      WHERE lses_group = p_groupName;
+    GET DIAGNOSTICS v_nbDeletedSession = ROW_COUNT;
+-- Delete rows from emaj_group_hist.
+    DELETE FROM emaj.emaj_group_hist
+      WHERE grph_group = p_groupName;
+    GET DIAGNOSTICS v_nbDeletedHistory = ROW_COUNT;
+-- Warn if the group has not been found in any history table.
+    IF v_nbDeletedSession + v_nbDeletedHistory = 0 THEN
+      RAISE WARNING 'emaj_forget_group: the table group "%" has not been found in history tables', p_groupName;
+    END IF;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('FORGET_GROUP', 'END', p_groupName,
+              v_nbDeletedSession || ' rows deleted from emaj_log_session and ' ||
+              v_nbDeletedHistory || ' rows deleted from emaj_group_hist');
+--
+    RETURN v_nbDeletedSession + v_nbDeletedHistory;
+  END;
+$emaj_forget_group$;
+COMMENT ON FUNCTION emaj.emaj_forget_group(TEXT) IS
+$$Removes traces of a dropped group from histories.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(p_groups TEXT[] DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql AS
+$emaj_export_groups_configuration$
+-- This function returns a JSON formatted structure representing some or all configured table groups
+-- The function can be called by clients like Emaj_web.
+-- This is just a wrapper of the internal _export_groups_conf() function.
+-- Input: an optional array of goup's names, NULL means all table groups
+-- Output: the table groups content in JSON format
+  BEGIN
+    RETURN emaj._export_groups_conf(p_groups);
+  END;
+$emaj_export_groups_configuration$;
+COMMENT ON FUNCTION emaj.emaj_export_groups_configuration(TEXT[]) IS
+$$Generates a json structure describing configured table groups.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(p_location TEXT, p_groups TEXT[] DEFAULT NULL)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_export_groups_configuration$
--- This function stores some or all configured tables groups configuration into a file on the server.
+-- This function stores some or all configured table groups configuration into a file on the server.
 -- The JSON structure is built by the _export_groups_conf() function.
--- Input: an optional array of goup's names, NULL means all tables groups
--- Output: the number of tables groups recorded in the file.
+-- Input: an optional array of goup's names, NULL means all table groups
+-- Output: the number of table groups recorded in the file.
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_groupsJson             JSON;
@@ -3906,19 +4634,19 @@ $emaj_export_groups_configuration$
     EXECUTE format ('COPY t TO %L',
                     p_location);
     DROP TABLE t;
--- Return the number of recorded tables groups.
+-- Return the number of recorded table groups.
     RETURN json_array_length(v_groupsJson->'tables_groups');
   END;
 $emaj_export_groups_configuration$;
 COMMENT ON FUNCTION emaj.emaj_export_groups_configuration(TEXT, TEXT[]) IS
-$$Generates and stores in a file a json structure describing configured tables groups.$$;
+$$Generates and stores in a file a json structure describing configured table groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_groups_conf$
--- This function generates a JSON formatted structure representing the current configuration of some or all tables groups.
--- Input: an optional array of goup's names, NULL means all tables groups
--- Output: the tables groups configuration in JSON format
+-- This function generates a JSON formatted structure representing the current configuration of some or all table groups.
+-- Input: an optional array of goup's names, NULL means all table groups
+-- Output: the table groups configuration in JSON format
   DECLARE
     v_groupsText             TEXT;
     v_unknownGroupsList      TEXT;
@@ -3931,9 +4659,9 @@ $_export_groups_conf$
     v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
                            emaj.emaj_get_version() || ', at ' || statement_timestamp();
     IF p_groups IS NULL THEN
-      v_groupsText = v_groupsText || E', including all tables groups",\n';
+      v_groupsText = v_groupsText || E', including all table groups",\n';
     ELSE
-      v_groupsText = v_groupsText || E', including a tables groups subset",\n';
+      v_groupsText = v_groupsText || E', including a table groups subset",\n';
     END IF;
 -- Check the group names array, if supplied. All the listed groups must exist.
     IF p_groups IS NOT NULL THEN
@@ -3946,10 +4674,10 @@ $_export_groups_conf$
                   WHERE emaj_group.group_name = grp.group_name
                );
       IF v_unknownGroupsList IS NOT NULL THEN
-        RAISE EXCEPTION '_export_groups_conf: The tables groups % are unknown.', v_unknownGroupsList;
+        RAISE EXCEPTION '_export_groups_conf: The table groups % are unknown.', v_unknownGroupsList;
       END IF;
     END IF;
--- Build the tables groups description.
+-- Build the table groups description.
     v_groupsText = v_groupsText
                 || E'  "tables_groups": [\n';
     FOR r_group IN
@@ -4039,22 +4767,22 @@ CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(p_json JSON, p_
                                                                  p_dropOtherGroups BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_import_groups_configuration$
--- This function import a supplied JSON formatted structure representing tables groups to create or update.
+-- This function import a supplied JSON formatted structure representing table groups to create or update.
 -- This structure can have been generated by the emaj_export_groups_configuration() functions and may have been adapted by the user.
--- It calls the _import_groups_conf() function to process the tables groups.
--- Input: - the tables groups configuration structure in JSON format
---        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
---        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
---        - an optional mark name to set for tables groups in logging state (IMPORT_% by default)
+-- It calls the _import_groups_conf() function to process the table groups.
+-- Input: - the table groups configuration structure in JSON format
+--        - an optional array of group names to process (a NULL value process all table groups described in the JSON structure)
+--        - an optional boolean indicating whether table groups to import may already exist (FALSE by default)
+--        - an optional mark name to set for table groups in logging state (IMPORT_% by default)
 --        - an optional boolean to ask for the drop of all existing groups that are not in the imported configuration (FALSE by default)
--- Output: the number of created or altered tables groups
+-- Output: the number of created or altered table groups
   BEGIN
--- Just process the tables groups.
+-- Just process the table groups.
     RETURN emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark, p_dropOtherGroups);
   END;
 $emaj_import_groups_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(JSON, TEXT[], BOOLEAN, TEXT, BOOLEAN) IS
-$$Import a json structure describing tables groups to create or alter.$$;
+$$Import a json structure describing table groups to create or alter.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(p_location TEXT, p_groups TEXT[] DEFAULT NULL,
                                                                  p_allowGroupsUpdate BOOLEAN DEFAULT FALSE, p_mark TEXT DEFAULT 'IMPORT_%',
@@ -4062,15 +4790,15 @@ CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(p_location TEXT
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_import_groups_configuration$
--- This function imports a file containing a JSON formatted structure representing tables groups to create or update.
+-- This function imports a file containing a JSON formatted structure representing table groups to create or update.
 -- This structure can have been generated by the emaj_export_groups_configuration() functions and may have been adapted by the user.
--- It calls the _import_groups_conf() function to process the tables groups.
+-- It calls the _import_groups_conf() function to process the table groups.
 -- Input: - input file location
---        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
---        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
---        - an optional mark name to set for tables groups in logging state (IMPORT_% by default)
+--        - an optional array of group names to process (a NULL value process all table groups described in the JSON structure)
+--        - an optional boolean indicating whether table groups to import may already exist (FALSE by default)
+--        - an optional mark name to set for table groups in logging state (IMPORT_% by default)
 --        - an optional boolean to ask for the drop of all existing groups that are not in the imported configuration (FALSE by default)
--- Output: the number of created or altered tables groups
+-- Output: the number of created or altered table groups
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_groupsText             TEXT;
@@ -4092,18 +4820,18 @@ $emaj_import_groups_configuration$
     EXCEPTION WHEN OTHERS THEN
       RAISE EXCEPTION 'emaj_import_groups_configuration: The file content is not a valid JSON content.';
     END;
--- Proccess the tables groups and return the result.
+-- Proccess the table groups and return the result.
     RETURN emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark, p_dropOtherGroups);
   END;
 $emaj_import_groups_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(TEXT, TEXT[], BOOLEAN, TEXT, BOOLEAN) IS
-$$Create or alter tables groups configuration from a JSON formatted file.$$;
+$$Create or alter table groups configuration from a JSON formatted file.$$;
 
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf(p_json JSON, p_groups TEXT[], p_allowGroupsUpdate BOOLEAN,
                                                     p_location TEXT, p_mark TEXT, p_dropOtherGroups BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_import_groups_conf$
--- This function processes a JSON formatted structure representing the tables groups to create or update.
+-- This function processes a JSON formatted structure representing the table groups to create or update.
 -- This structure can have been generated by the emaj_export_groups_configuration() functions and may have been adapted by the user.
 -- The expected JSON structure must contain an array like:
 -- { "tables_groups": [
@@ -4134,21 +4862,21 @@ $_import_groups_conf$
 --   ...
 --   ]
 -- }
--- For tables groups, "group_is_rollbackable" and "group_comment" attributes are optional.
+-- For table groups, "group_is_rollbackable" and "group_comment" attributes are optional.
 -- For tables, "priority", "log_data_tablespace" and "log_index_tablespace" attributes are optional.
--- A tables group may have no "tables" or "sequences" arrays.
+-- A table group may have no "tables" or "sequences" arrays.
 -- A table may have no "ignored_triggers" array.
--- The function replaces the content of the tmp_app_table table for the imported tables groups by the content of the JSON configuration.
+-- The function replaces the content of the tmp_app_table table for the imported table groups by the content of the JSON configuration.
 -- Non existing groups are created empty.
 -- The _alter_groups() function is used to process the assignement, the move, the removal or the attributes change for tables and
 -- sequences.
--- Input: - the tables groups configuration structure in JSON format
---        - the array of group names to process (a NULL value process all tables groups described in the JSON structure)
---        - a boolean indicating whether tables groups to import may already exist
+-- Input: - the table groups configuration structure in JSON format
+--        - the array of group names to process (a NULL value process all table groups described in the JSON structure)
+--        - a boolean indicating whether table groups to import may already exist
 --        - the input file name, if any, to record in the emaj_hist table (NULL if direct import)
---        - the mark name to set for tables groups in logging state
+--        - the mark name to set for table groups in logging state
 --        - the request for the drop of all existing groups that are not in the imported configuration
--- Output: the number of created or altered tables groups
+-- Output: the number of created or altered table groups
   DECLARE
     v_groupsJson             JSON;
     r_msg                    RECORD;
@@ -4191,13 +4919,13 @@ CREATE OR REPLACE FUNCTION emaj._import_groups_conf_prepare(p_groupsJson JSON, p
                                                     p_allowGroupsUpdate BOOLEAN, p_location TEXT, p_dropOtherGroups BOOLEAN DEFAULT FALSE)
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_prepare$
--- This function prepares the effective tables groups configuration import.
+-- This function prepares the effective table groups configuration import.
 -- It is called by _import_groups_conf() and by Emaj_web
 -- At the end of the function, the tmp_app_table table is updated with the new configuration of groups
 --   and a temporary table is created to prepare the application triggers management
--- Input: - the tables groups configuration structure in JSON format
---        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
---        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
+-- Input: - the table groups configuration structure in JSON format
+--        - an optional array of group names to process (a NULL value process all table groups described in the JSON structure)
+--        - an optional boolean indicating whether table groups to import may already exist (FALSE by default)
 --            (if TRUE, existing groups are altered, even if they are in logging state)
 --        - the input file name, if any, to record in the emaj_hist table
 --        - an optional boolean to ask for the drop of all existing groups that are not in the imported configuration (FALSE by default)
@@ -4215,10 +4943,10 @@ $_import_groups_conf_prepare$
       VALUES ('IMPORT_GROUPS', 'BEGIN', array_to_string(p_groups, ', '), 'Input file: ' || quote_literal(p_location));
 -- Extract the "tables_groups" json path.
     p_groupsJson = p_groupsJson #> '{"tables_groups"}';
--- Check that all tables groups listed in the p_groups array exist in the JSON structure.
+-- Check that all table groups listed in the p_groups array exist in the JSON structure.
     RETURN QUERY
       SELECT 250, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
-                   format('The tables group "%s" to import is not referenced in the JSON structure.',
+                   format('The table group "%s" to import is not referenced in the JSON structure.',
                           group_name)
         FROM
           (  SELECT group_name
@@ -4230,11 +4958,11 @@ $_import_groups_conf_prepare$
     IF FOUND THEN
       RETURN;
     END IF;
--- If the p_allowGroupsUpdate flag is FALSE, check that no tables group already exists.
+-- If the p_allowGroupsUpdate flag is FALSE, check that no table group already exists.
     IF NOT p_allowGroupsUpdate THEN
       RETURN QUERY
         SELECT 251, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
-                     format('The tables group "%s" already exists.',
+                     format('The table group "%s" already exists.',
                             group_name)
           FROM
             (SELECT "group" AS group_name
@@ -4246,11 +4974,11 @@ $_import_groups_conf_prepare$
         RETURN;
       END IF;
     ELSE
--- If the p_allowGroupsUpdate flag is TRUE, check that existing tables groups have the same type than in the JSON structure.
+-- If the p_allowGroupsUpdate flag is TRUE, check that existing table groups have the same type than in the JSON structure.
       RETURN QUERY
         SELECT 252, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
-                     format('Changing the type of the tables group "%s" is not allowed. '
-                            'You may drop this tables group before importing the configuration.',
+                     format('Changing the type of the table group "%s" is not allowed. '
+                            'You may drop this table group before importing the configuration.',
                             group_name)
           FROM
             (SELECT "group" AS group_name
@@ -4325,7 +5053,7 @@ $_import_groups_conf_prepare$
 -- Check that no table or sequence is referenced in several different groups or in its group.
     RETURN QUERY
       SELECT 270, 1, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::TEXT, nb_group::INT,
-             format('The table %s.%s is referenced in %s different tables groups.',
+             format('The table %s.%s is referenced in %s different table groups.',
                     quote_ident(tmp_schema), quote_ident(tmp_tbl_name), nb_group)
         FROM (SELECT tmp_schema, tmp_tbl_name, count(DISTINCT tmp_group) AS nb_group
                 FROM tmp_app_table
@@ -4333,7 +5061,7 @@ $_import_groups_conf_prepare$
                 HAVING count(DISTINCT tmp_group) > 1) AS t1
       UNION
       SELECT 271, 1, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::TEXT, nb_group::INT,
-             format('The sequence %s.%s is referenced in %s different tables groups.',
+             format('The sequence %s.%s is referenced in %s different table groups.',
                     quote_ident(tmp_schema), quote_ident(tmp_seq_name), nb_group)
         FROM (SELECT tmp_schema, tmp_seq_name, count(DISTINCT tmp_group) AS nb_group
                 FROM tmp_app_sequence
@@ -4341,7 +5069,7 @@ $_import_groups_conf_prepare$
                 HAVING count(DISTINCT tmp_group) > 1) AS t2
       UNION
       SELECT 272, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the table %s.%s is referenced several times.',
+             format('In table group "%s", the table %s.%s is referenced several times.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM (SELECT tmp_group, tmp_schema, tmp_tbl_name, count(*)
                 FROM tmp_app_table
@@ -4349,7 +5077,7 @@ $_import_groups_conf_prepare$
                 HAVING count(*) > 1) AS t3
       UNION
       SELECT 273, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the sequence %s.%s is referenced several times.',
+             format('In table group "%s", the sequence %s.%s is referenced several times.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
         FROM (SELECT tmp_group, tmp_schema, tmp_seq_name, count(*)
                 FROM tmp_app_sequence
@@ -4373,20 +5101,20 @@ $_import_groups_conf_prepare$;
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(p_groupNames TEXT[], p_dropOtherGroups BOOLEAN)
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_check$
--- This function verifies that the content of tables group as defined into the tmp_app_table and tmp_app_sequence tables is correct.
--- Any detected issue is reported as a message row. The caller defines what to do with them, depending on the tables group type.
+-- This function verifies that the content of table group as defined into the tmp_app_table and tmp_app_sequence tables is correct.
+-- Any detected issue is reported as a message row. The caller defines what to do with them, depending on the table group type.
 -- It is called by the _import_groups_conf_prepare() function.
 -- This function checks that the referenced application tables and sequences:
 --  - exist, and only once
 --  - are not located into an E-Maj schema (to protect against an E-Maj recursive use),
---  - do not already belong to another tables group,
+--  - do not already belong to another table group,
 --  - have the same owner as the installer role in non superuser emaj install,
 -- It also checks that:
 --  - tables are not TEMPORARY
 --  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
 --  - for rollbackable groups, all tables have a PRIMARY KEY
 --  - for tables, configured tablespaces exist
--- Input: name array of the tables groups to check
+-- Input: name array of the table groups to check
 --        flag to request for extra groups drop
 -- Output: _report_message_type records representing diagnostic messages
 --         the rpt_severity is set to 1 if the error blocks any type group creation or alter,
@@ -4402,7 +5130,7 @@ $_import_groups_conf_check$
 -- Check that all application tables listed for the group really exist.
     RETURN QUERY
       SELECT 1, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the table %s.%s does not exist.',
+             format('In table group "%s", the table %s.%s does not exist.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
         WHERE NOT EXISTS
@@ -4415,7 +5143,7 @@ $_import_groups_conf_check$
 -- Check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj).
     RETURN QUERY
       SELECT 2, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the table %s.%s is a partitionned table (only elementary partitions are supported by E-Maj).',
+             format('In table group "%s", the table %s.%s is a partitionned table (only elementary partitions are supported by E-Maj).',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
@@ -4424,7 +5152,7 @@ $_import_groups_conf_check$
 -- Check no application schema listed for the group in the tmp_app_table table is an E-Maj schema.
     RETURN QUERY
       SELECT 3, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the table %s.%s belongs to an E-Maj schema.',
+             format('In table group "%s", the table %s.%s belongs to an E-Maj schema.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
@@ -4432,7 +5160,7 @@ $_import_groups_conf_check$
     IF NOT p_dropOtherGroups THEN
       RETURN QUERY
         SELECT 4, 1, tmp_group, tmp_schema, tmp_tbl_name, rel_group, NULL::INT,
-               format('In tables group "%s", the table %s.%s is already assigned to the group "%s".',
+               format('In table group "%s", the table %s.%s is already assigned to the group "%s".',
                       tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(rel_group))
           FROM tmp_app_table
                JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range))
@@ -4441,7 +5169,7 @@ $_import_groups_conf_check$
 -- Check that no table is a TEMP table.
     RETURN QUERY
       SELECT 5, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the table %s.%s is a TEMPORARY table.',
+             format('In table group "%s", the table %s.%s is a TEMPORARY table.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
@@ -4451,7 +5179,7 @@ $_import_groups_conf_check$
     IF NOT v_installedBySuperuser THEN
       RETURN QUERY
         SELECT 6, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-               format('In tables group "%s", the %s.%s table owner is not the emaj installer role.',
+               format('In table group "%s", the %s.%s table owner is not the emaj installer role.',
                       tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
           FROM tmp_app_table
                JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
@@ -4462,7 +5190,7 @@ $_import_groups_conf_check$
 -- Check that the log data tablespaces for tables exist.
     RETURN QUERY
       SELECT 12, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_dat_tsp, NULL::INT,
-             format('In tables group "%s" and for the table %s.%s, the data log tablespace %s does not exist.',
+             format('In table group "%s" and for the table %s.%s, the data log tablespace %s does not exist.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_dat_tsp))
         FROM tmp_app_table
         WHERE tmp_log_dat_tsp IS NOT NULL
@@ -4474,7 +5202,7 @@ $_import_groups_conf_check$
 -- Check that the log index tablespaces for tables exist.
     RETURN QUERY
       SELECT 13, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_idx_tsp, NULL::INT,
-             format('In tables group "%s" and for the table %s.%s, the index log tablespace %s does not exist.',
+             format('In table group "%s" and for the table %s.%s, the index log tablespace %s does not exist.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_idx_tsp))
         FROM tmp_app_table
         WHERE tmp_log_idx_tsp IS NOT NULL
@@ -4486,7 +5214,7 @@ $_import_groups_conf_check$
 -- Check that all listed triggers exist,
     RETURN QUERY
       SELECT 15, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_trigger, NULL::INT,
-             format('In tables group "%s" and for the table %I.%I, the trigger %s does not exist.',
+             format('In table group "%s" and for the table %I.%I, the trigger %s does not exist.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_trigger))
         FROM
           (SELECT tmp_group, tmp_schema, tmp_tbl_name, unnest(tmp_ignored_triggers) AS tmp_trigger
@@ -4506,7 +5234,7 @@ $_import_groups_conf_check$
 -- ... and are not emaj triggers.
     RETURN QUERY
       SELECT 16, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_trigger, NULL::INT,
-             format('In tables group "%s" and for the table %I.%I, the trigger %I is an E-Maj trigger.',
+             format('In table group "%s" and for the table %I.%I, the trigger %I is an E-Maj trigger.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_trigger))
         FROM
           (SELECT tmp_group, tmp_schema, tmp_tbl_name, unnest(tmp_ignored_triggers) AS tmp_trigger
@@ -4519,7 +5247,7 @@ $_import_groups_conf_check$
 -- Check that no table is an unlogged table (blocking rollbackable groups only).
     RETURN QUERY
       SELECT 20, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the table %s.%s is an UNLOGGED table.',
+             format('In table group "%s", the table %s.%s is an UNLOGGED table.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
@@ -4529,7 +5257,7 @@ $_import_groups_conf_check$
 -- Check every table has a primary key (blocking rollbackable groups only).
     RETURN QUERY
       SELECT 22, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the table %s.%s has no PRIMARY KEY.',
+             format('In table group "%s", the table %s.%s has no PRIMARY KEY.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
@@ -4545,7 +5273,7 @@ $_import_groups_conf_check$
 -- Check that all application sequences listed for the group really exist.
     RETURN QUERY
       SELECT 31, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the sequence %s.%s does not exist.',
+             format('In table group "%s", the sequence %s.%s does not exist.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
         FROM tmp_app_sequence
         WHERE NOT EXISTS
@@ -4560,7 +5288,7 @@ $_import_groups_conf_check$
     IF NOT p_dropOtherGroups THEN
       RETURN QUERY
         SELECT 32, 1, tmp_group, tmp_schema, tmp_seq_name, rel_group, NULL::INT,
-               format('In tables group "%s", the sequence %s.%s is already assigned to the group %s.',
+               format('In table group "%s", the sequence %s.%s is already assigned to the group %s.',
                       tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name), quote_ident(rel_group))
           FROM tmp_app_sequence
                JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_seq_name AND upper_inf(rel_time_range))
@@ -4569,7 +5297,7 @@ $_import_groups_conf_check$
 -- Check no application schema listed for the group in the tmp_app_sequence table is an E-Maj schema.
     RETURN QUERY
       SELECT 33, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
-             format('In tables group "%s", the sequence %s.%s belongs to an E-Maj schema.',
+             format('In table group "%s", the sequence %s.%s belongs to an E-Maj schema.',
                     tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
         FROM tmp_app_sequence
              JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
@@ -4577,7 +5305,7 @@ $_import_groups_conf_check$
     IF NOT v_installedBySuperuser THEN
       RETURN QUERY
         SELECT 34, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
-               format('In tables group "%s", the %s.%s sequence owner is not the emaj installer role.',
+               format('In table group "%s", the %s.%s sequence owner is not the emaj installer role.',
                       tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
           FROM tmp_app_sequence
                JOIN pg_catalog.pg_class ON (relname = tmp_seq_name)
@@ -4594,17 +5322,17 @@ CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(p_json JSON, p_groups T
                                                          p_dropOtherGroups BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $_import_groups_conf_exec$
--- This function completes a tables groups configuration import.
+-- This function completes a table groups configuration import.
 -- It is called by _import_groups_conf() and by Emaj_web
 -- Non existing groups are created empty.
 -- The _import_groups_conf_alter() function is used to process the assignement, the move, the removal or the attributes change for tables
 -- and sequences and the extra groups drop.
--- Input: - the tables groups configuration structure in JSON format
+-- Input: - the table groups configuration structure in JSON format
 --        - the array of group names to process
---        - a boolean indicating whether tables groups to import may already exist
---        - the mark name to set for tables groups in logging state
+--        - a boolean indicating whether table groups to import may already exist
+--        - the mark name to set for table groups in logging state
 --        - an optional boolean to ask for the drop of all existing groups that are not in the imported configuration (FALSE by default)
--- Output: the number of created or altered tables groups
+-- Output: the number of created or altered table groups
   DECLARE
     v_function               TEXT = 'IMPORT_GROUPS';
     v_timeId                 BIGINT;
@@ -4631,7 +5359,7 @@ $_import_groups_conf_exec$
         WHERE value ->> 'group' = ANY (p_groups)
     LOOP
       v_nbGroup = v_nbGroup + 1;
--- Create the tables group if it does not exist yet.
+-- Create the table group if it does not exist yet.
       SELECT group_comment INTO v_comment
         FROM emaj.emaj_group
         WHERE group_name = r_group.groupJson ->> 'group';
@@ -4690,7 +5418,7 @@ $_import_groups_conf_exec$
     DROP TABLE tmp_app_sequence;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (v_function, 'END', v_nbGroup || ' created or altered tables groups');
+      VALUES (v_function, 'END', v_nbGroup || ' created or altered table groups');
 --
     RETURN v_nbGroup;
   END;
@@ -4699,7 +5427,7 @@ $_import_groups_conf_exec$;
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_alter(p_groupNames TEXT[], p_mark TEXT, p_timeId BIGINT, p_groupsToDrop TEXT[])
 RETURNS VOID LANGUAGE plpgsql AS
 $_import_groups_conf_alter$
--- This function effectively alters the tables groups to import.
+-- This function effectively alters the table groups to import.
 -- It uses the content of tmp_app_table and tmp_app_sequence temporary tables and calls the appropriate elementary functions
 -- It is called by the _import_groups_conf_exec() function.
 -- Input: group names array,
@@ -4889,7 +5617,7 @@ $_import_groups_conf_alter$
                   )
           ORDER BY tmp_schema, tmp_seq_name
            ) AS t;
--- Drop the not imported tables groups, if requested.
+-- Drop the not imported table groups, if requested.
     IF p_groupsToDrop IS NOT NULL THEN
       PERFORM emaj._drop_groups(p_groupsToDrop, p_timeId);
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
@@ -4936,7 +5664,7 @@ $emaj_start_group$
 --          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp,
 --          if omitted or if null or '', the mark is set to 'START_%', % representing the current timestamp,
 --        boolean indicating whether the log tables of the group must be reset, true by default,
---        boolean indicating whether a tables group already in LOGGING state is allowed, false by default.
+--        boolean indicating whether a table group already in LOGGING state is allowed, false by default.
 -- Output: number of processed tables and sequences in previously idle groups.
   DECLARE
     v_allGroups              TEXT[];
@@ -4970,7 +5698,7 @@ $emaj_start_groups$
 --          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp,
 --          if omitted or if null or '', the mark is set to 'START_%', % representing the current timestamp,
 --        boolean indicating whether the log tables of the group must be reset, true by default,
---        boolean indicating whether tables groups already in LOGGING state are allowed, false by default.
+--        boolean indicating whether table groups already in LOGGING state are allowed, false by default.
 -- Output: number of processed tables and sequences in previously idle groups.
   DECLARE
     v_allGroups              TEXT[];
@@ -5001,7 +5729,7 @@ $_start_groups_init$
 --        name of the mark to set,
 --        boolean indicating whether the function is called by a multi group function,
 --        boolean indicating whether the function must reset the group at start time,
---        boolean indicating whether tables groups already in LOGGING state are allowed.
+--        boolean indicating whether table groups already in LOGGING state are allowed.
 -- Output: adjusted group names array, adjusted mark name, idle groups array and logging groups array.
   DECLARE
     v_loggingGroupsList      TEXT;
@@ -5090,7 +5818,7 @@ RETURNS BIGINT
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_start_groups_exec$
--- This function performs the tables groups start.
+-- This function performs the table groups start.
 -- It resets groups when requested, activates the log triggers of all the tables for one or several groups, sets the first mark of the
 --   new log session.
 -- It also delete oldest rows in historical tables.
@@ -5170,7 +5898,7 @@ $emaj_stop_group$
 --          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
 --          if omitted or if null or '', the mark is set to 'STOP_%', % representing the current timestamp,
 --        boolean indicating whether the log tables of the group must be reset, false by default,
---        boolean indicating whether tables groups already in IDLE state are allowed, false by default.
+--        boolean indicating whether table groups already in IDLE state are allowed, false by default.
 -- Output: number of processed tables and sequences in previously logging groups
   DECLARE
     v_allGroups              TEXT[];
@@ -5201,7 +5929,7 @@ $emaj_stop_groups$
 -- Input: array of group names,
 --        stop mark name to set (by default, STOP_<current timestamp>),
 --        boolean indicating whether the log tables of the group must be reset, false by default,
---        boolean indicating whether tables groups already in IDLE state are allowed, false by default.
+--        boolean indicating whether table groups already in IDLE state are allowed, false by default.
 -- Output: number of processed tables and sequences in previously logging groups
   DECLARE
     v_allGroups              TEXT[];
@@ -5225,7 +5953,7 @@ $$Stops several E-Maj groups.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_force_stop_group(p_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_force_stop_group$
--- This function forces a tables group stop.
+-- This function forces a table group stop.
 -- The differences with the standart emaj_stop_group() function are:
 --   - it silently ignores errors when an application table or one of its triggers is missing,
 --   - no stop mark is set (to avoid error),
@@ -5260,7 +5988,7 @@ $_stop_groups_init$
 -- Input: array of group names, name of the mark to set, boolean indicating whether the function is called by a multi group function,
 --        boolean indicating whether the function is in FORCE mode,
 --        boolean indicating whether the log tables of the group must be reset.
---        boolean indicating whether tables groups already in IDLE state are allowed.
+--        boolean indicating whether table groups already in IDLE state are allowed.
 -- Output: adjusted group names array and adjusted mark name, logging groups array and idle groups array.
   DECLARE
     v_idleGroupsList         TEXT;
@@ -5464,11 +6192,11 @@ $_stop_groups_exec$
             AND mark_time_id = p_timeId;
       END IF;
     END IF;
--- Process each tables group separately to ...
+-- Process each table group separately to ...
     IF p_loggingGroups IS NOT NULL THEN
       FOREACH v_group IN ARRAY p_loggingGroups
       LOOP
--- Get the latest log session of the tables group.
+-- Get the latest log session of the table group.
         SELECT lses_time_range
           INTO v_lsesTimeRange
           FROM emaj.emaj_log_session
@@ -5501,6 +6229,15 @@ $_stop_groups_exec$
     RETURN v_nbTblSeq;
   END;
 $_stop_groups_exec$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_is_logging_group(p_groupName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a table group is in LOGGING state, otherwise FALSE (including when the table group doesn't exist).
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_group WHERE group_name = p_groupName AND group_is_logging);
+$$;
+COMMENT ON FUNCTION emaj.emaj_is_logging_group(TEXT) IS
+$$Returns a boolean indicating whether a table group is in LOGGING state.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT DEFAULT NULL, p_excludeFilter TEXT DEFAULT NULL)
 RETURNS TEXT[] LANGUAGE SQL STABLE AS
@@ -5684,7 +6421,7 @@ $_set_mark_groups_exec$
 -- Record the number of log rows for the previous last mark of each selected group.
       FOREACH v_group IN ARRAY p_groupNames
       LOOP
--- Get the latest log session of the tables group.
+-- Get the latest log session of the table group.
         SELECT lses_time_range
           INTO v_lsesTimeRange
           FROM emaj.emaj_log_session
@@ -5695,7 +6432,7 @@ $_set_mark_groups_exec$
 -- This condition excludes marks set at start_group time, for which there is nothing to do.
 --   The lower bound may be null when the log session has been created by the emaj version upgrade processing and the last start_group
 --   call has not been found into the history.
--- Get the latest mark for the tables group.
+-- Get the latest mark for the table group.
           SELECT mark_time_id
             INTO v_latestMarkTimeId
             FROM emaj.emaj_mark
@@ -5751,6 +6488,15 @@ $_set_mark_groups_exec$
     RETURN v_nbSeq + v_nbTbl;
   END;
 $_set_mark_groups_exec$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT)
+RETURNS BOOLEAN LANGUAGE SQL STABLE AS
+$$
+-- This function returns TRUE if a mark already exists for a table group, otherwise FALSE.
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_mark WHERE mark_group = p_groupName AND mark_name = p_markName);
+$$;
+COMMENT ON FUNCTION emaj.emaj_does_exist_mark_group(TEXT, TEXT) IS
+$$Returns a boolean indicating whether a mark exists for a table group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(p_groupName TEXT, p_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -6216,7 +6962,7 @@ $_rlbk_planning$
            (SELECT param_value::INTERVAL FROM emaj.emaj_all_param WHERE param_key = 'fixed_dblink_rollback_duration'),
            (SELECT param_value::INTERVAL FROM emaj.emaj_all_param WHERE param_key = 'fixed_table_rollback_duration')
       INTO STRICT v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk, v_fixed_dblink_rlbk, v_fixed_table_rlbk;
--- Process the sequences, if any in the tables groups.
+-- Process the sequences, if any in the table groups.
     IF v_nbSequence > 0 THEN
 -- Compute the cost for each RLBK_SEQUENCES step and keep it for later.
       SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDurationRlbkSeq
@@ -6249,7 +6995,7 @@ $_rlbk_planning$
     IF v_nbSequence = 0 AND v_effNbTable = 0 THEN
       RETURN 0;
     END IF;
--- Insert into emaj_rlbk_plan a LOCK_TABLE step per table currently belonging to the tables groups to process.
+-- Insert into emaj_rlbk_plan a LOCK_TABLE step per table currently belonging to the table groups to process.
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_is_repl_role_replica)
       SELECT p_rlbkId, 'LOCK_TABLE', rel_schema, rel_tblseq, '', FALSE
         FROM emaj.emaj_relation
@@ -7730,6 +8476,42 @@ $_log_stat_groups$
   END;
 $_log_stat_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_detailed_log_stat_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT)
+RETURNS SETOF emaj.emaj_detailed_log_stat_group_type LANGUAGE plpgsql AS
+$emaj_detailed_log_stat_group$
+-- This function returns statistics on logged data changes between 2 marks as viewed through the log tables for one table group.
+-- It provides much precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- So the response time may be much longer.
+-- Input: group name, the 2 marks names defining a range
+-- Output: set of stat rows by table, user and SQL type
+  BEGIN
+    RETURN QUERY
+      SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
+             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_role, stat_verb, stat_rows
+        FROM emaj._detailed_log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark);
+  END;
+$emaj_detailed_log_stat_group$;
+COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT, TEXT, TEXT) IS
+$$Returns detailed statistics about logged data changes between 2 marks for a single group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_detailed_log_stat_groups(p_groupNames TEXT[], p_firstMark TEXT, p_lastMark TEXT)
+RETURNS SETOF emaj.emaj_detailed_log_stat_group_type LANGUAGE plpgsql AS
+$emaj_detailed_log_stat_groups$
+-- This function returns statistics on logged data changes between 2 marks as viewed through the log tables for several table groups.
+-- It provides much precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- So the response time may be much longer.
+-- Input: group names array, the 2 marks names defining a range
+-- Output: set of stat rows by table, user and SQL type
+  BEGIN
+    RETURN QUERY
+      SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_first_time_id,
+             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_role, stat_verb, stat_rows
+        FROM emaj._detailed_log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark);
+  END;
+$emaj_detailed_log_stat_groups$;
+COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_groups(TEXT[], TEXT, TEXT) IS
+$$Returns detailed statistics about logged data changes between 2 marks for several groups.$$;
+
 CREATE OR REPLACE FUNCTION emaj._sequence_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj.emaj_sequence_stat_group_type LANGUAGE plpgsql AS
 $_sequence_stat_groups$
@@ -7815,12 +8597,158 @@ $_sequence_stat_groups$
   END;
 $_sequence_stat_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_table(p_schema TEXT, p_table TEXT, p_startGroup TEXT, p_startMark TEXT,
+                                                    p_endGroup TEXT DEFAULT NULL, p_endMark TEXT DEFAULT NULL)
+RETURNS SETOF emaj.emaj_log_stat_table_type LANGUAGE plpgsql AS
+$emaj_log_stat_table$
+-- This function returns statistics about a single table, for the time period framed by a supplied marks interval.
+-- For each marks interval, possibly for different table groups, it returns the number of recorded changes.
+-- It calls the _log_stat_table() function version with time id interval to compute the statistics.
+-- Input: schema and table names,
+--        start and end marks.
+-- Output: set of stats by time interval.
+  DECLARE
+    v_startTimeId            BIGINT;
+    v_endTimeId              BIGINT;
+  BEGIN
+-- Check the table is known in the emaj_relation table.
+    IF NOT EXISTS (
+      SELECT 0
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND rel_kind = 'r'
+                  ) THEN
+      RAISE EXCEPTION 'emaj_log_stat_table: Table %.% is not known by E-Maj.', p_schema, p_table;
+    END IF;
+-- If the start group is known, check it with its mark.
+    IF p_startGroup IS NOT NULL THEN
+      PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_startGroup], p_mayBeNull := FALSE, p_lockGroups := FALSE);
+      SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark) INTO p_startMark;
+-- ... and get its timeId.
+      SELECT mark_time_id INTO v_startTimeId
+        FROM emaj.emaj_mark
+        WHERE mark_group = p_startGroup
+          AND mark_name = p_startMark;
+    END IF;
+-- If supplied, check the end group and mark.
+    IF p_endGroup IS NOT NULL THEN
+      PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_endGroup], p_mayBeNull := FALSE, p_lockGroups := FALSE);
+      SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_endGroup], p_mark := p_endMark) INTO p_endMark;
+-- ... and get its timestamp.
+      SELECT mark_time_id INTO v_endTimeId
+        FROM emaj.emaj_mark
+        WHERE mark_group = p_endGroup
+          AND mark_name = p_endMark;
+    END IF;
+-- Check the mark lower bound has been set before the mark upper bound.
+    IF v_startTimeId IS NOT NULL AND v_endTimeId IS NOT NULL AND v_startTimeId > v_endTimeId THEN
+      RAISE EXCEPTION 'emaj_log_stat_table: The start mark has been set after the end mark.';
+    END IF;
+-- OK.
+-- If there is no emaj_table row for the start time id, get the previous one, if exists.
+    IF p_startGroup IS NOT NULL THEN
+      SELECT tbl_time_id
+        INTO v_startTimeId
+        FROM emaj.emaj_table
+        WHERE tbl_schema = p_schema
+          AND tbl_name = p_table
+          AND tbl_time_id <= v_startTimeId
+        ORDER BY tbl_time_id DESC
+        LIMIT 1;
+    END IF;
+-- If there is no emaj_table row for the end time id, get the next one, if exists.
+    IF p_endGroup IS NOT NULL THEN
+      SELECT tbl_time_id
+        INTO v_endTimeId
+        FROM emaj.emaj_table
+        WHERE tbl_schema = p_schema
+          AND tbl_name = p_table
+          AND tbl_time_id >= v_endTimeId
+        ORDER BY tbl_time_id
+        LIMIT 1;
+    END IF;
+-- Compute the statistics.
+    RETURN QUERY
+      SELECT stat_group, stat_first_mark, stat_first_mark_datetime, stat_first_time_id, stat_is_log_start,
+             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
+        FROM emaj._log_stat_table(p_schema, p_table, v_startTimeId, v_endTimeId);
+  END;
+$emaj_log_stat_table$;
+COMMENT ON FUNCTION emaj.emaj_log_stat_table(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) IS
+$$Returns statistics about logged data changes between 2 marks for a single table.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_table(p_schema TEXT, p_table TEXT,
+                                                    p_startTs TIMESTAMPTZ DEFAULT NULL, p_endTs TIMESTAMPTZ DEFAULT NULL)
+RETURNS SETOF emaj.emaj_log_stat_table_type LANGUAGE plpgsql AS
+$emaj_log_stat_table$
+-- This function returns statistics about a single table, for the time period framed by a supplied timestamp interval,
+--   by default the entire time range when the table is managed by E-Maj.
+-- For each mark interval, possibly for different table groups, it returns the number of recorded changes.
+-- Input: schema and table names
+--        start and end timestamps.
+-- Output: set of stats by time interval.
+  DECLARE
+    v_startTimeId            BIGINT;
+    v_endTimeId              BIGINT;
+  BEGIN
+-- Check the table is known in the emaj_relation table.
+    IF NOT EXISTS (
+      SELECT 0
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_time_stamp l ON (l.time_id = lower(rel_time_range))
+             LEFT OUTER JOIN emaj.emaj_time_stamp u ON (u.time_id = upper(rel_time_range))
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND rel_kind = 'r'
+                  ) THEN
+      RAISE EXCEPTION 'emaj_log_stat_table: The table %.% is not known by E-Maj.', p_schema, p_table;
+    END IF;
+-- Check the lower bound TS is not greater than the upper bound TS.
+    IF p_startTs IS NOT NULL AND p_endTs IS NOT NULL AND p_startTs > p_endTs THEN
+      RAISE EXCEPTION 'emaj_log_stat_table: The start timestamp is greater than the end timestamp.';
+    END IF;
+-- OK
+-- Get the start time id, if a start TS is supplied. Select the time id just before the supplied TS.
+    IF p_startTs IS NOT NULL THEN
+      SELECT time_id
+        INTO v_startTimeId
+        FROM emaj.emaj_table
+             JOIN emaj.emaj_time_stamp ON (time_id = tbl_time_id)
+        WHERE tbl_schema = p_schema
+          AND tbl_name = p_table
+          AND time_clock_timestamp <= p_startTs
+        ORDER BY time_id DESC
+        LIMIT 1;
+    END IF;
+-- Get the end time id, if an end TS is supplied. Select the time id just after the supplied TS.
+    IF p_endTs IS NOT NULL THEN
+      SELECT time_id
+        INTO v_endTimeId
+        FROM emaj.emaj_table
+             JOIN emaj.emaj_time_stamp ON (time_id = tbl_time_id)
+        WHERE tbl_schema = p_schema
+          AND tbl_name = p_table
+          AND time_clock_timestamp >= p_endTs
+        ORDER BY time_id
+        LIMIT 1;
+    END IF;
+-- Call the _log_stat_table() function to build the result.
+    RETURN QUERY
+      SELECT stat_group, stat_first_mark, stat_first_mark_datetime, stat_first_time_id, stat_is_log_start,
+             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_is_log_stop, stat_changes, stat_rollbacks
+        FROM emaj._log_stat_table(p_schema, p_table, v_startTimeId, v_endTimeId);
+  END;
+$emaj_log_stat_table$;
+COMMENT ON FUNCTION emaj.emaj_log_stat_table(TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ) IS
+$$Returns statistics about logged data changes between 2 timestamps for a single table.$$;
+
 CREATE OR REPLACE FUNCTION emaj._log_stat_table(p_schema TEXT, p_table TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
 RETURNS SETOF emaj.emaj_log_stat_table_type LANGUAGE plpgsql AS
 $_log_stat_table$
 -- This function returns statistics about a single table, for the time period framed by a supplied time_id slice.
 -- It is called by the various emaj_log_stat_table() functions.
--- For each mark interval, possibly for different tables groups, it returns the number of recorded changes.
+-- For each mark interval, possibly for different table groups, it returns the number of recorded changes.
 -- Input: schema and table names
 --        start and end time_id.
 -- Output: set of stats by time slice.
@@ -7903,12 +8831,162 @@ $_log_stat_table$
   END;
 $_log_stat_table$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startGroup TEXT, p_startMark TEXT,
+                                                       p_endGroup TEXT DEFAULT NULL, p_endMark TEXT DEFAULT NULL)
+RETURNS SETOF emaj.emaj_log_stat_sequence_type LANGUAGE plpgsql AS
+$emaj_log_stat_sequence$
+-- This function returns statistics about a single sequence, for the time period framed by a supplied marks interval.
+-- For each marks interval, possibly for different table groups, it returns the number of increments and a flag to show any sequence
+--   properties changes.
+-- It calls the _log_stat_sequence() function version with time id interval to compute the statistics.
+-- Input: schema and sequence names,
+--        start and end marks.
+-- Output: set of stats by time interval.
+  DECLARE
+    v_startTimeId            BIGINT;
+    v_endTimeId              BIGINT;
+  BEGIN
+-- Check the sequence is known in the emaj_relation table.
+    IF NOT EXISTS (
+      SELECT 0
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_sequence
+          AND rel_kind = 'S'
+                  ) THEN
+      RAISE EXCEPTION 'emaj_log_stat_sequence: Sequence %.% is not known by E-Maj.', p_schema, p_sequence;
+    END IF;
+-- If the start group is known, check it with its mark.
+    IF p_startGroup IS NOT NULL THEN
+      PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_startGroup], p_mayBeNull := FALSE, p_lockGroups := FALSE);
+      SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_startGroup], p_mark := p_startMark) INTO p_startMark;
+-- ... and get its timeId.
+      SELECT mark_time_id INTO v_startTimeId
+        FROM emaj.emaj_mark
+        WHERE mark_group = p_startGroup
+          AND mark_name = p_startMark;
+    END IF;
+-- If supplied, check the end group and mark.
+    IF p_endGroup IS NOT NULL THEN
+      PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_endGroup], p_mayBeNull := FALSE, p_lockGroups := FALSE);
+      SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_endGroup], p_mark := p_endMark) INTO p_endMark;
+-- ... and get its timestamp.
+      SELECT mark_time_id INTO v_endTimeId
+        FROM emaj.emaj_mark
+        WHERE mark_group = p_endGroup
+          AND mark_name = p_endMark;
+    END IF;
+-- Check the mark lower bound has been set before the mark upper bound.
+    IF v_startTimeId IS NOT NULL AND v_endTimeId IS NOT NULL AND v_startTimeId > v_endTimeId THEN
+      RAISE EXCEPTION 'emaj_log_stat_sequence: The start mark has been set after the end mark.';
+    END IF;
+-- OK.
+-- If there is no emaj_sequence row for this time id, get the next one, if exists.
+    IF p_endGroup IS NOT NULL THEN
+      SELECT sequ_time_id
+        INTO v_endTimeId
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = p_schema
+          AND sequ_name = p_sequence
+          AND sequ_time_id >= v_endTimeId
+        ORDER BY sequ_time_id
+        LIMIT 1;
+    END IF;
+-- If there is no emaj_sequence row for this time id, get the previous one, if exists.
+    IF p_startGroup IS NOT NULL THEN
+      SELECT sequ_time_id
+        INTO v_startTimeId
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = p_schema
+          AND sequ_name = p_sequence
+          AND sequ_time_id <= v_startTimeId
+        ORDER BY sequ_time_id DESC
+        LIMIT 1;
+    END IF;
+-- Compute the statistics.
+    RETURN QUERY
+      SELECT stat_group, stat_first_mark, stat_first_mark_datetime, stat_first_time_id, stat_is_log_start,
+             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_is_log_stop,
+             stat_increments, stat_has_structure_changed, stat_rollbacks
+        FROM emaj._log_stat_sequence(p_schema, p_sequence, v_startTimeId, v_endTimeId);
+  END;
+$emaj_log_stat_sequence$;
+COMMENT ON FUNCTION emaj.emaj_log_stat_sequence(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) IS
+$$Returns statistics about recorded changes between 2 marks for a single sequence.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_sequence(p_schema TEXT, p_sequence TEXT,
+                                                       p_startTs TIMESTAMPTZ DEFAULT NULL, p_endTs TIMESTAMPTZ DEFAULT NULL)
+RETURNS SETOF emaj.emaj_log_stat_sequence_type LANGUAGE plpgsql AS
+$emaj_log_stat_sequence$
+-- This function returns statistics about a single sequence, for the time period framed by a supplied timestamp interval,
+--   by default the entire time range when the sequence is managed by E-Maj.
+-- For each mark interval, possibly for different table groups, it returns the number of increments and a flag to show any sequence
+--   properties changes.
+-- Input: schema and sequence names
+--        start and end timestamps.
+-- Output: set of stats by time interval.
+  DECLARE
+    v_startTimeId            BIGINT;
+    v_endTimeId              BIGINT;
+  BEGIN
+-- Check the sequence is known in the emaj_relation table.
+    IF NOT EXISTS (
+      SELECT 0
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_time_stamp l ON (l.time_id = lower(rel_time_range))
+             LEFT OUTER JOIN emaj.emaj_time_stamp u ON (u.time_id = upper(rel_time_range))
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_sequence
+          AND rel_kind = 'S'
+                  ) THEN
+      RAISE EXCEPTION 'emaj_log_stat_sequence: The sequence %.% is not known by E-Maj.', p_schema, p_sequence;
+    END IF;
+-- Check the lower bound TS is not greater than the upper bound TS.
+    IF p_startTs IS NOT NULL AND p_endTs IS NOT NULL AND p_startTs > p_endTs THEN
+      RAISE EXCEPTION 'emaj_log_stat_sequence: The start timestamp is greater than the end timestamp.';
+    END IF;
+-- OK.
+-- Get the start time id, if a start TS is supplied. Select the time id just before the supplied TS.
+    IF p_startTs IS NOT NULL THEN
+      SELECT time_id
+        INTO v_startTimeId
+        FROM emaj.emaj_sequence
+             JOIN emaj.emaj_time_stamp ON (time_id = sequ_time_id)
+        WHERE sequ_schema = p_schema
+          AND sequ_name = p_sequence
+          AND time_clock_timestamp <= p_startTs
+        ORDER BY time_id DESC
+        LIMIT 1;
+    END IF;
+-- Get the end time id, if an end TS is supplied. Select the time id just after the supplied TS.
+    IF p_endTs IS NOT NULL THEN
+      SELECT time_id
+        INTO v_endTimeId
+        FROM emaj.emaj_sequence
+             JOIN emaj.emaj_time_stamp ON (time_id = sequ_time_id)
+        WHERE sequ_schema = p_schema
+          AND sequ_name = p_sequence
+          AND time_clock_timestamp >= p_endTs
+        ORDER BY time_id
+        LIMIT 1;
+    END IF;
+-- Call the _log_stat_sequence() function to build the result.
+    RETURN QUERY
+      SELECT stat_group, stat_first_mark, stat_first_mark_datetime, stat_first_time_id, stat_is_log_start,
+             stat_last_mark, stat_last_mark_datetime, stat_last_time_id, stat_is_log_stop,
+             stat_increments, stat_has_structure_changed, stat_rollbacks
+        FROM emaj._log_stat_sequence(p_schema, p_sequence, v_startTimeId, v_endTimeId);
+  END;
+$emaj_log_stat_sequence$;
+COMMENT ON FUNCTION emaj.emaj_log_stat_sequence(TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ) IS
+$$Returns statistics about recorded changes between 2 timestamps for a single sequence.$$;
+
 CREATE OR REPLACE FUNCTION emaj._log_stat_sequence(p_schema TEXT, p_sequence TEXT, p_startTimeId BIGINT, p_endTimeId BIGINT)
 RETURNS SETOF emaj.emaj_log_stat_sequence_type LANGUAGE plpgsql AS
 $_log_stat_sequence$
 -- This function returns statistics about a single sequence, for the time period framed by a supplied time_id slice.
 -- It is called by the various emaj_log_stat_sequence() function.
--- For each mark interval, possibly for different tables groups, it returns the number of increments and a flag to show any sequence
+-- For each mark interval, possibly for different table groups, it returns the number of increments and a flag to show any sequence
 --   properties changes.
 -- Input: schema and sequence names
 --        start and end time_id.
@@ -8000,6 +9078,84 @@ $_log_stat_sequence$
         ORDER BY start_time_id;
   END;
 $_log_stat_sequence$;
+
+CREATE OR REPLACE FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter TEXT, p_groupsExcludeFilter TEXT,
+                                                          p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                          p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                          OUT p_key TEXT, OUT p_value TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$_get_sequences_last_value$
+-- The function is used by the emajStat client and Emaj_web to monitor the recorded tables and/or sequences changes.
+-- It returns in textual format:
+--    - the last_value of selected log and application sequences,
+--    - the last value of 2 emaj technical sequences to detect table groups changes or marks set,
+--    - the current timestamp as EPOCH
+-- The function traps the execution error that may happen when table groups structure are changing.
+-- In this case, it just returns a key set to 'error' with the SQLSTATE (typically XX000) as value.
+-- This error trapping is the main reason for this function exists. Otherwise, the client could just execute the main query.
+-- Input: include and exclude regexps to filter table groups, tables and sequences.
+-- Output: a set of (key, value) records.
+  DECLARE
+    v_stmt                   TEXT;
+  BEGIN
+-- Set the default value for NULL filters (to include all and exclude nothing).
+    p_groupsIncludeFilter = coalesce(p_groupsIncludeFilter, '.*');
+    p_groupsExcludeFilter = coalesce(p_groupsExcludeFilter, '');
+    p_tablesIncludeFilter = coalesce(p_tablesIncludeFilter, '.*');
+    p_tablesExcludeFilter = coalesce(p_tablesExcludeFilter, '');
+    p_sequencesIncludeFilter = coalesce(p_sequencesIncludeFilter, '.*');
+    p_sequencesExcludeFilter = coalesce(p_sequencesExcludeFilter, '');
+-- Build the statement to execute.
+    v_stmt = $$
+      WITH filtered_group AS (
+        SELECT group_name
+          FROM emaj.emaj_group
+          WHERE group_name ~ $1
+            AND ($2 = '' OR group_name !~ $2)
+        )
+        SELECT 'current_epoch', extract('EPOCH' FROM statement_timestamp())::TEXT
+      UNION ALL
+        SELECT 'emaj.emaj_time_stamp_time_id_seq', last_value::TEXT FROM emaj.emaj_time_stamp_time_id_seq
+      UNION ALL
+        SELECT 'emaj.emaj_global_seq', last_value::TEXT FROM emaj.emaj_global_seq
+    $$;
+    IF p_tablesExcludeFilter != '.*' THEN
+      v_stmt = v_stmt || $$
+      UNION ALL
+        SELECT rel_schema || '.' || rel_tblseq, emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence)::TEXT AS seq_current
+          FROM emaj.emaj_relation
+            JOIN filtered_group ON (group_name = rel_group)
+         WHERE upper_inf(rel_time_range)
+           AND rel_kind = 'r'
+           AND (rel_schema || '.' || rel_tblseq) ~ $3
+           AND ($4 = '' OR (rel_schema || '.' || rel_tblseq) !~ $4)
+      $$;
+    END IF;
+    IF p_sequencesExcludeFilter != '.*' THEN
+      v_stmt = v_stmt || $$
+      UNION ALL
+        SELECT rel_schema || '.' || rel_tblseq, emaj._get_app_sequence_last_value(rel_schema, rel_tblseq)::TEXT AS seq_current
+          FROM emaj.emaj_relation
+            JOIN filtered_group ON (group_name = rel_group)
+         WHERE upper_inf(rel_time_range)
+           AND rel_kind = 'S'
+           AND (rel_schema || '.' || rel_tblseq) ~ $5
+           AND ($6 = '' OR (rel_schema || '.' || rel_tblseq) !~ $6)
+      $$;
+    END IF;
+    BEGIN
+      RETURN QUERY EXECUTE v_stmt
+        USING p_groupsIncludeFilter, p_groupsExcludeFilter,
+              p_tablesIncludeFilter, p_tablesExcludeFilter,
+              p_sequencesIncludeFilter, p_sequencesExcludeFilter;
+    EXCEPTION WHEN OTHERS THEN
+-- If an error occurs, just return an error key with the SQLSTATE.
+      RETURN QUERY SELECT 'error', SQLSTATE;
+    END;
+--
+    RETURN;
+  END;
+$_get_sequences_last_value$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT,
                                                                 p_optionsList TEXT, p_tblseqs TEXT[], p_scriptLocation TEXT)
@@ -8457,7 +9613,7 @@ $_gen_sql_dump_changes_group$
                                                   --   caller with an ALTER TABLE)
     );
 -- Add an initial comment reporting the supplied options.
-    v_comment = format('-- Generated SQL for dumping changes in tables group "%s" %sbetween marks "%s" and "%s"%s',
+    v_comment = format('-- Generated SQL for dumping changes in table group "%s" %sbetween marks "%s" and "%s"%s',
                        p_groupName, CASE WHEN p_tblseqs IS NOT NULL THEN '(subset) ' ELSE '' END, p_firstMark, p_lastMark,
                        CASE WHEN p_optionsList IS NOT NULL AND p_optionsList <> '' THEN ' using options: ' || p_optionsList ELSE '' END);
     INSERT INTO emaj_temp_sql (sql_stmt_number, sql_line_number, sql_text)
@@ -8863,7 +10019,7 @@ $emaj_snap_group$
       v_nbRel = v_nbRel + 1;
     END LOOP;
 -- Create the _INFO file to keep general information about the snap operation.
-    v_stmt = '(SELECT ' || quote_literal('E-Maj snap of tables group ' || p_groupName || ' at ' || statement_timestamp()) || ')';
+    v_stmt = '(SELECT ' || quote_literal('E-Maj snap of table group ' || p_groupName || ' at ' || statement_timestamp()) || ')';
     EXECUTE format ('COPY %s TO %L',
                     v_stmt, p_dir || '/_INFO');
 -- Insert a END event into the history.
@@ -8876,20 +10032,66 @@ $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT, TEXT, TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT, p_location TEXT,
+                                                   p_tblseqs TEXT[] DEFAULT NULL)
+RETURNS BIGINT LANGUAGE plpgsql
+SET standard_conforming_strings = ON AS
+$emaj_gen_sql_group$
+-- This function generates a SQL script representing all updates performed on a table group between 2 marks.
+-- or beetween a mark and the current state. The result is stored into an external file.
+-- It calls the _gen_sql_groups() function to effetively process the request.
+-- Input: - table group
+--        - start mark
+--        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
+--        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
+--        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
+-- Output: number of generated SQL statements (non counting comments and transaction management)
+  BEGIN
+-- Call the _gen_sql_groups() function that effectively processes the request.
+    RETURN emaj._gen_sql_groups(array[p_groupName], FALSE, p_firstMark, p_lastMark, p_location, p_tblseqs, current_user);
+  END;
+$emaj_gen_sql_group$;
+COMMENT ON FUNCTION emaj.emaj_gen_sql_group(TEXT, TEXT, TEXT, TEXT, TEXT[]) IS
+$$Generates a sql script corresponding to all updates performed on a table group between two marks and stores it into a given file.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(p_groupNames TEXT[], p_firstMark TEXT, p_lastMark TEXT, p_location TEXT,
+                                                    p_tblseqs TEXT[] DEFAULT NULL)
+RETURNS BIGINT LANGUAGE plpgsql
+SET standard_conforming_strings = ON AS
+$emaj_gen_sql_groups$
+-- This function generates a SQL script representing all updates performed on a set of table groups between 2 marks
+-- or beetween a mark and the current state. The result is stored into an external file.
+-- It calls the _gen_sql_groups() function to effetively process the request.
+-- Input: - table groups array
+--        - start mark
+--        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
+--        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
+--        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
+-- Output: number of generated SQL statements (non counting comments and transaction management)
+  BEGIN
+-- Call the _gen_sql_groups() function that effectively processes the request.
+    RETURN emaj._gen_sql_groups(p_groupNames, TRUE, p_firstMark, p_lastMark, p_location, p_tblseqs, current_user);
+  END;
+$emaj_gen_sql_groups$;
+COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(TEXT[], TEXT, TEXT, TEXT, TEXT[]) IS
+$$Generates a sql script replaying all updates performed on a table groups set between two marks and stores it into a given file.$$;
+
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT,
                                                 p_location TEXT, p_tblseqs TEXT[], p_currentUser TEXT)
 RETURNS BIGINT LANGUAGE plpgsql
 SET DateStyle = 'ISO, YMD' SET standard_conforming_strings = ON
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_gen_sql_groups$
--- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
+-- This function generates a SQL script representing all updates performed on a table groups array between 2 marks
 -- or beetween a mark and the current state. The result is stored into an external file.
 -- The function can process groups that are in LOGGING state or not.
 -- The sql statements are placed between a BEGIN TRANSACTION and a COMMIT statements.
 -- The output file can be reused as input file to a psql command to replay the updates scenario. Just '\\'
 -- character strings (double antislash), if any, must be replaced by '\' (single antislash) before feeding
 -- the psql command.
--- Input: - tables groups array
+-- Input: - table groups array
 --        - start mark
 --        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
@@ -8985,7 +10187,7 @@ $_gen_sql_groups$
         WHERE name = 'DateStyle';
       INSERT INTO emaj_temp_script VALUES
         (0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp()),
-        (0, 2, 0, '--    for tables group(s): ' || array_to_string(p_groupNames, ',')),
+        (0, 2, 0, '--    for table group(s): ' || array_to_string(p_groupNames, ',')),
         (0, 3, 0, '--    processing logs between mark "' || p_firstMark || v_endComment);
       IF p_tblseqs IS NOT NULL THEN
         INSERT INTO emaj_temp_script VALUES
@@ -9595,7 +10797,7 @@ $_verify_all_groups$
         ORDER BY msg;
 -- Check that all application relations referenced in the emaj_relation table still exist.
     RETURN QUERY
-      SELECT 'Error: In tables group "' || r.rel_group || '", the ' ||
+      SELECT 'Error: In table group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
                t.rel_schema || '"."' || t.rel_tblseq || '" does not exist anymore.' AS msg
         FROM                                          -- all expected application relations
@@ -9612,7 +10814,7 @@ $_verify_all_groups$
         ORDER BY t.rel_schema, t.rel_tblseq, 1;
 -- Check that the log table for all tables referenced in the emaj_relation table still exist.
     RETURN QUERY
-      SELECT 'Error: In tables group "' || rel_group || '", the log table "' ||
+      SELECT 'Error: In table group "' || rel_group || '", the log table "' ||
                rel_log_schema || '"."' || rel_log_table || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
@@ -9626,7 +10828,7 @@ $_verify_all_groups$
         ORDER BY rel_schema, rel_tblseq, 1;
 -- Check that the log sequence for all tables referenced in the emaj_relation table still exist.
     RETURN QUERY
-      SELECT 'Error: In tables group "' || rel_group || '", the log sequence "' ||
+      SELECT 'Error: In table group "' || rel_group || '", the log sequence "' ||
                rel_log_schema || '"."' || rel_log_sequence || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE upper_inf(rel_time_range)
@@ -9640,7 +10842,7 @@ $_verify_all_groups$
         ORDER BY rel_schema, rel_tblseq, 1;
 -- Check the log function for each table referenced in the emaj_relation table still exist.
     RETURN QUERY
-      SELECT 'Error: In tables group "' || rel_group || '", the log function "' ||
+      SELECT 'Error: In table group "' || rel_group || '", the log function "' ||
                rel_log_schema || '"."' || rel_log_function || '" is not found.'
              AS msg
         FROM emaj.emaj_relation
@@ -9657,7 +10859,7 @@ $_verify_all_groups$
 -- Check log and truncate triggers for all tables referenced in the emaj_relation table still exist.
 -- Start with log triggers.
     RETURN QUERY
-      SELECT 'Error: In tables group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+      SELECT 'Error: In table group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE upper_inf(rel_time_range)
@@ -9683,7 +10885,7 @@ $_verify_all_groups$
         ORDER BY rel_schema, rel_tblseq, 1;
 -- Then truncate triggers.
     RETURN QUERY
-      SELECT 'Error: In tables group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+      SELECT 'Error: In table group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
              rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE upper_inf(rel_time_range)
@@ -9735,7 +10937,7 @@ $_verify_all_groups$
                 AND rel_kind = 'r'
            )
         SELECT DISTINCT rel_schema, rel_tblseq,
-               'Error: In tables group "' || rel_group || '", the structure of the application table "' ||
+               'Error: In table group "' || rel_group || '", the structure of the application table "' ||
                  rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
                rel_log_schema || '"."' || rel_log_table || '").' AS msg
           FROM
@@ -9797,7 +10999,7 @@ $_verify_all_groups$
                 )
         ORDER BY rel_schema, rel_tblseq, 1;
 -- For rollbackable groups, check that no table has been altered as UNLOGGED or dropped and recreated as TEMP table after
--- tables groups creation.
+-- table groups creation.
     RETURN QUERY
       SELECT 'Error: In the rollbackable group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
@@ -9837,7 +11039,7 @@ $_verify_all_groups$
 -- Check that the "GENERATED AS expression" columns list of all tables have not changed.
 -- (The expression of virtual generated columns be changed, without generating any trouble)
     RETURN QUERY
-      SELECT 'Error: In tables group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
+      SELECT 'Error: In table group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
              rel_schema || '"."' || rel_tblseq || '" has changed (' ||
              registered_gen_columns || ' => ' || current_gen_columns || ').' AS msg
         FROM
@@ -9859,7 +11061,7 @@ $_verify_all_groups$
         ORDER BY rel_schema, rel_tblseq, 1;
 -- Check the array of triggers to ignore at rollback time only contains existing triggers.
     RETURN QUERY
-      SELECT 'Error: In tables group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
+      SELECT 'Error: In table group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
           || rel_schema || '"."' || rel_tblseq || '" is missing. '
           || 'Use the emaj_modify_table() function to adjust the list of application triggers that should not be'
           || ' automatically disabled at rollback time.'
@@ -9884,7 +11086,7 @@ $_verify_all_groups$
     RETURN QUERY
       SELECT msg FROM
         (SELECT DISTINCT rel_schema, rel_tblseq,
-                'Error: In tables group "' || rel_group || '", the log table "' ||
+                'Error: In table group "' || rel_group || '", the log table "' ||
                 rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
                 string_agg(attname, ', ' ORDER BY attname) || ').' AS msg
            FROM
@@ -9918,7 +11120,7 @@ $_verify_all_groups$
 -- In non superuser emaj install, check that all table owners are the installer role.
     IF NOT v_installedBySuperuser THEN
       RETURN QUERY
-        SELECT 'Error: In tables group "' || rel_group || '", the owner of table ' || rel_schema || '"."' || rel_tblseq ||
+        SELECT 'Error: In table group "' || rel_group || '", the owner of table ' || rel_schema || '"."' || rel_tblseq ||
                '" is not the emaj extension installer.'
                AS msg
           FROM emaj.emaj_relation
@@ -9929,7 +11131,7 @@ $_verify_all_groups$
           ORDER BY rel_schema, rel_tblseq;
 -- In non superuser emaj install, check that all sequence owners are the installer role.
       RETURN QUERY
-        SELECT 'Error: In tables group "' || rel_group || '", the owner of sequence ' || rel_schema || '"."' || rel_tblseq ||
+        SELECT 'Error: In table group "' || rel_group || '", the owner of sequence ' || rel_schema || '"."' || rel_tblseq ||
                '" is not the emaj extension installer.'
                AS msg
           FROM emaj.emaj_relation
@@ -9966,25 +11168,25 @@ $_verify_all_groups$
                       )
            )
            SELECT DISTINCT seq_schema, seq_name,
-                  'Warning: In tables group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
+                  'Warning: In table group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
                   '" is linked to the table "' || tbl_schema || '"."' || tbl_name ||
-                  '" but this table does not belong to any tables group.' AS msg
+                  '" but this table does not belong to any table group.' AS msg
              FROM serial_dependencies
              WHERE tbl_group IS NULL
          UNION ALL
            SELECT DISTINCT seq_schema, seq_name,
-                  'Warning: In tables group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
+                  'Warning: In table group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
                   '" is linked to the table "' || tbl_schema || '"."' || tbl_name ||
-                  '" but this table belongs to another tables group (' || tbl_group || ').' AS msg
+                  '" but this table belongs to another table group (' || tbl_group || ').' AS msg
              FROM serial_dependencies
              WHERE tbl_group <> seq_group
            ORDER BY 1, 2, 3
         ) AS t;
--- Detect tables linked by a foreign key but not belonging to the same tables group and inherited FK that cannot be dropped and
+-- Detect tables linked by a foreign key but not belonging to the same table group and inherited FK that cannot be dropped and
 --   recreated at rollback time.
     RETURN QUERY
       SELECT msg FROM
-        (WITH fk_dependencies AS             -- all foreign keys that link 2 tables at least one of both belongs to a tables group
+        (WITH fk_dependencies AS             -- all foreign keys that link 2 tables at least one of both belongs to a table group
            (SELECT n.nspname AS tbl_schema, t.relname AS tbl_name,
                    c.conname, c. coninhcount, c.condeferrable, c.confdeltype, c.confupdtype,
                    nf.nspname AS reftbl_schema, tf.relname AS reftbl_name,
@@ -10004,11 +11206,11 @@ $_verify_all_groups$
               WHERE contype = 'f'                                         -- FK constraints only
                 AND t.relkind = 'r' AND tf.relkind = 'r'                  -- excluding partitionned tables
                 AND (r.rel_group IS NOT NULL OR rf.rel_group IS NOT NULL) -- at least the table or the referenced table belongs to
-                                                                          -- a tables group
+                                                                          -- a table group
            )
 -- Referenced table not in a group.
            SELECT tbl_schema, tbl_name,
-                  'Warning: In tables group "' || tbl_group || '", the foreign key "' || conname ||
+                  'Warning: In table group "' || tbl_group || '", the foreign key "' || conname ||
                   '" on "' || tbl_schema || '"."' || tbl_name || '" references the table "' ||
                   reftbl_schema || '"."' || reftbl_name || '" that does not belong to any group.' AS msg
              FROM fk_dependencies
@@ -10018,7 +11220,7 @@ $_verify_all_groups$
          UNION ALL
 -- Referencing table not in a group.
            SELECT tbl_schema, tbl_name,
-                  'Warning: In tables group "' || reftbl_group || '", the table "' || reftbl_schema || '"."' || reftbl_name ||
+                  'Warning: In table group "' || reftbl_group || '", the table "' || reftbl_schema || '"."' || reftbl_name ||
                   '" is referenced by the foreign key "' || conname || '" on "' ||
                   tbl_schema || '"."' || tbl_name || '" that does not belong to any group.' AS msg
              FROM fk_dependencies
@@ -10028,7 +11230,7 @@ $_verify_all_groups$
          UNION ALL
 -- Both tables in different groups.
            SELECT tbl_schema, tbl_name,
-                  'Warning: In tables group "' || tbl_group || '", the foreign key "' || conname ||
+                  'Warning: In table group "' || tbl_group || '", the foreign key "' || conname ||
                   '" on "' || tbl_schema || '"."' || tbl_name || '" references the table "' ||
                   reftbl_schema || '"."' || reftbl_name || '" that belongs to another group ("' ||
                   reftbl_group || '")' AS msg
@@ -10062,6 +11264,134 @@ $_verify_all_groups$
     RETURN;
   END;
 $_verify_all_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._verify_all_schemas()
+RETURNS SETOF TEXT LANGUAGE plpgsql AS
+$_verify_all_schemas$
+-- The function verifies that all E-Maj schemas only contains E-Maj objects.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
+  BEGIN
+-- Verify that the expected E-Maj schemas still exist.
+    RETURN QUERY
+      SELECT DISTINCT 'Error: The E-Maj schema "' || sch_name || '" does not exist anymore.' AS msg
+        FROM emaj.emaj_schema
+        WHERE NOT EXISTS
+               (SELECT NULL
+                  FROM pg_catalog.pg_namespace
+                  WHERE nspname = sch_name
+               )
+        ORDER BY msg;
+-- Detect all objects that are not directly linked to a known table groups in all E-Maj schemas, by scanning the catalog
+-- (pg_class, pg_proc, pg_type, pg_conversion, pg_operator, pg_opclass).
+    RETURN QUERY
+      SELECT msg FROM
+-- Look for unexpected tables.
+        (  SELECT nspname, 1, 'Error: In schema "' || nspname ||
+                 '", the table "' || nspname || '"."' || relname || '" is not linked to any created table group.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'r'
+                AND (nspname <> 'emaj' OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal tables
+                AND NOT EXISTS                                                   -- exclude emaj log tables
+                     (SELECT 0
+                        FROM emaj.emaj_relation
+                        WHERE rel_log_schema = nspname
+                          AND rel_log_table = relname
+                     )
+         UNION ALL
+-- Look for unexpected sequences.
+           SELECT nspname, 2, 'Error: In schema "' || nspname ||
+                  '", the sequence "' || nspname || '"."' || relname || '" is not linked to any created table group.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'S'
+                AND (nspname <> 'emaj' OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal sequences
+                AND NOT EXISTS                                                   -- exclude emaj log table sequences
+                     (SELECT 0
+                        FROM emaj.emaj_relation
+                        WHERE rel_log_schema = nspname
+                          AND rel_log_sequence = relname
+                     )
+         UNION ALL
+-- Look for unexpected functions.
+           SELECT nspname, 3, 'Error: In schema "' || nspname ||
+                  '", the function "' || nspname || '"."' || proname  || '" is not linked to any created table group.' AS msg
+              FROM pg_catalog.pg_proc
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE (nspname <> 'emaj' OR (proname NOT LIKE E'emaj\\_%' AND proname NOT LIKE E'\\_%'))
+                                                                                 -- exclude emaj internal functions
+                AND NOT EXISTS                                                   -- exclude emaj log functions
+                     (SELECT 0
+                        FROM emaj.emaj_relation
+                        WHERE rel_log_schema = nspname
+                          AND rel_log_function = proname
+                     )
+         UNION ALL
+-- Look for unexpected composite types.
+           SELECT nspname, 4, 'Error: In schema "' || nspname ||
+                  '", the type "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'c'
+                AND (nspname <> 'emaj' OR (relname NOT LIKE E'emaj\\_%' AND relname NOT LIKE E'\\_%'))
+                                                                                 -- exclude emaj internal types
+         UNION ALL
+-- Look for unexpected views.
+           SELECT nspname, 5, 'Error: In schema "' || nspname ||
+                  '", the view "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'v'
+                AND (nspname <> 'emaj' OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal views
+         UNION ALL
+-- Look for unexpected foreign tables.
+           SELECT nspname, 6, 'Error: In schema "' || nspname ||
+                  '", the foreign table "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE relkind = 'f'
+         UNION ALL
+-- Look for unexpected domains.
+           SELECT nspname, 7, 'Error: In schema "' || nspname ||
+                  '", the domain "' || nspname || '"."' || typname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_type
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = typnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+              WHERE typisdefined
+                AND typtype = 'd'
+         UNION ALL
+-- Look for unexpected conversions.
+         SELECT nspname, 8, 'Error: In schema "' || nspname ||
+                '", the conversion "' || nspname || '"."' || conname || '" is not an E-Maj component.' AS msg
+            FROM pg_catalog.pg_conversion
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = connamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+           UNION ALL
+-- Look for unexpected operators.
+           SELECT nspname, 9, 'Error: In schema "' || nspname ||
+                  '", the operator "' || nspname || '"."' || oprname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_operator
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = oprnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+         UNION ALL
+-- Look for unexpected operator classes.
+           SELECT nspname, 10, 'Error: In schema "' || nspname ||
+                  '", the operator class "' || nspname || '"."' || opcname || '" is not an E-Maj component.' AS msg
+              FROM pg_catalog.pg_opclass
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = opcnamespace)
+                   JOIN emaj.emaj_schema ON (sch_name = nspname)
+           ORDER BY 1, 2, 3
+        ) AS t;
+--
+    RETURN;
+  END;
+$_verify_all_schemas$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
@@ -10247,6 +11577,204 @@ $_rollback_activity$
     RETURN;
   END;
 $_rollback_activity$;
+
+CREATE OR REPLACE FUNCTION emaj._event_trigger_sql_drop_fnct()
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_event_trigger_sql_drop_fnct$
+-- This function is called by the emaj_sql_drop_trg event trigger.
+-- The function blocks any ddl operation that leads to a drop of
+--   - an application table or a sequence registered into an active (not stopped) E-Maj group, or a schema containing such tables/sequence
+--   - an E-Maj schema, a log table, a log sequence, a log function or a log trigger
+-- The drop of emaj schema or extension is managed by another event trigger.
+-- The function is declared SECURITY DEFINER so that non emaj roles can access the emaj internal tables when dropping their objects.
+  DECLARE
+    v_groupName              TEXT;
+    v_tableName              TEXT;
+    r_dropped                RECORD;
+  BEGIN
+-- Scan all dropped objects.
+    FOR r_dropped IN
+      SELECT object_type, schema_name, object_name, object_identity, original
+        FROM pg_catalog.pg_event_trigger_dropped_objects()
+    LOOP
+      CASE
+        WHEN r_dropped.object_type = 'schema' THEN
+-- The object is a schema.
+-- Look at the emaj_relation table to verify that the schema being dropped does not belong to any active (not stopped) group.
+          SELECT string_agg(DISTINCT rel_group, ', ' ORDER BY rel_group) INTO v_groupName
+            FROM emaj.emaj_relation
+                 JOIN emaj.emaj_group ON (group_name = rel_group)
+            WHERE rel_schema = r_dropped.object_name
+              AND upper_inf(rel_time_range)
+              AND group_is_logging;
+          IF v_groupName IS NOT NULL THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the application schema "%". But it belongs to the active tables'
+                            ' groups "%".', r_dropped.object_name, v_groupName;
+          END IF;
+-- Look at the emaj_schema table to verify that the schema being dropped is not an E-Maj schema containing log tables.
+          IF EXISTS
+               (SELECT 0
+                  FROM emaj.emaj_schema
+                  WHERE sch_name = r_dropped.object_name
+               ) THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the schema "%". But dropping an E-Maj schema is not allowed.',
+              r_dropped.object_name;
+          END IF;
+        WHEN r_dropped.object_type = 'table' THEN
+-- The object is a table.
+-- Look at the emaj_relation table to verify that the table being dropped does not currently belong to any active (not stopped) group.
+          SELECT rel_group INTO v_groupName
+            FROM emaj.emaj_relation
+                 JOIN emaj.emaj_group ON (group_name = rel_group)
+            WHERE rel_schema = r_dropped.schema_name
+              AND rel_tblseq = r_dropped.object_name
+              AND upper_inf(rel_time_range)
+              AND group_is_logging;
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the application table "%.%". But it belongs to the active tables'
+                            ' group "%".', r_dropped.schema_name, r_dropped.object_name, v_groupName;
+          END IF;
+-- Look at the emaj_relation table to verify that the table being dropped is not a log table.
+          IF EXISTS
+               (SELECT 0
+                  FROM emaj.emaj_relation
+                  WHERE rel_log_schema = r_dropped.schema_name
+                    AND rel_log_table = r_dropped.object_name
+               ) THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the log table "%.%". But dropping an E-Maj log table is not allowed.',
+                            r_dropped.schema_name, r_dropped.object_name;
+          END IF;
+        WHEN r_dropped.object_type = 'sequence' THEN
+-- The object is a sequence.
+-- Look at the emaj_relation table to verify that the sequence being dropped does not currently belong to any active (not stopped) group.
+          SELECT rel_group INTO v_groupName
+            FROM emaj.emaj_relation
+                 JOIN emaj.emaj_group ON (group_name = rel_group)
+            WHERE rel_schema = r_dropped.schema_name
+              AND rel_tblseq = r_dropped.object_name
+              AND upper_inf(rel_time_range)
+              AND group_is_logging;
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the application sequence "%.%". But it belongs to the active'
+                            ' table group "%".', r_dropped.schema_name, r_dropped.object_name, v_groupName;
+          END IF;
+-- Look at the emaj_relation table to verify that the sequence being dropped is not a log sequence.
+          IF EXISTS
+               (SELECT 0
+                  FROM emaj.emaj_relation
+                  WHERE rel_log_schema = r_dropped.schema_name
+                    AND rel_log_sequence = r_dropped.object_name
+               ) THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the log sequence "%.%". But dropping an E-Maj sequence is not'
+                           ' allowed.', r_dropped.schema_name, r_dropped.object_name;
+          END IF;
+        WHEN r_dropped.object_type = 'function' THEN
+-- The object is a function.
+-- Look at the emaj_relation table to verify that the function being dropped is not a log function.
+          IF EXISTS
+            (SELECT 0
+               FROM emaj.emaj_relation
+               WHERE r_dropped.object_identity = quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_function) || '()'
+            ) THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the log function "%". But dropping an E-Maj log function is not'
+                            ' allowed.', r_dropped.object_identity;
+          END IF;
+-- Verify that the function is not public._emaj_protection_event_trigger_fnct() (which is intentionaly not linked to the emaj extension)
+          IF r_dropped.object_identity = 'public._emaj_protection_event_trigger_fnct()' THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the public._emaj_protection_event_trigger_fnct() function. '
+                            'But dropping this E-Maj technical function is not allowed.';
+          END IF;
+        WHEN r_dropped.object_type = 'trigger' THEN
+-- The object is a trigger.
+-- Look at the trigger name pattern to identify emaj trigger.
+-- Do not raise an exception if the triggers drop is derived from a drop of a table or a function.
+          IF r_dropped.original AND
+             (r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%') THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the "%" E-Maj trigger. But dropping an E-Maj trigger is not allowed.',
+              r_dropped.object_identity;
+          END IF;
+        WHEN r_dropped.object_type = 'table constraint' AND tg_tag = 'ALTER TABLE' THEN
+-- The object is a table constraint. It may be primary key or another constraint.
+-- Verify that if the targeted table belongs to a rollbackable group, its primary key still exists.
+-- The table name can be found in the last part of the object_identity variable,
+-- after the '.' that separates the schema and table names, and possibly between double quotes
+          v_tableName = substring(r_dropped.object_identity from '\.(?:"?)(.*)(?:"?)');
+          SELECT rel_group INTO v_groupName
+            FROM emaj.emaj_relation
+                 JOIN emaj.emaj_group ON (group_name = rel_group)
+            WHERE rel_schema = r_dropped.schema_name
+              AND rel_tblseq = v_tableName
+              AND upper_inf(rel_time_range)
+              AND group_is_rollbackable
+              AND NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class c
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = c.relnamespace)
+                        JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = c.oid)
+                             WHERE contype = 'p'
+                               AND nspname = rel_schema
+                               AND c.relname = rel_tblseq
+                );
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the primary key for the application table "%.%". But it belongs to'
+                            ' the rollbackable table group "%".', r_dropped.schema_name, v_tableName, v_groupName;
+          END IF;
+        ELSE
+          CONTINUE;
+      END CASE;
+    END LOOP;
+  END;
+$_event_trigger_sql_drop_fnct$;
+COMMENT ON FUNCTION emaj._event_trigger_sql_drop_fnct() IS
+$$E-Maj extension: support of the emaj_sql_drop_trg event trigger.$$;
+
+CREATE OR REPLACE FUNCTION emaj._event_trigger_table_rewrite_fnct()
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_event_trigger_table_rewrite_fnct$
+-- This function is called by the emaj_table_rewrite_trg event trigger.
+-- The function blocks any ddl operation that leads to a table rewrite for:
+--   - an application table registered into an active (not stopped) E-Maj group,
+--   - an E-Maj log table.
+-- The function is declared SECURITY DEFINER so that non emaj roles can access the emaj internal tables when altering their tables.
+  DECLARE
+    v_tableSchema            TEXT;
+    v_tableName              TEXT;
+    v_groupName              TEXT;
+  BEGIN
+-- Get the schema and table names of the altered table.
+    SELECT nspname, relname INTO v_tableSchema, v_tableName
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE pg_class.oid = pg_event_trigger_table_rewrite_oid();
+-- Look at the emaj_relation table to verify that the table being rewritten does not belong to any active (not stopped) group.
+    SELECT rel_group INTO v_groupName
+      FROM emaj.emaj_relation
+           JOIN emaj.emaj_group ON (group_name = rel_group)
+      WHERE rel_schema = v_tableSchema
+        AND rel_tblseq = v_tableName
+        AND upper_inf(rel_time_range)
+        AND group_is_logging;
+    IF FOUND THEN
+-- The table is an application table that belongs to a group, so raise an exception.
+      RAISE EXCEPTION 'E-Maj event trigger: Attempting to change the application table "%.%" structure. But the table belongs to the'
+                      ' active table group "%".', v_tableSchema, v_tableName , v_groupName;
+    END IF;
+-- Look at the emaj_relation table to verify that the table being rewritten is not a known log table.
+    SELECT rel_group INTO v_groupName
+      FROM emaj.emaj_relation
+      WHERE rel_log_schema = v_tableSchema
+        AND rel_log_table = v_tableName;
+    IF FOUND THEN
+-- The table is an E-Maj log table, so raise an exception.
+      RAISE EXCEPTION 'E-Maj event trigger: Attempting to change the log table "%.%" structure. But the table belongs to the tables'
+                      ' group "%".', v_tableSchema, v_tableName , v_groupName;
+    END IF;
+  END;
+$_event_trigger_table_rewrite_fnct$;
+COMMENT ON FUNCTION emaj._event_trigger_table_rewrite_fnct() IS
+$$E-Maj extension: support of the emaj_table_rewrite_trg event trigger.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
 RETURNS INT LANGUAGE plpgsql AS

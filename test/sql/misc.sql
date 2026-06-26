@@ -580,7 +580,7 @@ SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || 
 SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
      'myschema1.mytbl1', 'foo', 'myschema2.myTbl3_col31_seq', 'phil''s schema3.phil''s tbl1']);
 
--- The tables group contains a table without pkey.
+-- The table group contains a table without pkey.
 SELECT emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
 
 -- Invalid location path name.

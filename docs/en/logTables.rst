@@ -37,4 +37,4 @@ Several *ADD COLUMN* directives may be concatenated, separated by a comma. For i
        'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), '
        'ADD COLUMN emaj_user_port INT DEFAULT inet_client_port()');
 
-To change the structure of existing log tables once the *alter_log_table* parameter has been set, the tables groups must be dropped and then recreated.
+To change the structure of existing log tables once the *alter_log_table* parameter has been set, the table groups must be dropped and then recreated.

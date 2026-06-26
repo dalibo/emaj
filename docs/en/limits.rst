@@ -7,11 +7,11 @@ General limits
 The E-Maj extension usage has some limits:
 
 * The minimum required **PostgreSQL version** is 14.
-* All tables belonging to a “*ROLLBACKABLE*” tables group must have an explicit **PRIMARY KEY**. If a table has no explicit *PRIMARY KEY* but has a *UNIQUE* index referencing *NOT NULL* columns, this index should rather be transformed into *PRIMARY KEY*.
-* *UNLOGGED* tables can only be members of “*audit_only*” tables groups.
+* All tables belonging to a “*ROLLBACKABLE*” table group must have an explicit **PRIMARY KEY**. If a table has no explicit *PRIMARY KEY* but has a *UNIQUE* index referencing *NOT NULL* columns, this index should rather be transformed into *PRIMARY KEY*.
+* *UNLOGGED* tables can only be members of “*audit_only*” table groups.
 * *TEMPORARY* tables are not supported by E-Maj.
 * In some configurations, :ref:`foreign keys defined on partitioned tables<fk_on_partitioned_tables>` are not supported by E-Maj rollback operations.
-* If a **DDL operation** is executed on an application table belonging to a tables group, E-Maj is not able to reset the table in its previous state (:doc:`more details<alterGroups>`).
+* If a **DDL operation** is executed on an application table belonging to a table group, E-Maj is not able to reset the table in its previous state (:doc:`more details<alterGroups>`).
 
 .. _non_superuser_install_limits:
 
@@ -23,7 +23,7 @@ A non SUPERUSER role can :ref:`install the emaj extension with the psql<create_e
 Tables and sequences ownership
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The main constraint deals with the ownership of tables and sequences assigned to tables groups. **Nothing but tables and sequences owned by the emaj installer role can be assigned to a tables group**.
+The main constraint deals with the ownership of tables and sequences assigned to table groups. **Nothing but tables and sequences owned by the emaj installer role can be assigned to a table group**.
 
 .. _roles_limits:
 
@@ -55,9 +55,9 @@ Some :ref:`event triggers<event_triggers>` protect the E-Maj environment. If the
 Files import and export
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Functions that import tables groups or parameters configurations read data from external files. If the installer role has not the *pg_read_server_files* privileges, the operation is forbidden.
+Functions that import table groups or parameters configurations read data from external files. If the installer role has not the *pg_read_server_files* privileges, the operation is forbidden.
 
-Similarly, functions that export tables groups or parameters configurations, snap tables or logged changes and generate sql scripts write into external files. If the installer role has not the *pg_write_server_files* privileges, the operation is forbidden. Some of these functions also require the *pg_execute_server_program* privilege.
+Similarly, functions that export table groups or parameters configurations, snap tables or logged changes and generate sql scripts write into external files. If the installer role has not the *pg_write_server_files* privileges, the operation is forbidden. Some of these functions also require the *pg_execute_server_program* privilege.
 
 To allow the installer role to read or write external files, a role having enough privileges can execute the following statement::
 

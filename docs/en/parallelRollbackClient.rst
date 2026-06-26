@@ -6,7 +6,7 @@ On servers having several processors or processor cores, it may be possible to r
 Sessions
 --------
 
-To run a rollback in parallel, E-Maj spreads tables and sequences to process for one or several tables groups into "**sessions**". Each *session* is then processed in its own thread.
+To run a rollback in parallel, E-Maj spreads tables and sequences to process for one or several table groups into "**sessions**". Each *session* is then processed in its own thread.
 
 However, in order to guarantee the integrity of the global operation, the rollback of all sessions is executed inside a single transaction.
 
@@ -51,19 +51,19 @@ And the connection options are:
 
 To replace some or all these parameters, the usual *PGDATABASE*, *PGPORT*, *PGHOST* and/or *PGUSER* environment variables can be used.
 
-To specify a list of tables groups in the -g parameter, separate the name of each group by a comma.
+To specify a list of table groups in the -g parameter, separate the name of each group by a comma.
 
 The supplied connection role must have the :doc:`E-Maj administration rights<accessPolicy>`.
 
 For safety reasons, it is not recommended to use the -W option to supply a password. It is rather advisable to use the *.pgpass* file (see PostgreSQL documentation).
 
-To allow the rollback operation to work, the tables group or groups must be in *LOGGING* state. The supplied mark must also correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_group() <emaj_set_mark_group>` function call.
+To allow the rollback operation to work, the table group or groups must be in *LOGGING* state. The supplied mark must also correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_group() <emaj_set_mark_group>` function call.
 
 The *'EMAJ_LAST_MARK'* keyword can be used as mark name, meaning the last set mark.
 
 It is possible to monitor the multi-session rollback operations with the same tools as for mono-session rollbacks: :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function, the :doc:`emajRollbackMonitor<rollbackMonitorClient>` command or the Emaj_web rollback monitor page. 
 
-In order to test the *emajParallelRollback* client, the E-Maj extension supplies a test script, *emaj_prepare_parallel_rollback_test.sql*. It prepares an environment with two tables groups containing some tables and sequences, on which some updates have been performed, with intermediate marks. Once this script has been executed under *psql*, the command displayed at the end of the script can be simply run.
+In order to test the *emajParallelRollback* client, the E-Maj extension supplies a test script, *emaj_prepare_parallel_rollback_test.sql*. It prepares an environment with two table groups containing some tables and sequences, on which some updates have been performed, with intermediate marks. Once this script has been executed under *psql*, the command displayed at the end of the script can be simply run.
 
 Examples
 --------

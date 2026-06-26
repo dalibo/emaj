@@ -75,7 +75,7 @@ Dans ce second cas de figure, ce contrôle d’intégrité est réalisé :
 
 La première option est choisie si la clé étrangère est déclarée *DEFERRABLE* et si elle ne porte pas de clause *ON DELETE* ou *ON UPDATE*.
 
-Une :ref:`clé étrangère définie au niveau d‘une table partitionnée<fk_on_partitionned_tables>` n’est supportée par les opérations de rollback E-Maj que si :
+Une :ref:`clé étrangère définie au niveau d‘une table partitionnée<fk_on_partitioned_tables>` n’est supportée par les opérations de rollback E-Maj que si :
 
 * les tables/partitions reliées par cette clé étrangère appartiennent toutes aux mêmes groupes de tables à traiter,
 * la clé étrangère est de type *DEFERRABLE*
@@ -99,4 +99,4 @@ Si *session_replication_role* a la valeur ‘replica’, alors les triggers acti
 
 Si *session_replication_role* garde sa valeur standard, alors les triggers actifs à désactiver le sont temporairement pour la durée de l’opération.
 
-Dans un contexte de partitionnement déclaratif, il est possible de créer un :ref:`trigger sur une table partitionnée<trigger_on_partitionned_tables>`. Cette pratique ne pose pas de problème particulier dans le fonctionnement des rollbacks E-Maj.
+Dans un contexte de partitionnement déclaratif, il est possible de créer un :ref:`trigger sur une table partitionnée<trigger_on_partitioned_tables>`. Cette pratique ne pose pas de problème particulier dans le fonctionnement des rollbacks E-Maj.

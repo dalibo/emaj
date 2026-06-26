@@ -99,7 +99,7 @@ Si le chemin du fichier n’est pas renseigné ou est valorisé à *NULL*, la fo
 La structure JSON exportée comprent l’attribut :ref:`"tables_groups"<tables_groups_json>` décrit ci-dessus, précédé d’un attribut *"_comment"*. ::
 
    {
-   	   "_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>, including all tables groups",
+   	   "_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>, including all table groups",
    	   "tables_groups": [
           ...
    	   ]

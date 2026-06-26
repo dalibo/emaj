@@ -94,7 +94,7 @@ SELECT verh_version FROM emaj.emaj_version_hist;
 SELECT * FROM emaj.emaj_install_conf;
 SELECT * FROM emaj.emaj_verify_all();
 
--- Build a tables group.
+-- Build a table group.
 SELECT emaj.emaj_create_group('instGroup1');
 SELECT emaj.emaj_assign_table('instschema1', 'mytbl1', 'instGroup1');
 SELECT emaj.emaj_assign_sequence('instschema1', 'mytbl1_col11_seq', 'instGroup1');

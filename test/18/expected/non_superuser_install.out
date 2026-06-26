@@ -93,7 +93,7 @@ SELECT * FROM emaj.emaj_verify_all();
  No error detected
 (2 rows)
 
--- Build a tables group.
+-- Build a table group.
 SELECT emaj.emaj_create_group('instGroup1');
  emaj_create_group 
 -------------------
@@ -299,20 +299,20 @@ SELECT emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "i
 																	 "sequences": [ { "schema": "appschema1", "sequence": "mytbl1_col11_seq" },
 																			        { "schema": "appschema1", "sequence": "mytbl2_col21_seq" }] } ]}'::json,
 											 NULL, TRUE);
-WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl1 table owner is not the emaj installer role.
-WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl2 table owner is not the emaj installer role.
-WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl1_col11_seq sequence owner is not the emaj installer role.
-WARNING:  _import_groups_conf (2): In tables group "instGroup1", the appschema1.mytbl2_col21_seq sequence owner is not the emaj installer role.
+WARNING:  _import_groups_conf (2): In table group "instGroup1", the appschema1.mytbl1 table owner is not the emaj installer role.
+WARNING:  _import_groups_conf (2): In table group "instGroup1", the appschema1.mytbl2 table owner is not the emaj installer role.
+WARNING:  _import_groups_conf (2): In table group "instGroup1", the appschema1.mytbl1_col11_seq sequence owner is not the emaj installer role.
+WARNING:  _import_groups_conf (2): In table group "instGroup1", the appschema1.mytbl2_col21_seq sequence owner is not the emaj installer role.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 -- Change the table/sequence ownership.
 RESET session_authorization;
 ALTER TABLE instschema1.mytbl1 owner TO _regress_emaj_app;
 SET session_authorization TO _regress_emaj_install;
 SELECT * FROM emaj.emaj_verify_all();
-                                                         emaj_verify_all                                                         
----------------------------------------------------------------------------------------------------------------------------------
- Error: In tables group "instGroup1", the owner of table instschema1"."mytbl1" is not the emaj extension installer.
- Error: In tables group "instGroup1", the owner of sequence instschema1"."mytbl1_col11_seq" is not the emaj extension installer.
+                                                        emaj_verify_all                                                         
+--------------------------------------------------------------------------------------------------------------------------------
+ Error: In table group "instGroup1", the owner of table instschema1"."mytbl1" is not the emaj extension installer.
+ Error: In table group "instGroup1", the owner of sequence instschema1"."mytbl1_col11_seq" is not the emaj extension installer.
 (2 rows)
 
 RESET session_authorization;

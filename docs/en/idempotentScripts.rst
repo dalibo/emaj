@@ -1,7 +1,7 @@
 Writing idempotent administration scripts
 =========================================
 
-In many environments, it’s important to execute idempotent administration scripts, i.e. scripts that are able to build or update an E-Maj environment, whatever is its initial state. An E-Maj environment can be considered as a parameters set and a tables groups set for which the tables and sequences they contain must be described and that must be managed then (groups start and stop, marks set,...).
+In many environments, it’s important to execute idempotent administration scripts, i.e. scripts that are able to build or update an E-Maj environment, whatever is its initial state. An E-Maj environment can be considered as a parameters set and a table groups set for which the tables and sequences they contain must be described and that must be managed then (groups start and stop, marks set,...).
 
 .. _idempotent_parameters:
 
@@ -37,13 +37,13 @@ Tables groups content
 
 Here again, there are two working approaches.
 
-Managing a global tables groups configuration
+Managing a global table groups configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Alike for parameters, a global tables groups configuration can be defined into a *JSON* structure stored into a flat file or a table column. The :ref:`emaj_import_groups_configuration()<import_groups_conf>` function “loads” such a configuration. Missing groups are created and groups whose content differs are automatically updated. In order to get an idempotent operation, it is necessary to:
+Alike for parameters, a global table groups configuration can be defined into a *JSON* structure stored into a flat file or a table column. The :ref:`emaj_import_groups_configuration()<import_groups_conf>` function “loads” such a configuration. Missing groups are created and groups whose content differs are automatically updated. In order to get an idempotent operation, it is necessary to:
 
-* import all groups from the configuration at once, with the second parameter set to *NULL* (or set to the exhaustive tables groups list);
-* authorize the update of in LOGGING state tables groups, with the 3rd parameter set to *TRUE*;
+* import all groups from the configuration at once, with the second parameter set to *NULL* (or set to the exhaustive table groups list);
+* authorize the update of in LOGGING state table groups, with the 3rd parameter set to *TRUE*;
 * drop any existing group that is not in the configuration to import, with the 5th parameter set to *TRUE*.
 
 ::
@@ -55,9 +55,9 @@ The JSON configuration to load may have been built manualy or using the :ref:`em
 Elementary groups configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The alternative approach consists in writing a script containing all the elementary actions needed to :ref:`create<emaj_create_group>`, :ref:`populate<assign_table_sequence>`, :doc:`modify<alterGroups>` or even :ref:`drop<emaj_drop_group>` tables groups, into a single transaction, and taking the current state into account.
+The alternative approach consists in writing a script containing all the elementary actions needed to :ref:`create<emaj_create_group>`, :ref:`populate<assign_table_sequence>`, :doc:`modify<alterGroups>` or even :ref:`drop<emaj_drop_group>` table groups, into a single transaction, and taking the current state into account.
 
-To create missing tables groups::
+To create missing table groups::
 
    SELECT emaj.emaj_create_group ('myGroup1', ...)
       WHERE NOT emaj_does_exist_group('myGroup1');
@@ -71,7 +71,7 @@ To drop obsolete groups, once stopped::
       FROM unnest (emaj.emaj_get_groups () ) AS group_name
       WHERE group_name NOT IN ('myGroup1', 'myGroup2', ...);
 
-To assign the table sch1.tbl1 or the sequence sch1.seq1 to the tables group grp1, if it is not yet the case::
+To assign the table sch1.tbl1 or the sequence sch1.seq1 to the table group grp1, if it is not yet the case::
 
    SELECT CASE
       WHEN emaj_get_assigned_group_table('sch1', 'tbl1') IS NULL
@@ -116,12 +116,12 @@ If E-Maj properties of tables belonging to a group have non default values, it i
 Tables groups state
 -------------------
 
-It is possible to :ref:`set a mark<emaj_set_mark_group>` on a tables group depending on its current state::
+It is possible to :ref:`set a mark<emaj_set_mark_group>` on a table group depending on its current state::
 
    SELECT emaj.emaj_set_mark_group ('grp1', '<mark>')
       WHERE emaj.emaj_is_logging_group('grp1');
 
-To start or stop all tables groups, whatever their current state::
+To start or stop all table groups, whatever their current state::
 
    SELECT emaj.emaj_start_groups (emaj.emaj_get_idle_groups(),
       '<start_mark>');
@@ -135,4 +135,4 @@ Similarly, a common :ref:`mark can be set<emaj_set_mark_group>` on all started g
 
 Let’s remind that :ref:`emaj_get_groups(), emaj_get_logging_groups() and emaj_get_idle_groups()<groups_array_building_functions>` functions have parameters that filter group names.
 
-Finaly, the :ref:`emaj_protect_group() and emaj_unprotect_group()<emaj_protect_group>` functions that respectively protect and unprotect a tables group against E-Maj rollbacks, are idempotent by nature. So they are safely callable without knowing the current group protection level.
+Finaly, the :ref:`emaj_protect_group() and emaj_unprotect_group()<emaj_protect_group>` functions that respectively protect and unprotect a table group against E-Maj rollbacks, are idempotent by nature. So they are safely callable without knowing the current group protection level.

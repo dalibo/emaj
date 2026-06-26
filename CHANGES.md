@@ -6,18 +6,18 @@ E-Maj - Change log
   * E-Maj now supports PostgreSQL 19.
   * PostgreSQL 12 and 13 are not supported anymore.
   * Writing idempotent administration scripts:
-    * Allow to start tables groups that are already in LOGGING state, using
+    * Allow to start table groups that are already in LOGGING state, using
       a new parameter in emaj_start_group() and emaj_start_groups() functions.
-    * Allow to stop tables groups that are already in IDLE state, using
+    * Allow to stop table groups that are already in IDLE state, using
       a new parameter in emaj_stop_group() and emaj_stop_groups() functions.
-    * Add 2 new functions to help building idempotent tables groups content
+    * Add 2 new functions to help building idempotent table groups content
       definition scripts.
     * Add 3 helper functions to build group names arrays.
     * Add a parameter in import_groups_configuration() functions to
       automatically drop the existing groups that are not imported.
   * Let E-Maj work when the extension is installed by a non superuser role
     using the emaj-<version>.sql script:
-    * Report clear error messages when trying to assign to a tables group
+    * Report clear error messages when trying to assign to a table group
       tables or sequences whose owner is not the installer role.
     * Do not create and use emaj_adm or emaj_viewer roles when the installer
       role has not the needed rights to do it.
@@ -30,7 +30,9 @@ E-Maj - Change log
   * The emaj_export_parameters_configuration() functions now have an additional
     option to also export parameters whose value is their default value.
   * Add a boolean parameter to emaj_stop_group() and emaj_stop_groups()
-    functions to optionnaly reset logs when tables groups are stopped.
+    functions to optionnaly reset logs when table groups are stopped.
+  * Rename the "tables group" concept into "table group" for a better english
+    spelling.
   * Use the dblink_connect() function when emaj is installed by a superuser,
       avoiding to grant rights to dblink_connect_u() in most cases.
   * The emaj_purge_histories() function now returns an execution report message.
@@ -40,7 +42,7 @@ E-Maj - Change log
     escape_string_warning GUC that are no longer supported with PG19.
   * Improve the initial comment of the JSON output produced by
     emaj_export_groups_configuration().
-  * Improve checks of the input JSON structure when importing a tables group
+  * Improve checks of the input JSON structure when importing a table group
     configuration.
   * Remove both deprecated php clients.
   * Minor code changes.

@@ -558,9 +558,9 @@ RESET session_authorization;
 ALTER TABLE "phil's schema""3"."my""tbl4" ALTER COLUMN col45 TYPE CHAR(11);
 SET session_authorization TO _regress_emaj_adm1;
 SELECT * FROM emaj_verify_all() as t(msg) WHERE msg NOT LIKE '%foreign key%';
-                                                                                           msg                                                                                            
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In tables group "phil's group#3",", the structure of the application table "phil's schema"3"."my"tbl4" is not coherent with its log table ("emaj_phil's schema"3"."my"tbl4_log").
+                                                                                           msg                                                                                           
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In table group "phil's group#3",", the structure of the application table "phil's schema"3"."my"tbl4" is not coherent with its log table ("emaj_phil's schema"3"."my"tbl4_log").
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (2 rows)
 
@@ -592,7 +592,7 @@ SET session_authorization TO _regress_emaj_adm1;
 SELECT * FROM emaj_verify_all() as t(msg) WHERE msg NOT LIKE '%foreign key%';
                                                                  msg                                                                 
 -------------------------------------------------------------------------------------------------------------------------------------
- Error: In tables group "phil's group#3",", the log table "emaj_phil's schema"3"."my"tbl4_log" is not found.
+ Error: In table group "phil's group#3",", the log table "emaj_phil's schema"3"."my"tbl4_log" is not found.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (2 rows)
 
@@ -630,7 +630,7 @@ SET session_authorization TO _regress_emaj_adm2;
 -- Try to set a mark.
 BEGIN;
   SELECT emaj_set_mark_group('phil''s group#3",', 'should fails');
-ERROR:  _verify_groups (1): In tables group "phil's group#3",", the table "phil's schema"3"."my"tbl4" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In table group "phil's group#3",", the table "phil's schema"3"."my"tbl4" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 ROLLBACK;
 SELECT emaj_remove_table('phil''s schema"3', 'my"tbl4', 'remove_the_dropped_table');
 WARNING:  _check_tblseqs_array: In schema "phil's schema"3", some tables ("my""tbl4") do not exist.
@@ -836,7 +836,7 @@ SELECT public.handle_emaj_sequences(17600);
 (1 row)
 
 -----------------------------
--- Step 19 : test use of dynamic tables group management (assign, move, remove, change).
+-- Step 19 : test use of dynamic table group management (assign, move, remove, change).
 -----------------------------
 -- Create, start and populate groups.
 -- Grp_tmp is empty, grp_tmp_3 and grp_tmp_4 contains tables and sequences frop respectively phil''s schema3 and myschema4.
@@ -983,10 +983,10 @@ SELECT emaj_move_tables('phil''s schema"3', '.*', '', 'grp_tmp', 'Move_tbl_3_to_
 (1 row)
 
 SELECT * FROM emaj_verify_all() as t(msg) WHERE msg NOT LIKE '%foreign key%';
-                                                                                                  msg                                                                                                  
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In tables group "grp_tmp_4", the sequence "myschema4"."mytblp_col4_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
- Warning: In tables group "grp_tmp_3", the sequence "phil's schema"3"."myTbl2\_col21_seq" is linked to the table "phil's schema"3"."myTbl2\" but this table belongs to another tables group (grp_tmp).
+                                                                                                 msg                                                                                                 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In table group "grp_tmp_4", the sequence "myschema4"."mytblp_col4_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any table group.
+ Warning: In table group "grp_tmp_3", the sequence "phil's schema"3"."myTbl2\_col21_seq" is linked to the table "phil's schema"3"."myTbl2\" but this table belongs to another table group (grp_tmp).
  No error detected
 (3 rows)
 
@@ -1287,10 +1287,10 @@ SELECT emaj_enable_protection_by_event_triggers();
 SET session_authorization TO _regress_emaj_adm2;
 -- Note that the warning about the mytblp_col3_seq sequence is normal.
 SELECT * FROM emaj_verify_all() AS t(msg) WHERE msg NOT LIKE '%foreign key%';
-                                                                                      msg                                                                                       
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In tables group "grp_tmp", the log sequence "emaj_phil's schema"3"."my"tbl4_log_seq" is not found.
- Warning: In tables group "grp_tmp", the sequence "myschema4"."mytblp_col4_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
+                                                                                     msg                                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In table group "grp_tmp", the log sequence "emaj_phil's schema"3"."my"tbl4_log_seq" is not found.
+ Warning: In table group "grp_tmp", the sequence "myschema4"."mytblp_col4_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any table group.
 (2 rows)
 
 --     A removal while the group is LOGGING fails.
@@ -1316,9 +1316,9 @@ SELECT emaj_assign_table('phil''s schema"3', 'my"tbl4', 'grp_tmp');
 (1 row)
 
 SELECT * FROM emaj_verify_all() AS t(msg) WHERE msg NOT LIKE '%foreign key%';
-                                                                                      msg                                                                                       
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In tables group "grp_tmp", the sequence "myschema4"."mytblp_col4_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
+                                                                                     msg                                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In table group "grp_tmp", the sequence "myschema4"."mytblp_col4_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any table group.
  No error detected
 (2 rows)
 
@@ -1624,7 +1624,7 @@ SELECT hist_function, hist_event, hist_object,
  MOVE_TABLES              | TABLE MOVED                 | "phil's schema""3"."my""tbl4"          | From the logging group grp_tmp_3 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
  MOVE_TABLES              | TABLE MOVED                 | "phil's schema""3"."myTbl2\"           | From the logging group grp_tmp_3 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
  MOVE_TABLES              | TABLE MOVED                 | "phil's schema""3"."phil's tbl1"       | From the logging group grp_tmp_3 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
- MOVE_TABLES              | END                         |                                        | 3 tables moved to the tables group grp_tmp                                                                                       | _regress_emaj_adm1
+ MOVE_TABLES              | END                         |                                        | 3 tables moved to the table group grp_tmp                                                                                        | _regress_emaj_adm1
  MOVE_SEQUENCES           | BEGIN                       |                                        |                                                                                                                                  | _regress_emaj_adm1
  MOVE_SEQUENCES           | TIME STAMP SET              | 17616                                  |                                                                                                                                  | _regress_emaj_adm1
  LOCK_GROUP               | BEGIN                       | grp_tmp,grp_tmp_3                      |                                                                                                                                  | _regress_emaj_adm1
@@ -1633,7 +1633,7 @@ SELECT hist_function, hist_event, hist_object,
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3                      | Move_seq_3_to_tmp                                                                                                                | _regress_emaj_adm1
  MOVE_SEQUENCES           | SEQUENCE MOVED              | "phil's schema""3"."myTbl2\_col21_seq" | From the logging group grp_tmp_3 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
  MOVE_SEQUENCES           | SEQUENCE MOVED              | "phil's schema""3"."phil's""seq\1"     | From the logging group grp_tmp_3 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
- MOVE_SEQUENCES           | END                         |                                        | 2 sequences moved to the tables group grp_tmp                                                                                    | _regress_emaj_adm1
+ MOVE_SEQUENCES           | END                         |                                        | 2 sequences moved to the table group grp_tmp                                                                                     | _regress_emaj_adm1
  MOVE_TABLES              | BEGIN                       |                                        |                                                                                                                                  | _regress_emaj_adm1
  MOVE_TABLES              | TIME STAMP SET              | 17617                                  |                                                                                                                                  | _regress_emaj_adm1
  LOCK_GROUP               | BEGIN                       | grp_tmp,grp_tmp_4                      |                                                                                                                                  | _regress_emaj_adm1
@@ -1647,7 +1647,7 @@ SELECT hist_function, hist_event, hist_object,
  MOVE_TABLES              | TABLE MOVED                 | myschema4.mytblm                       | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
  MOVE_TABLES              | TABLE MOVED                 | myschema4.mytblr1                      | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
  MOVE_TABLES              | TABLE MOVED                 | myschema4.mytblr2                      | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
- MOVE_TABLES              | END                         |                                        | 7 tables moved to the tables group grp_tmp                                                                                       | _regress_emaj_adm1
+ MOVE_TABLES              | END                         |                                        | 7 tables moved to the table group grp_tmp                                                                                        | _regress_emaj_adm1
  MOVE_SEQUENCES           | BEGIN                       |                                        |                                                                                                                                  | _regress_emaj_adm1
  MOVE_SEQUENCES           | TIME STAMP SET              | 17618                                  |                                                                                                                                  | _regress_emaj_adm1
  LOCK_GROUP               | BEGIN                       | grp_tmp,grp_tmp_4                      |                                                                                                                                  | _regress_emaj_adm1
@@ -1656,7 +1656,7 @@ SELECT hist_function, hist_event, hist_object,
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_4                      | Move_seq_4_to_tmp                                                                                                                | _regress_emaj_adm1
  MOVE_SEQUENCES           | SEQUENCE MOVED              | myschema4.mytblp_col4_seq              | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
  MOVE_SEQUENCES           | SEQUENCE MOVED              | myschema4.mytblr2_col1_seq             | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                    | _regress_emaj_adm1
- MOVE_SEQUENCES           | END                         |                                        | 2 sequences moved to the tables group grp_tmp                                                                                    | _regress_emaj_adm1
+ MOVE_SEQUENCES           | END                         |                                        | 2 sequences moved to the table group grp_tmp                                                                                     | _regress_emaj_adm1
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp            | Mk4                                                                                                                              | _regress_emaj_adm1
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4            |                                                                                                                                  | _regress_emaj_adm1
  LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4            | 10 tables locked, 0 deadlock(s)                                                                                                  | _regress_emaj_adm1
@@ -1841,7 +1841,7 @@ SELECT hist_function, hist_event, hist_object,
  IMPORT_GROUPS            | SEQUENCE MOVED              | "phil's schema""3"."myTbl2\_col21_seq" | From the logging group grp_tmp to the logging group grp_tmp_3                                                                    | _regress_emaj_adm2
  IMPORT_GROUPS            | TABLE ADDED                 | myschema4.mytblc1                      | To the logging group grp_tmp_4                                                                                                   | _regress_emaj_adm2
  IMPORT_GROUPS            | SEQUENCE ADDED              | "phil's schema""3"."phil's""seq\1"     | To the logging group grp_tmp_3                                                                                                   | _regress_emaj_adm2
- IMPORT_GROUPS            | END                         |                                        | 3 created or altered tables groups                                                                                               | _regress_emaj_adm2
+ IMPORT_GROUPS            | END                         |                                        | 3 created or altered table groups                                                                                                | _regress_emaj_adm2
  STOP_GROUP               | BEGIN                       | grp_tmp_3                              | Without logs reset                                                                                                               | _regress_emaj_adm2
  LOCK_GROUP               | BEGIN                       | grp_tmp_3                              |                                                                                                                                  | _regress_emaj_adm2
  LOCK_GROUP               | END                         | grp_tmp_3                              | 3 tables locked, 0 deadlock(s)                                                                                                   | _regress_emaj_adm2
@@ -1916,7 +1916,7 @@ SELECT emaj_gen_sql_dump_changes_group('myGroup1', 'M4', 'M5',
 SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      sql_text                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- -- Generated SQL for dumping changes in tables group "myGroup1" (subset) between marks "M4" and "M5" using options: EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_verb), CONSOLIDATION=FULL, ORDER_BY=TIME
+ -- Generated SQL for dumping changes in table group "myGroup1" (subset) between marks "M4" and "M5" using options: EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_verb), CONSOLIDATION=FULL, ORDER_BY=TIME
  SET enable_nestloop = FALSE;
  -- Dump changes for table myschema1.myTbl3 between marks "M4" and "M5" (10 changes)
  WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 12500014 AND emaj_gid <= 12500024 AND emaj_tuple IN ('OLD', 'NEW') GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_gid,emaj_tuple,tbl.col32,tbl.col33,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY emaj_gid, emaj_tuple DESC;
@@ -2082,7 +2082,7 @@ SELECT * FROM emaj_rollback_group('truncateTestGroup', 'M1', FALSE);
 RESET session_authorization;
 \i :FILE1
 -- SQL script generated by E-Maj at [ts]$
---    for tables group(s): truncateTestGroup
+--    for table group(s): truncateTestGroup
 --    processing logs between mark "M1" and mark "M2"
 SET datestyle = 'ISO, YMD';
 BEGIN TRANSACTION;
@@ -2892,7 +2892,7 @@ SELECT substr(pg_size_pretty(pg_database_size(current_database())), 1, 0);
 (1 row)
 
 SELECT emaj_forget_group('dummyGroup');
-WARNING:  emaj_forget_group: the tables group "dummyGroup" has not been found in history tables
+WARNING:  emaj_forget_group: the table group "dummyGroup" has not been found in history tables
  emaj_forget_group 
 -------------------
                  0

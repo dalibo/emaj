@@ -548,7 +548,7 @@ SELECT emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
 SELECT rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers FROM emaj.emaj_relation
   WHERE rel_ignored_triggers is NOT NULL ORDER BY 1, 2, 3;
 
--- Keep the current tables groups definition as reference for further tests, once all ignored_triggers configurations reset.
+-- Keep the current table groups definition as reference for further tests, once all ignored_triggers configurations reset.
 SELECT emaj.emaj_modify_table('myschema1', 'mytbl2', '{"ignored_triggers":null}'::JSONB);
 SELECT emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json');
 

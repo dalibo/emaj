@@ -266,7 +266,7 @@ SELECT hist_function, hist_event, hist_object,
 SELECT public.handle_emaj_sequences(17600);
 
 -----------------------------
--- Step 19 : test use of dynamic tables group management (assign, move, remove, change).
+-- Step 19 : test use of dynamic table group management (assign, move, remove, change).
 -----------------------------
 
 -- Create, start and populate groups.

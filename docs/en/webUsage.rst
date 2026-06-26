@@ -20,7 +20,7 @@ To sign in to a database, select the target instance in the left browser or in t
 
 Once connected to a database where the *emaj* extension has been installed, the user interacts with the extension, depending on the role it owns (*super-user*, *emaj_adm* or *emaj_viewer*).
 
-On the left, the browser tree shows all the configured instances, that may be split into instances groups, and all the databases they contain. By unfolding a database object, the user reaches the E-Maj tables groups and the existing schemas.
+On the left, the browser tree shows all the configured instances, that may be split into instances groups, and all the databases they contain. By unfolding a database object, the user reaches the E-Maj table groups and the existing schemas.
 
 .. figure:: images/emajweb_browser.png
    :align: center
@@ -33,7 +33,7 @@ Both icons located at the bottom-right (not visible here) allow to adjust the br
 Tables groups lists
 -------------------
 
-By selecting a database, the user reaches a page that lists all tables groups created in this database.
+By selecting a database, the user reaches a page that lists all table groups created in this database.
 
 .. figure:: images/emajweb_groups.png
    :align: center
@@ -43,10 +43,10 @@ By selecting a database, the user reaches a page that lists all tables groups cr
 
 This page displays two lists: 
 
-* the tables groups in *LOGGING* state,
-* the tables groups in *IDLE* state.
+* the table groups in *LOGGING* state,
+* the table groups in *IDLE* state.
 
-For each created tables group, the following attributes are displayed:
+For each created table group, the following attributes are displayed:
 
 * its creation date and time,
 * the number of application tables and sequences it contains,
@@ -54,11 +54,11 @@ For each created tables group, the following attributes are displayed:
 * the number of marks it owns,
 * its associated comment, if any.
 
-For each tables group, several buttons are available so that the user can perform any possible action, depending on the group state.
+For each table group, several buttons are available so that the user can perform any possible action, depending on the group state.
 
-Below, three buttons allow to create a new tables group, to export or import a tables groups configuration to or from a local file.
+Below, three buttons allow to create a new table group, to export or import a table groups configuration to or from a local file.
 
-Lastly, a list of dropped tables groups is displayed.
+Lastly, a list of dropped table groups is displayed.
 
 Some details about the user interface
 -------------------------------------
@@ -71,7 +71,7 @@ The page headers contain:
 * a breadcrumb trail,
 * and a button to directly go to the page bottom.
 
-The user can navigate in Emaj_web functions using four icon bars: one for the general purpose functions, two similar bars for the functions concerning respectively a single tables group or a single table, and the last for the functions concerning a single sequence.
+The user can navigate in Emaj_web functions using four icon bars: one for the general purpose functions, two similar bars for the functions concerning respectively a single table group or a single table, and the last for the functions concerning a single sequence.
 
 .. figure:: images/emajweb_maintabs.png
    :align: center
@@ -101,7 +101,7 @@ On most tables too, an icon located at the left of the header row, let show or h
    :align: center
    :class: screenshot
 
-   Figure 6 – Filtering the tables groups in *LOGGING* state. Here, only tables groups whose name contains “my” and having more than 2 marks are displayed, sorted in descending order by number of tables.
+   Figure 6 – Filtering the table groups in *LOGGING* state. Here, only table groups whose name contains “my” and having more than 2 marks are displayed, sorted in descending order by number of tables.
 
 Some tables allow to perform actions on several objects at once. In this case, the user selects the objects with the checkboxes on the first column of the table and choose the action to perform among the available buttons under the table.
 
@@ -112,13 +112,13 @@ Cells containing event timestamps or durations show a full data content in toolt
 Tables group details
 --------------------
 
-From the tables groups list page, it is possible to get more information about a particular tables group by clicking on its name. This page is also accessible with the “*Properties*” icon of the groups bar and through the left browsing tree.
+From the table groups list page, it is possible to get more information about a particular table group by clicking on its name. This page is also accessible with the “*Properties*” icon of the groups bar and through the left browsing tree.
 
 .. figure:: images/emajweb_groupproperties.png
    :align: center
    :class: screenshot
 
-   Figure 7 – Details of a tables group
+   Figure 7 – Details of a table group
 
 A first line repeats information already displayed on the groups list (number of tables and sequences, type, state and number of marks). It also shows the disk space used by its log tables.
 
@@ -141,7 +141,7 @@ For each mark, several buttons are available to perform the actions permitted by
 Statistics
 ----------
 
-Using the "*Changes statistics*" tab of the group’s bar, one gets statistics about recorded changes for tables or sequences, for the selected tables group and a given time interval. This time interval is defined as either two marks or a mark and the current state.
+Using the "*Changes statistics*" tab of the group’s bar, one gets statistics about recorded changes for tables or sequences, for the selected table group and a given time interval. This time interval is defined as either two marks or a mark and the current state.
 
 Three types of statistics can be produced:
 
@@ -170,7 +170,7 @@ On each line of the statistics table, the user can click on a button to easily l
 Tables group content
 --------------------
 
-Using the “*Content*” tab of the group's bar, it is possible to get a summary of a tables group content.
+Using the “*Content*” tab of the group's bar, it is possible to get a summary of a table group content.
 
 For each table belonging to the group, the displayed sheet shows its E-Maj characteristics, as well as the disk space used by its log table and index.
 
@@ -178,33 +178,33 @@ For each table belonging to the group, the displayed sheet shows its E-Maj chara
    :align: center
    :class: screenshot
 
-   Figure 10 – A tables group's content.
+   Figure 10 – A table group's content.
 
 Tables group history
 --------------------
 
-The “*History*” tab displays the periods of time when the tables group exists and the periods of time when the group is in *LOGGING* state (*log sessions*). The historical depth depends on the *history_retention* parameter.
+The “*History*” tab displays the periods of time when the table group exists and the periods of time when the group is in *LOGGING* state (*log sessions*). The historical depth depends on the *history_retention* parameter.
 
 .. figure:: images/emajweb_grouphistory.png
    :align: center
    :class: screenshot
 
-   Figure 11 – A tables group’s history.
+   Figure 11 – A table group’s history.
 
-Schemas and tables groups configuration
+Schemas and table groups configuration
 ---------------------------------------
 
 The "*Schemas*" tab displays the list of schemas contained in the database.
 
 By selecting one of them, two additional lists are displayed: the tables and the sequences contained by this schema.
 
-For both lists, the E-Maj properties and some general properties of each object become visible. Some action buttons allow to reach their structure or content and manage their assignment to tables groups.
+For both lists, the E-Maj properties and some general properties of each object become visible. Some action buttons allow to reach their structure or content and manage their assignment to table groups.
 
 .. figure:: images/emajweb_schemas.png
    :align: center
    :class: screenshot
 
-   Figure 12 – Schema content and tables groups configuration.
+   Figure 12 – Schema content and table groups configuration.
 
 By clicking on a table or sequence name or on an eye icon, one gets details about the table or sequence characteristics and content.
 
@@ -213,7 +213,7 @@ Table details
 
 By selecting a table from a schema tables list, one reaches a first "*Properties*" tab that shows the current E-Maj properties, the table structure, and its triggers.
 
-E-Maj properties like tables group assignement, move or removal are available through appropriate buttons.
+E-Maj properties like table group assignement, move or removal are available through appropriate buttons.
 
 .. figure:: images/emajweb_tableproperties.png
    :align: center
@@ -223,13 +223,13 @@ E-Maj properties like tables group assignement, move or removal are available th
 
 Thanks to the specific table tabs bar three other functions are available.
 
-The "*Change statistics*" tab offers statistics about changes registered for the table, on a specified time frame, like statistics about tables groups. However, they differ in several ways:
+The "*Change statistics*" tab offers statistics about changes registered for the table, on a specified time frame, like statistics about table groups. However, they differ in several ways:
 
 * a single table is processed,
 * but one gets one statistic row per elementary marks interval,
 * the number of executed E-Maj rollbacks is also reported for each marks interval.
 
-Alike for tables groups, an "eye" icon allows to look at changes details.
+Alike for table groups, an "eye" icon allows to look at changes details.
 
 .. figure:: images/emajweb_tablestat.png
    :align: center
@@ -239,7 +239,7 @@ Alike for tables groups, an "eye" icon allows to look at changes details.
 
 The "*Content*" tab allows to visualize the current table rows.
 
-Lastly, the "*History*" tab shows the E-Maj properties evolutions of the table, and in particular its tables groups assignements.
+Lastly, the "*History*" tab shows the E-Maj properties evolutions of the table, and in particular its table groups assignements.
 
 .. figure:: images/emajweb_tablehistory.png
    :align: center
@@ -250,7 +250,7 @@ Lastly, the "*History*" tab shows the E-Maj properties evolutions of the table, 
 Sequence details
 ----------------
 
-Regarding sequences, the "*Properties*" tab shows the E-Maj properties and the characteristics of a single sequence. Some buttons allow to modify the sequence E-Maj properties (tables group assignment, move or removal).
+Regarding sequences, the "*Properties*" tab shows the E-Maj properties and the characteristics of a single sequence. Some buttons allow to modify the sequence E-Maj properties (table group assignment, move or removal).
 
 .. figure:: images/emajweb_sequenceproperties.png
    :align: center
@@ -272,7 +272,7 @@ The "*Changes statistics*" tab returns statistics about the sequence state evolu
 
    Figure 17 – Sequence statistics.
 
-Lastly, the "*History*" tab shows the sequence E-Maj characterics changes, in particular the assignment into tables groups.
+Lastly, the "*History*" tab shows the sequence E-Maj characterics changes, in particular the assignment into table groups.
 
 .. figure:: images/emajweb_sequencehistory.png
    :align: center
@@ -337,18 +337,18 @@ The *"Activity"* tab allows to monitor in real time the activity of E-Maj log tr
 
    Figure 22 – E-Maj activity.
 
-At the page top, the form alllows to define the monitoring wishes, by default the 5 most active tables groups, the 20 most active tables and the 20 most active sequences. Regular expressions may be set to filter (include or exclude) tables groups, tables and sequences.
+At the page top, the form alllows to define the monitoring wishes, by default the 5 most active table groups, the 20 most active tables and the 20 most active sequences. Regular expressions may be set to filter (include or exclude) table groups, tables and sequences.
 
 The activity indicators are displayed under the form:
 
 * at a global level (all groups, tables and sequences),
-* for the selected tables groups,
-* for the selected tables of selected tables groups,
-* for the selected sequences of selected tables groups.
+* for the selected table groups,
+* for the selected tables of selected table groups,
+* for the selected sequences of selected table groups.
 
 Four activity indicators are computed:
 
-* the number of changes since the latest mark set for the tables group,
+* the number of changes since the latest mark set for the table group,
 * the throughput since the latest mark, in number of changes per second,
 * the number of changes since the last display,
 * the throughput since the last display.

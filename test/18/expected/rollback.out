@@ -357,12 +357,12 @@ ROLLBACK;
 BEGIN;
   DROP TABLE mySchema2."myTbl3" CASCADE;
   SELECT * FROM emaj.emaj_rollback_group('myGroup2', 'Mark21');
-ERROR:  _verify_groups (1): In tables group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In table group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 ROLLBACK;
 BEGIN;
   DROP TABLE mySchema2."myTbl3" CASCADE;
   SELECT * FROM emaj.emaj_logged_rollback_group('myGroup2', 'Mark21');
-ERROR:  _verify_groups (1): In tables group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In table group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 ROLLBACK;
 -- Internal error when the row corresponding to an application sequence to rollback is missing in emaj_sequence.
 BEGIN;
@@ -453,12 +453,12 @@ SELECT * FROM emaj.emaj_logged_rollback_groups('{"myGroup1", "myGroup2"}', 'Mark
 BEGIN;
   DROP TABLE mySchema2."myTbl3" CASCADE;
   SELECT * FROM emaj.emaj_rollback_groups('{"myGroup1", "myGroup2"}', 'Mark1B');
-ERROR:  _verify_groups (1): In tables group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In table group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 ROLLBACK;
 BEGIN;
   DROP TABLE mySchema2."myTbl3" CASCADE;
   SELECT * FROM emaj.emaj_logged_rollback_groups('{"myGroup1", "myGroup2"}', 'Mark1B');
-ERROR:  _verify_groups (1): In tables group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In table group "myGroup2", the table "myschema2"."myTbl3" does not exist anymore. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 ROLLBACK;
 -- Restart groups.
 SELECT emaj.emaj_stop_groups('{"myGroup1", "myGroup2"}');

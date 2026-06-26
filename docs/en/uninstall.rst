@@ -22,8 +22,8 @@ Whatever the manner the *emaj* extension has been installed (using the standart 
 This function performs the following steps:
 
 * it executes the cleaning functions created by demo or test scripts, if they exist,
-* it stops the tables groups in *LOGGING* state, if any,
-* it drops the tables groups, removing in particular the triggers on application tables,
+* it stops the table groups in *LOGGING* state, if any,
+* it drops the table groups, removing in particular the triggers on application tables,
 * it drops the extension and the main *emaj* schema,
 * it drops roles *emaj_adm* and *emaj_viewer* if they are not linked to any objects in the current database or in other databases of the instance.
 

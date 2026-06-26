@@ -20,9 +20,9 @@ General options:
 
 * --interval: time interval between 2 displays (in seconds, default = 5s)
 * --iteration: number of display iterations (default = 0 = infinite loop)
-* --include-groups: regexp to select tables groups to process (default = ‘.*’ = all)
-* --exclude-groups: regexp to exclude tables groups to process (default = '' = no exclusion)
-* --max-groups limits the number of tables groups to display (default = 5)
+* --include-groups: regexp to select table groups to process (default = ‘.*’ = all)
+* --exclude-groups: regexp to exclude table groups to process (default = '' = no exclusion)
+* --max-groups limits the number of table groups to display (default = 5)
 * --include-tables: regexp to select tables to process (default = ‘.*’ = all)
 * --exclude-tables: regexp to exclude tables to process (default = '' = no	exclusion)
 * --max-tables limits the number of tables to display (default = 20)
@@ -57,7 +57,7 @@ The command::
 
    emajStat.pl --interval 30 --max-tables 40 --exclude-tables '\.sav$' --max-sequences 0
 
-displays every 30 seconds, cumulated changes of the 5 most active tables groups and the 40 most active tables, tables named with a ".sav" suffix being excluded, no sequences being processed.
+displays every 30 seconds, cumulated changes of the 5 most active table groups and the 40 most active tables, tables named with a ".sav" suffix being excluded, no sequences being processed.
 
 Display description
 -------------------
@@ -84,10 +84,10 @@ The first title line reminds the *emajStat* client version, the logged on databa
 The second line displays:
 
 * the current date and time,
-* the number of tables groups in logging state, the number of tables and sequences assigned to those tables groups,
+* the number of table groups in logging state, the number of tables and sequences assigned to those table groups,
 * the total number of changes recorded since the previous display ant the troughput in changes per second.
 
-Then, a tables groups list appears, with:
+Then, a table groups list appears, with:
 
 * the group name,
 * the name and timestamp of the latest mark set on the group,
@@ -103,8 +103,8 @@ Then, one finds the lists of selected tables and sequences, with:
 * the cumulated number of changes recorded for the table or the number of sequences increments since the latest mark and the related throughput,
 * the cumulated number of changes recorded for the table or the number of sequences increments since the latest display and the related throughput.
 
-Both lists are ordered by the same criteria than the tables groups. Similarly, the *--max-tables* and *--max-sequences* options limit the number of displayed tables or sequences.
+Both lists are ordered by the same criteria than the table groups. Similarly, the *--max-tables* and *--max-sequences* options limit the number of displayed tables or sequences.
 
-At the first display or when a tables group structure changes (for instance when a table or sequence is assigned to or removed from their group) or when a mark is set, the statistics about changes since the previous display are masked.
+At the first display or when a table group structure changes (for instance when a table or sequence is assigned to or removed from their group) or when a mark is set, the statistics about changes since the previous display are masked.
 
-If an E-Maj rollback is performed on a tables group, it may happen that negative numbers of changes and changes per second be displayed.
+If an E-Maj rollback is performed on a table group, it may happen that negative numbers of changes and changes per second be displayed.

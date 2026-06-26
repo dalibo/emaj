@@ -4,7 +4,7 @@ SET client_min_messages TO WARNING;
 \set ON_ERROR_STOP
 
 ------------------------------------------------------------
--- drop any remaining tables groups
+-- drop any remaining table groups
 ------------------------------------------------------------
 SELECT emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
 

@@ -42,7 +42,7 @@ use warnings; use strict;
     if ($status == 2 && $line =~ /^-- This script must be executed by a role having SUPERUSER privileges\./) {
       print FICOT "-- This script may be executed by a non SUPERUSER role. But in this case:\n";
       print FICOT "--   - the installation role must be the owner of application tables and sequences that will be assigned to the\n";
-      print FICOT "--     future tables groups,\n";
+      print FICOT "--     future table groups,\n";
       print FICOT "--   - emaj_adm and emaj_viewer roles may not exist,\n";
       print FICOT "--   - event triggers that protect the E-Maj environment may not be created,\n";
       print FICOT "--   - functions that read or write external files may be not allowed.\n";

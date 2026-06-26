@@ -8,7 +8,7 @@ Aside the functions that :ref:`perform an E-Maj rollback<emaj_rollback_group>`, 
 Estimate the rollback duration
 ------------------------------
 
-The *emaj_estimate_rollback_group()* function returns an idea of the time needed to rollback a tables group to a given mark. It can be called with a statement like::
+The *emaj_estimate_rollback_group()* function returns an idea of the time needed to rollback a table group to a given mark. It can be called with a statement like::
 
    SELECT emaj.emaj_estimate_rollback_group('<group.name>', '<mark.name>', <is.logged>);
 
@@ -18,7 +18,7 @@ The third parameter indicates whether the E-Maj rollback to simulate is a *logge
 
 The function returns an *INTERVAL* value.
 
-The tables group must be in *LOGGING* state and the supplied mark must be usable for an E-Maj rollback.
+The table group must be in *LOGGING* state and the supplied mark must be usable for an E-Maj rollback.
 
 This duration estimate is approximative. It takes into account:
 
@@ -78,7 +78,7 @@ It returns a set of rows of type *emaj.emaj_rollback_activity_type*. Each row re
 +=============================+=============+===============================================================+
 | rlbk_id                     | INT         | rollback identifier                                           |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_groups                 | TEXT[]      | tables groups array associated to the rollback                |
+| rlbk_groups                 | TEXT[]      | table groups array associated to the rollback                 |
 +-----------------------------+-------------+---------------------------------------------------------------+
 | rlbk_mark                   | TEXT        | mark to rollback to                                           |
 +-----------------------------+-------------+---------------------------------------------------------------+
@@ -87,15 +87,15 @@ It returns a set of rows of type *emaj.emaj_rollback_activity_type*. Each row re
 | rlbk_is_logged              | BOOLEAN     | boolean taking the “true” value for logged rollbacks          |
 +-----------------------------+-------------+---------------------------------------------------------------+
 | rlbk_is_alter_group_allowed | BOOLEAN     | | boolean indicating whether the rollback can target a mark   |
-|                             |             | | set before a tables groups structure change                 |
+|                             |             | | set before a table groups structure change                  |
 +-----------------------------+-------------+---------------------------------------------------------------+
 | rlbk_comment                | TEXT        | comment                                                       |
 +-----------------------------+-------------+---------------------------------------------------------------+
 | rlbk_nb_session             | INT         | number of parallel sessions                                   |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_nb_table               | INT         | number of tables contained in the processed tables groups     |
+| rlbk_nb_table               | INT         | number of tables contained in the processed table groups      |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_nb_sequence            | INT         | number of sequences contained in the processed tables groups  |
+| rlbk_nb_sequence            | INT         | number of sequences contained in the processed table groups   |
 +-----------------------------+-------------+---------------------------------------------------------------+
 | rlbk_eff_nb_table           | INT         | number of tables having updates to cancel                     |
 +-----------------------------+-------------+---------------------------------------------------------------+
@@ -160,7 +160,7 @@ The :ref:`emaj_get_consolidable_rollbacks() <emaj_get_consolidable_rollbacks>` f
 
 Like rollback functions, the *emaj_consolidate_rollback_group()* function returns the number of effectively processed tables and sequences.
 
-The tables group may be in *LOGGING* or in *IDLE* state.
+The table group may be in *LOGGING* or in *IDLE* state.
 
 The rollback target mark must always exist but may have been renamed. However, intermediate marks may have been deleted.
 
@@ -188,7 +188,7 @@ The function returns a set of rows with the following columns:
 +-------------------------------+-------------+-------------------------------------------+
 | Column                        | Type        | Description                               |
 +===============================+=============+===========================================+
-| cons_group                    | TEXT        | rolled back tables group                  |
+| cons_group                    | TEXT        | rolled back table group                   |
 +-------------------------------+-------------+-------------------------------------------+
 | cons_target_rlbk_mark_name    | TEXT        | rollback target mark name                 |
 +-------------------------------+-------------+-------------------------------------------+
@@ -203,9 +203,9 @@ The function returns a set of rows with the following columns:
 | cons_marks                    | INT         | number of intermediate marks              |
 +-------------------------------+-------------+-------------------------------------------+
 
-(*) emaj_time_stamp table identifiers ; this table contains the time stamps of the most important events of the tables groups life.
+(*) emaj_time_stamp table identifiers ; this table contains the time stamps of the most important events of the table groups life.
 
-Using this function, it is easy to consolidate at once all “*consolidable*” rollbacks for all tables groups in order to recover as much as possible disk space::
+Using this function, it is easy to consolidate at once all “*consolidable*” rollbacks for all table groups in order to recover as much as possible disk space::
 
    SELECT emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark__name)
           FROM emaj.emaj_get_consolidable_rollbacks();

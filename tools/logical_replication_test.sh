@@ -342,7 +342,7 @@ echo "-------------------------------------------------------"
 psql -h $PUBHOST  -p $PUBPORT $PUBDATABASE -a <<EOF
 \set ON_ERROR_STOP
 
--- Remove the table from its tables group. The log table rename is reported into the publication
+-- Remove the table from its table group. The log table rename is reported into the publication
 select emaj.emaj_remove_table('logrep_schema','logged_table');
 \dt emaj_logrep_schema.*
 \dRp+

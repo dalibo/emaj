@@ -16,7 +16,7 @@ The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the 
 
 The function doesn't return any data.
 
-To modify an existing comment, just call the function again for the same tables group and the same mark, with the new comment.
+To modify an existing comment, just call the function again for the same table group and the same mark, with the new comment.
 
 To delete a comment, just call the function, supplying a *NULL* value as comment.
 
@@ -27,7 +27,7 @@ Comments are mostly interesting when using :doc:`Emaj_web<webUsage>`, that syste
 Search a mark
 -------------
 
-The *emaj_get_previous_mark_group()* function provides the name of the latest mark before either a given date and time or another mark for a tables group. ::
+The *emaj_get_previous_mark_group()* function provides the name of the latest mark before either a given date and time or another mark for a table group. ::
 
    SELECT emaj.emaj_get_previous_mark_group('<group.name>', '<date.time>');
 
@@ -54,7 +54,7 @@ The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the 
 
 The function does not return any data.
 
-A mark having the same name as the requested new name should not already exist for the tables group.
+A mark having the same name as the requested new name should not already exist for the table group.
 
 .. _emaj_delete_mark_group:
 
@@ -69,11 +69,11 @@ The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the 
 
 The function returns 1, corresponding to the number of effectively deleted marks.
 
-As at least one mark must remain after the function has been performed, a mark deletion is only possible when there are at least two marks for the concerned tables group. 
+As at least one mark must remain after the function has been performed, a mark deletion is only possible when there are at least two marks for the concerned table group. 
 
-If the deleted mark is the first mark of the tables group, the useless rows of log tables are deleted.
+If the deleted mark is the first mark of the table group, the useless rows of log tables are deleted.
 
-If a table has been :ref:`detached from a tables group in LOGGING state<remove_table_sequence>`, and the deleted mark corresponds to the last known mark for this table, the logs for the period between this mark and the preceeding one are deleted,
+If a table has been :ref:`detached from a table group in LOGGING state<remove_table_sequence>`, and the deleted mark corresponds to the last known mark for this table, the logs for the period between this mark and the preceeding one are deleted,
 
 .. _emaj_delete_before_mark_group:
 
@@ -94,7 +94,7 @@ The function also performs a purge of the oldest events in the :ref:`emaj_hist <
 
 With this function, it is quite easy to use E-Maj for a long period of time, without stopping and restarting groups, while limiting the disk space needed for accumulated log records.
 
-However, as the log rows deletion cannot use any *TRUNCATE* command (unlike with the :ref:`emaj_start_group() <emaj_start_group>` or :ref:`emaj_reset_group() <emaj_reset_group>` functions), using *emaj_delete_before_mark_group()* function may take a longer time than simply stopping and restarting the group. In return, no lock is set on the tables of the group. Its execution may continue while other processes update the application tables. Nothing but other E-Maj operations on the same tables group, like setting a new mark, would wait until the end of an *emaj_delete_before_mark_group()* function execution.
+However, as the log rows deletion cannot use any *TRUNCATE* command (unlike with the :ref:`emaj_start_group() <emaj_start_group>` or :ref:`emaj_reset_group() <emaj_reset_group>` functions), using *emaj_delete_before_mark_group()* function may take a longer time than simply stopping and restarting the group. In return, no lock is set on the tables of the group. Its execution may continue while other processes update the application tables. Nothing but other E-Maj operations on the same table group, like setting a new mark, would wait until the end of an *emaj_delete_before_mark_group()* function execution.
 
 When associated, the functions *emaj_delete_before_mark_group()* and :ref:`emaj_get_previous_mark_group() <emaj_get_previous_mark_group>` allow to delete marks older than a retention delay. For example, to suppress all marks (and the associated log rows) set since more than 24 hours, the following statement can be executed::
 
@@ -107,27 +107,27 @@ When associated, the functions *emaj_delete_before_mark_group()* and :ref:`emaj_
 Protect a mark against rollbacks
 --------------------------------
 
-To complement the mechanism of :ref:`tables group protection <emaj_protect_group>` against accidental rollbacks, it is possible to set protection at mark level. Two functions fit this need.
+To complement the mechanism of :ref:`table group protection <emaj_protect_group>` against accidental rollbacks, it is possible to set protection at mark level. Two functions fit this need.
 
-The *emaj_protect_mark_group()* function sets a protection on a mark for a tables group.::
+The *emaj_protect_mark_group()* function sets a protection on a mark for a table group.::
 
    SELECT emaj.emaj_protect_mark_group('<groupe.name>','<mark.name>');
 
 The function returns the integer 1 if the mark was not previously protected, or 0 if it was already protected.
 
-Once a mark is protected, any *logged* or *unlogged rollback* attempt is refused if it reset the tables group in a state prior this protected mark.
+Once a mark is protected, any *logged* or *unlogged rollback* attempt is refused if it reset the table group in a state prior this protected mark.
 
-A mark of an "*audit-only*" or an *IDLE* tables group cannot be protected.
+A mark of an "*audit-only*" or an *IDLE* table group cannot be protected.
 
-When a mark is set, it is not protected. Protected marks of a tables group automatically loose their protection when the group is stopped. Warning: deleting a protected mark also deletes its protection. This protection is not moved on an adjacent mark.
+When a mark is set, it is not protected. Protected marks of a table group automatically loose their protection when the group is stopped. Warning: deleting a protected mark also deletes its protection. This protection is not moved on an adjacent mark.
 
-The emaj_unprotect_mark_group() function remove an existing protection on a tables group mark. ::
+The emaj_unprotect_mark_group() function remove an existing protection on a table group mark. ::
 
    SELECT emaj.emaj_unprotect_mark_group('<group.name>','<mark.name>');
 
 The function returns the integer 1 if the mark was previously protected, or 0 if it was not yet protected.
 
-A mark of an "*audit-only*" tables group cannot be unprotected.
+A mark of an "*audit-only*" table group cannot be unprotected.
 
 Once a mark protection is removed, it becomes possible to execute any type of rollback on a previous mark.
 

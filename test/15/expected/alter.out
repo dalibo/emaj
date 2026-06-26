@@ -111,17 +111,17 @@ SELECT emaj.emaj_assign_table('phil''s schema"3', 'myTbl2\', 'myGroup5');
 -- Missing table.
 SELECT emaj.emaj_remove_table('dummySchema', 'mytbl1');
 WARNING:  _check_schema: The schema "dummySchema" does not exist.
-ERROR:  _check_tblseqs_array: In schema "dummySchema", some tables (mytbl1) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "dummySchema", some tables (mytbl1) do not currently belong to any table group.
 SELECT emaj.emaj_remove_table('myschema1', 'dummyTable');
 WARNING:  _check_tblseqs_array: In schema "myschema1", some tables ("dummyTable") do not exist.
-ERROR:  _check_tblseqs_array: In schema "myschema1", some tables ("dummyTable") do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema1", some tables ("dummyTable") do not currently belong to any table group.
 -- Table not in a group.
 SELECT emaj.emaj_remove_table('myschema6', 'table_with_50_characters_long_name_____0_________0');
-ERROR:  _check_tblseqs_array: In schema "myschema6", some tables (table_with_50_characters_long_name_____0_________0) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema6", some tables (table_with_50_characters_long_name_____0_________0) do not currently belong to any table group.
 -- Bad relation kind.
 SELECT emaj.emaj_remove_table('myschema1', 'mytbl2b_col20_seq');
 WARNING:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl2b_col20_seq) do not exist.
-ERROR:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl2b_col20_seq) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl2b_col20_seq) do not currently belong to any table group.
 -- Bad mark.
 SELECT emaj.emaj_remove_table('myschema1', 'mytbl1', 'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
@@ -161,7 +161,7 @@ WARNING:  _remove_tables: No table to process.
 -- Missing table.
 SELECT emaj.emaj_remove_tables('myschema1', ARRAY['dummyTable', 'mytbl1', 'mytbl2']);
 WARNING:  _check_tblseqs_array: In schema "myschema1", some tables ("dummyTable") do not exist.
-ERROR:  _check_tblseqs_array: In schema "myschema1", some tables ("dummyTable", mytbl1) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema1", some tables ("dummyTable", mytbl1) do not currently belong to any table group.
 -- Ok (with a duplicate table name).
 SELECT emaj.emaj_remove_tables('myschema1', ARRAY['mytbl2', 'mytbl2b', 'mytbl2']);
  emaj_remove_tables 
@@ -223,17 +223,17 @@ SELECT group_last_alter_time_id, group_nb_table, group_nb_sequence FROM emaj.ema
 -- Missing sequence.
 SELECT emaj.emaj_remove_sequence('dummySchema', 'myseq1');
 WARNING:  _check_schema: The schema "dummySchema" does not exist.
-ERROR:  _check_tblseqs_array: In schema "dummySchema", some sequences (myseq1) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "dummySchema", some sequences (myseq1) do not currently belong to any table group.
 SELECT emaj.emaj_remove_sequence('myschema2', 'dummySequence');
 WARNING:  _check_tblseqs_array: In schema "myschema2", some sequences ("dummySequence") do not exist.
-ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences ("dummySequence") do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences ("dummySequence") do not currently belong to any table group.
 -- Sequence not in a group.
 SELECT emaj.emaj_remove_sequence('myschema2', 'myseq2');
-ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences (myseq2) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences (myseq2) do not currently belong to any table group.
 -- Bad relation kind.
 SELECT emaj.emaj_remove_sequence('myschema2', 'mytbl1');
 WARNING:  _check_tblseqs_array: In schema "myschema2", some sequences (mytbl1) do not exist.
-ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences (mytbl1) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences (mytbl1) do not currently belong to any table group.
 -- Bad mark.
 SELECT emaj.emaj_remove_sequence('myschema2', 'myseq1', 'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
@@ -273,7 +273,7 @@ WARNING:  _remove_sequences: No sequence to process.
 -- Missing sequence.
 SELECT emaj.emaj_remove_sequences('myschema2', ARRAY['dummyTable', 'myseq2']);
 WARNING:  _check_tblseqs_array: In schema "myschema2", some sequences ("dummyTable") do not exist.
-ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences ("dummyTable", myseq2) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences ("dummyTable", myseq2) do not currently belong to any table group.
 -- Ok (with a duplicate sequence name).
 SELECT emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2');
  emaj_assign_sequence 
@@ -534,7 +534,7 @@ SELECT hist_function, hist_event, hist_object,
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema1.mytbl2b_col20_seq                        | To the idle group myGroup1                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2."myTbl3_col31_seq"                       | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2.myseq1                                   | To the idle group myGroup2                                 | postgres
- IMPORT_GROUPS    | END                |                                                    | 5 created or altered tables groups                         | postgres
+ IMPORT_GROUPS    | END                |                                                    | 5 created or altered table groups                          | postgres
  ASSIGN_TABLE     | BEGIN              |                                                    |                                                            | postgres
  ASSIGN_TABLE     | TIME STAMP SET     | 8011                                               |                                                            | postgres
  ASSIGN_TABLE     | LOG_SCHEMA CREATED | "emaj_phil's schema""3"                            |                                                            | postgres
@@ -609,7 +609,7 @@ SELECT hist_function, hist_event, hist_object,
  IMPORT_GROUPS    | TABLE ADDED        | myschema1.mytbl2b                                  | To the idle group myGroup1                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2."myTbl3_col31_seq"                       | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2.myseq1                                   | To the idle group myGroup2                                 | postgres
- IMPORT_GROUPS    | END                |                                                    | 4 created or altered tables groups                         | postgres
+ IMPORT_GROUPS    | END                |                                                    | 4 created or altered table groups                          | postgres
 (158 rows)
 
 -- Set sequence restart value.
@@ -630,7 +630,7 @@ SELECT emaj.emaj_move_table('myschema1', 'dummyTable', 'myGroup2');
 ERROR:  _check_tblseqs_array: In schema "myschema1", some tables ("dummyTable") do not exist!
 -- Table not in a group.
 SELECT emaj.emaj_move_table('myschema6', 'table_with_50_characters_long_name_____0_________0', 'myGroup1');
-ERROR:  _check_tblseqs_array: In schema "myschema6", some tables (table_with_50_characters_long_name_____0_________0) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema6", some tables (table_with_50_characters_long_name_____0_________0) do not currently belong to any table group.
 -- Bad relation kind.
 SELECT emaj.emaj_move_table('myschema1', 'mytbl2b_col20_seq', 'myGroup2');
 ERROR:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl2b_col20_seq) do not exist!
@@ -647,7 +647,7 @@ SELECT emaj.emaj_move_table('phil''s schema"3', 'myTbl2\', 'myGroup1');
 ERROR:  _check_tables_for_rollbackable_group: In schema "phil's schema""3", some tables ("myTbl2\") have no PRIMARY KEY.
 -- Move to the same group.
 SELECT emaj.emaj_move_table('myschema1', 'mytbl1', 'myGroup1');
-WARNING:  _move_tables: In schema "myschema1", some tables (mytbl1) already belong to the tables group "myGroup1".
+WARNING:  _move_tables: In schema "myschema1", some tables (mytbl1) already belong to the table group "myGroup1".
 WARNING:  _move_tables: No table to process.
  emaj_move_table 
 -----------------
@@ -695,7 +695,7 @@ SELECT emaj.emaj_move_tables('myschema5', ARRAY['myunloggedtbl'], 'myGroup1');
 ERROR:  _check_tables_for_rollbackable_group: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
 -- Move to the same group.
 SELECT emaj.emaj_move_tables('myschema1', ARRAY['mytbl2', 'mytbl2b'], 'myGroup1');
-WARNING:  _move_tables: In schema "myschema1", some tables (mytbl2, mytbl2b) already belong to the tables group "myGroup1".
+WARNING:  _move_tables: In schema "myschema1", some tables (mytbl2, mytbl2b) already belong to the table group "myGroup1".
 WARNING:  _move_tables: No table to process.
  emaj_move_tables 
 ------------------
@@ -809,7 +809,7 @@ SELECT emaj.emaj_move_sequence('myschema2', 'dummySequence', 'myGroup1');
 ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences ("dummySequence") do not exist!
 -- Sequence not in a group.
 SELECT emaj.emaj_move_sequence('myschema2', 'myseq2', 'myGroup1');
-ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences (myseq2) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences (myseq2) do not currently belong to any table group.
 -- Bad relation kind.
 SELECT emaj.emaj_move_sequence('myschema2', 'mytbl1', 'myGroup1');
 ERROR:  _check_tblseqs_array: In schema "myschema2", some sequences (mytbl1) do not exist!
@@ -821,7 +821,7 @@ SELECT emaj.emaj_move_sequence('myschema2', 'myseq1', 'myGroup1', 'EMAJ_LAST_MAR
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 -- Move to the same group.
 SELECT emaj.emaj_move_sequence('myschema2', 'myseq1', 'myGroup2');
-WARNING:  _move_sequences: In schema "myschema2", some sequences (myseq1) already belong to the tables group "myGroup2".
+WARNING:  _move_sequences: In schema "myschema2", some sequences (myseq1) already belong to the table group "myGroup2".
 WARNING:  _move_sequences: No sequence to process.
  emaj_move_sequence 
 --------------------
@@ -866,14 +866,14 @@ WARNING:  _move_sequences: No sequence to process.
 
 -- Move to the same group.
 SELECT emaj.emaj_move_sequences('myschema2', ARRAY['myseq1', 'myTbl3_col31_seq'], 'myGroup2');
-WARNING:  _move_sequences: In schema "myschema2", some sequences ("myTbl3_col31_seq") already belong to the tables group "myGroup2".
+WARNING:  _move_sequences: In schema "myschema2", some sequences ("myTbl3_col31_seq") already belong to the table group "myGroup2".
  emaj_move_sequences 
 ---------------------
                    1
 (1 row)
 
 SELECT emaj.emaj_move_sequences('myschema2', ARRAY['myseq1', 'myTbl3_col31_seq'], 'myGroup2');
-WARNING:  _move_sequences: In schema "myschema2", some sequences ("myTbl3_col31_seq", myseq1) already belong to the tables group "myGroup2".
+WARNING:  _move_sequences: In schema "myschema2", some sequences ("myTbl3_col31_seq", myseq1) already belong to the table group "myGroup2".
 WARNING:  _move_sequences: No sequence to process.
  emaj_move_sequences 
 ---------------------
@@ -987,75 +987,75 @@ SELECT hist_function, hist_event, hist_object,
  hist_function  |   hist_event   |    hist_object    |                     regexp_replace                      | hist_user 
 ----------------+----------------+-------------------+---------------------------------------------------------+-----------
  MOVE_TABLE     | BEGIN          |                   |                                                         | postgres
- MOVE_TABLE     | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLE     | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLE     | BEGIN          |                   |                                                         | postgres
  MOVE_TABLE     | TIME STAMP SET | 8200              |                                                         | postgres
  MOVE_TABLE     | TABLE MOVED    | myschema1.mytbl1  | From the idle group myGroup1 to the idle group myGroup2 | postgres
- MOVE_TABLE     | END            |                   | 1 tables moved to the tables group myGroup2             | postgres
+ MOVE_TABLE     | END            |                   | 1 tables moved to the table group myGroup2              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
  MOVE_TABLES    | TIME STAMP SET | 8201              |                                                         | postgres
  MOVE_TABLES    | TABLE MOVED    | myschema1.mytbl2  | From the idle group myGroup1 to the idle group myGroup2 | postgres
  MOVE_TABLES    | TABLE MOVED    | myschema1.mytbl2b | From the idle group myGroup1 to the idle group myGroup2 | postgres
- MOVE_TABLES    | END            |                   | 2 tables moved to the tables group myGroup2             | postgres
+ MOVE_TABLES    | END            |                   | 2 tables moved to the table group myGroup2              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
  MOVE_TABLES    | TIME STAMP SET | 8202              |                                                         | postgres
  MOVE_TABLES    | TABLE MOVED    | myschema1.mytbl1  | From the idle group myGroup2 to the idle group myGroup1 | postgres
  MOVE_TABLES    | TABLE MOVED    | myschema1.mytbl2b | From the idle group myGroup2 to the idle group myGroup1 | postgres
- MOVE_TABLES    | END            |                   | 2 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 2 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
  MOVE_TABLES    | TIME STAMP SET | 8203              |                                                         | postgres
  MOVE_TABLES    | TABLE MOVED    | myschema1.mytbl2  | From the idle group myGroup2 to the idle group myGroup1 | postgres
- MOVE_TABLES    | END            |                   | 1 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 1 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_TABLES    | BEGIN          |                   |                                                         | postgres
- MOVE_TABLES    | END            |                   | 0 tables moved to the tables group myGroup1             | postgres
+ MOVE_TABLES    | END            |                   | 0 tables moved to the table group myGroup1              | postgres
  MOVE_SEQUENCE  | BEGIN          |                   |                                                         | postgres
- MOVE_SEQUENCE  | END            |                   | 0 sequences moved to the tables group myGroup2          | postgres
+ MOVE_SEQUENCE  | END            |                   | 0 sequences moved to the table group myGroup2           | postgres
  MOVE_SEQUENCE  | BEGIN          |                   |                                                         | postgres
  MOVE_SEQUENCE  | TIME STAMP SET | 8204              |                                                         | postgres
  MOVE_SEQUENCE  | SEQUENCE MOVED | myschema2.myseq1  | From the idle group myGroup2 to the idle group myGroup1 | postgres
- MOVE_SEQUENCE  | END            |                   | 1 sequences moved to the tables group myGroup1          | postgres
+ MOVE_SEQUENCE  | END            |                   | 1 sequences moved to the table group myGroup1           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
- MOVE_SEQUENCES | END            |                   | 0 sequences moved to the tables group myGroup1          | postgres
+ MOVE_SEQUENCES | END            |                   | 0 sequences moved to the table group myGroup1           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
- MOVE_SEQUENCES | END            |                   | 0 sequences moved to the tables group myGroup1          | postgres
+ MOVE_SEQUENCES | END            |                   | 0 sequences moved to the table group myGroup1           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
- MOVE_SEQUENCES | END            |                   | 0 sequences moved to the tables group myGroup1          | postgres
+ MOVE_SEQUENCES | END            |                   | 0 sequences moved to the table group myGroup1           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
  MOVE_SEQUENCES | TIME STAMP SET | 8205              |                                                         | postgres
  MOVE_SEQUENCES | SEQUENCE MOVED | myschema2.myseq1  | From the idle group myGroup1 to the idle group myGroup2 | postgres
- MOVE_SEQUENCES | END            |                   | 1 sequences moved to the tables group myGroup2          | postgres
+ MOVE_SEQUENCES | END            |                   | 1 sequences moved to the table group myGroup2           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
- MOVE_SEQUENCES | END            |                   | 0 sequences moved to the tables group myGroup2          | postgres
+ MOVE_SEQUENCES | END            |                   | 0 sequences moved to the table group myGroup2           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
  MOVE_SEQUENCES | TIME STAMP SET | 8206              |                                                         | postgres
  MOVE_SEQUENCES | SEQUENCE MOVED | myschema2.myseq1  | From the idle group myGroup2 to the idle group myGroup4 | postgres
- MOVE_SEQUENCES | END            |                   | 1 sequences moved to the tables group myGroup4          | postgres
+ MOVE_SEQUENCES | END            |                   | 1 sequences moved to the table group myGroup4           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
- MOVE_SEQUENCES | END            |                   | 0 sequences moved to the tables group myGroup2          | postgres
+ MOVE_SEQUENCES | END            |                   | 0 sequences moved to the table group myGroup2           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
- MOVE_SEQUENCES | END            |                   | 0 sequences moved to the tables group myGroup2          | postgres
+ MOVE_SEQUENCES | END            |                   | 0 sequences moved to the table group myGroup2           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
- MOVE_SEQUENCES | END            |                   | 0 sequences moved to the tables group myGroup2          | postgres
+ MOVE_SEQUENCES | END            |                   | 0 sequences moved to the table group myGroup2           | postgres
  MOVE_SEQUENCES | BEGIN          |                   |                                                         | postgres
  MOVE_SEQUENCES | TIME STAMP SET | 8207              |                                                         | postgres
  MOVE_SEQUENCES | SEQUENCE MOVED | myschema2.myseq1  | From the idle group myGroup4 to the idle group myGroup2 | postgres
- MOVE_SEQUENCES | END            |                   | 1 sequences moved to the tables group myGroup2          | postgres
+ MOVE_SEQUENCES | END            |                   | 1 sequences moved to the table group myGroup2           | postgres
 (70 rows)
 
 -- Set sequence restart value.
@@ -1076,7 +1076,7 @@ SELECT emaj.emaj_modify_table('myschema1', 'dummyTable', NULL);
 ERROR:  _check_tblseqs_array: In schema "myschema1", some tables ("dummyTable") do not exist!
 -- Table not in a group.
 SELECT emaj.emaj_modify_table('myschema6', 'table_with_50_characters_long_name_____0_________0', NULL);
-ERROR:  _check_tblseqs_array: In schema "myschema6", some tables (table_with_50_characters_long_name_____0_________0) do not currently belong to any tables group.
+ERROR:  _check_tblseqs_array: In schema "myschema6", some tables (table_with_50_characters_long_name_____0_________0) do not currently belong to any table group.
 -- Bad relation kind.
 SELECT emaj.emaj_modify_table('myschema1', 'mytbl2b_col20_seq', NULL);
 ERROR:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl2b_col20_seq) do not exist!

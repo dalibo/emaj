@@ -3,25 +3,25 @@ Count data content changes
 
 Data stored into E-Maj technical tables or log tables allow to build statistics about recorded changes.
 
-For this purpose, two functions sets are available for users. They produce statistics either at tables group level, or at individual table or sequence level.
+For this purpose, two functions sets are available for users. They produce statistics either at table group level, or at individual table or sequence level.
 
 These functions can be used by *emaj_adm* and *emaj_viewer* E-Maj roles.
 
 Tables group level statistics
 -----------------------------
 
-Six functions return statistics about recorded data content changes for **all tables or sequences** belonging to one or several **tables groups** on a **single marks interval** or since a mark:
+Six functions return statistics about recorded data content changes for **all tables or sequences** belonging to one or several **table groups** on a **single marks interval** or since a mark:
 
-* :ref:`emaj_log_stat_group() <emaj_log_stat_group>` and :ref:`emaj_log_stat_groups() <emaj_log_stat_group>` quickly deliver, for each table from one or several tables groups, the number of changes that have been recorded in their related log tables,
+* :ref:`emaj_log_stat_group() <emaj_log_stat_group>` and :ref:`emaj_log_stat_groups() <emaj_log_stat_group>` quickly deliver, for each table from one or several table groups, the number of changes that have been recorded in their related log tables,
 * :ref:`emaj_detailed_log_stat_group()<emaj_detailed_log_stat_group>` and :ref:`emaj_detailed_log_stat_groups()<emaj_detailed_log_stat_group>` provide more detailed information than *emaj_log_stat_group()*, the number of updates been reported per table, SQL verb type and connection role,
-* :ref:`emaj_sequence_stat_group() <emaj_sequence_stat_group>` and :ref:`emaj_sequence_stat_groups() <emaj_sequence_stat_group>` return statistics about how sequences from one or several tables groups change.
+* :ref:`emaj_sequence_stat_group() <emaj_sequence_stat_group>` and :ref:`emaj_sequence_stat_groups() <emaj_sequence_stat_group>` return statistics about how sequences from one or several table groups change.
 
 .. _emaj_log_stat_group:
 
-Global statistics about log tables contents for one or several tables groups
+Global statistics about log tables contents for one or several table groups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Full global statistics about logs content for a tables group are available with this SQL statement::
+Full global statistics about logs content for a table group are available with this SQL statement::
 
    SELECT * FROM emaj.emaj_log_stat_group('<group.name>', '<start.mark>', '<end.mark>');
 
@@ -30,7 +30,7 @@ The function returns a set of rows, whose type is named *emaj.emaj_log_stat_type
 +--------------------------+-------------+-------------------------------------------------------+
 | Column                   | Type        | Description                                           |
 +==========================+=============+=======================================================+ 
-| stat_group               | TEXT        | tables group name                                     |
+| stat_group               | TEXT        | table group name                                      |
 +--------------------------+-------------+-------------------------------------------------------+
 | stat_schema              | TEXT        | schema name                                           |
 +--------------------------+-------------+-------------------------------------------------------+
@@ -59,7 +59,7 @@ If the marks range is not contained by a single *log session*, i.e. if group sto
 
 The function returns one row per table, even if there is no logged update for this table. In this case, stat_rows columns value is 0.
 
-Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
+Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the table group during the requested time interval.
 
 If a table is removed from its group and later re-assigned to it during the resquested time frame, several rows are returned in the statistics. In this case, *stat_first_time_id* and *stat_last_time_id* columns can used to reliably sort these multiple time slices (internal server clock fluctuations may produce consecutive *stat_first_datetime* or *stat_last_datetime* not always in ascending order).
 
@@ -87,7 +87,7 @@ More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
 .. _emaj_detailed_log_stat_group:
 
-Detailed statistics about logs for one or several tables groups
+Detailed statistics about logs for one or several table groups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Scanning log tables brings a more detailed information, at a higher response time cost. So can we get fully detailed statistics with the following SQL statement::
@@ -100,7 +100,7 @@ The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | Column                   | Type        | Description                                                                                      |
 +==========================+=============+==================================================================================================+
-| stat_group               | TEXT        | tables group name                                                                                |
+| stat_group               | TEXT        | table group name                                                                                 |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | stat_schema              | TEXT        | schema name                                                                                      |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
@@ -133,7 +133,7 @@ If the marks range is not contained by a single *log session*, i.e. if group sto
 
 Unlike :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, the *emaj_detailed_log_stat_group()* function doesn't return any rows for tables having no logged updates inside the requested marks range. So *stat_rows* column never contains 0.
 
-Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
+Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the table group during the requested time interval.
 
 If a table is removed from its group and later re-assigned to it during the resquested time frame, several rows are returned in the statistics. In this case, *stat_first_time_id* and *stat_last_time_id* columns can used to reliably sort these multiple time slices (internal server clock fluctuations may produce consecutive *stat_first_datetime* or *stat_last_datetime* not always in ascending order).
 
@@ -146,10 +146,10 @@ More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
 .. _emaj_sequence_stat_group:
 
-Statistics about sequence changes for one or several tables groups
+Statistics about sequence changes for one or several table groups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Global statistics about how sequences of a tables group change are available with this SQL statement::
+Global statistics about how sequences of a table group change are available with this SQL statement::
 
    SELECT * FROM emaj.emaj_sequence_stat_group('<group.name>', '<start.mark>', '<end.mark>');
 
@@ -158,7 +158,7 @@ The function returns a set of rows, whose type is named *emaj.emaj_sequence_stat
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
 | Column                     | Type        | Description                                                                          |
 +============================+=============+======================================================================================+
-| stat_group                 | TEXT        | tables group name                                                                    |
+| stat_group                 | TEXT        | table group name                                                                     |
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
 | stat_schema                | TEXT        | schema name                                                                          |
 +----------------------------+-------------+--------------------------------------------------------------------------------------+
@@ -187,7 +187,7 @@ The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the 
 
 The function returns one row per sequence, even if no change has been detected during the period.
 
-Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a sequence has been added or removed from the tables group during the requested time interval.
+Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a sequence has been added or removed from the table group during the requested time interval.
 
 If a sequence is removed from its group and later re-assigned to it during the resquested time frame, several rows are returned in the statistics. In this case, *stat_first_time_id* and *stat_last_time_id* columns can used to reliably sort these multiple time slices (internal server clock fluctuations may produce consecutive *stat_first_datetime* or *stat_last_datetime* not always in ascending order).
 
@@ -236,7 +236,7 @@ Both functions return a set of rows of type *emaj.emaj_log_stat_table_type* and 
 +----------------------------+-------------+-------------------------------------------------------+
 | Column                     | Type        | Description                                           |
 +============================+=============+=======================================================+
-| stat_group                 | TEXT        | tables group name                                     |
+| stat_group                 | TEXT        | table group name                                      |
 +----------------------------+-------------+-------------------------------------------------------+
 | stat_first_mark            | TEXT        | mark of the time slice lower bound                    |
 +----------------------------+-------------+-------------------------------------------------------+
@@ -261,7 +261,7 @@ Both functions return a set of rows of type *emaj.emaj_log_stat_table_type* and 
 
 In the first function variant, the observation is framed by two start date-time and end date-time parameters of type *TIMESTAMPTZ*. The first returned interval surrounds the start date-time. The last returned interval surrounds the end date-time.
 
-In the second function variant, the observation is framed by two marks defined by their tables group and mark names. These marks are just points in time: they not necessarily belong to the tables group owning the examined table. If the lower bound mark doesn’t match a known state of the table (i.e. if the start tables group didn’t owned the table at this start mark time), the first returned interval surrounds this first mark. Similarly, If the upper bound mark doesn’t match a known state of the table (i.e. if the end tables group didn’t owned the table at this end mark time), the last returned interval surrounds this end mark.
+In the second function variant, the observation is framed by two marks defined by their table group and mark names. These marks are just points in time: they not necessarily belong to the table group owning the examined table. If the lower bound mark doesn’t match a known state of the table (i.e. if the start table group didn’t owned the table at this start mark time), the first returned interval surrounds this first mark. Similarly, If the upper bound mark doesn’t match a known state of the table (i.e. if the end table group didn’t owned the table at this end mark time), the last returned interval surrounds this end mark.
 
 If parameters defining the observation start are not set or are set to *NULL*, the observation starts at the oldest available data for the table.
 
@@ -293,7 +293,7 @@ Both functions return a set of rows of type *emaj.emaj_log_stat_sequence_type* a
 +----------------------------+-------------+--------------------------------------------------------+
 | Column                     | Type        | Description                                            |
 +============================+=============+========================================================+
-| stat_group                 | TEXT        | tables group name                                      |
+| stat_group                 | TEXT        | table group name                                       |
 +----------------------------+-------------+--------------------------------------------------------+
 | stat_first_mark            | TEXT        | mark of the time slice lower bound                     |
 +----------------------------+-------------+--------------------------------------------------------+
@@ -320,7 +320,7 @@ Both functions return a set of rows of type *emaj.emaj_log_stat_sequence_type* a
 
 In the first function variant, the observation is framed by two start date-time and end date-time parameters of type TIMESTAMPTZ. The first returned interval surrounds the start date-time. The last returned interval surrounds the end date-time.
 
-In the second function variant, the observation is framed by two marks defined by their tables group and mark names. These marks are just points in time: they not necessarily belong to the tables group owning the examined sequence. If the lower bound mark doesn’t match a known state of the sequence (i.e. if the start tables group didn’t owned the sequence at this start mark time), the first returned interval surrounds this first mark. Similarly, If the upper bound mark doesn’t match a known state of the sequence (i.e. if the end tables group didn’t owned the sequence at this end mark time), the last returned interval surrounds this end mark.
+In the second function variant, the observation is framed by two marks defined by their table group and mark names. These marks are just points in time: they not necessarily belong to the table group owning the examined sequence. If the lower bound mark doesn’t match a known state of the sequence (i.e. if the start table group didn’t owned the sequence at this start mark time), the first returned interval surrounds this first mark. Similarly, If the upper bound mark doesn’t match a known state of the sequence (i.e. if the end table group didn’t owned the sequence at this end mark time), the last returned interval surrounds this end mark.
 
 If parameters defining the observation start are not set or are set to *NULL*, the observation starts at the oldest available data for the sequence.
 

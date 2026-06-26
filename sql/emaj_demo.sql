@@ -201,7 +201,7 @@ select * from emaj_emaj_demo_app_schema.mytbl4_log;
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
-\echo '---  Let us set a second mark on "emaj demo group 1" tables group and   ---'
+\echo '---  Let us set a second mark on "emaj demo group 1" table group and   ---'
 \echo '---  perform some new tables updates.                                   ---'
 \echo '---                                                                     ---'
 \echo '---------------------------------------------------------------------------'
@@ -230,7 +230,7 @@ select * from emaj.emaj_detailed_log_stat_group('emaj demo group 1','EMAJ_LAST_M
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
-\echo '---  Let us set a third mark on "emaj demo group 1" tables group and    ---'
+\echo '---  Let us set a third mark on "emaj demo group 1" table group and    ---'
 \echo '---  perform some new tables updates.                                   ---'
 \echo '---                                                                     ---'
 \echo '---------------------------------------------------------------------------'
@@ -258,7 +258,7 @@ select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1','MARK1',
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
-\echo '---  Let us rollback "emaj demo group 1" tables group to MARK2.         ---'
+\echo '---  Let us rollback "emaj demo group 1" table group to MARK2.         ---'
 \echo '---                                                                     ---'
 \echo '---------------------------------------------------------------------------'
 
@@ -517,7 +517,7 @@ select * from emaj_emaj_demo_app_schema."myTbl3_log";
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
-\echo '---  Sometimes, tables structure or tables groups content change...     ---'
+\echo '---  Sometimes, tables structure or table groups content change...     ---'
 \echo '---                                                                     ---'
 \echo '---------------------------------------------------------------------------'
 

@@ -33,14 +33,14 @@ Use tablespaces
 
 Creating tables into tablespaces located in dedicated disks or file systems is a way to more efficiently spread the access to these tables. To minimize the disturbance of application tables access by log tables access, the E-Maj administrator has two ways to use tablespaces for log tables and indexes location.
 
-By setting a specific default tablespace for the session before the tables groups creation, log tables and indexes are created by default into this tablespace, without any additional action.
+By setting a specific default tablespace for the session before the table groups creation, log tables and indexes are created by default into this tablespace, without any additional action.
 
 But through parameters set when calling the :ref:`emaj_assign_table(), emaj_assign_tables()<assign_table_sequence>` and :ref:`emaj_modify_table()<modify_table>` functions, it is also possible to specify a tablespace to use for any log table or log index
 
 Declare foreign keys as *DEFERRABLE* 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Foreign keys can be explicitly declared as *DEFERRABLE* at creation time. If a foreign key links two tables belonging to different tables groups or if one of them doesn’t belong to any tables group and if the foreign key has no *ON DELETE* or *ON UPDATE* clause then it is recommended to declare it as *DEFERRABLE*. This will avoid to be dropped and recreated at subsequent E-Maj rollbacks. The foreign key checks of updated rows are just deferred to the end of the rollback function execution, once all log tables are processed. This generally greatly speeds up the rollback operation.
+Foreign keys can be explicitly declared as *DEFERRABLE* at creation time. If a foreign key links two tables belonging to different table groups or if one of them doesn’t belong to any table group and if the foreign key has no *ON DELETE* or *ON UPDATE* clause then it is recommended to declare it as *DEFERRABLE*. This will avoid to be dropped and recreated at subsequent E-Maj rollbacks. The foreign key checks of updated rows are just deferred to the end of the rollback function execution, once all log tables are processed. This generally greatly speeds up the rollback operation.
 
 Modify memory parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -16,16 +16,16 @@ Check the E-Maj environment consistency
 ---------------------------------------
 
 A function is also available to check the consistency of the E-Maj environment. 
-It consists in checking the integrity of all E-Maj schemas and all created tables groups. This function can be called with the following SQL statement::
+It consists in checking the integrity of all E-Maj schemas and all created table groups. This function can be called with the following SQL statement::
 
    SELECT * FROM emaj.emaj_verify_all();
 
 For each E-Maj schema (*emaj* and each log schema) the function verifies that:
 
-* all tables, functions, sequences and types contained in the schema are either objects of the extension, or linked to created tables groups,
+* all tables, functions, sequences and types contained in the schema are either objects of the extension, or linked to created table groups,
 * they don't contain any view, foreign table, domain, conversion, operator or operator class.
 
-Then, for each created tables group, the function performs the same checks as those performed when a group is started, a mark is set, or a rollback is executed (:ref:`more details <internal_checks>`).
+Then, for each created table group, the function performs the same checks as those performed when a group is started, a mark is set, or a rollback is executed (:ref:`more details <internal_checks>`).
 
 The function returns a set of rows describing the detected discrepancies. If no error is detected, the function returns a single row containing the following messages::
 
@@ -33,15 +33,15 @@ The function returns a set of rows describing the detected discrepancies. If no 
 
 The function also returns warnings when:
 
-* a sequence linked to a column belongs to a tables group, but the associated table does not belong to the same tables group,
-* a table of a tables group is linked to another table by a foreign key, but the associated table does not belong to the same tables group,
+* a sequence linked to a column belongs to a table group, but the associated table does not belong to the same table group,
+* a table of a table group is linked to another table by a foreign key, but the associated table does not belong to the same table group,
 * a :ref:`foreign key is inheritated from a partitioned table<fk_on_partitioned_tables>` but either is not *DEFERRABLE* or holds an *ON DELETE* or *ON UPDATE* clause, blocking its potential drop / recreation during an E-Maj rollback in both cases,
 * the dblink connection is not operationnal,
 * event triggers protecting E-Maj are missing or are disabled.
 
 The *emaj_verify_all()* function can be executed by any role belonging to *emaj_adm* or *emaj_viewer* roles (the dblink connection not being tested for the later).
 
-If errors are detected, for instance after an application table referenced in a tables group has been dropped, appropriate measures must be taken. Typically, the potential orphan log tables or functions must be manually dropped. 
+If errors are detected, for instance after an application table referenced in a table group has been dropped, appropriate measures must be taken. Typically, the potential orphan log tables or functions must be manually dropped. 
 
 .. _emaj_get_current_log_table:
 
@@ -53,7 +53,7 @@ The *emaj_get_current_log_table()* function allows to get the schema and table n
 	SELECT log_schema, log_table FROM
 		emaj_get_current_log_table(<schema>, <table>);
 
-The function always returns 1 row. If the application table does not currently belong to any tables group, the *log_schema* and *log_table* columns are set to NULL.
+The function always returns 1 row. If the application table does not currently belong to any table group, the *log_schema* and *log_table* columns are set to NULL.
 
 The *emaj_get_current_log_table()* function can be used by *emaj_adm* and *emaj_viewer* E-Maj roles.
 
@@ -68,7 +68,7 @@ It is possible to build a statement accessing a log table. For instance::
 Purge history data
 ------------------
 
-E-Maj keeps some historical data: traces of elementary operations, E-Maj rollback details, tables groups structure changes (:ref:`more  details...<emaj_hist>`). Oldest traces are automaticaly purged by the extension. But it is also possible to purge these obsolete traces on demand using::
+E-Maj keeps some historical data: traces of elementary operations, E-Maj rollback details, table groups structure changes (:ref:`more  details...<emaj_hist>`). Oldest traces are automaticaly purged by the extension. But it is also possible to purge these obsolete traces on demand using::
 
    SELECT emaj.emaj_purge_histories(['<retention.delay>']);
 
@@ -98,7 +98,7 @@ The function returns the number of reactivated event triggers.
 
 .. _emaj_snap_group:
 
-Snap tables and sequences of a tables group
+Snap tables and sequences of a table group
 -------------------------------------------
 
 It may be useful to take images of all tables and sequences belonging to a group to be able to analyse their content or compare them. It is possible to dump to files all tables and sequences of a group with::
@@ -111,7 +111,7 @@ The third parameter defines the output files format. It is a character string th
 
 The function returns the number of tables and sequences contained by the group.
 
-This *emaj_snap_group()* function generates one file per table and sequence belonging to the supplied tables group. These files are stored in the directory or folder corresponding to the second parameter.
+This *emaj_snap_group()* function generates one file per table and sequence belonging to the supplied table group. These files are stored in the directory or folder corresponding to the second parameter.
 
 New files will overwrite existing files of the same name.
 
@@ -123,9 +123,9 @@ Each file corresponding to a sequence has only one row, containing all character
 
 Files corresponding to tables contain one record per row, in the format corresponding to the supplied parameter. These records are sorted on the primary key ascending order (or on all columns if the table has no primary key). Each row contains all table columns, including generated columns.
 
-At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains a message including the tables group name and the date and time of the snap operation.
+At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains a message including the table group name and the date and time of the snap operation.
 
-It is not necessary that the tables group be in *IDLE* state to snap tables.
+It is not necessary that the table group be in *IDLE* state to snap tables.
 
 As this function may generate large or very large files (of course depending on tables sizes), it is user's responsibility to provide a sufficient disk space.
 

@@ -1,11 +1,11 @@
 Export and import the E-Maj configuration
 =========================================
 
-An E-Maj configuration contains the set of :ref:`E-Maj parameters<emaj_param>` and the tables groups configuration.
+An E-Maj configuration contains the set of :ref:`E-Maj parameters<emaj_param>` and the table groups configuration.
 
 Some functions can import or export them into or from an external support, as a JSON structure. They can be useful in particular:
 
-* to deploy a standardized tables groups configuration and parameters set towards several databases;
+* to deploy a standardized table groups configuration and parameters set towards several databases;
 * to upgrade the *emaj* extension with a :ref:`full uninstall and reinstall<uninstall_reinstall>`.
 
 JSON structures
@@ -13,10 +13,10 @@ JSON structures
 
 .. _tables_groups_json:
 
-JSON structure describing tables groups
+JSON structure describing table groups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The JSON structure that describes tables groups is an attribute named *"tables_groups"*, of type array, and containing substructures describing each tables group. It looks like::
+The JSON structure that describes table groups is an attribute named *"tables_groups"*, of type array, and containing substructures describing each table group. It looks like::
 
    {
    	"tables_groups": [
@@ -51,7 +51,7 @@ The JSON structure that describes tables groups is an attribute named *"tables_g
    	]
    }
 
-The *"is_rollbackable"* and *"comment"* attributes of tables groups and the *"priority"*, *"log_data_tablespace"*, *"log_index_tablespace"* and *"ignored_triggers"* attributes of tables keep their default value when they are not present in the JSON structure.
+The *"is_rollbackable"* and *"comment"* attributes of table groups and the *"priority"*, *"log_data_tablespace"*, *"log_index_tablespace"* and *"ignored_triggers"* attributes of tables keep their default value when they are not present in the JSON structure.
 
 .. _parameters_json:
 
@@ -76,20 +76,20 @@ Parameters that are not described in the structure keep their default value.
 
 .. _export_groups_conf:
 
-Export a tables groups configuration
+Export a table groups configuration
 ------------------------------------
 
-Two versions of the *emaj_export_groups_configuration()* function export a description of one or several tables groups as a JSON structure.
+Two versions of the *emaj_export_groups_configuration()* function export a description of one or several table groups as a JSON structure.
 
-A tables groups configuration can be written to a file with::
+A table groups configuration can be written to a file with::
 
    SELECT emaj_export_groups_configuration('<file.path>' [, <groups.names.array>] );
 
 The file path must be accessible in write mode by the PostgreSQL instance.
 
-The second parameter is optional. It lists in an array the tables groups names to process. If the parameter is not supplied or is set to *NULL*, the configuration of all tables groups is exported.
+The second parameter is optional. It lists in an array the table groups names to process. If the parameter is not supplied or is set to *NULL*, the configuration of all table groups is exported.
 
-The function returns the number of exported tables groups.
+The function returns the number of exported table groups.
 
 If the file path is not supplied or is set to *NULL*, the function directly returns the JSON structure containing the configuration. This allows to visualize the structure or store it into a relational table. For instance::
 
@@ -99,7 +99,7 @@ If the file path is not supplied or is set to *NULL*, the function directly retu
 The generated JSON structure contains the :ref:`"tables_groups"<tables_groups_json>` attribute described above, preceded by a "_comment" attribute. ::
 
    {
-   	   "_comment": "Generated on database <db> with E-Maj version <version> at <date_time>, including all tables groups",
+   	   "_comment": "Generated on database <db> with E-Maj version <version> at <date_time>, including all table groups",
    	   "tables_groups": [
           ...
    	   ]
@@ -143,12 +143,12 @@ The generated JSON structure contains the :ref:`"parameters"<parameters_json>` a
 
 .. _import_groups_conf:
 
-Import a tables groups configuration
+Import a table groups configuration
 ------------------------------------
 
-Two versions of the *emaj_import_groups_configuration()* function import a tables groups description as a JSON structure.
+Two versions of the *emaj_import_groups_configuration()* function import a table groups description as a JSON structure.
 
-A tables groups configuration can be read from a file with::
+A table groups configuration can be read from a file with::
 
    SELECT emaj_import_groups_configuration('<file.path>' [,
              <groups.names.array> [, <alter_started_groups> [, <mark> [,
@@ -156,21 +156,21 @@ A tables groups configuration can be read from a file with::
 
 The file must be accessible in read mode by the PostgreSQL instance.
 
-The file must contain a JSON structure with an attribute named :ref:`"tables_groups"<tables_groups_json>`, of type array, and containing sub-structures describing each tables group, as described above.
+The file must contain a JSON structure with an attribute named :ref:`"tables_groups"<tables_groups_json>`, of type array, and containing sub-structures describing each table group, as described above.
 
 The function can directly import a file generated by the :ref:`emaj_export_groups_configuration()<export_groups_conf>` function.
 
-The second parameter is of type array and is optional. It contains the list of the tables groups to import. By default, all tables groups described in the file are imported.
+The second parameter is of type array and is optional. It contains the list of the table groups to import. By default, all table groups described in the file are imported.
 
-If a tables group to import does not exist, it is created and its tables and sequences are assigned into it.
+If a table group to import does not exist, it is created and its tables and sequences are assigned into it.
 
-If a tables group to import already exists, its configuration is adjusted to reflect the target configuration: some tables and sequences may be added or removed, and some attributes may be modified. When the tables group is in *LOGGING* state, its configuration adjustment is only possible if the third parameter is explicitly set to *TRUE*.
+If a table group to import already exists, its configuration is adjusted to reflect the target configuration: some tables and sequences may be added or removed, and some attributes may be modified. When the table group is in *LOGGING* state, its configuration adjustment is only possible if the third parameter is explicitly set to *TRUE*.
 
-If an existing tables group is missing in the configuration or is not listed as to be imported, it is left unchanged by default. But if the fifth parameter is set to *TRUE*, this group is dropped, whatever its state.
+If an existing table group is missing in the configuration or is not listed as to be imported, it is left unchanged by default. But if the fifth parameter is set to *TRUE*, this group is dropped, whatever its state.
 
-The fourth parameter defines the mark to set on tables groups in *LOGGING* state. By default, the generated mark is "IMPORT_%", where the % character represents the current time, formatted as "hh.min.ss.mmmm".
+The fourth parameter defines the mark to set on table groups in *LOGGING* state. By default, the generated mark is "IMPORT_%", where the % character represents the current time, formatted as "hh.min.ss.mmmm".
 
-The function returns the number of imported tables groups.
+The function returns the number of imported table groups.
 
 In the second function version, the first input parameter directly contains the JSON description of the groups to load, the other parameters being unchanged ::
 

@@ -4,7 +4,7 @@ The E-Maj rollback under the Hood
 Planning and execution
 ----------------------
 
-E-Maj rollbacks are complex operations. They can be logged or not, concern one or several tables groups, with or without parallelism, and be lounched by a direct SQL function call or by a client. Thus E-Maj rollbacks are splitted into elementary steps.
+E-Maj rollbacks are complex operations. They can be logged or not, concern one or several table groups, with or without parallelism, and be lounched by a direct SQL function call or by a client. Thus E-Maj rollbacks are splitted into elementary steps.
 
 An E-Maj rollback is executed in two phases: a planning phase and an execution phase.
 
@@ -21,7 +21,7 @@ The plan produced by the planning phase is recorded into the *emaj_rlbk_plan* ta
 
 The E-Maj rollback **execution** phase just chains the elementary steps of the built plan.
 
-First, a lock of type *EXCLUSIVE* is set on all tables of the rolled back tables group or tables groups, so that any table’s content change attempt from another client be blocked.
+First, a lock of type *EXCLUSIVE* is set on all tables of the rolled back table group or table groups, so that any table’s content change attempt from another client be blocked.
 
 Then, for each table having changes to revert, the elementary steps are chained. In ascending order:
 
@@ -61,11 +61,11 @@ If a table processed by the rollback operation has a foreign key or is reference
 
 Depending on the context, several behaviours exist.
 
-For a given table, if all other tables linked to it by foreign keys belong to the same tables group or tables groups processed by the E-Maj rollback operation, reverting the changes on all tables will safely preserve the referential integrity.
+For a given table, if all other tables linked to it by foreign keys belong to the same table group or table groups processed by the E-Maj rollback operation, reverting the changes on all tables will safely preserve the referential integrity.
 
 For this first case (which is the most frequent) the table rollback is executed with a *session_replication_role* parameter set to '*replica*'. In this mode, no check on foreign keys is performed while updating the table.
 
-On the contrary, if tables are linked to other tables that do not belong to the tables groups processed by the rollback operation or that are not including into any tables groups, then it is essential that the referential integrity be checked.
+On the contrary, if tables are linked to other tables that do not belong to the table groups processed by the rollback operation or that are not including into any table groups, then it is essential that the referential integrity be checked.
 
 In this second case, checking the referential integrity is performed:
 
@@ -76,7 +76,7 @@ The first option is choosen if the foreign key is declared *DEFERRABLE* and does
 
 A :ref:`foreign key defined on a partitioned table<fk_on_partitioned_tables>` is only supported by E-Maj rollback operations if:
 
-    • tables/partitions linked by the foreign key all belong to the same tables groups to process
+    • tables/partitions linked by the foreign key all belong to the same table groups to process
     • and the foreign key is of type *DEFFERABLE*
     • and the foreign key does not hold a *ON DELETE* or *ON UPDATE* clause.
 
@@ -90,7 +90,7 @@ During an E-Maj rollback, these constraints are verified by PostgreSQL, immediat
 Application triggers management
 -------------------------------
 
-Triggers belonging to tables to rollback that are not E-Maj triggers are temporarily disabled during the operation. But this default behaviour can be adjusted when :ref:`assigning a table<assign_table_sequence>` to a tables group or :ref:`importing a tables group configuration<import_groups_conf>`, by defining a trigger as "not to be disabled at rollback time".
+Triggers belonging to tables to rollback that are not E-Maj triggers are temporarily disabled during the operation. But this default behaviour can be adjusted when :ref:`assigning a table<assign_table_sequence>` to a table group or :ref:`importing a table group configuration<import_groups_conf>`, by defining a trigger as "not to be disabled at rollback time".
 
 The technical way to disable or not the application triggers depends on the *session_replication_role* parameter value set for each table to rollback.
 

@@ -627,7 +627,7 @@ SELECT emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTION
 ERROR:  _gen_sql_dump_changes_group: Unquoted semi-column in COPY options is illegal.
 -- Invalid relations array.
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['dummy']);
-ERROR:  _check_tblseqs_filter: 1 tables/sequences (dummy) never belonged to any of the selected tables groups during the requested marks range.
+ERROR:  _check_tblseqs_filter: 1 tables/sequences (dummy) never belonged to any of the selected table groups during the requested marks range.
 -- Invalid output location.
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
 ERROR:  emaj_gen_sql_dump_changes_group: The output script location parameter cannot be NULL.
@@ -651,7 +651,7 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', '', 
 SELECT * FROM emaj_temp_sql;
  sql_stmt_number | sql_line_number | sql_rel_kind | sql_schema |    sql_tblseq    | sql_first_mark | sql_last_mark | sql_group | sql_nb_changes | sql_file_name_suffix |                                                                                                                                                                sql_text                                                                                                                                                                | sql_result 
 -----------------+-----------------+--------------+------------+------------------+----------------+---------------+-----------+----------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------
-               0 |               0 |              |            |                  |                |               |           |                |                      | -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mark21" and "Mark23"                                                                                                                                                                                                                                    |           
+               0 |               0 |              |            |                  |                |               |           |                |                      | -- Generated SQL for dumping changes in table group "myGroup2" between marks "Mark21" and "Mark23"                                                                                                                                                                                                                                     |           
                1 |               0 | table        | myschema2  | myTbl3           | Mark21         | Mark23        | myGroup2  |             10 |                      | -- Dump changes for table myschema2.myTbl3 between marks "Mark21" and "Mark23" (10 changes)                                                                                                                                                                                                                                            |           
                1 |               1 | table        | myschema2  | myTbl3           | Mark21         | Mark23        | myGroup2  |             10 | .changes             | SELECT tbl.* FROM emaj_myschema2."myTbl3_log" tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD', 'NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                |           
                2 |               0 | table        | myschema2  | mytbl1           | Mark21         | Mark23        | myGroup2  |          10700 |                      | -- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)                                                                                                                                                                                                                                         |           
@@ -1093,7 +1093,7 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL
 (1 row)
 
 \! cat $EMAJTESTTMPDIR/sql_script
--- Generated SQL for dumping changes in tables group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: SQL_FORMAT=PRETTY
+-- Generated SQL for dumping changes in table group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: SQL_FORMAT=PRETTY
 -- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)
 SELECT tbl.*
   FROM emaj_myschema2.mytbl1_log tbl
@@ -1120,7 +1120,7 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQ
 (1 row)
 
 \! cat $EMAJTESTTMPDIR/sql_script
--- Generated SQL for dumping changes in tables group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: PSQL_COPY_DIR=(/tmp/emaj_18/misc)
+-- Generated SQL for dumping changes in table group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: PSQL_COPY_DIR=(/tmp/emaj_18/misc)
 -- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)
 \copy (SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD', 'NEW') ORDER BY emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_18/misc/myschema2_mytbl1.changes'
 -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
@@ -1134,7 +1134,7 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23',
 (1 row)
 
 \! cat $EMAJTESTTMPDIR/sql_script
--- Generated SQL for dumping changes in tables group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: PSQL_COPY_DIR=(/tmp/emaj_18/misc), PSQL_COPY_OPTIONS=(format csv, delimiter ';', header)
+-- Generated SQL for dumping changes in table group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: PSQL_COPY_DIR=(/tmp/emaj_18/misc), PSQL_COPY_OPTIONS=(format csv, delimiter ';', header)
 -- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)
 \copy (SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD', 'NEW') ORDER BY emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_18/misc/myschema2_mytbl1.changes' (format csv, delimiter ';', header)
 -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
@@ -1352,7 +1352,7 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1', 'Dump_changes_tests_M2',
 (1 row)
 
 \i :EMAJTESTTMPDIR/sql_script
--- Generated SQL for dumping changes in tables group "myGroup1" between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" using options: PSQL_COPY_DIR=(/tmp/emaj_18/misc), CONSOLIDATION=FULL
+-- Generated SQL for dumping changes in table group "myGroup1" between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" using options: PSQL_COPY_DIR=(/tmp/emaj_18/misc), CONSOLIDATION=FULL
 SET enable_nestloop = FALSE;
 -- Dump changes for table myschema1.myTbl3 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
 \copy (WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 AND emaj_tuple IN ('OLD', 'NEW') GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_tuple,tbl.col32,tbl.col33 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY tbl.col31, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_18/misc/myschema1_myTbl3.changes'
@@ -1598,14 +1598,14 @@ WARNING:  _check_tblseqs_filter: The table/sequence names array is empty.
 
 -- Unknown table/sequence names in the tables filter.
 SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile', ARRAY['foo']);
-ERROR:  _check_tblseqs_filter: 1 tables/sequences (foo) did not belong to any of the selected tables groups at start mark time.
+ERROR:  _check_tblseqs_filter: 1 tables/sequences (foo) did not belong to any of the selected table groups at start mark time.
 SELECT emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
      'myschema1.mytbl1', 'myschema2.myTbl3_col31_seq', 'phil''s schema3.phil''s tbl1']);
-ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) did not belong to any of the selected tables groups at start mark time.
+ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) did not belong to any of the selected table groups at start mark time.
 SELECT emaj.emaj_gen_sql_groups(ARRAY['myGroup1', 'myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile', ARRAY[
      'myschema1.mytbl1', 'foo', 'myschema2.myTbl3_col31_seq', 'phil''s schema3.phil''s tbl1']);
-ERROR:  _check_tblseqs_filter: 2 tables/sequences (foo, phil's schema3.phil's tbl1) did not belong to any of the selected tables groups at start mark time.
--- The tables group contains a table without pkey.
+ERROR:  _check_tblseqs_filter: 2 tables/sequences (foo, phil's schema3.phil's tbl1) did not belong to any of the selected table groups at start mark time.
+-- The table group contains a table without pkey.
 SELECT emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
 ERROR:  _gen_sql_groups: 1 tables/sequences (phil's schema"3.myTbl2\) had no pkey at Mark4 mark time.
 -- Invalid location path name.
@@ -1754,7 +1754,7 @@ ROLLBACK;
 BEGIN;
   \i :SQLSCRIPT
 -- SQL script generated by E-Maj at [ts]$
---    for tables group(s): myGroup2
+--    for table group(s): myGroup2
 --    processing logs between mark "Test sql generation" and mark "Before ALTER mytbl2"
 SET datestyle = 'ISO, YMD';
 --BEGIN TRANSACTION;

@@ -377,7 +377,7 @@ SELECT emaj.emaj_start_group('myGroup4', 'myGroup4_restart', FALSE);
 SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   FROM emaj.emaj_log_stat_group('myGroup4', 'myGroup4_start', 'myGroup4_restart')
   ORDER BY stat_group, stat_schema, stat_table;
-WARNING:  Between marks "myGroup4_start" and "myGroup4_restart", the tables group "myGroup4" has not been always in logging state. Some data changes may not have been recorded.
+WARNING:  Between marks "myGroup4_start" and "myGroup4_restart", the table group "myGroup4" has not been always in logging state. Some data changes may not have been recorded.
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id |  stat_last_mark  | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+------------------+-------------------+-----------
  myGroup4   | myschema4   | mypartp1a  | myGroup4_start  |               4047 | myGroup4_restart |              5006 |         0
@@ -393,7 +393,7 @@ WARNING:  Between marks "myGroup4_start" and "myGroup4_restart", the tables grou
 SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_time_id, stat_last_mark, stat_last_time_id, stat_rows
   FROM emaj.emaj_log_stat_group('myGroup4', 'myGroup4_start', '')
   ORDER BY stat_group, stat_schema, stat_table;
-WARNING:  Since mark "myGroup4_start", the tables group "myGroup4" has not been always in logging state. Some data changes may not have been recorded.
+WARNING:  Since mark "myGroup4_start", the table group "myGroup4" has not been always in logging state. Some data changes may not have been recorded.
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_time_id | stat_last_mark | stat_last_time_id | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+----------------+-------------------+-----------
  myGroup4   | myschema4   | mypartp1a  | myGroup4_start  |               4047 |                |                   |         0

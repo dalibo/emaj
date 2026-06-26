@@ -62,10 +62,10 @@ END $$;
 DO
 -- Let E-maj check its environment.
 SELECT * FROM emaj.emaj_verify_all();
-                                                                                   emaj_verify_all                                                                                   
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In tables group "myGroup2", the foreign key "mytbl6_col61_fkey" on "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on "myschema2"."mytbl8" that does not belong to any group.
+                                                                                  emaj_verify_all                                                                                   
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In table group "myGroup2", the foreign key "mytbl6_col61_fkey" on "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In table group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on "myschema2"."mytbl8" that does not belong to any group.
  No error detected
 (3 rows)
 

@@ -28,7 +28,7 @@ The output file name may be set to NULL. In this case, the SQL script is prepare
 
 This method allows to generate a script in a file located outside the file systems accessible by the PostgreSQL instance.
 
-The last parameter of the *emaj_gen_sql_group()* function is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
+The last parameter of the *emaj_gen_sql_group()* function is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the table group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
@@ -38,7 +38,7 @@ or::
 
 The function returns the number of generated statements (not including comments and transaction management statements).
 
-The tables group may be in *IDLE* or in *LOGGING* state while the function is called.
+The table group may be in *IDLE* or in *LOGGING* state while the function is called.
 
 In order to generate the script, all tables must have an explicit *PRIMARY KEY*.
 
@@ -48,9 +48,9 @@ In order to generate the script, all tables must have an explicit *PRIMARY KEY*.
 
 Statements are generated in the order of their initial execution.
 
-The statements are inserted into a single transaction. They are surrounded by a *BEGIN TRANSACTION;* statement and a *COMMIT;* statement. An initial comment specifies the characteristics of the script generation: generation date and time, related tables group and used marks. 
+The statements are inserted into a single transaction. They are surrounded by a *BEGIN TRANSACTION;* statement and a *COMMIT;* statement. An initial comment specifies the characteristics of the script generation: generation date and time, related table group and used marks. 
 
-At the end of the script, sequences belonging to the tables group are set to their final state.
+At the end of the script, sequences belonging to the table group are set to their final state.
 
 Then, the generated file may be executed as is by *psql*, using a connection role that has enough rights on accessed tables and sequences.
 

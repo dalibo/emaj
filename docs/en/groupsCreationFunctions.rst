@@ -1,51 +1,51 @@
-Create and drop tables groups
+Create and drop table groups
 =============================
 
 Tables groups configuration principles
 --------------------------------------
 
-Configuring a tables group consists in:
+Configuring a table group consists in:
 
-* defining the tables group characteristics,
+* defining the table group characteristics,
 * defining the tables and sequences to assign to the group,
 * optionnaly, defining some specific properties for each table.
 
-The tables group
+The table group
 ^^^^^^^^^^^^^^^^
 
-A tables group is identified by its **name**. Thus, the name must be unique withing the database. A tables group name contains at least 1 character. It may contain spaces and/or any punctuation characters. But it is advisable to avoid commas, single or double quotes.
+A table group is identified by its **name**. Thus, the name must be unique withing the database. A table group name contains at least 1 character. It may contain spaces and/or any punctuation characters. But it is advisable to avoid commas, single or double quotes.
 
-At creation time, the :ref:`ROLLBACKABLE or AUDIT_ONLY <tables_group>` property of the group must be set. Note that this property cannot be modified once the tables group is created. If it needs to be changed, the tables group must be dropped and then recreated.
+At creation time, the :ref:`ROLLBACKABLE or AUDIT_ONLY <tables_group>` property of the group must be set. Note that this property cannot be modified once the table group is created. If it needs to be changed, the table group must be dropped and then recreated.
 
 The tables and sequences to assign
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A tables group can contain tables and/or sequences belonging to one or several schemas.
+A table group can contain tables and/or sequences belonging to one or several schemas.
 
 All tables of a schema are not necessarily member of the same group. Some of them can belong to another group. Some others can belong to any group.
 
-But **at a given time**, a table or a sequence cannot be assigned to more than **one tables group**.
+But **at a given time**, a table or a sequence cannot be assigned to more than **one table group**.
 
 .. caution::
 
-   To guarantee the integrity of tables managed by E-Maj, it is essential to take a particular attention to the tables groups content definition. If a table were missing, its content would be out of synchronisation with other tables it is related to, after an E-Maj rollback operation. In particular, when application tables are created or suppressed, it is important to always maintain an up-to-date groups configuration.
+   To guarantee the integrity of tables managed by E-Maj, it is essential to take a particular attention to the table groups content definition. If a table were missing, its content would be out of synchronisation with other tables it is related to, after an E-Maj rollback operation. In particular, when application tables are created or suppressed, it is important to always maintain an up-to-date groups configuration.
 
 All tables assigned to a *ROLLBACKABLE* group must have an explicit primary key (*PRIMARY KEY* clause in *CREATE TABLE* or *ALTER TABLE*).
 
-E-Maj can process elementary partitions of :doc:`partitioned tables<partitioning>` created with the declarative DDL. They are processed as any other tables. All partitions of a partitioned table do not need to belong to a tables group. Partitions of a partitioned table can be assigned to different tables groups.
+E-Maj can process elementary partitions of :doc:`partitioned tables<partitioning>` created with the declarative DDL. They are processed as any other tables. All partitions of a partitioned table do not need to belong to a table group. Partitions of a partitioned table can be assigned to different table groups.
 
-By their nature, *TEMPORARY TABLE* are not supported by E-Maj. *UNLOGGED* tables can only be members of *AUDIT_ONLY* tables groups.
+By their nature, *TEMPORARY TABLE* are not supported by E-Maj. *UNLOGGED* tables can only be members of *AUDIT_ONLY* table groups.
 
 If a sequence is associated to an application table, it is advisable to assign it into the same group as its table, so that, in case of E-maj rollback, the sequence can be reset to its state at the set mark time. If it were not the case, an E-Maj rollback would simply generate a hole in the sequence values.
 
-E-Maj log tables and sequences should NOT be assigned in a tables group.
+E-Maj log tables and sequences should NOT be assigned in a table group.
 
 .. _table_emaj_properties:
 
 Specific tables properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Four properties are associated to tables assigned to tables group:
+Four properties are associated to tables assigned to table group:
 
 * the priority level,
 * the tablespace for log data,
@@ -59,16 +59,16 @@ To optimize performances of E-Maj installations having a large number of tables,
 * the name of the tablespace to use for the log table of an application table,
 * the name of the tablespace to use for the index of the log table.
 
-By default, these properties have a *NULL* value, meaning that the default tablespace of the current session at tables group creation is used.
+By default, these properties have a *NULL* value, meaning that the default tablespace of the current session at table group creation is used.
 
-When an E-Maj rollback is performed on a tables group, enabled triggers of concerned tables are neutralized, so that table’s content changes generated by the operation do not fire them. But this by default behaviour can be changed if needed. Note that this does not concern E-Maj or system triggers.
+When an E-Maj rollback is performed on a table group, enabled triggers of concerned tables are neutralized, so that table’s content changes generated by the operation do not fire them. But this by default behaviour can be changed if needed. Note that this does not concern E-Maj or system triggers.
 
 .. _emaj_create_group:
 
-Create a tables group
+Create a table group
 ---------------------
 
-To create a tables group, just execute the following SQL statement::
+To create a table group, just execute the following SQL statement::
 
    SELECT emaj.emaj_create_group('<group.name>' [,<is_rollbackable> [,<comment>]]);
 
@@ -78,16 +78,16 @@ The third parameter is an optional comment to describe the group. If it is not p
 
 The function returns the number of created groups, i.e. 1.
 
-To insert a tables group creation into an idempotent script, it is possible to condition the creation to its non-existence, by using the :ref:`emaj_does_exist_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
+To insert a table group creation into an idempotent script, it is possible to condition the creation to its non-existence, by using the :ref:`emaj_does_exist_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
 
 .. _assign_table_sequence:
 
-Assign tables and sequences into a tables group
+Assign tables and sequences into a table group
 -----------------------------------------------
 
 Six functions allow to assign one or several tables or sequences to a group.
 
-To add one or several tables into a tables group::
+To add one or several tables into a table group::
 
    SELECT emaj.emaj_assign_table('<schema>', '<table>', '<group.name>' [,'<properties>'
               [,'<mark>']]);
@@ -102,7 +102,7 @@ or::
    SELECT emaj.emaj_assign_tables('<schema>', '<tables.to.include.filter>',
               '<tables.to.exclude.filter>', '<group.name>' [,'<properties>' [,'<mark>']] );
 
-To add one or several sequences into a tables group::
+To add one or several sequences into a table group::
 
    SELECT emaj.emaj_assign_sequence('<schema>', '<sequence>', '<group.name>' [,'<mark>'] );
 
@@ -138,7 +138,7 @@ To select all tables of this schema and whose name start with ‘tbl’, except 
 
    'my_schema', '^tbl.*', '_sav$'
 
-The functions assigning tables or sequences to tables groups that build their selection with regular expressions take into account the context of the tables or sequences. Are not selected for instance: tables or sequences already assigned, or tables without primary key for *rollbackable* groups, or tables declared *UNLOGGED*.
+The functions assigning tables or sequences to table groups that build their selection with regular expressions take into account the context of the tables or sequences. Are not selected for instance: tables or sequences already assigned, or tables without primary key for *rollbackable* groups, or tables declared *UNLOGGED*.
 
 The *<properties>* parameter of functions that assign tables to a group allows to set values to some properties for the table or tables. Of type *JSONB*, its value can be set like this::
 
@@ -178,10 +178,10 @@ The tables assignment functions create all the needed log tables, the log functi
 
 .. _emaj_drop_group:
 
-Drop a tables group
+Drop a table group
 -------------------
 
-To drop a tables group previously created by the :ref:`emaj_create_group() <emaj_create_group>` function, this group must be already in *IDLE* state. If it is not the case, the :ref:`emaj_stop_group() <emaj_stop_group>` function has to be used first.
+To drop a table group previously created by the :ref:`emaj_create_group() <emaj_create_group>` function, this group must be already in *IDLE* state. If it is not the case, the :ref:`emaj_stop_group() <emaj_stop_group>` function has to be used first.
 
 Then, just execute the SQL command::
 
@@ -189,10 +189,10 @@ Then, just execute the SQL command::
 
 The function returns the number of tables and sequences contained in the group.
 
-For this tables group, the *emaj_drop_group()* function drops all the objects that have been created by the assignment functions: log tables, sequences, functions and triggers.
+For this table group, the *emaj_drop_group()* function drops all the objects that have been created by the assignment functions: log tables, sequences, functions and triggers.
 
 The function also drops all log schemas that are now useless.
 
 The locks set by this operation can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 
-To insert a tables group drop into an idempotent script, it is possible to condition the operation to the group existence, by using the :ref:`emaj_does_exist_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.
+To insert a table group drop into an idempotent script, it is possible to condition the operation to the group existence, by using the :ref:`emaj_does_exist_group()<emaj_exist_state_mark_group>` function in a *WHERE* clause.

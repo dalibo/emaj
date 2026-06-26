@@ -351,7 +351,7 @@ CREATE TRIGGER z_min_update
   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
 
 --
--- Fifth schema (for tables unsupported in rollbackable tables groups)
+-- Fifth schema (for tables unsupported in rollbackable table groups)
 --
 
 DROP SCHEMA IF EXISTS mySchema5 CASCADE;
