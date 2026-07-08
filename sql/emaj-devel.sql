@@ -10607,7 +10607,7 @@ $_rlbk_end$
           WHERE rlchg_time_id = time_id
       UNION
         SELECT rlchg_time_id, rlchg_change_kind, rlchg_schema, rlchg_tblseq,
-               'Tables group change not rolled back: ' ||
+               'Table group change not rolled back: ' ||
                (CASE rlchg_change_kind
                   WHEN 'CHANGE_PRIORITY' THEN
                     'E-Maj priority for ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)

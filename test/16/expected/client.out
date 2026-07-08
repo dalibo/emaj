@@ -79,8 +79,8 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
     Notice: Rollback id = 20000.
     Notice: 10 / 11 tables effectively processed.
     Notice: 3 / 4 sequences effectively processed.
-    Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
-    Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
+    Warning: Table group change not rolled back: ignored triggers list for myschema1.mytbl2
+    Warning: Table group change not rolled back: E-Maj priority for myschema1.mytbl1
 -- Logged rollback for a single group and a single session.
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
  E-Maj (version <devel>) - launching parallel rollbacks
@@ -91,8 +91,8 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
     Notice: Rollback id = 20001.
     Notice: 4 / 5 tables effectively processed.
     Notice: 2 / 2 sequences effectively processed.
-    Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
-    Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
+    Warning: Table group change not rolled back: ignored triggers list for myschema1.mytbl2
+    Warning: Table group change not rolled back: E-Maj priority for myschema1.mytbl1
 --------------------------------------------------------------
 --
 -- Rollback monitor client.

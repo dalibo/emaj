@@ -155,7 +155,7 @@ delete from myTbl4 where col41 = 1;
 select * from emaj_emaj_demo_app_schema.mytbl4_log;
 ---------------------------------------------------------------------------
 ---                                                                     ---
----  Let us set a second mark on "emaj demo group 1" tables group and   ---
+---  Let us set a second mark on "emaj demo group 1" table group and    ---
 ---  perform some new tables updates.                                   ---
 ---                                                                     ---
 ---------------------------------------------------------------------------
@@ -179,7 +179,7 @@ select * from emaj.emaj_log_stat_group('emaj demo group 1','EMAJ_LAST_MARK',NULL
 select * from emaj.emaj_detailed_log_stat_group('emaj demo group 1','EMAJ_LAST_MARK',NULL);
 ---------------------------------------------------------------------------
 ---                                                                     ---
----  Let us set a third mark on "emaj demo group 1" tables group and    ---
+---  Let us set a third mark on "emaj demo group 1" table group and     ---
 ---  perform some new tables updates.                                   ---
 ---                                                                     ---
 ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
 select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1','MARK1',NULL);
 ---------------------------------------------------------------------------
 ---                                                                     ---
----  Let us rollback "emaj demo group 1" tables group to MARK2.         ---
+---  Let us rollback "emaj demo group 1" table group to MARK2.          ---
 ---                                                                     ---
 ---------------------------------------------------------------------------
 ---
@@ -424,7 +424,7 @@ select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo
 select * from emaj_emaj_demo_app_schema."myTbl3_log";
 ---------------------------------------------------------------------------
 ---                                                                     ---
----  Sometimes, tables structure or tables groups content change...     ---
+---  Sometimes, tables structure or table groups content change...      ---
 ---                                                                     ---
 ---------------------------------------------------------------------------
 ---
@@ -542,7 +542,7 @@ CREATE TRIGGER myTbl2trg
 ---
 SELECT emaj.emaj_create_group('emaj parallel rollback test group');
 ---
---- Now the E-Maj administrator populates the tables groups
+--- Now the E-Maj administrator populates the table groups
 ---
 SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl1', 'emaj parallel rollback test group');
 SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl2', 'emaj parallel rollback test group');

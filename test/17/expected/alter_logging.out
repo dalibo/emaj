@@ -2218,10 +2218,10 @@ SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\
  Notice        | 0 / 11 tables effectively processed.
  Notice        | 0 / 4 sequences effectively processed.
  Notice        | Rollback id = 9704.
- Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
- Warning       | Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
- Warning       | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b
- Warning       | Tables group change not rolled back: log index tablespace for myschema2.mytbl6
+ Warning       | Table group change not rolled back: E-Maj priority for myschema1.mytbl1
+ Warning       | Table group change not rolled back: ignored triggers list for myschema1.mytbl2
+ Warning       | Table group change not rolled back: log data tablespace for myschema1.mytbl2b
+ Warning       | Table group change not rolled back: log index tablespace for myschema2.mytbl6
  Warning       | The sequence myschema1."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>)
  Warning       | The sequence myschema2.myseq2 has been left unchanged (not in group anymore since <timestamp>)
  Warning       | The table myschema1."myTbl3" has only been rolled back to its latest group attachment (<timestamp>)
@@ -2237,10 +2237,10 @@ SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\
  Notice        | 0 / 11 tables effectively processed.
  Notice        | 0 / 4 sequences effectively processed.
  Notice        | Rollback id = 9705.
- Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
- Warning       | Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
- Warning       | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b
- Warning       | Tables group change not rolled back: log index tablespace for myschema2.mytbl6
+ Warning       | Table group change not rolled back: E-Maj priority for myschema1.mytbl1
+ Warning       | Table group change not rolled back: ignored triggers list for myschema1.mytbl2
+ Warning       | Table group change not rolled back: log data tablespace for myschema1.mytbl2b
+ Warning       | Table group change not rolled back: log index tablespace for myschema2.mytbl6
  Warning       | The sequence myschema1."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>)
  Warning       | The sequence myschema2.myseq2 has been left unchanged (not in group anymore since <timestamp>)
  Warning       | The table myschema1."myTbl3" has only been rolled back to its latest group attachment (<timestamp>)
@@ -2402,10 +2402,10 @@ SELECT hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS        | NOTICE         | Rollback id 9704             | Rollback id = 9704.                                                                                                    | postgres
  ROLLBACK_GROUPS        | NOTICE         | Rollback id 9704             | 0 / 11 tables effectively processed.                                                                                   | postgres
  ROLLBACK_GROUPS        | NOTICE         | Rollback id 9704             | 0 / 4 sequences effectively processed.                                                                                 | postgres
- ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b                                         | postgres
- ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | Tables group change not rolled back: log index tablespace for myschema2.mytbl6                                         | postgres
- ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1                                               | postgres
- ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | Tables group change not rolled back: ignored triggers list for myschema1.mytbl2                                        | postgres
+ ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | Table group change not rolled back: log data tablespace for myschema1.mytbl2b                                          | postgres
+ ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | Table group change not rolled back: log index tablespace for myschema2.mytbl6                                          | postgres
+ ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | Table group change not rolled back: E-Maj priority for myschema1.mytbl1                                                | postgres
+ ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | Table group change not rolled back: ignored triggers list for myschema1.mytbl2                                         | postgres
  ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | The sequence myschema2.myseq2 has been left unchanged (not in group anymore since <timestamp>)                         | postgres
  ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | The sequence myschema1."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>) | postgres
  ROLLBACK_GROUPS        | WARNING        | Rollback id 9704             | The table myschema2.mytbl7 has been left unchanged (not in group anymore since <timestamp>)                            | postgres
@@ -2440,10 +2440,10 @@ SELECT hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS        | NOTICE         | Rollback id 9705             | Rollback id = 9705.                                                                                                    | postgres
  ROLLBACK_GROUPS        | NOTICE         | Rollback id 9705             | 0 / 11 tables effectively processed.                                                                                   | postgres
  ROLLBACK_GROUPS        | NOTICE         | Rollback id 9705             | 0 / 4 sequences effectively processed.                                                                                 | postgres
- ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b                                         | postgres
- ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | Tables group change not rolled back: log index tablespace for myschema2.mytbl6                                         | postgres
- ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1                                               | postgres
- ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | Tables group change not rolled back: ignored triggers list for myschema1.mytbl2                                        | postgres
+ ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | Table group change not rolled back: log data tablespace for myschema1.mytbl2b                                          | postgres
+ ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | Table group change not rolled back: log index tablespace for myschema2.mytbl6                                          | postgres
+ ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | Table group change not rolled back: E-Maj priority for myschema1.mytbl1                                                | postgres
+ ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | Table group change not rolled back: ignored triggers list for myschema1.mytbl2                                         | postgres
  ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | The sequence myschema2.myseq2 has been left unchanged (not in group anymore since <timestamp>)                         | postgres
  ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | The sequence myschema1."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>) | postgres
  ROLLBACK_GROUPS        | WARNING        | Rollback id 9705             | The table myschema2.mytbl7 has been left unchanged (not in group anymore since <timestamp>)                            | postgres
@@ -2714,9 +2714,9 @@ SELECT rlbk_severity, regexp_replace(rlbk_message, E'\\d\\d\\d\\d/\\d\\d\\/\\d\\
  Notice        | 0 / 4 sequences effectively processed.
  Warning       | The table myschema2."myTbl3" has only been rolled back to its latest group attachment (<timestamp>)
  Warning       | The sequence myschema2."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>)
- Warning       | Tables group change not rolled back: log data tablespace for myschema2."myTbl3"
- Warning       | Tables group change not rolled back: log index tablespace for myschema2."myTbl3"
- Warning       | Tables group change not rolled back: E-Maj priority for myschema2."myTbl3"
+ Warning       | Table group change not rolled back: log data tablespace for myschema2."myTbl3"
+ Warning       | Table group change not rolled back: log index tablespace for myschema2."myTbl3"
+ Warning       | Table group change not rolled back: E-Maj priority for myschema2."myTbl3"
 (8 rows)
 
 -- Generate a sql script crossing the move (after rollback).
@@ -3440,9 +3440,9 @@ SELECT hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 10003            | 0 / 4 sequences effectively processed.                                                                                 | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 10003            | The table myschema2."myTbl3" has only been rolled back to its latest group attachment (<timestamp>)                    | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 10003            | The sequence myschema2."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>) | postgres
- ROLLBACK_GROUPS    | WARNING                      | Rollback id 10003            | Tables group change not rolled back: log data tablespace for myschema2."myTbl3"                                        | postgres
- ROLLBACK_GROUPS    | WARNING                      | Rollback id 10003            | Tables group change not rolled back: log index tablespace for myschema2."myTbl3"                                       | postgres
- ROLLBACK_GROUPS    | WARNING                      | Rollback id 10003            | Tables group change not rolled back: E-Maj priority for myschema2."myTbl3"                                             | postgres
+ ROLLBACK_GROUPS    | WARNING                      | Rollback id 10003            | Table group change not rolled back: log data tablespace for myschema2."myTbl3"                                         | postgres
+ ROLLBACK_GROUPS    | WARNING                      | Rollback id 10003            | Table group change not rolled back: log index tablespace for myschema2."myTbl3"                                        | postgres
+ ROLLBACK_GROUPS    | WARNING                      | Rollback id 10003            | Table group change not rolled back: E-Maj priority for myschema2."myTbl3"                                              | postgres
  DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                                                        | postgres
  ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 10003                                                                                                      | postgres
  GEN_SQL_GROUPS     | BEGIN                        | myGroup1,myGroup2            | From mark before move to current state with tables/sequences filtering                                                 | postgres

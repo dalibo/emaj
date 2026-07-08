@@ -2899,12 +2899,12 @@ SELECT hist_function, hist_event, hist_object,
 (269 rows)
 
 SELECT * FROM emaj.emaj_rollback_group('myGroup1', 'Multi-1', TRUE) ORDER BY 1, 2;
- rlbk_severity |                                  rlbk_message                                   
----------------+---------------------------------------------------------------------------------
+ rlbk_severity |                                  rlbk_message                                  
+---------------+--------------------------------------------------------------------------------
  Notice        | 2 / 2 sequences effectively processed.
  Notice        | 3 / 5 tables effectively processed.
  Notice        | Rollback id = 14708.
- Warning       | Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
+ Warning       | Table group change not rolled back: ignored triggers list for myschema1.mytbl2
 (4 rows)
 
 -- Remove the temp directory.
