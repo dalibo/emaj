@@ -1,33 +1,43 @@
 Concepts
 ========
 
-E-Maj is built on three main concepts.
+E-Maj is built on three core concepts.
 
 .. _tables_group:
 
 Tables Group
 ************
 
-The **table group** represents a set of **application tables** that live at the same rhythm, meaning that their content can be restored as a whole if needed. Typically, it deals with all tables of a database that are updated by one or more sets of programs.  Each table group is defined by a name which must be unique inside its database. By extent, a table group can also contain **partitions** of partitioned tables and **sequences**. Tables (including partitions) and sequences that constitute a table group can belong to different schemas of the database.
+A **table group** represents a **set of application tables** that share the same lifecycle. This means their content can be **restored as a whole** if needed. Typically, a table group includes all tables in a database that are updated by one or more sets of programs.
 
-At a given time, a table group is either in a **LOGGING** state or in a **IDLE** state. The *LOGGING* state means that all updates applied on the tables of the group are recorded.
+Each table group is identified by a **unique name** within its database. Additionally, a table group can also include **partitions** of partitioned tables and **sequences**.
 
-A table group can be either **ROLLBACKABLE**, which is the standard case, or **AUDIT_ONLY**. In this latter case, it is not possible to rollback the group. But using this type of group allows to record tables updates for auditing purposes, even with tables that have no explicitely created primary key or with tables of type *UNLOGGED*.
+Tables (including partitions) and sequences in a table group can belong to **different schemas** within the database.
+
+At any given time, a table group is in one of two states:
+
+- **LOGGING**: Updates applied to the tables in the group are recorded.
+- **IDLE**: Updates are not recorded.
+
+A table group can be either:
+
+- **ROLLBACKABLE** (default): Allows rolling back the group to a previous state.
+- **AUDIT_ONLY**: Records changes for auditing purposes only. This type is useful for tables without an explicitly created *PRIMARY KEY* or for *UNLOGGED* tables. Note that rolling back the group is not possible for *AUDIT_ONLY* groups.
 
 Mark
 ****
 
-A **mark** is a particular point in the life of a table group, corresponding to a stable point for all tables and sequences of the group. A mark is explicitly set by a user operation. It is defined by a name that must be unique for the table group.
+A **mark** is a **stable reference point** in the lifecycle of a table group. It captures the state of all tables and sequences in the group at a specific moment. A mark is explicitly created by a user action and is identified by a **unique name** within the table group.
 
 Rollback
 ********
 
-The **rollback** operation consists of resetting all tables and sequences of a group in the state they had when a mark was set.
+An **E-Maj rollback** operation **resets** all tables and sequences in a group to the state they had when a **mark** was set.
 
-There are two rollback types:
+There are two types of rollback:
 
-* with a **unlogged rollback**, no trace of updates that are cancelled by the rollback operation are kept,
-* with a **logged rollback**, update cancellations are recorded in log tables, so that they can be later cancelled: the rollback operation can be … rolled back.
+* **Unlogged rollback**: Changes canceled by the rollback are **permanently discarded**, with no trace kept in the log tables.
+* **Logged rollback**: Changes canceled by the rollback are **recorded in the log tables**, allowing the rollback itself to be reversed later. In other words, a logged rollback can be *rolled back*.
 
-Note that this concept of *E-Maj rollback* is different from the usual concept of *transactions rollback* managed by PostgreSQL.
-
+.. note::
+   The E-Maj **rollback** concept is distinct from PostgreSQL's **transaction rollback** mechanism.

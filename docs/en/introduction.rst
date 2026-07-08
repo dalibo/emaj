@@ -4,45 +4,47 @@ Introduction
 License
 *******
 
-This extension and its documentation are distributed under GPL license (GNU - General Public License).
+This extension and its documentation are released under the **GNU General Public License (GPL)**.
 
+----
 
 E-Maj's objectives
 ******************
 
-E-Maj is the French acronym for "*Enregistrement des Mises A Jour*", which means "*updates recording*".
+E-Maj is the French acronym for "*Enregistrement des Mises À Jour*", which translates to "*Updates Recording*".
 
-It meets two main goals:
+It serves two primary purposes:
 
-* E-Maj can be used to **trace updates** performed by application programs on the table's content. Viewing these recorded updates offers an answer to the need for “updates-auditing”,
-* By using these recorded updates, E-Maj is able to **logically restore sets of tables into predefined states**, without being obliged to either restore all files of the PostgreSQL instance (cluster) or reload the entire content of the concerned tables.
+* **Audit Trail**: E-Maj can trace updates performed by application programs on table content. Viewing these recorded updates addresses the need for auditing database changes.
 
-In other words, E-Maj is a PostgreSQL extension which enables fine-grained write logging and time travel on subsets of the database.
+* **Logical Restoration**: Using these recorded updates, E-Maj can logically restore sets of tables to predefined states, without requiring a full restore of the PostgreSQL instance (cluster) or reloading the entire content of the affected tables.
 
-It provides a good solution to :
+In other words, E-Maj is a PostgreSQL extension that enables fine-grained write logging and time travel on subsets of the database.
 
-* define save points at precise time on a set of tables,
-* restore, if needed, this table set into a stable state, without stopping the instance,
-* manage several save points, each of them being usable at any time as a restore point.
+It provides an efficient solution to:
 
-So, in a **production environment**, E-Maj may simplify the technical architecture, by offering a smooth and efficient alternative to time and/or disk consuming intermediate saves (pg_dump, mirror disks,...). E-Maj may also bring a help to the debugging by giving a way to precisely analyse how suspicious programs update application tables.
+* define savepoints at precise times for a set of tables,
+* restore, if needed, this table set to a stable state without stopping the instance,
+* manage multiple savepoints, each usable at any time as a restore point.
 
-In a **test environment**, E-Maj also brings smoothness into operations. It is possible to very easily restore database subsets into predefined stable states, so that tests can be replayed as many times as needed.
+In a **production environment**, E-Maj simplifies the technical architecture by offering a smooth and efficient alternative to time-consuming and disk-intensive intermediate saves (e.g., pg_dump, mirror disks, etc.). It also aids debugging by enabling precise analysis of how suspicious programs update application tables.
 
+In a **test environment**, E-Maj streamlines operations by allowing easy restoration of database subsets to predefined stable states, so that tests can be replayed as many times as needed.
+
+----
 
 Main components
 ***************
 
-E-Maj actually groups several components:
+E-Maj consists of several components:
 
-* a PostgreSQL **extension** object created into each database, named *emaj* and holding some tables, functions, sequences, ...
-* a set of **external clients** working in command line interface,
+* a PostgreSQL **extension** object created in each database, named *emaj* and containing tables, functions, sequences, etc.,
+* a set of **command-line external clients**,
 * a web GUI, **Emaj_web**.
 
-The external clients and the GUI call the functions of the emaj extension.
+The external clients and the GUI call the functions of the *emaj* extension.
 
 .. image:: images/components.png
    :align: center
 
-All these components are discribed in the documentation.
-
+All these components are described in the documentation.

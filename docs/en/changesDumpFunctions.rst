@@ -1,262 +1,283 @@
-Examine data content changes
-============================
+Examining Data Content Changes
+==============================
 
 .. _examining_changes:
 
 Introduction
 ------------
 
-Log tables and the internal sequences states table are a real gold mine for the analysis of changes recorded between two marks. Aside already described cancellation (rollback) and statistics functions, it is possible to view the changes in different forms.
+Log tables and the internal sequences states table are a valuable resource for analyzing changes recorded between two marks. In addition to the already described rollback and statistics functions, it is possible to view changes in various formats.
 
-First of all, any user having *emaj_adm* or *emaj_viewer* privileges can directly query log tables. Their structure is described :ref:`here<logTableStructure>`.
+Any user with *emaj_adm* or *emaj_viewer* privileges can directly query the log tables. Their structure is described :ref:`here <logTableStructure>`.
 
-But two functions, :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` and :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>`, may help this examination. They allow to visualize data content changes for each table and sequence belonging to a table group, for a period of time framed by two marks.
+However, two functions, :ref:`emaj_dump_changes_group() <emaj_dump_changes_group>` and :ref:`emaj_gen_sql_dump_changes_group() <emaj_gen_sql_dump_changes_group>`, can simplify this process. They allow users to visualize data content changes for each table and sequence belonging to a table group, within a time period defined by two marks.
 
-Output types
+----
+
+Output Types
 ------------
 
-In order to cover many use cases, the data changes visualization may take different forms:
+To cover a wide range of use cases, data change visualization can take different forms:
 
-* a set of flat files created by *COPY TO* statements (thus stored into the PostgreSQL instance disk space);
-* a *psql* script producing flat files using *\\copy to* meta-commands (thus in the client disk space);
-* a temporary table containing SQL statements allowing any client to directly visualize and analyze data changes.
+* A **set of flat files** created using *COPY TO* statements (stored in the PostgreSQL instance's disk space);
+* A **psql script** generating flat files using *\\copy to* meta-commands (stored in the client's disk space);
+* A **temporary table** containing **SQL statements**, enabling direct visualization and analysis of data changes by any client.
 
-Consolidation levels
+----
+
+Consolidation Levels
 --------------------
 
-Different levels of changes visualization are available through the concept of **consolidation**.
+Different levels of change visualization are available through the **consolidation** concept.
 
-Without consolidation, each elementary change recorded into the log tables is returned. So one gets simple log table extracts for the targeted time period.
+Without consolidation, every elementary change recorded in the log tables is returned. This provides simple log table extracts for the specified time period.
 
-The consolidation process aims to only return the initial state (at the begin mark time) and/or the end state (at the end mark time) of each primary key, for which changes have been recorded. For each primary key, one gets a row of type ‘OLD’, representing the initial state if it already exists, and/or a row of type ‘NEW’ representing the final state, if it still exists. So the consolidation process needs that all examined tables own a PRIMARY KEY.
+The consolidation process aims to return only the initial state (at the start mark time) and/or the final state (at the end mark time) of each primary key for which changes have been recorded. For each primary key, a row of type **OLD** (representing the initial state, if it exists) and/or a row of type **NEW** (representing the final state, if it still exists) is returned. Thus, the consolidation process requires that all examined tables have a **PRIMARY KEY**.
 
-Two consolidation levels exists. The **partial consolidation** doesn’t take into account the data content. On the contrary, the **full consolidation** considers that changes producing strictly identical data between both marks are not to be returned.
+Two consolidation levels exist:
 
-Let’s take some examples, using a table described as *(col1 INT PRIMARY KEY, col2 TEXT)*.
+* **Partial consolidation** ignores data content.
+* **Full consolidation** excludes changes that produce strictly identical data between both marks.
 
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| SQL between both marks      | Log table (*)                         | Partial consolidation   | Full consolidation   |
-+=============================+=======================================+=========================+======================+
-| | INSERT (1,’A’)            | | 1,’A’,NEW,1                         | | 1,’A’,NEW             | | 1,’A’,NEW          |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | UPDATE (1,’A’) => (1,’B’) | | 1,’A’,OLD,1                         | | 1,’A’,OLD             | | 1,’A’,OLD          |
-| |                           | | 1,’B’,NEW,1                         | | 1,’B’,NEW             | | 1,’B’,NEW          |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | DELETE (1,’A’)            | | 1,’A’,OLD,1                         | | 1,’A’,OLD             | | 1,’A’,OLD          |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | INSERT (1,’A’)            | | 1,’A’,NEW,1                         | | 1,’B’,NEW             | | 1,’B’,NEW          |
-| | UPDATE (1,’A’) => (1,’B’) | | 1,’A’,OLD,2                         | |                       | |                    |
-| |                           | | 1,’B’,NEW,2                         | |                       | |                    |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | UPDATE (1,’A’) => (1,’B’) | | 1,’A’,OLD,1                         | | 1,’A’,OLD             | | 1,’A’,OLD          |
-| |                           | | 1,’B’,NEW,1                         | |                       | |                    |
-| | DELETE (1,’B’)            | | 1,’B’,OLD,1                         | |                       | |                    |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | UPDATE (1,’A’) => (1,’B’) | | 1,’A’,OLD,1                         | | 1,’A’,OLD             | | 1,’A’,OLD          |
-| |                           | | 1,’B’,NEW,1                         | | 1,’D’,NEW             | | 1,’D’,NEW          |
-| | UPDATE (1,’B’) => (1,’C’) | | 1,’B’,OLD,2                         | |                       | |                    |
-| |                           | | 1,’C’,NEW,2                         | |                       | |                    |
-| | UPDATE (1,’C’) => (1,’D’) | | 1,’C’,OLD,3                         | |                       | |                    |
-| |                           | | 1,’D’,NEW,3                         | |                       | |                    |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | INSERT (1,’A’)            | | 1,’A’,NEW,1                         | | -                     | | -                  |
-| | DELETE (1,’A’)            | | 1,’A’,OLD,2                         | |                       | |                    |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | DELETE (1,’A’)            | | 1,’A’,OLD,1                         | | 1,’A’,OLD             | | 1,’A’,OLD          |
-| | INSERT (1,’B’)            | | 1,’B’,NEW,2                         | | 1,’B’,NEW             | | 1,’B’,NEW          |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | UPDATE (1,’A’) => (1,’B’) | | 1,’A’,OLD,1                         | | 1,’A’,OLD             | | -                  |
-| |                           | | 1,’B’,NEW,1                         | | 1,’A’,NEW             | |                    |
-| | UPDATE (1,’B’) => (1,’A’) | | 1,’B’,OLD,2                         | |                       | |                    |
-| |                           | | 1,’A’,NEW,2                         | |                       | |                    |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | DELETE (1,’A’)            | | 1,’A’,OLD,1                         | | 1,’A’,OLD             | | -                  |
-| | INSERT (1,’A’)            | | 1,’A’,NEW,2                         | | 1,’A’,NEW             | |                    |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
-| | UPDATE (1,’A’) => (2,’A’) | | 1,’A’,OLD,1                         | | 1,’A’,OLD,1           | | 1,’A’,OLD          |
-| |                           | | 2,’A’,NEW,1                         | | 3,’B’,NEW             | | 3,’B’,NEW          |
-| | UPDATE (2,’A’) => (2,’B’) | | 2,’A’,OLD,2                         | |                       | |                    |
-| |                           | | 2,’B’,NEW,2                         | |                       | |                    |
-| | UPDATE (2,’B’) => (3,’B’) | | 2,’B’,OLD,3                         | |                       | |                    |
-| |                           | | 3,’B’,NEW,3                         | |                       | |                    |
-+-----------------------------+---------------------------------------+-------------------------+----------------------+
+Below are examples using a table defined as *(col1 INT PRIMARY KEY, col2 TEXT)*.
 
-(*) the log table extract corresponds to columns *(col1, col2, emaj_tuple, emaj_gid)*, other E-Maj technical columns not being mentionned.
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| SQL between both marks      | Log table (*)                         | Partial consolidation   | Full consolidation    |
++=============================+=======================================+=========================+=======================+
+| INSERT (1,'A')              | 1,'A',NEW,1                           | 1,'A',NEW               | 1,'A',NEW             |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| UPDATE (1,'A') => (1,'B')   | 1,'A',OLD,1                           | 1,'A',OLD               | 1,'A',OLD             |
+|                             | 1,'B',NEW,1                           | 1,'B',NEW               | 1,'B',NEW             |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| DELETE (1,'A')              | 1,'A',OLD,1                           | 1,'A',OLD               | 1,'A',OLD             |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| INSERT (1,'A')              | 1,'A',NEW,1                           | 1,'B',NEW               | 1,'B',NEW             |
+| UPDATE (1,'A') => (1,'B')   | 1,'A',OLD,2                           |                         |                       |
+|                             | 1,'B',NEW,2                           |                         |                       |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| UPDATE (1,'A') => (1,'B')   | 1,'A',OLD,1                           | 1,'A',OLD               | 1,'A',OLD             |
+| DELETE (1,'B')              | 1,'B',OLD,1                           |                         |                       |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| UPDATE (1,'A') => (1,'B')   | 1,'A',OLD,1                           | 1,'A',OLD               | 1,'A',OLD             |
+| UPDATE (1,'B') => (1,'C')   | 1,'B',OLD,2                           | 1,'D',NEW               | 1,'D',NEW             |
+| UPDATE (1,'C') => (1,'D')   | 1,'C',OLD,3                           |                         |                       |
+|                             | 1,'D',NEW,3                           |                         |                       |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| INSERT (1,'A')              | 1,'A',NEW,1                           |                         |                       |
+| DELETE (1,'A')              | 1,'A',OLD,2                           |                         |                       |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| DELETE (1,'A')              | 1,'A',OLD,1                           | 1,'A',OLD               | 1,'A',OLD             |
+| INSERT (1,'B')              | 1,'B',NEW,2                           | 1,'B',NEW               | 1,'B',NEW             |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| UPDATE (1,'A') => (1,'B')   | 1,'A',OLD,1                           | 1,'A',OLD               |                       |
+| UPDATE (1,'B') => (1,'A')   | 1,'B',OLD,2                           | 1,'A',NEW               |                       |
+|                             | 1,'A',NEW,2                           |                         |                       |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| DELETE (1,'A')              | 1,'A',OLD,1                           | 1,'A',OLD               |                       |
+| INSERT (1,'A')              | 1,'A',NEW,2                           | 1,'A',NEW               |                       |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+| UPDATE (1,'A') => (2,'A')   | 1,'A',OLD,1                           | 1,'A',OLD,1             | 1,'A',OLD             |
+| UPDATE (2,'A') => (2,'B')   | 2,'A',NEW,1                           | 3,'B',NEW               | 3,'B',NEW             |
+| UPDATE (2,'B') => (3,'B')   | 2,'A',OLD,2                           |                         |                       |
+|                             | 2,'B',NEW,2                           |                         |                       |
+|                             | 2,'B',OLD,3                           |                         |                       |
+|                             | 3,'B',NEW,3                           |                         |                       |
++-----------------------------+---------------------------------------+-------------------------+-----------------------+
+
+(*) The log table extract corresponds to columns *(col1, col2, emaj_tuple, emaj_gid)*. Other E-Maj technical columns are not mentioned.
 
 .. caution::
 
-   Some rare data types like *JSON* or *XML* have no equality operator. In this case, the full consolidation casts these columns into *TEXT* to compare initial and final values.
+   Some rare data types, such as *JSON* or *XML*, do not have an equality operator. In such cases, full consolidation casts these columns to *TEXT* to compare initial and final values.
 
-For each sequence, two rows are returned, corresponding to its initial and final state. In a full consolidation vision, no row is returned when both states are strictly identical.
+For each sequence, two rows are returned, corresponding to its initial and final states. In a full consolidation context, no row is returned if both states are strictly identical.
+
+----
 
 .. _emaj_dump_changes_group:
 
-The emaj_dump_changes_group() function
---------------------------------------
+Dumping Changes on Files
+------------------------
 
-The *emaj_dump_changes_group()* function extracts changes from log tables and from the sequences states table and create files into the PostgreSQL instance disk space, using *COPY TO* statements. ::
+The ``emaj_dump_changes_group()`` function extracts changes from log tables and the sequences states table for a given table group, then creates files in the PostgreSQL instance's disk space using *COPY TO* statements. ::
 
-   SELECT emaj.emaj_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>',
-               '<options.list>', <tables/sequences.array>, '<output.directory>');
+   SELECT emaj.emaj_dump_changes_group(p_groupName, p_firstMark, p_lastMark,
+                                       p_optionsList, p_tblseqs, p_dir);
 
-The keyword 'EMAJ_LAST_MARK' can be used as end mark name, representing the last set mark.
+**Input Parameters**
 
-If the marks range is not contained by a single *log session*, i.e. if group stops/restarts occured between these marks, a warning message is raised, indicating that data changes may have been not recorded.
+- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_firstMark`` (*TEXT*): **First mark name**.
+- ``p_lastMark`` (*TEXT*): **Last mark name**. The keyword **EMAJ_LAST_MARK** represents the last set mark.
+- ``p_optionsList`` (*TEXT*): Comma-separated **options list**.
+- ``p_tblseqs`` (*TEXT[]*): Array of **tables or sequences** to filter. *NULL* means all tables and sequences are processed.
+- ``p_dir`` (*TEXT*): **Output directory**.
 
-The **4th parameter** is a list of options, separated by commas. Options can be any of the following keywords (in alphabetic order):
+**Returned data**
 
-* COLS_ORDER = LOG_TABLE | PK: defines the columns order in output files (LOG_TABLE = the same order than in log tables, PK = the primary key columns first);
-* CONSOLIDATION = NONE | PARTIAL | FULL: defines the consolidation level; the default value is NONE;
-* COPY_OPTIONS = (options): defines the options to be used by the *COPY TO* statements; the list must be set between parenthesis; refer to the PostgreSQL documentation for the available options details (https://www.postgresql.org/docs/current/sql-copy.html);
-* EMAJ_COLUMNS = ALL | MIN | (columns list): restricts the returned E-Maj technical columns: ALL = all existing columns, MIN = a minimum number of columns, or an explicit columns list, set between parenthesis;
-* NO_EMPTY_FILES: removes files that do not contain any data;
-* ORDER_BY = PK | TIME: defines the rows sort order in files; PK = the primary key order, TIME = the entry into the table log order;
-* SEQUENCES_ONLY: only process sequences of the table group; by default, tables are processed;
-* TABLES_ONLY: only process tables of the table groups; by default, sequences are processed.
+The function returns a message indicating the number of generated files and their location.
 
-The default value of the three COLS_ORDER, EMAJ_COLUMNS and ORDER_BY options depends on the consolidation level:
+**Notes**
 
-* when CONSOLIDATION = NONE, COLS_ORDER = LOG_TABLE, EMAJ_COLUMNS = ALL and ORDER_BY = TIME;
-* when CONSOLIDATION = PARTIAL or FULL, COLS_ORDER = PK, EMAJ_COLUMNS = MIN and ORDER_BY = PK.
+During extraction, the table group can be in any **IDLE** or **LOGGING** state.
 
-The **5th parameter** allows to filter the tables and sequences to process. If the parameter is set to NULL, all tables and sequences of the table group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
+If the marks range is not contained within a single *log session* (i.e., if the group was stopped or restarted between these marks), a warning message is raised, indicating that some data changes may not have been recorded.
+
+The ``p_optionsList`` parameter is a comma-separated list of options. Available options (in alphabetical order) include:
+
+* **COLS_ORDER = LOG_TABLE | PK**: Defines the column order in output files (*LOG_TABLE* = same order as in log tables, *PK* = primary key columns first);
+* **CONSOLIDATION = NONE | PARTIAL | FULL**: Defines the consolidation level (default: *NONE*);
+* **COPY_OPTIONS = (options)**: Defines the options for *COPY TO* statements. The list must be enclosed in parentheses. Refer to the `PostgreSQL documentation <https://www.postgresql.org/docs/current/sql-copy.html>`_ for details;
+* **EMAJ_COLUMNS = ALL | MIN | (columns_list)**: Restricts the returned E-Maj technical columns (*ALL* = all columns, *MIN* = minimal columns, or an explicit list enclosed in parentheses);
+* **NO_EMPTY_FILES**: Removes files that do not contain any data;
+* **ORDER_BY = PK | TIME**: Defines the row sort order in files (*PK* = primary key order, *TIME* = log entry order);
+* **SEQUENCES_ONLY**: Processes only sequences in the table group (default: tables are processed);
+* **TABLES_ONLY**: Processes only tables in the table group (default: sequences are processed).
+
+Default values for **COLS_ORDER**, **EMAJ_COLUMNS**, and **ORDER_BY** depend on the consolidation level:
+
+* If **CONSOLIDATION = NONE**: *COLS_ORDER = LOG_TABLE*, *EMAJ_COLUMNS = ALL*, *ORDER_BY = TIME*;
+* If **CONSOLIDATION = PARTIAL** or **FULL**: *COLS_ORDER = PK*, *EMAJ_COLUMNS = MIN*, *ORDER_BY = PK*.
+
+The ``p_tblseqs`` parameter **filters the tables and sequences** to process for the requested table group. If set to *NULL*, all tables and sequences in the group are processed. If specified, it must be a non-empty array of text elements, each representing a schema-qualified table or sequence name. Both syntaxes are supported: ::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
-
-or::
-
-   '{ "sch1.tbl1" , "sch1.tbl2" }'
-
-The effects of this tables/sequences selection and the TABLES_ONLY and SEQUENCES_ONLY options are cumulative. For instance, a sequence listed in the array will not be processed if the TABLES_ONLY option is set.
-
-The output directory/folder set as **6th parameter** must be an absolute pathname. It must have been created prior the function call and it must have the appropriate permission so that the PostgreSQL instance can write into it.
-
-The function returns a textual message containing the number of generated files and their location.
-
-When the table group structure is stable between both targeted marks, the *emaj_dump_changes_group()* function generates one file per application table and sequence. Its name profile looks like::
-
-   <schema.name>_<table/sequence.name>.changes
-
-The impact of table group structure changes is presented below.
-
-In order to manipulate generated files more easily, any unconvenient in file name characters, namely spaces, “/”, “\”, “$”, “>”, “<”, “|”, single or double quotes and “*” are replaced by “_”. Beware, these file names adjusment may lead to duplicates, the last generated file overwriting then the previous ones.
-
-All files are stored into the directory/folder set as 6th parameter. Already existing files are overwritten.
-
-At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains:
-
-* the operation characteristics, including the table group, both selected marks, the options and the operation date and time;
-* one line per created file, indicating the table or sequence name and the associated marks range.
-
-During the extraction, the table group may be in any idle or logging state.
-
-As this function may generate large or very large files, it is user's responsibility to provide a sufficient disk space.
-
-The log tables structure is described :ref:`here <logTableStructure>`.
-
-.. _emaj_gen_sql_dump_changes_group:
-
-The emaj_gen_sql_dump_changes_group() function
-----------------------------------------------
-
-The *emaj_gen_sql_dump_changes_group()* function generates SQL statements that extract changes from log tables and from the sequences states table. Two versions exist, depending whether the 6th parameter is present. ::
-
-   SELECT emaj.emaj_gen_sql_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>',
-               '<options.list>', <tables/sequences.array>);
 
 or ::
 
-   SELECT emaj.emaj_gen_sql_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>',
-               '<options.list>', <tables/sequences.array>, '<script.location>');
+   '{ "sch1.tbl1", "sch1.tbl2" }'
 
-The keyword 'EMAJ_LAST_MARK' can be used as end mark name, representing the last set mark.
+The effects of this selection and the **TABLES_ONLY**/**SEQUENCES_ONLY** options are cumulative. For example, a sequence listed in the array will not be processed if the **TABLES_ONLY** option is set.
 
-If the marks range is not contained by a single *log session*, i.e. if group stops/restarts occured between these marks, a warning message is raised, indicating that data changes may have been not recorded.
+The ``p_dir`` parameter specifies the output directory. It must be an **absolute pathname**, pre-created with appropriate write permissions for the PostgreSQL instance.
 
-The **4th parameter** is a list of options, separated by commas. Options can be any of the following keywords (in alphabetic order):
+If the table group structure is stable between the two marks, the function generates **one file per application table and sequence**. The naming convention is: ::
 
-* COLS_ORDER = LOG_TABLE | PK: defines the columns order in output results (LOG_TABLE = the same order than in log tables, PK = the primary key columns first);
-* CONSOLIDATION = NONE | PARTIAL | FULL: defines the consolidation level; the default value is NONE;
-* EMAJ_COLUMNS = ALL | MIN | (columns list): restricts the returned E-Maj technical columns: ALL = all existing columns, MIN = a minimum number of columns, or an explicit columns list, set between parenthesis;
-* ORDER_BY = PK | TIME: defines the rows sort order in output results; PK = the primary key order, TIME = the entry into the table log order;
-* PSQL_COPY_DIR = (directory): generates a *psql* *\\copy* meta-command for each statement, using the directory name provided by the option; the diretory name must be surrounded by parenthesis;
-* PSQL_COPY_OPTIONS = (options): when PSQL_COPY_DIR is set, defines the options to be used by the generated *\\copy to* statements; the list must be set between parenthesis; refer to the PostgreSQL documentation for the available options details (https://www.postgresql.org/docs/current/sql-copy.html);
-* SEQUENCES_ONLY: only process sequences of the table group; by default, tables are processed;
-* SQL_FORMAT = RAW | PRETTY: defines how generated statements will be formatted: RAW = on a single line, PRETTY = on several lines and indended, for a better readability;
-* TABLES_ONLY: only process tables of the table groups; by default, sequences are processed.
+   <schema_name>_<table_or_sequence_name>.changes
 
-The default value of the three COLS_ORDER, EMAJ_COLUMNS and ORDER_BY options depends on the consolidation level:
+Unsuitable characters in file names (spaces, "/", "\\", "$", ">", "<", "|", quotes, "*") are replaced with underscores ("_"). Note that these adjustments may lead to duplicate filenames, with the last file overwriting previous ones.
 
-* when CONSOLIDATION = NONE, COLS_ORDER = LOG_TABLE, EMAJ_COLUMNS = ALL and ORDER_BY = TIME;
-* when CONSOLIDATION = PARTIAL or FULL, COLS_ORDER = PK, EMAJ_COLUMNS = MIN and ORDER_BY = PK.
+All files are stored in the directory specified as the ``p_dir`` parameter. Existing files are overwritten.
 
-The **5th parameter** allows to filter the tables and sequences to process. If the parameter is set to NULL, all tables and sequences of the table group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
+At the end of the operation, an **_INFO** file is created in the same directory. It contains:
+
+* Operation details (table group, selected marks, options, date, and time);
+* One line per generated file, indicating the table or sequence name and the associated marks range.
+
+As this function may generate large files, users must ensure sufficient disk space is available.
+
+----
+
+.. _emaj_gen_sql_dump_changes_group:
+
+Generating SQL to Dump Changes
+------------------------------
+
+The ``emaj_gen_sql_dump_changes_group()`` function generates SQL statements to extract changes from log tables and the sequences states table for a given table group. It produces either a temporary table or a flat file::
+
+   SELECT emaj.emaj_gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark,
+                                               p_optionsList, p_tblseqs, p_scriptLocation);
+
+**Input Parameters**
+
+- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_firstMark`` (*TEXT*): **First mark name**.
+- ``p_lastMark`` (*TEXT*): **Last mark name**. The keyword **EMAJ_LAST_MARK** represents the last set mark.
+- ``p_optionsList`` (*TEXT*): Comma-separated **options list**.
+- ``p_tblseqs`` (*TEXT[]*): Array of **tables or sequences** to filter. *NULL* means all tables and sequences are processed.
+- ``p_scriptLocation`` (*TEXT*, optional): Output **script location**. If *NULL*, SQL statements are generated into a temporary table.
+
+**Returned data**
+
+The function returns a message indicating the number of generated statements and their location.
+
+**Notes**
+
+During SQL generation, the table group can be in any **IDLE** or **LOGGING** state.
+
+If the marks range is not contained within a single *log session*, a warning message is raised, indicating that some data changes may not have been recorded.
+
+The ``p_optionsList`` is a comma-separated list of options. Available options (in alphabetical order) include:
+
+* **COLS_ORDER = LOG_TABLE | PK**: Defines the column order in output results (*LOG_TABLE* = same order as in log tables, *PK* = primary key columns first);
+* **CONSOLIDATION = NONE | PARTIAL | FULL**: Defines the consolidation level (default: *NONE*);
+* **EMAJ_COLUMNS = ALL | MIN | (columns_list)**: Restricts the returned E-Maj technical columns (*ALL* = all columns, *MIN* = minimal columns, or an explicit list enclosed in parentheses);
+* **ORDER_BY = PK | TIME**: Defines the row sort order in output results (*PK* = primary key order, *TIME* = log entry order);
+* **PSQL_COPY_DIR = (directory)**: Generates a *psql* *\\copy* meta-command for each statement, using the directory provided by this option. The directory name must be enclosed in parentheses;
+* **PSQL_COPY_OPTIONS = (options)**: If **PSQL_COPY_DIR** is set, defines the options for the generated *\\copy to* statements. The list must be enclosed in parentheses. Refer to the `PostgreSQL documentation <https://www.postgresql.org/docs/current/sql-copy.html>`_ for details;
+* **SEQUENCES_ONLY**: Processes only sequences in the table group (default: tables are processed);
+* **SQL_FORMAT = RAW | PRETTY**: Defines the formatting of generated statements (*RAW* = single line, *PRETTY* = multiple lines with indentation for readability);
+* **TABLES_ONLY**: Processes only tables in the table group (default: sequences are processed).
+
+Default values for **COLS_ORDER**, **EMAJ_COLUMNS**, and **ORDER_BY** depend on the consolidation level:
+
+* If **CONSOLIDATION = NONE**: *COLS_ORDER = LOG_TABLE*, *EMAJ_COLUMNS = ALL*, *ORDER_BY = TIME*;
+* If **CONSOLIDATION = PARTIAL** or **FULL**: *COLS_ORDER = PK*, *EMAJ_COLUMNS = MIN*, *ORDER_BY = PK*.
+
+The ``p_tblseqs`` **filters the tables and sequences** to process for the requested table group. If set to *NULL*, all tables and sequences in the group are processed. If specified, it must be a non-empty array of text elements, each representing a schema-qualified table or sequence name. Both syntaxes are supported: ::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
-or::
+or ::
 
-   '{ "sch1.tbl1" , "sch1.tbl2" }'
+   '{ "sch1.tbl1", "sch1.tbl2" }'
 
-The effects of this tables/sequences selection and the TABLES_ONLY and SEQUENCES_ONLY options are cumulative. For instance, a sequence listed in the array will not be processed if the TABLES_ONLY option is set.
+The effects of this selection and the **TABLES_ONLY**/**SEQUENCES_ONLY** options are cumulative.
 
-The script file name parameter supplied as **6th parameter** is optional. If it is not present, generated statements are left at the caller’s disposal into an *emaj_temp_sql* temporary table. Otherwise, they are written into the file defined by this parameter. It must be an absolute pathname. The directory must have been created prior the function call and it must have the appropriate permission so that the PostgreSQL instance can write into it.
+The ``p_scriptLocation`` is optional. If omitted or set to *NULL*, generated statements are stored in the *emaj_temp_sql* temporary table for the caller's use. If provided, they are written to the specified file, which must be an **absolute pathname**. The directory must be pre-created with appropriate write permissions for the PostgreSQL instance.
 
-If any schema, table or column name contains a "\\" (antislah) character, the *COPY* command executed to build the output script file duplicates this character. If a *sed* command is available on the server hosting the PostgreSQL instance, the *emaj_gen_sql_dump_changes_group()* function automatically removes such duplicated characters. Otherwise, manual script changes are required.
+If any schema, table, or column name contains a backslash ("\\"), the *COPY* command used to generate the output script duplicates this character. If a *sed* command is available on the server, *emaj_gen_sql_dump_changes_group()* automatically removes duplicated backslashes. Otherwise, manual adjustments are required.
 
-The function returns a textual message containing the number of generated statements and their location.
+The ``emaj_temp_sql`` temporary table has the following **structure**:
 
-The *emaj_temp_sql* temporary table left at the caller’s disposal when the 6th parameter is not present has the following structure:
+* **sql_stmt_number** (INT): Statement number;
+* **sql_line_number** (INT): Line number for the statement (0 for comments, 1 for a full statement if *SQL_FORMAT = RAW*, 1 to *n* if *SQL_FORMAT = PRETTY*);
+* **sql_rel_kind** (TEXT): Type of relation ("table" or "sequence");
+* **sql_schema** (TEXT): Schema containing the application table or sequence;
+* **sql_tblseq** (TEXT): Table or sequence name;
+* **sql_first_mark** (TEXT): First mark for this table or sequence;
+* **sql_last_mark** (TEXT): Last mark for this table or sequence;
+* **sql_group** (TEXT): Table group owning the table or sequence;
+* **sql_nb_changes** (BIGINT): Estimated number of changes to process (*NULL* for sequences);
+* **sql_file_name_suffix** (TEXT): File name suffix if the *PSQL_COPY_DIR* option is set;
+* **sql_text** (TEXT): A line of text from the generated statement;
+* **sql_result** (BIGINT): Column reserved for the caller's use when using the temporary table.
 
-* sql_stmt_number (INT): statement number
-* sql_line_number (INT): line number for the statement (0 for comments, 1 for a full statement when SQL_FORMAT = RAW, 1 to n when SQL_FORMAT = PRETTY)
-* sql_rel_kind (TEXT): kind of relation ("table" ou "sequence")
-* sql_schema (TEXT): schema containing the application table or sequence
-* sql_tblseq (TEXT): table or sequence name
-* sql_first_mark (TEXT): the first mark for this table or sequence
-* sql_last_mark (TEXT): the last mark for this table or sequence
-* sql_group (TEXT): table group owning the table or sequence
-* sql_nb_changes (BIGINT): estimated number of changes to process (NULL for sequences)
-* sql_file_name_suffix (TEXT): file name suffix when the PSQL_COPY_DIR option has been set
-* sql_text (TEXT): a line of text of the generated statement
-* sql_result (BIGINT): column dedicated to the caller for its own purpose when using the temporary table.
+The table contains:
 
-The table contents:
+* A first statement: a general comment reporting the main SQL generation details (table group, marks, options, etc.) (*sql_stmt_number* = 0);
+* If full consolidation is used, a statement to change the *enable_nestloop* configuration variable (optimizes log table analysis) (*sql_stmt_number* = 1);
+* For each table and sequence:
+   * A comment related to the table or sequence (*sql_line_number* = 0);
+   * The analysis statement, on one or multiple lines depending on the *SQL_FORMAT* option;
+* If full consolidation is used, a final statement to reset *enable_nestloop* to its previous value.
 
-* a first statement which is a general comment, reporting the main SQL generation characteristics: table group, marks, options, etc (*sql_stmt_number* = 0);
-* in case of full consolidation, a statement that changes the *enable_nestloop* configuration variable ; this statement is needed to optimize the log tables analysis (*sql_stmt_number* = 1);
-* then, for each table and sequence:
+An index is created on both *sql_stmt_number* and *sql_line_number* columns.
 
-   * a comment related to this table or sequence (*sql_line_number* = 0);
-   * the analysis statement, on one or several lines, depending on the SQL_FORMAT option;
-* in case of full consolidation, a last statement reseting the *enable_nestloop* variable to its previous value.
+Once *emaj_gen_sql_dump_changes_group()* has executed, the caller can use the temporary table as needed. Using *ALTER TABLE*, he/she can add columns, rename the table, or convert it to a permanent table. Additional indexes can also be added if required. The estimated number of changes can help parallelize statement execution efficiently.
 
-An index is created on columns *sql_stmt_number* and *sql_line_number*.
+For example, the caller can generate a SQL script and store it locally with: ::
 
-Once the *emaj_gen_sql_dump_changes_group()* function has been executed the caller can use the temporary table as he wants. With *ALTER TABLE* statements, he can even add columns, rename the table, transform it into a permanent table; He can also add an additional index, if needed. The estimated number of changes can be used to efficiently parallelize the statements execution.
+   \copy (SELECT sql_text FROM emaj_temp_sql) to <file>
 
-For instance, the caller can generate a SQL script and store it locally with::
-
-   \copy (SELECT sql_text FROM emaj_temp_sql) to <fichier>
-
-He can get the SQL statement for a given table with::
+Or retrieve the SQL statement for a specific table with::
 
    SELECT sql_text FROM emaj_temp_sql
      WHERE sql_line_number >= 1
        AND sql_schema = '<schema>' AND sql_tblseq = '<table>';
 
-During the SQL generation, the table group may be in any idle or logging state.
+The *emaj_gen_sql_dump_changes_group()* function can be called by any role with *emaj_viewer* privileges, if no output file is directly written.
 
-The *emaj_gen_sql_dump_changes_group()* function can be called by any role who has been granted *emaj_viewer* but not *emaj_adm* if no file is directly written by the function (i.e. if the 6th parameter is not present).
+----
 
-Impact of table group structure changes
-----------------------------------------
+Impact of Table Group Structure Changes
+---------------------------------------
 
-It may happen that the table group structure changes during the examined marks frame.
+The table group structure may change during the examined marks range.
 
 .. image:: images/logging_group_stat.png
    :align: center
 
-A table or a sequence may have been removed from the group or assigned to the group between the selected start mark and end mark. In this case, as for table t2 and t3 in the example above, the extraction frames the real period of time the table or sequence belonged to the table group. For this reason, the *_INFO* file and the *emaj_temp_sql* table contain information about the real marks frame used for each table or sequence.
+A table or sequence may be removed from or added to the group between the start and end marks. In such cases (e.g., tables *t2* and *t3* in the example above), the extraction covers only the actual period during which the table or sequence belonged to the group. For this reason, the **_INFO** file and the *emaj_temp_sql* table include details about the actual marks range used for each table or sequence.
 
-A table or a sequence may even be removed from its group and reassigned to it later. In this case, as for table t4 above, there are several distinct extractions; the *emaj_dump_changes_group()* function generates several statements into the *emaj_temp_sql* table and the *emaj_gen_sql_dump_changes_group()* function writes several files for the same table or sequence. Then, the output file name suffix becomes *_1.changes*, *_2.changes*, etc.
+A table or sequence may even be removed and later reassigned to the group. In such cases (e.g., table *t4* above), multiple extractions occur. The *emaj_dump_changes_group()* function generates multiple statements in the *emaj_temp_sql* table, and the *emaj_gen_sql_dump_changes_group()* function writes multiple files for the same table or sequence. The output file name suffixes become *_1.changes*, *_2.changes*, etc.

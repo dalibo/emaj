@@ -1,250 +1,257 @@
-Traces of operations
+Traces of Operations
 ====================
+
+This page describes the tracing mechanisms of E-Maj operations.
 
 .. _emaj_hist:
 
-The emaj_hist table
+The emaj_hist Table
 -------------------
 
-All operations performed by E-Maj, and that impact in any way a table group, are traced into a table named *emaj_hist*.
+All operations performed by E-Maj that impact a table group in any way are traced in a table named *emaj_hist*.
 
-Any user having *emaj_adm* or *emaj_viewer* rights may look at the *emaj_hist* content.
+Any user with ``emaj_adm`` or ``emaj_viewer`` rights can view the *emaj_hist* content.
 
-The **emaj_hist** table structure is the following:
+The **emaj_hist** table structure is as follows:
 
-+--------------+-------------+------------------------------------------------------------+
-|Column        | Type        | Description                                                |
-+==============+=============+============================================================+
-|hist_id       | BIGSERIAL   | serial number identifying a row in this history table      |
-+--------------+-------------+------------------------------------------------------------+
-|hist_datetime | TIMESTAMPTZ | recording date and time of the row                         |
-+--------------+-------------+------------------------------------------------------------+
-|hist_function | TEXT        | function associated to the traced event                    |
-+--------------+-------------+------------------------------------------------------------+
-|hist_event    | TEXT        | kind of event                                              |
-+--------------+-------------+------------------------------------------------------------+
-|hist_object   | TEXT        | object related to the event (group, table or sequence)     |
-+--------------+-------------+------------------------------------------------------------+
-|hist_wording  | TEXT        | additional comments                                        |
-+--------------+-------------+------------------------------------------------------------+
-|hist_user     | TEXT        | role whose action has generated the event                  |
-+--------------+-------------+------------------------------------------------------------+
-|hist_txid     | BIGINT      | identifier of the transaction that has generated the event |
-+--------------+-------------+------------------------------------------------------------+
++--------------+-------------+---------------------------------------------------------+
+| Column       | Type        | Description                                             |
++==============+=============+=========================================================+
+| hist_id      | BIGSERIAL   | Serial number identifying a row in this history table   |
++--------------+-------------+---------------------------------------------------------+
+| hist_datetime| TIMESTAMPTZ | Recording date and time of the row                      |
++--------------+-------------+---------------------------------------------------------+
+| hist_function| TEXT        | Function associated with the traced event               |
++--------------+-------------+---------------------------------------------------------+
+| hist_event   | TEXT        | Kind of event                                           |
++--------------+-------------+---------------------------------------------------------+
+| hist_object  | TEXT        | Object related to the event (group, table, or sequence) |
++--------------+-------------+---------------------------------------------------------+
+| hist_wording | TEXT        | Additional comments                                     |
++--------------+-------------+---------------------------------------------------------+
+| hist_user    | TEXT        | Role whose action generated the event                   |
++--------------+-------------+---------------------------------------------------------+
+| hist_txid    | BIGINT      | Identifier of the transaction that generated the event  |
++--------------+-------------+---------------------------------------------------------+
 
-The *hist_function* column can take the following values:
+The *hist_function* Column
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-+----------------------------------+----------------------------------------------------------------------------+
-| Value                            | Meaning                                                                    |
-+==================================+============================================================================+
-| ADJUST_GROUP_PROPERTIES          | ajust the group_has_waiting_changes column content of the emaj_group table |
-+----------------------------------+----------------------------------------------------------------------------+
-| ASSIGN_SEQUENCE                  | sequence assigned to a table group                                        |
-+----------------------------------+----------------------------------------------------------------------------+
-| ASSIGN_SEQUENCES                 | sequences assigned to a table group                                       |
-+----------------------------------+----------------------------------------------------------------------------+
-| ASSIGN_TABLE                     | table assigned to a table group                                           |
-+----------------------------------+----------------------------------------------------------------------------+
-| ASSIGN_TABLES                    | tables assigned to a table group                                          |
-+----------------------------------+----------------------------------------------------------------------------+
-| CLEANUP_RLBK_STATE               | cleanup the state of recently completed rollback operations                |
-+----------------------------------+----------------------------------------------------------------------------+
-| COMMENT_GROUP                    | comment set on a group                                                     |
-+----------------------------------+----------------------------------------------------------------------------+
-| COMMENT_MARK_GROUP               | comment set on a mark for a table group                                   |
-+----------------------------------+----------------------------------------------------------------------------+
-| COMMENT_ROLLBACK                 | comment set on an E-Maj rollback                                           |
-+----------------------------------+----------------------------------------------------------------------------+
-| CONSOLIDATE_RLBK_GROUP           | consolidate a logged rollback operation                                    |
-+----------------------------------+----------------------------------------------------------------------------+
-| CREATE_GROUP                     | table group creation                                                      |
-+----------------------------------+----------------------------------------------------------------------------+
-| DBLINK_OPEN_CNX                  | open a dblink connection for a rollback operation                          |
-+----------------------------------+----------------------------------------------------------------------------+
-| DBLINK_CLOSE_CNX                 | close a dblink connection for a rollback operation                         |
-+----------------------------------+----------------------------------------------------------------------------+
-| DELETE_MARK_GROUP                | mark deletion for a table group                                           |
-+----------------------------------+----------------------------------------------------------------------------+
-| DISABLE_PROTECTION               | desactivate event triggers                                                 |
-+----------------------------------+----------------------------------------------------------------------------+
-| DROP_GROUP                       | table group suppression                                                   |
-+----------------------------------+----------------------------------------------------------------------------+
-| EMAJ_INSTALL                     | E-Maj installation or version update                                       |
-+----------------------------------+----------------------------------------------------------------------------+
-| ENABLE_PROTECTION                | activate event triggers                                                    |
-+----------------------------------+----------------------------------------------------------------------------+
-| EXPORT_GROUPS                    | export a table groups configuration                                       |
-+----------------------------------+----------------------------------------------------------------------------+
-| EXPORT_PARAMETERS                | export an E-maj parameters configuration                                   |
-+----------------------------------+----------------------------------------------------------------------------+
-| FORCE_DROP_GROUP                 | table group forced suppression                                            |
-+----------------------------------+----------------------------------------------------------------------------+
-| FORCE_STOP_GROUP                 | table group forced stop                                                   |
-+----------------------------------+----------------------------------------------------------------------------+
-| FORGET_GROUP                     | erase historical traces for a dropped table group                         |
-+----------------------------------+----------------------------------------------------------------------------+
-| GEN_SQL_GROUP                    | generation of a *psql* script to replay updates for a table group         |
-+----------------------------------+----------------------------------------------------------------------------+
-| GEN_SQL_GROUPS                   | generation of a *psql* script to replay updates for several table groups  |
-+----------------------------------+----------------------------------------------------------------------------+
-| IMPORT_GROUPS                    | import a table groups configuration                                       |
-+----------------------------------+----------------------------------------------------------------------------+
-| IMPORT_PARAMETERS                | import an E-maj parameters configuration                                   |
-+----------------------------------+----------------------------------------------------------------------------+
-| LOCK_GROUP                       | lock set on tables of a group                                              |
-+----------------------------------+----------------------------------------------------------------------------+
-| LOCK_GROUPS                      | lock set on tables of several groups                                       |
-+----------------------------------+----------------------------------------------------------------------------+
-| LOCK_SESSION                     | lock set on tables for a rollback session                                  |
-+----------------------------------+----------------------------------------------------------------------------+
-| MODIFY_TABLE                     | table properties change                                                    |
-+----------------------------------+----------------------------------------------------------------------------+
-| MODIFY_TABLES                    | tables properties change                                                   |
-+----------------------------------+----------------------------------------------------------------------------+
-| MOVE_SEQUENCE                    | sequence moved to another table group                                     |
-+----------------------------------+----------------------------------------------------------------------------+
-| MOVE_SEQUENCES                   | sequences moved to another table group                                    |
-+----------------------------------+----------------------------------------------------------------------------+
-| MOVE_TABLE                       | table moved to another table group                                        |
-+----------------------------------+----------------------------------------------------------------------------+
-| MOVE_TABLES                      | tables moved to another table group                                       |
-+----------------------------------+----------------------------------------------------------------------------+
-| PROTECT_GROUP                    | set a protection against rollbacks on a group                              |
-+----------------------------------+----------------------------------------------------------------------------+
-| PROTECT_MARK_GROUP               | set a protection against rollbacks on a mark for a group                   |
-+----------------------------------+----------------------------------------------------------------------------+
-| PURGE_HISTORIES                  | delete from the historical tables the events prior the retention delay     |
-+----------------------------------+----------------------------------------------------------------------------+
-| REMOVE_SEQUENCE                  | sequence removed from its table group                                     |
-+----------------------------------+----------------------------------------------------------------------------+
-| REMOVE_SEQUENCES                 | sequences removed from their table group                                  |
-+----------------------------------+----------------------------------------------------------------------------+
-| REMOVE_TABLE                     | table removed from its table group                                        |
-+----------------------------------+----------------------------------------------------------------------------+
-| REMOVE_TABLES                    | tables removed from their table group                                     |
-+----------------------------------+----------------------------------------------------------------------------+
-| RENAME_MARK_GROUP                | mark rename for a table group                                             |
-+----------------------------------+----------------------------------------------------------------------------+
-| RESET_GROUP                      | log tables content reset for a group                                       |
-+----------------------------------+----------------------------------------------------------------------------+
-| ROLLBACK_GROUP                   | rollback updates for a table group                                        |
-+----------------------------------+----------------------------------------------------------------------------+
-| ROLLBACK_GROUPS                  | rollback updates for several table groups                                 |
-+----------------------------------+----------------------------------------------------------------------------+
-| ROLLBACK_SEQUENCE                | rollback one sequence                                                      |
-+----------------------------------+----------------------------------------------------------------------------+
-| ROLLBACK_TABLE                   | rollback updates for one table                                             |
-+----------------------------------+----------------------------------------------------------------------------+
-| SET_MARK_GROUP                   | mark set on a table group                                                 |
-+----------------------------------+----------------------------------------------------------------------------+
-| SET_MARK_GROUPS                  | mark set on several table groups                                          |
-+----------------------------------+----------------------------------------------------------------------------+
-| SET_PARAM                        | parameter value change                                                     |
-+----------------------------------+----------------------------------------------------------------------------+
-| SNAP_GROUP                       | snap all tables and sequences for a group                                  |
-+----------------------------------+----------------------------------------------------------------------------+
-| SNAP_LOG_GROUP                   | snap all log tables for a group                                            |
-+----------------------------------+----------------------------------------------------------------------------+
-| START_GROUP                      | table group start                                                         |
-+----------------------------------+----------------------------------------------------------------------------+
-| START_GROUPS                     | table groups start                                                        |
-+----------------------------------+----------------------------------------------------------------------------+
-| STOP_GROUP                       | table group stop                                                          |
-+----------------------------------+----------------------------------------------------------------------------+
-| STOP_GROUPS                      | table groups stop                                                         |
-+----------------------------------+----------------------------------------------------------------------------+
-| UNPROTECT_GROUP                  | remove a protection against rollbacks on a group                           |
-+----------------------------------+----------------------------------------------------------------------------+
-| UNPROTECT_MARK_GROUP             | remove a protection against rollbacks on a mark for a group                |
-+----------------------------------+----------------------------------------------------------------------------+
+The ``hist_function`` column can take the following values:
 
-The *hist_event* column can take the following values:
++----------------------------------+---------------------------------------------------------------------------+
+| Value                            | Meaning                                                                   |
++==================================+===========================================================================+
+| ASSIGN_SEQUENCE                  | Sequence assigned to a table group                                        |
++----------------------------------+---------------------------------------------------------------------------+
+| ASSIGN_SEQUENCES                 | Sequences assigned to a table group                                       |
++----------------------------------+---------------------------------------------------------------------------+
+| ASSIGN_TABLE                     | Table assigned to a table group                                           |
++----------------------------------+---------------------------------------------------------------------------+
+| ASSIGN_TABLES                    | Tables assigned to a table group                                          |
++----------------------------------+---------------------------------------------------------------------------+
+| CLEANUP_RLBK_STATE               | Clean up the state of recently completed rollback operations              |
++----------------------------------+---------------------------------------------------------------------------+
+| COMMENT_GROUP                    | Comment set on a group                                                    |
++----------------------------------+---------------------------------------------------------------------------+
+| COMMENT_MARK_GROUP               | Comment set on a mark for a table group                                   |
++----------------------------------+---------------------------------------------------------------------------+
+| COMMENT_ROLLBACK                 | Comment set on an E-Maj rollback                                          |
++----------------------------------+---------------------------------------------------------------------------+
+| CONSOLIDATE_RLBK_GROUP           | Consolidate a logged rollback operation                                   |
++----------------------------------+---------------------------------------------------------------------------+
+| CREATE_GROUP                     | Table group creation                                                      |
++----------------------------------+---------------------------------------------------------------------------+
+| DBLINK_OPEN_CNX                  | Open a dblink connection for a rollback operation                         |
++----------------------------------+---------------------------------------------------------------------------+
+| DBLINK_CLOSE_CNX                 | Close a dblink connection for a rollback operation                        |
++----------------------------------+---------------------------------------------------------------------------+
+| DELETE_MARK_GROUP                | Mark deletion for a table group                                           |
++----------------------------------+---------------------------------------------------------------------------+
+| DISABLE_PROTECTION               | Deactivate event triggers                                                 |
++----------------------------------+---------------------------------------------------------------------------+
+| DROP_GROUP                       | Table group suppression                                                   |
++----------------------------------+---------------------------------------------------------------------------+
+| EMAJ_INSTALL                     | E-Maj installation or version update                                      |
++----------------------------------+---------------------------------------------------------------------------+
+| ENABLE_PROTECTION                | Activate event triggers                                                   |
++----------------------------------+---------------------------------------------------------------------------+
+| EXPORT_GROUPS                    | Export a table groups configuration                                       |
++----------------------------------+---------------------------------------------------------------------------+
+| EXPORT_PARAMETERS                | Export an E-Maj parameters configuration                                  |
++----------------------------------+---------------------------------------------------------------------------+
+| FORCE_DROP_GROUP                 | Table group forced suppression                                            |
++----------------------------------+---------------------------------------------------------------------------+
+| FORCE_STOP_GROUP                 | Table group forced stop                                                   |
++----------------------------------+---------------------------------------------------------------------------+
+| FORGET_GROUP                     | Erase historical traces for a dropped table group                         |
++----------------------------------+---------------------------------------------------------------------------+
+| GEN_SQL_GROUP                    | Generate a *psql* script to replay updates for a table group              |
++----------------------------------+---------------------------------------------------------------------------+
+| GEN_SQL_GROUPS                   | Generate a *psql* script to replay updates for several table groups       |
++----------------------------------+---------------------------------------------------------------------------+
+| IMPORT_GROUPS                    | Import a table groups configuration                                       |
++----------------------------------+---------------------------------------------------------------------------+
+| IMPORT_PARAMETERS                | Import an E-Maj parameters configuration                                  |
++----------------------------------+---------------------------------------------------------------------------+
+| LOCK_GROUP                       | Lock set on tables of a group                                             |
++----------------------------------+---------------------------------------------------------------------------+
+| LOCK_GROUPS                      | Lock set on tables of several groups                                      |
++----------------------------------+---------------------------------------------------------------------------+
+| LOCK_SESSION                     | Lock set on tables for a rollback session                                 |
++----------------------------------+---------------------------------------------------------------------------+
+| MODIFY_TABLE                     | Table properties change                                                   |
++----------------------------------+---------------------------------------------------------------------------+
+| MODIFY_TABLES                    | Tables properties change                                                  |
++----------------------------------+---------------------------------------------------------------------------+
+| MOVE_SEQUENCE                    | Sequence moved to another table group                                     |
++----------------------------------+---------------------------------------------------------------------------+
+| MOVE_SEQUENCES                   | Sequences moved to another table group                                    |
++----------------------------------+---------------------------------------------------------------------------+
+| MOVE_TABLE                       | Table moved to another table group                                        |
++----------------------------------+---------------------------------------------------------------------------+
+| MOVE_TABLES                      | Tables moved to another table group                                       |
++----------------------------------+---------------------------------------------------------------------------+
+| PROTECT_GROUP                    | Set protection against rollbacks on a group                               |
++----------------------------------+---------------------------------------------------------------------------+
+| PROTECT_MARK_GROUP               | Set protection against rollbacks on a mark for a group                    |
++----------------------------------+---------------------------------------------------------------------------+
+| PURGE_HISTORIES                  | Delete events older than the retention delay from historical tables       |
++----------------------------------+---------------------------------------------------------------------------+
+| REMOVE_SEQUENCE                  | Sequence removed from its table group                                     |
++----------------------------------+---------------------------------------------------------------------------+
+| REMOVE_SEQUENCES                 | Sequences removed from their table group                                  |
++----------------------------------+---------------------------------------------------------------------------+
+| REMOVE_TABLE                     | Table removed from its table group                                        |
++----------------------------------+---------------------------------------------------------------------------+
+| REMOVE_TABLES                    | Tables removed from their table group                                     |
++----------------------------------+---------------------------------------------------------------------------+
+| RENAME_MARK_GROUP                | Mark renamed for a table group                                            |
++----------------------------------+---------------------------------------------------------------------------+
+| RESET_GROUP                      | Log tables content reset for a group                                      |
++----------------------------------+---------------------------------------------------------------------------+
+| ROLLBACK_GROUP                   | Rollback updates for a table group                                        |
++----------------------------------+---------------------------------------------------------------------------+
+| ROLLBACK_GROUPS                  | Rollback updates for several table groups                                 |
++----------------------------------+---------------------------------------------------------------------------+
+| ROLLBACK_SEQUENCE                | Rollback one sequence                                                     |
++----------------------------------+---------------------------------------------------------------------------+
+| ROLLBACK_TABLE                   | Rollback updates for one table                                            |
++----------------------------------+---------------------------------------------------------------------------+
+| SET_MARK_GROUP                   | Mark set on a table group                                                 |
++----------------------------------+---------------------------------------------------------------------------+
+| SET_MARK_GROUPS                  | Mark set on several table groups                                          |
++----------------------------------+---------------------------------------------------------------------------+
+| SET_PARAM                        | Parameter value change                                                    |
++----------------------------------+---------------------------------------------------------------------------+
+| SNAP_GROUP                       | Snap all tables and sequences for a group                                 |
++----------------------------------+---------------------------------------------------------------------------+
+| SNAP_LOG_GROUP                   | Snap all log tables for a group                                           |
++----------------------------------+---------------------------------------------------------------------------+
+| START_GROUP                      | Table group start                                                         |
++----------------------------------+---------------------------------------------------------------------------+
+| START_GROUPS                     | Table groups start                                                        |
++----------------------------------+---------------------------------------------------------------------------+
+| STOP_GROUP                       | Table group stop                                                          |
++----------------------------------+---------------------------------------------------------------------------+
+| STOP_GROUPS                      | Table groups stop                                                         |
++----------------------------------+---------------------------------------------------------------------------+
+| UNPROTECT_GROUP                  | Remove protection against rollbacks on a group                            |
++----------------------------------+---------------------------------------------------------------------------+
+| UNPROTECT_MARK_GROUP             | Remove protection against rollbacks on a mark for a group                 |
++----------------------------------+---------------------------------------------------------------------------+
+
+The *hist_event* Column
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``hist_event`` column can take the following values:
 
 +------------------------------+----------------------------------------------------------------+
 | Value                        | Meaning                                                        |
 +==============================+================================================================+
-| BEGIN                        |                                                                |
+| BEGIN                        | Beginning of an operation                                      |
 +------------------------------+----------------------------------------------------------------+
-| DELETED PARAMETER            | parameter deleted from *emaj_param*                            |
+| DELETED PARAMETER            | Parameter deleted from *emaj_param*                            |
 +------------------------------+----------------------------------------------------------------+
-| END                          |                                                                |
+| END                          | End of an operation                                            |
 +------------------------------+----------------------------------------------------------------+
-| EVENT TRIGGER RECREATED      |                                                                |
+| EVENT TRIGGER RECREATED      | Event trigger recreated                                        |
 +------------------------------+----------------------------------------------------------------+
-| EVENT TRIGGERS DISABLED      |                                                                |
+| EVENT TRIGGERS DISABLED      | Event triggers disabled                                        |
 +------------------------------+----------------------------------------------------------------+
-| EVENT TRIGGERS ENABLED       |                                                                |
+| EVENT TRIGGERS ENABLED       | Event triggers enabled                                         |
 +------------------------------+----------------------------------------------------------------+
-| GROUP CREATED                | new table group created                                       |
+| GROUP CREATED                | New table group created                                        |
 +------------------------------+----------------------------------------------------------------+
-| INSERTED PARAMETER           | parameter inserted into *emaj_param*                           |
+| INSERTED PARAMETER           | Parameter inserted into *emaj_param*                           |
 +------------------------------+----------------------------------------------------------------+
-| LOG DATA TABLESPACE CHANGED  | tablespace for the log table modified                          |
+| LOG DATA TABLESPACE CHANGED  | Tablespace for the log table modified                          |
 +------------------------------+----------------------------------------------------------------+
-| LOG INDEX TABLESPACE CHANGED | tablespace for the log index modified                          |
+| LOG INDEX TABLESPACE CHANGED | Tablespace for the log index modified                          |
 +------------------------------+----------------------------------------------------------------+
-| LOG_SCHEMA CREATED           | secondary schema created                                       |
+| LOG_SCHEMA CREATED           | Secondary schema created                                       |
 +------------------------------+----------------------------------------------------------------+
-| LOG_SCHEMA DROPPED           | secondary schema dropped                                       |
+| LOG_SCHEMA DROPPED           | Secondary schema dropped                                       |
 +------------------------------+----------------------------------------------------------------+
-| MARK DELETED                 |                                                                |
+| MARK DELETED                 | Mark deleted                                                   |
 +------------------------------+----------------------------------------------------------------+
 | NAMES PREFIX CHANGED         | E-Maj names prefix modified                                    |
 +------------------------------+----------------------------------------------------------------+
-| NOTICE                       | warning message issued by a rollback                           |
+| NOTICE                       | Warning message issued by a rollback                           |
 +------------------------------+----------------------------------------------------------------+
-| PRIORITY CHANGED             | priority level modified                                        |
+| PRIORITY CHANGED             | Priority level modified                                        |
 +------------------------------+----------------------------------------------------------------+
-| SEQUENCE ADDED               | sequence added to a logging table group                       |
+| SEQUENCE ADDED               | Sequence added to a logging table group                        |
 +------------------------------+----------------------------------------------------------------+
-| SEQUENCE MOVED               | sequence moved from one group to another                       |
+| SEQUENCE MOVED               | Sequence moved from one group to another                       |
 +------------------------------+----------------------------------------------------------------+
-| SEQUENCE REMOVED             | sequence removed from a logging table group                   |
+| SEQUENCE REMOVED             | Sequence removed from a logging table group                    |
 +------------------------------+----------------------------------------------------------------+
-| TABLE ADDED                  | table  added to a logging table group                         |
+| TABLE ADDED                  | Table added to a logging table group                           |
 +------------------------------+----------------------------------------------------------------+
-| TABLE MOVED                  | table moved from one group to another                          |
+| TABLE MOVED                  | Table moved from one group to another                          |
 +------------------------------+----------------------------------------------------------------+
-| TABLE REMOVED                | table removed from a logging table group                      |
+| TABLE REMOVED                | Table removed from a logging table group                       |
 +------------------------------+----------------------------------------------------------------+
-| TABLE REPAIRED               | table repaired for E-Maj                                       |
+| TABLE REPAIRED               | Table repaired for E-Maj                                       |
 +------------------------------+----------------------------------------------------------------+
-| TIME STAMP SET               | internal time stamp recorded                                   |
+| TIME STAMP SET               | Internal timestamp recorded                                    |
 +------------------------------+----------------------------------------------------------------+
-| TRIGGERS TO IGNORE CHANGED   | set of application triggers to ignore at rollback time changed |
+| TRIGGERS TO IGNORE CHANGED   | Set of application triggers to ignore at rollback time changed |
 +------------------------------+----------------------------------------------------------------+
-| UPDATED PARAMETER            | parameter updated in *emaj_param*                              |
+| UPDATED PARAMETER            | Parameter updated in *emaj_param*                              |
 +------------------------------+----------------------------------------------------------------+
-| WARNING                      | warning message issued by a rollback                           |
+| WARNING                      | Warning message issued by a rollback                           |
 +------------------------------+----------------------------------------------------------------+
 
-Other history tables
+----
+
+Other History Tables
 --------------------
 
-Several other internal tables store historical data :
+Several other internal tables store historical data:
 
-* *emaj_version_hist* keeps the trace of the extension version changes;
-* *emaj_group_hist* records table groups creations and drops;
-* *emaj_rel_hist* keeps tables and sequences assignments to table groups;
-* *emaj_log_session* records the periods of time when the table groups are enabled (started);
-* and several other tables handling E-Maj rollbacks data.
+* *emaj_version_hist*: Keeps track of extension version changes.
+* *emaj_group_hist*: Records table group creations and drops.
+* *emaj_rel_hist*: Keeps track of tables and sequences assignments to table groups.
+* *emaj_log_session*: Records the periods when table groups are enabled (started).
+* Several other tables handle E-Maj rollback data.
 
-The Emaj_web client is the easiest way to examine these tables content.
+The Emaj_web client is the easiest way to examine the content of these tables.
 
-Purge obsolete traces
+----
+
+Purge Obsolete Traces
 ---------------------
 
-When a table group is started with reset (:ref:`emaj_start_group() <emaj_start_group>` function), or when old marks are deleted (:ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function), the oldest events are deleted from most historical tables. The events kept are those not older than:
+When a table group is started with reset (:ref:`emaj_start_group() <emaj_start_group>` function) or when old marks are deleted (:ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function), the oldest events are deleted from most historical tables. The events kept are those not older than:
 
-* a parametrised retention delay,
-* the oldest mark,
-* and the oldest uncompleted rollback operation.
+* A configurable retention delay.
+* The oldest mark.
+* The oldest uncompleted rollback operation.
 
-By default, the retention delay for events equals 1 year. But this value can be modified at any time by changing the *history_retention* :ref:`E-Maj parameter<emaj_param>` value. If the *history_retention* parameter is set to 100 years or more, no histories purge attempt is executed.
+By default, the retention delay for events is 1 year. However, this value can be modified at any time by changing the *history_retention* :ref:`E-Maj parameter<emaj_param>`. If the *history_retention* parameter is set to 100 years or more, no history purge is attempted.
 
-The obsolete traces purge can also be initiated by explicitely calling the :ref:`emaj_purge_histories() <emaj_purge_histories>` function. The input parameter of the function defines a retention delay that overloads the *history_retention* E-Maj parameter.
+The obsolete traces purge can also be initiated by explicitly calling the :ref:`emaj_purge_histories() <emaj_purge_histories>` function. The input parameter of the function defines a retention delay that overrides the *history_retention* E-Maj parameter.
 
-In order to schedule purges periodically, it is possible to:
-
-* set the *history_retention* parameter to a very high value (for instance '100 YEARS')
-* and schedule purge operations by any mean (*crontab*, *pgAgent*, *pgTimeTable* or any other tool).
+To schedule purges periodically, it is possible to set the *history_retention* parameter to a very high value (e.g., '100 YEARS'),and schedule purge operations using any tool (*crontab*, *pgAgent*, *pgTimeTable*, or any other tool).

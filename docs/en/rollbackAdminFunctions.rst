@@ -1,234 +1,293 @@
-Manage E-Maj rollbacks
-======================
+Managing E-Maj Rollbacks
+========================
 
-Aside the functions that :ref:`perform an E-Maj rollback<emaj_rollback_group>`, there are several other rollbacks management functions.
+Aside from the functions that :ref:`perform an E-Maj rollback<emaj_rollback_group>`, there are several other rollback management functions.
 
 .. _emaj_estimate_rollback_group:
 
-Estimate the rollback duration
-------------------------------
+Estimating Rollback Duration
+----------------------------
 
-The *emaj_estimate_rollback_group()* function returns an idea of the time needed to rollback a table group to a given mark. It can be called with a statement like::
+The ``emaj_estimate_rollback_group()`` function returns an estimate of the time needed to roll back a table group to a given mark. It can be called with a statement like::
 
-   SELECT emaj.emaj_estimate_rollback_group('<group.name>', '<mark.name>', <is.logged>);
+   SELECT emaj.emaj_estimate_rollback_group(p_groupName, p_mark, p_isLoggedRlbk);
 
-The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the last set mark.
+**Input Parameters**
 
-The third parameter indicates whether the E-Maj rollback to simulate is a *logged rollback* or not.
+- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_mark`` (*TEXT*): Target **mark name**. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
+- ``p_isLoggedRlbk`` (*BOOLEAN*):
 
-The function returns an *INTERVAL* value.
+   - *FALSE*: The simulated E-Maj rollback is an unlogged rollback.
+   - *TRUE*: The simulated E-Maj rollback is a logged rollback.
 
-The table group must be in *LOGGING* state and the supplied mark must be usable for an E-Maj rollback.
+**Returned data**
 
-This duration estimate is approximative. It takes into account:
+The function returns an *INTERVAL* value representing the estimated rollback duration.
 
-* the number of updates in log tables to process, as returned by the :ref:`emaj_log_stat_group() <emaj_log_stat_group>` function,
-* recorded duration of already performed rollbacks for the same tables,  
-* 6 generic :doc:`parameters<parameters>` that are used as default values when no statistics have been already recorded for the tables to process.
+**Notes**
 
-The precision of the result cannot be high. The first reason is that, *INSERT*, *UPDATE* and *DELETE* having not the same cost, the part of each SQL type may vary. The second reason is that the load of the server at rollback time can be very different from one run to another. However, if there is a time constraint, the order of magnitude delivered by the function can be helpful to determine of the rollback operation can be performed in the available time interval.
+The table group must be in *LOGGING* state, and the supplied mark must be usable for an E-Maj rollback.
 
-If no statistics on previous rollbacks are available and if the results quality is poor, it is possible to adjust the generic :doc:`parameters<parameters>`. It is also possible to manually change the *emaj.emaj_rlbk_stat* table's content that keep a trace of the previous rollback durations, for instance by deleting rows corresponding to rollback operations performed in unusual load conditions.
+This duration estimate is computed using:
 
-Using the *emaj_estimate_rollback_groups()* function, it is possible to estimate the duration of a rollback operation on several groups::
+* The number of changes in log tables to process, as returned by the :ref:`emaj_log_stat_group() <emaj_log_stat_group>` function.
+* Recorded durations of already performed rollbacks for the same tables.
+* Six generic :doc:`parameters<parameters>` that are used as default values when no statistics have been recorded for the tables to process.
 
-   SELECT emaj.emaj_estimate_rollback_groups('<group.names.array>', '<mark.name>', <is.logged>);
+The duration estimate **precision** cannot be high. The first reason is that the real cost of rows *INSERT*, *UPDATE*, and *DELETE* is not the same, and the proportion of each SQL type vary. The second reason is that the server load at rollback time can be very different from one run to another. However, if there is a time constraint, the order of magnitude delivered by the function can be helpful in determining whether the rollback operation can be performed in the available time interval.
 
-More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
+If no statistics on previous rollbacks are available and the result quality is poor, it is possible to adjust the generic :doc:`parameters<parameters>`. It is also possible to manually change the *emaj.emaj_rlbk_stat* table content, which keeps a trace of previous rollback durations. For instance, rows corresponding to rollback operations performed under unusual load conditions can be deleted.
+
+**Multi-groups operation**
+
+Using the ``emaj_estimate_rollback_groups()`` function, it is possible to estimate the duration of a rollback operation on several groups::
+
+   SELECT emaj.emaj_estimate_rollback_groups(p_groupNames, p_mark, p_isLoggedRlbk);
+
+The differences with the *emaj_estimate_rollback_group()* function are:
+
+- The first parameter is a *TEXT array* representing all table groups to process. For more information, see :doc:`multi-groups functions <multiGroupsFunctions>`.
+
+----
 
 .. _emaj_rollback_activity:
 
-Monitor rollback operations
----------------------------
+Monitoring Rollback Operations
+------------------------------
 
-When the volume of recorded updates to cancel leads to a long rollback, it may be interesting to monitor the operation to appreciate how it progresses. A function, named *emaj_rollback_activity()*, and a client, :doc:`emajRollbackMonitor.php <rollbackMonitorClient>`, fit this need. 
+When the volume of recorded updates to cancel leads to a long rollback, it may be useful to monitor the operation to see how it progresses. A function, named ``emaj_rollback_activity()``, and a client, :doc:`emajRollbackMonitor <rollbackMonitorClient>`, meet this need.
 
 .. _emaj_rollback_activity_prerequisites:
 
-Prerequisite
-^^^^^^^^^^^^
+Prerequisites
+^^^^^^^^^^^^^
 
-To allow E-Maj administrators to monitor the progress of a rollback operation, the activated functions update several technical tables as the process progresses. To ensure that these updates are visible while the transaction managing the rollback is in progress, they are performed through a *dblink* connection.
+To allow E-Maj administrators to monitor the progress of a rollback operation, the activated functions update several technical tables as the process progresses. To ensure that these updates are visible while the transaction managing the rollback is in progress, they are performed in separate transactions through a *dblink* connection.
 
-If not already present, the *dblink* extension is automatically installed at *emaj* extension creation. But monitoring rollback operations also requires to set the :ref:`'dblink_user_password'<emaj_param>` extension parameter with connection identifiers usable by *dblink*. ::
+If not already present, the *dblink* extension is automatically installed at *emaj* extension creation. However, monitoring rollback operations also requires setting the :ref:`'dblink_user_password'<emaj_param>` extension parameter with connection identifiers usable by *dblink*::
 
    SELECT emaj.emaj_set_param('dblink_user_password','user=<user> password=<password>');
 
-The declared connection role must have been granted the *emaj_adm* privilege (or be a *superuser*).
+The declared connection role must have been granted the ``emaj_adm`` privilege (or be a *SUPERUSER*).
 
-If the extension has been installed by a non *SUPERUSER* role, he must have been granted :ref:`the privilege to execute the dblink_connect_u(text,text)<rollbacks_limits>` function.
+If the extension has been installed by a non-*SUPERUSER* role, the role must have been granted the privilege to execute the :ref:`dblink_connect_u(text,text)<rollbacks_limits>` function.
 
-Lastly, the main transaction managing the rollback operation must be in a “*read committed*” concurrency mode (the default value).
+Lastly, the main transaction managing the rollback operation must be in a "*READ COMMITTED*" concurrency mode (the default value).
 
-Monitoring function
+Monitoring Function
 ^^^^^^^^^^^^^^^^^^^
 
-The *emaj_rollback_activity()* function allows one to see the progress of rollback operations.
-
-Invoke it with the following statement::
+The ``emaj_rollback_activity()`` function allows monitoring the progress of rollback operations. Invoke it with the following statement::
 
    SELECT * FROM emaj.emaj_rollback_activity();
 
+**Input Parameters**
+
 The function does not require any input parameter.
 
-It returns a set of rows of type *emaj.emaj_rollback_activity_type*. Each row represents an in progress rollback operation, with the following columns:
+**Returned data**
+
+The function returns a set of rows of type *emaj.emaj_rollback_activity_type*. Each row represents an in-progress rollback operation with the following columns:
 
 +-----------------------------+-------------+---------------------------------------------------------------+
 | Column                      | Type        | Description                                                   |
 +=============================+=============+===============================================================+
-| rlbk_id                     | INT         | rollback identifier                                           |
+| rlbk_id                     | INT         | Rollback identifier                                           |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_groups                 | TEXT[]      | table groups array associated to the rollback                 |
+| rlbk_groups                 | TEXT[]      | Table groups array associated with the rollback               |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_mark                   | TEXT        | mark to rollback to                                           |
+| rlbk_mark                   | TEXT        | Mark to roll back to                                          |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_mark_datetime          | TIMESTAMPTZ | date and time when the mark to rollback to has been set       |
+| rlbk_mark_datetime          | TIMESTAMPTZ | Date and time when the mark to roll back to was set           |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_is_logged              | BOOLEAN     | boolean taking the “true” value for logged rollbacks          |
+| rlbk_is_logged              | BOOLEAN     | Boolean taking the *TRUE* value for logged rollbacks          |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_is_alter_group_allowed | BOOLEAN     | | boolean indicating whether the rollback can target a mark   |
-|                             |             | | set before a table groups structure change                  |
+| rlbk_is_alter_group_allowed | BOOLEAN     | Boolean indicating whether the rollback can target a mark     |
+|                             |             | set before a table group structure change                     |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_comment                | TEXT        | comment                                                       |
+| rlbk_comment                | TEXT        | Comment                                                       |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_nb_session             | INT         | number of parallel sessions                                   |
+| rlbk_nb_session             | INT         | Number of parallel sessions                                   |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_nb_table               | INT         | number of tables contained in the processed table groups      |
+| rlbk_nb_table               | INT         | Number of tables contained in the processed table groups      |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_nb_sequence            | INT         | number of sequences contained in the processed table groups   |
+| rlbk_nb_sequence            | INT         | Number of sequences contained in the processed table groups   |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_eff_nb_table           | INT         | number of tables having updates to cancel                     |
+| rlbk_eff_nb_table           | INT         | Number of tables having updates to cancel                     |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_eff_nb_sequence        | INT         | number of sequences having attributes to change               |
+| rlbk_eff_nb_sequence        | INT         | Number of sequences having attributes to change               |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_status                 | ENUM        | rollback operation state                                      |
+| rlbk_status                 | ENUM        | Rollback operation state                                      |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_start_datetime         | TIMESTAMPTZ | rollback operation start timestamp                            |
+| rlbk_start_datetime         | TIMESTAMPTZ | Rollback operation start timestamp                            |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_planning_duration      | INTERVAL    | planning phase duration                                       |
+| rlbk_planning_duration      | INTERVAL    | Planning phase duration                                       |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_locking_duration       | INTERVAL    | tables locking phase duration                                 |
+| rlbk_locking_duration       | INTERVAL    | Tables locking phase duration                                 |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_elapse                 | INTERVAL    | elapse time spent since the rollback operation start          |
+| rlbk_elapse                 | INTERVAL    | Time spent since the rollback operation start                 |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_remaining              | INTERVAL    | estimated remaining duration                                  |
+| rlbk_remaining              | INTERVAL    | Estimated remaining duration                                  |
 +-----------------------------+-------------+---------------------------------------------------------------+
-| rlbk_completion_pct         | SMALLINT    | estimated percentage of the completed work                    |
+| rlbk_completion_pct         | SMALLINT    | Estimated percentage of the completed work                    |
 +-----------------------------+-------------+---------------------------------------------------------------+
 
-An in progress rollback operation is in one of the following state:
+**Notes**
 
-* PLANNING : the operation is in its initial planning phase,
-* LOCKING : the operation is setting locks,
-* EXECUTING : the operation is currently executing one of the planned steps.
+An in-progress **rollback** operation is in one of the following **states**:
 
-If the functions executing rollback operations cannot use *dblink* connections (extension not installed, missing or incorrect connection parameters,...), the *emaj_rollback_activity()* does not return any rows.
+* *PLANNING*: The operation is in its initial planning phase.
+* *LOCKING*: The operation is setting locks.
+* *EXECUTING*: The operation is currently executing one of the planned steps.
 
-The remaining duration estimate is approximate. Its precision is similar to the precision of the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.
+If the functions executing rollback operations cannot use *dblink* connections (extension not installed, missing or incorrect connection parameters, etc.), the ``emaj_rollback_activity()`` function does not return any rows.
+
+The remaining duration estimate is **approximate**. Its precision is similar to the precision of the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.
+
+----
 
 .. _emaj_comment_rollback:
 
-Comment a rollback operation
-----------------------------
+Commenting a Rollback Operation
+-------------------------------
 
-When calling *emaj_rollback_group()*, *emaj_logged_rollback_group()*, *emaj_rollback_groups()* or *emaj_logged_rollback_groups()* functions, one of the supplied parameters allows to record a comment associated to the rollback operation. Using the *emaj_comment_rollback()* function, this comment can be updated or deleted. The same function allows to set a comment when it has not been done at rollback submission time. ::
+The ``emaj_comment_rollback()`` function allows to set, modify or delete a comment for an already started E-Maj rollback operation::
 
-   SELECT emaj.emaj_comment_rollback('<rollback.id>', <comment>);
+   SELECT emaj.emaj_comment_rollback(p_rlbkId, p_comment);
 
-The rollback identifier is an integer. It is available in the execution report delivered at the rollback operation completion. It is also visible in the :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function report.
+**Input Parameters**
 
-If the comment parameter is set to NULL, the existing comment, if any, is deleted.
+- ``p_rlbkId`` (*INTEGER*): E-Maj **rollback identifier**.
+- ``p_comment`` (*TEXT*): **Comment** to set, modify or delete.
+
+**Returned data**
 
 The function does not return any data.
 
-The comment can be added, modified or deleted when the operation is completed, but also when it is in progress if it is visible, i.e. if the :ref:`'dblink_user_password'<emaj_param>` E-Maj parameter is set.
+**Notes**
+
+The rollback identifier is available in the execution report delivered at the rollback operation completion. It is also visible in the :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function report.
+
+If the ``p_comment`` parameter is set to *NULL*, the existing comment, if any, is deleted.
+
+The comment can be added, modified, or deleted when the operation is:
+
+- either completed,
+- or even in progress, if it is visible (i.e., if the :ref:`'dblink_user_password'<emaj_param>` E-Maj parameter is set).
+
+:ref:`emaj_rollback_group(), emaj_rollback_groups()<emaj_rollback_group>`, :ref:`emaj_logged_rollback_group() or emaj_logged_rollback_groups()<emaj_logged_rollback_group>` functions also have a *p_comment* parameter that allows immediately setting a comment at E-Maj rollback submission time.
+
+----
 
 .. _emaj_consolidate_rollback_group:
 
-"Consolidate" a logged rollback
--------------------------------
+"Consolidating" a Logged Rollback
+---------------------------------
 
-Following the execution of a “*logged rollback*”, and once the rollback operation recording becomes useless, it is possible to “*consolidate*” this rollback, meaning to some extent to transform it into “*unlogged rollback*”. A the end of the consolidation operation, marks and logs between the rollback target mark and the end rollback mark are deleted. The *emaj_consolidate_rollback_group()* function fits this need.::
+Following the execution of an E-Maj *logged rollback*, and once the rollback operation recording becomes useless, it is possible to "*consolidate*" this rollback, meaning to some extent transforming it into an *unlogged rollback*. At the consolidation operation completion, marks and logs between the rollback target mark and the end rollback mark are deleted. The ``emaj_consolidate_rollback_group()`` function meets this need::
 
-   SELECT emaj.emaj_consolidate_rollback_group('<group.name>', <end.rollback.mark>);
+   SELECT emaj.emaj_consolidate_rollback_group(p_groupName, p_endRlbkMark);
 
-The concerned logged rollback operation is identified by the name of the mark generated at the end of the rollback. This mark must always exist, but may have been renamed.
+**Input Parameters**
 
-The *'EMAJ_LAST_MARK'* keyword may be used as mark name to reference the last set mark.
+- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_endRlbkMark`` (*TEXT*): The name of the **mark that closed** the rollback operation. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 
-The :ref:`emaj_get_consolidable_rollbacks() <emaj_get_consolidable_rollbacks>` function may help to identify the rollbacks that may be condolidated.
+**Returned data**
 
-Like rollback functions, the *emaj_consolidate_rollback_group()* function returns the number of effectively processed tables and sequences.
+The function returns the number of effectively processed tables and sequences.
 
-The table group may be in *LOGGING* or in *IDLE* state.
+**Notes**
 
-The rollback target mark must always exist but may have been renamed. However, intermediate marks may have been deleted.
+The concerned logged rollback operation is identified by the name of the mark generated at the end of the rollback. This mark must always exist but may have been renamed.
 
-When the consolidation is complete, only the rollback target mark and the end rollback mark are kept.
+The table group may be in *LOGGING* or in *IDLE* **state**.
 
-The disk space of deleted rows will become reusable as soon as these log tables will be “vacuumed”.
+The consolidation operation is not sensitive to the **protections** set on groups or marks, if any.
 
-Of course, once consolidated, a “*logged rollback*” cannot be cancelled (or rolled back) anymore, the start rollback mark and the logs covering this rollback being deleted.
+When the consolidation is complete:
 
-The consolidation operation is not sensitive to the protections set on groups or marks, if any.
+- Only the rollback target mark and the end rollback mark are kept.
+- Marks set before the target mark remain candidate for further rollback operations.
+- The **disk space** of deleted rows will become reusable as soon as these log tables are vacuumed.
 
-If a database has enough disk space, it may be interesting to replace a simple *unlogged rollback* by a *logged rollback* followed by a *consolidation* so that the application tables remain readable during the rollback operation, thanks to the lower locking mode used for logged rollbacks.
+If a database has enough disk space, it may be useful to replace a simple *unlogged rollback* with a *logged rollback* followed by a *consolidation* so that the application tables remain readable during the rollback operation, thanks to the lower locking mode used for logged rollbacks.
+
+The :ref:`emaj_get_consolidable_rollbacks() <emaj_get_consolidable_rollbacks>` function may help identify the rollbacks that may be consolidated.
+
+----
 
 .. _emaj_get_consolidable_rollbacks:
 
-List “consolidable rollbacks”
------------------------------
+Listing Consolidable Rollbacks
+------------------------------
 
-The *emaj_get_consolidable_rollbacks()* function help to identify the rollbacks that may be consolidated.::
+The ``emaj_get_consolidable_rollbacks()`` function helps identify the rollbacks that may be consolidated::
 
    SELECT * FROM emaj.emaj_get_consolidable_rollbacks();
 
+**Input Parameters**
+
+The function does not require any input parameter.
+
+**Returned data**
+
 The function returns a set of rows with the following columns:
 
-+-------------------------------+-------------+-------------------------------------------+
-| Column                        | Type        | Description                               |
-+===============================+=============+===========================================+
-| cons_group                    | TEXT        | rolled back table group                   |
-+-------------------------------+-------------+-------------------------------------------+
-| cons_target_rlbk_mark_name    | TEXT        | rollback target mark name                 |
-+-------------------------------+-------------+-------------------------------------------+
-| cons_target_rlbk_mark_time_id | BIGINT      | temporal reference of the target mark (*) |
-+-------------------------------+-------------+-------------------------------------------+
-| cons_end_rlbk_mark_name       | TEXT        | rollback end mark name                    |
-+-------------------------------+-------------+-------------------------------------------+
-| cons_end_rlbk_mark_time_id    | BIGINT      | temporal reference of the end mark (*)    |
-+-------------------------------+-------------+-------------------------------------------+
-| cons_rows                     | BIGINT      | number of intermediate updates            |
-+-------------------------------+-------------+-------------------------------------------+
-| cons_marks                    | INT         | number of intermediate marks              |
-+-------------------------------+-------------+-------------------------------------------+
++-------------------------------+-------------+---------------------------------------+
+| Column                        | Type        | Description                           |
++===============================+=============+=======================================+
+| cons_group                    | TEXT        | Rolled-back table group               |
++-------------------------------+-------------+---------------------------------------+
+| cons_target_rlbk_mark_name    | TEXT        | Rollback target mark name             |
++-------------------------------+-------------+---------------------------------------+
+| cons_target_rlbk_mark_time_id | BIGINT      | Temporal reference of the target mark |
++-------------------------------+-------------+---------------------------------------+
+| cons_end_rlbk_mark_name       | TEXT        | Rollback end mark name                |
++-------------------------------+-------------+---------------------------------------+
+| cons_end_rlbk_mark_time_id    | BIGINT      | Temporal reference of the end mark    |
++-------------------------------+-------------+---------------------------------------+
+| cons_rows                     | BIGINT      | Number of intermediate updates        |
++-------------------------------+-------------+---------------------------------------+
+| cons_marks                    | INT         | Number of intermediate marks          |
++-------------------------------+-------------+---------------------------------------+
 
-(*) emaj_time_stamp table identifiers ; this table contains the time stamps of the most important events of the table groups life.
+**Notes**
 
-Using this function, it is easy to consolidate at once all “*consolidable*” rollbacks for all table groups in order to recover as much as possible disk space::
+Mark temporal references are identifiers of the *emaj_time_stamp* table, which contains the timestamps of the most important events in the life of the table groups.
 
-   SELECT emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark__name)
-          FROM emaj.emaj_get_consolidable_rollbacks();
+The *emaj_get_consolidable_rollbacks()* function may be used by ``emaj_adm`` and ``emaj_viewer`` roles.
 
-The *emaj_get_consolidable_rollbacks()* function may be used by *emaj_adm* and *emaj_viewer* roles.
+Using this *emaj_get_consolidable_rollbacks()* function, it is easy to consolidate at once all consolidable rollbacks for all table groups to recover as much disk space as possible::
 
+   SELECT emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark_name)
+      FROM emaj.emaj_get_consolidable_rollbacks();
+
+----
 
 .. _emaj_cleanup_rollback_state:
 
-Update rollback operations state
---------------------------------
+Updating Rollback Operations State
+----------------------------------
 
 The *emaj_rlbk* technical table and its derived tables contain the history of E-Maj rollback operations.
 
-When rollback functions cannot use *dblink* connections, all updates of these technical tables are all performed inside a single transaction. Therefore:
+When rollback functions cannot use *dblink* connections, all updates of these technical tables are performed inside a single transaction. Therefore:
 
-* any rollback operation that has not been completed is invisible in these technical tables,
-* any rollback operation that has been validated is visible in these technical tables with a “*COMMITTED*” state.
+* Any rollback operation that has not been completed is invisible in these technical tables.
+* Any rollback operation that has been validated is visible in these technical tables with a *COMMITTED* state.
 
-When rollback functions can use *dblink* connections, all updates of *emaj_rlbk* and its related tables are performed in autonomous transactions. In this working mode, rollback functions leave the operation in a “*COMPLETED*” state when finished. A dedicated internal function is in charge of transforming the “*COMPLETED*” operations either into a “*COMMITTED*” state or into an “*ABORTED*” state, depending on how the main rollback transaction has ended. This function is automatically called when a new mark is set and when the rollback monitoring function is used.
+When rollback functions can use *dblink* connections, all updates of *emaj_rlbk* and its related tables are performed in autonomous transactions. In this working mode, rollback functions leave the operation in a *COMPLETED* state when finished. A dedicated internal function is responsible for transforming *COMPLETED* operations either into a *COMMITTED* state or into an *ABORTED* state, depending on how the main rollback transaction ended. This function is automatically called when a new mark is set and when the rollback monitoring function is used.
 
-If the E-Maj administrator wishes to check the status of recently executed rollback operations, he can use the *emaj_cleanup_rollback_state()* function at any time::
+The E-Maj administrator who wishes to check the status of recently executed rollback operations, can call the ``emaj_cleanup_rollback_state()`` function at any time::
 
    SELECT emaj.emaj_cleanup_rollback_state();
+
+**Input Parameters**
+
+The function does not require any input parameter.
+
+**Returned data**
 
 The function returns the number of modified rollback operations.

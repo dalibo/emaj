@@ -1,104 +1,111 @@
-Install the E-Maj software
+Install the E-Maj Software
 ==========================
 
-Download sources
+Download Sources
 ****************
 
-E-Maj is available for download on the Internet site **PGXN**, the PostgreSQL Extension Network (https://pgxn.org/dist/e-maj/).
+E-Maj is available for download from the following sources:
 
-E-Maj and its add-ons are also available on the **github.org** Internet site:
+- **PGXN (PostgreSQL Extension Network)**: `https://pgxn.org/dist/e-maj/ <https://pgxn.org/dist/e-maj/>`_
+- **GitHub repositories**:
 
-* source components (https://github.org/dalibo/emaj)
-* documentation (https://github.com/beaud76/emaj_doc)
-* Emaj_web GUI (https://github.com/dalibo/emaj_web)
+  - Source code: `https://github.com/dalibo/emaj <https://github.com/dalibo/emaj>`_
+  - Documentation: `https://github.com/beaud76/emaj_doc <https://github.com/beaud76/emaj_doc>`_
+  - Emaj_web GUI: `https://github.com/dalibo/emaj_web <https://github.com/dalibo/emaj_web>`_
 
 .. caution::
-   Installing the extension from the *github.org* repository creates the extension in its development version ("devel"), even when downloading a 'tagged' version. In this case, no future extension update is possible. For a stable E-Maj use, it is highly recommended to use the packets available from *PGXN*.
+   Installing E-Maj directly from the GitHub repository will create the extension in its **development version** ("devel"), even if you download a tagged release. In this case, **future updates via PostgreSQL's extension mechanism will not be possible**.
+   For stable use, it is **strongly recommended** to use the packages available from **PGXN**.
 
-Standart installation on Linux
+----
+
+Standard Installation on Linux
 ******************************
 
-With the pgxn client
+With the pgxn Client
 ^^^^^^^^^^^^^^^^^^^^
 
-If the *pgxn* client is installed, just execute the command::
+If the *pgxn* client is installed, run the following command::
 
-  pgxn install E-Maj --sudo
+  pgxn install emaj --sudo
 
-Without the pgxn client
+Without the pgxn Client
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Download the latest E-Maj version by any convenient way, for instance using the *wget* command::
+1. Download the latest E-Maj version. For example, using *wget*::
 
-  wget https://api.pgxn.org/dist/e-maj/<version>/e-maj-<version>.zip
+     wget https://api.pgxn.org/dist/e-maj/<version>/e-maj-<version>.zip
 
-Then decompress the downloaded archive file and install the components with the commands::
+2. Extract the archive and install the components::
 
-  unzip e-maj-<version>.zip
+     unzip e-maj-<version>.zip
+     cd e-maj-<version>/
+     sudo make install
 
-  cd e-maj-<version>/
-
-  sudo make install
-
-Components localization
+Component Localization
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-In both cases, the components are installed into the usual PostgreSQL directories. In particular:
+In both cases, E-Maj components are installed in the standard PostgreSQL directories:
 
-* SQL scripts are into *<SHAREDIR_directory>/emaj/*
-* CLI clients are into *<BINDIR_directory>*, with PostgreSQL clients
-* the documentation is into *<DOCDIR_directory>/emaj/*
+- **SQL scripts**: ``<SHAREDIR>/emaj/``
+- **CLI clients**: ``<BINDIR>`` (alongside other PostgreSQL clients)
+- **Documentation**: ``<DOCDIR>/emaj/``
 
-The physical localization of *SHAREDIR*, *BINDIR* and *DOCDIR* directories can be found with the *pg_config* command.
+To locate the *SHAREDIR*, *BINDIR*, and *DOCDIR* directories, use the ``pg_config`` command.
 
-Manual installation under Linux
+----
+
+Manual Installation on Linux
 *******************************
 
-Download the latest E-Maj version by any convenient way, for instance using the *wget* command::
+1. Download the latest E-Maj version. For example, using *wget*::
 
-  wget https://api.pgxn.org/dist/e-maj/<version>/e-maj-<version>.zip
+     wget https://api.pgxn.org/dist/e-maj/<version>/e-maj-<version>.zip
 
-Then decompress the downloaded archive file with the commands::
+2. Extract the archive::
 
-  unzip e-maj-<version>.zip
+     unzip e-maj-<version>.zip
+     cd e-maj-<version>/
 
-  cd e-maj-<version>/
+3. Edit the ``emaj.control`` file to set the ``directory`` parameter to the **absolute path** of the E-Maj SQL scripts directory (e.g., ``/path/to/e-maj-<version>/sql``).
 
-Edit the *emaj.control* file to set the *directory* parameter to the actual location of the E-Maj install SQL scripts (the absolute path of the *e-maj-<version>/sql* directory).
+4. Locate the *SHAREDIR* directory. You can use the following command::
 
-Identify the precise location of the *SHAREDIR* directory. Depending on the PostgreSQL installation, the *pg_config --sharedir* shell command may directly report this directory name. Otherwise, look at typical locations like:
+     pg_config --sharedir
 
-* */usr/share/postgresql/<pg_version>* for Debian or Ubuntu
-* */usr/pgsql-<pg_version>/share* for RedHat or CentOS
+   If this does not return the correct path, check typical locations such as: ``/usr/share/postgresql/<pg_version>/`` (Debian/Ubuntu) or ``/usr/pgsql-<pg_version>/share/`` (RedHat/CentOS)
 
-Then copy the modified *emaj.control* file into the *extension* directory of the PostgreSQL version you want to use. As a super-user or pre-pended with sudo, type::
+5. Copy the modified ``emaj.control`` file to the PostgreSQL extension directory. As a superuser or using ``sudo``, run::
 
-	cp emaj.control <SHAREDIR_directory>/extension/.
+     cp emaj.control <SHAREDIR>/extension/.
 
-The latest E-Maj version is now installed and referenced by PostgreSQL. The e-maj-<version> directory contains the file tree :doc:`described here <content>`.
+The latest E-Maj version is now installed and recognized by PostgreSQL. The ``e-maj-<version>`` directory contains the file structure :doc:`described here <content>`.
+
+----
 
 .. _minimum_install:
 
-Minimum installation on Linux
+Minimum Installation on Linux
 *****************************
 
-On some environments (like DBaaS clouds for instance), it is not allowed to add extensions into the *SHAREDIR* directory. For these cases, a minimum installation is possible.
+In some environments (e.g., **DBaaS cloud services**), it may not be possible to add extensions to the *SHAREDIR* directory. For these cases, a **minimal installation** is available.
 
-Download the latest E-Maj version by any convenient way and decompress it.
+1. Download and extract the latest E-Maj version.
+2. The ``e-maj-<version>`` directory contains the file structure :doc:`described here <content>`.
 
-The e-maj-<version> directory contains the file tree :doc:`described here <content>`.
+.. note::
+   The :ref:`extension creation process <create_emaj_extension_by_script>` will differ slightly in this case.
 
-The :ref:`extension creation<create_emaj_extension_by_script>` will be a little bit different.
-
+----
 
 Installation on Windows
 ***********************
 
 To install E-Maj on Windows:
 
-* Download the extension from the *pgxn.org* site,
-* Extract the file tree from the downloaded zip file,
-* Copy into the *share* folder of the PostgreSQL installation folder (typically *c:\\Program_Files\\PostgreSQL\\<postgres_version>\\share*):
+1. Download the extension from the `PGXN website <https://pgxn.org/dist/e-maj/>`_.
+2. Extract the contents of the downloaded ZIP file.
+3. Copy the following files to the PostgreSQL installation directory (typically ``C:\Program Files\PostgreSQL\<postgres_version>\share\``):
 
-  * the *emaj.control* file into *\\extension* ;
-  * and *sql\\emaj--** files into a new *\\emaj* subfolder.
+   - The ``emaj.control`` file to the ``\extension\`` subdirectory.
+   - The SQL files (``sql\emaj--*.sql``) to a new ``\emaj\`` subdirectory.

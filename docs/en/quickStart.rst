@@ -1,81 +1,88 @@
-Quick start
+Quick Start
 ===========
 
-The E-Maj installation is described in detail later. But the few following commands allow to quicky install and use E-Maj under Linux.
+The full E-Maj installation process is detailed later. However, the following commands provide a **quick way to install and test E-Maj on Linux**.
 
-Install software
+Install Software
 ^^^^^^^^^^^^^^^^
 
-If the *pgxn* client is installed, a single command is required::
+If the *pgxn* client is installed, use this single command::
 
-  pgxn install E-Maj --sudo
+  pgxn install emaj --sudo
 
-Otherwise::
+Otherwise, follow these steps::
 
   wget https://api.pgxn.org/dist/e-maj/<version>/e-maj-<version>.zip
-
   unzip e-maj-<version>.zip
-
   cd e-maj-<version>/
-
   sudo make install
 
-For more details, or in case of problem, look at :doc:`there <install>`.
+For more details or troubleshooting, refer to :doc:`install`.
 
-Create the extension
+----
+
+Create the Extension
 ^^^^^^^^^^^^^^^^^^^^
 
-To install the emaj extension into a database, log on the target database, using a super-user role and execute::
+To install the E-Maj extension in a database:
 
-  CREATE EXTENSION emaj CASCADE;
+1. Connect to the target database **as a superuser** and run::
 
-  GRANT emaj_adm TO <role>;
+    CREATE EXTENSION emaj CASCADE;
 
-With the latest statement, you give E-Maj administration grants to a particular role.  Then, this role can be used to execute all E-Maj operations, avoiding the use of superuser role.
+2. Grant E-Maj administration privileges to a specific role::
 
-Use the extension
+    GRANT emaj_adm TO <role>;
+
+This allows the specified role to execute all E-Maj operations without requiring superuser privileges.
+
+----
+
+Use the Extension
 ^^^^^^^^^^^^^^^^^
 
-You can now log on the database with the role having the E-Maj administration rights.
+Connect to the database using the role with E-Maj administration rights.
 
-Then, an empty (here *ROLLBACKABLE*) table group must be created::
+1. **Create a table group** (here, a *ROLLBACKABLE* group)::
 
-   SELECT emaj.emaj_create_group('my_group', true);
+    SELECT emaj.emaj_create_group('my_group', true);
 
-The table group can now be populated with tables and sequences, using statements like::
+2. **Add tables and sequences** to the group.
 
-   SELECT emaj.emaj_assign_table('my_schema', 'my_table', 'my_group');
+   For example, to add a single table::
 
-to add a table into the group, or, to add all tables and sequences of a given schema::
+    SELECT emaj.emaj_assign_table('my_schema', 'my_table', 'my_group');
 
-   SELECT emaj.emaj_assign_tables('my_schema', '.*', '', 'my_group');
+   To add all tables and sequences from a schema::
 
-   SELECT emaj.emaj_assign_sequences('my_schema', '.*', '', 'my_group');
+    SELECT emaj.emaj_assign_tables('my_schema', '.*', '', 'my_group');
+    SELECT emaj.emaj_assign_sequences('my_schema', '.*', '', 'my_group');
 
-Note that only tables having a primary key will be effectively assigned to a *ROLLBACKABLE* group.
+   .. note::
+      Only tables having a **PRIMARY KEY** can be assigned to a *ROLLBACKABLE* group.
 
-Then the typical commands sequence::
+3. **Typical workflow** to log updates and roll back:
 
-   SELECT emaj.emaj_start_group('my_group', 'Mark-1');
+   Start the group and log updates::
 
-   [INSERT/UPDATE/DELETE on tables]
+      SELECT emaj.emaj_start_group('my_group', 'Mark-1');
 
-   SELECT emaj.emaj_set_mark_group('my_group','Mark-2');
+   Perform database updates (e.g., ``INSERT``, ``UPDATE``, ``DELETE``).
 
-   [INSERT/UPDATE/DELETE on tables]
+   Set intermediate marks::
 
-   SELECT emaj.emaj_set_mark_group('my_group','Mark-3');
+      SELECT emaj.emaj_set_mark_group('my_group', 'Mark-2');
+      SELECT emaj.emaj_set_mark_group('my_group', 'Mark-3');
 
-   [INSERT/UPDATE/DELETE on tables]
+   Roll back to a previous mark::
 
-   SELECT emaj.emaj_rollback_group('my_group','Mark-2');
+      SELECT emaj.emaj_rollback_group('my_group', 'Mark-2');
 
-   SELECT emaj.emaj_stop_group('my_group');
+   Stop recording and clean up::
 
-   SELECT emaj.emaj_drop_group('my_group');
+      SELECT emaj.emaj_stop_group('my_group');
+      SELECT emaj.emaj_drop_group('my_group');
 
-will start the table group, log updates and set several intermediate marks, go back to one of them, stop the recording and finally drop the group.
+For more details, see the description of :doc:`main functions <mainFunctions>`.
 
-For more details, main functions are described :doc:`here <mainFunctions>`.
-
-Additionally, the :doc:`Emaj_web <webOverview>` client can also be installed and used.
+Additionally, you can install and use the :doc:`Emaj_web <webOverview>` client for a graphical interface.

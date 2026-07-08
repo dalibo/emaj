@@ -1,45 +1,53 @@
 Uninstall
 =========
 
-Remove an E-Maj extension from a database
+Remove an E-Maj Extension from a Database
 *****************************************
 
-To remove E-Maj from a database, the user must log on this database with *psql*, as a superuser.
+To remove E-Maj from a database, log in as a **superuser** using *psql*.
 
-If the drop of the *emaj_adm* and *emaj_viewer* **roles** is desirable, rights on them given to other roles must be previously deleted, using *REVOKE SQL* verbs. ::
+If you want to **drop** the ``emaj_adm`` and ``emaj_viewer`` **roles**, you must first:
 
-   REVOKE emaj_adm FROM <role.or.roles.list>;
-   REVOKE emaj_viewer FROM <role.or.roles.list>;
+1. Revoke any rights granted to other roles using the ``REVOKE`` SQL command::
 
-If these *emaj_adm* and *emaj_viewer* roles own access rights on other application objects, these rights must be suppressed too, before starting the removal operation.
+     REVOKE emaj_adm FROM <role_or_roles_list>;
+     REVOKE emaj_viewer FROM <role_or_roles_list>;
 
-Allthough the *emaj* extension is usualy installed with a *CREATE EXTENSION* statement, it cannot be removed with a simple *DROP EXTENSION* statement. An event trigger blocks such a statement.
+2. If these roles own access rights on other application objects, revoke those rights as well **before** starting the removal process.
 
-Whatever the manner the *emaj* extension has been installed (using the standart *CREATE EXTENSION* statement or a *psql* script when adding an extension is forbidden), its removal just needs to execute the *emaj_drop_extension()* function::
+Although the *emaj* extension is typically installed using ``CREATE EXTENSION``, it **cannot** be removed with a simple ``DROP EXTENSION`` statement. An event trigger blocks this operation.
+
+Regardless of how the *emaj* extension was installed (using the standard ``CREATE EXTENSION`` statement or a *psql* script in restricted environments), you can remove it by executing the ``emaj_drop_extension()`` function::
 
    SELECT emaj.emaj_drop_extension();
 
 This function performs the following steps:
 
-* it executes the cleaning functions created by demo or test scripts, if they exist,
-* it stops the table groups in *LOGGING* state, if any,
-* it drops the table groups, removing in particular the triggers on application tables,
-* it drops the extension and the main *emaj* schema,
-* it drops roles *emaj_adm* and *emaj_viewer* if they are not linked to any objects in the current database or in other databases of the instance.
+- Executes cleanup functions created by demo or test scripts (if they exist).
+- Stops any table groups in *LOGGING* state.
+- Drops all table groups, including triggers on application tables.
+- Drops the extension and the main ``emaj`` schema.
+- Drops the ``emaj_adm`` and ``emaj_viewer`` roles if they are not linked to any objects in the current database or other databases in the instance.
 
-In E-Maj versions 4.4.0 and previous, the *emaj* extension removal was done by the execution of a *sql/emaj_uninstall.sql* script. Although deprecated, the removal can always be done the same manner.
+.. note::
+   In E-Maj versions **4.4.0 and earlier**, the extension was removed by executing the ``sql/emaj_uninstall.sql`` script. Although deprecated, this method remains valid.
 
-Uninstall the E-Maj software
+----
+
+Uninstall the E-Maj Software
 ****************************
 
-The way to uninstall the E-Maj software depends on the way it has been installed.
+The method to uninstall the E-Maj software depends on how it was initially installed.
 
-For a standart install with the *pgxn* client, a single command is required::
+- **Standard installation with the pgxn client**:
+  Run the following command::
 
-  pgxn uninstall E-Maj --sudo
+     pgxn uninstall emaj --sudo
 
-For a standart install without the *pgxn* client, reach the initial directory of the E-Maj distribution and type::
+- **Standard installation without the pgxn client**:
+  Navigate to the initial E-Maj distribution directory and run::
 
-  sudo make uninstall
+     sudo make uninstall
 
-For a manual install, the installed components must be removed by reverting the initial installation steps.
+- **Manual installation**:
+  Remove the installed components by **reversing the initial installation steps**.

@@ -1,137 +1,168 @@
-Export and import the E-Maj configuration
-=========================================
+Exporting and Importing the E-Maj Configuration
+===============================================
 
-An E-Maj configuration contains the set of :ref:`E-Maj parameters<emaj_param>` and the table groups configuration.
+An E-Maj configuration includes the set of :ref:`E-Maj parameters <emaj_param>` and the table groups configuration.
 
-Some functions can import or export them into or from an external support, as a JSON structure. They can be useful in particular:
+Several functions allow importing or exporting these configurations to or from an external source as a **JSON structure**. These functions are particularly useful for:
 
-* to deploy a standardized table groups configuration and parameters set towards several databases;
-* to upgrade the *emaj* extension with a :ref:`full uninstall and reinstall<uninstall_reinstall>`.
+* Deploying a standardized table groups configuration and parameter set across multiple databases;
+* Upgrading the *emaj* extension with a :ref:`full uninstall and reinstall <uninstall_reinstall>`.
 
-JSON structures
+JSON Structures
 ---------------
 
 .. _tables_groups_json:
 
-JSON structure describing table groups
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+JSON Structure for Table Groups
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The JSON structure that describes table groups is an attribute named *"tables_groups"*, of type array, and containing substructures describing each table group. It looks like::
+The JSON structure describing table groups is an array named ``tables_groups``, containing substructures for each table group. It has the following format::
 
    {
-   	"tables_groups": [
-   		{
-   		"group": "ggg",
-   		"is_rollbackable": true|false,
-   		"comment": "ccc",
-   		"tables": [
-   			{
-   			"schema": "sss",
-   			"table": "ttt",
-   			"priority": ppp,
-   			"log_data_tablespace": "lll",
-   			"log_index_tablespace": "lll",
-   			"ignored_triggers": [ "tg1", "tg2", ... ]
-   			},
-   			{
-   			...
-   			}
-   		],
-   		"sequences": [
-   			{
-   			"schema": "sss",
-   			"sequence": "sss",
-   			},
-   			{
-   			...
-   			}
-   		],
-   		},
-   		...
-   	]
+       "tables_groups": [
+           {
+               "group": "ggg",
+               "is_rollbackable": true|false,
+               "comment": "ccc",
+               "tables": [
+                   {
+                       "schema": "sss",
+                       "table": "ttt",
+                       "priority": ppp,
+                       "log_data_tablespace": "lll",
+                       "log_index_tablespace": "lll",
+                       "ignored_triggers": ["tg1", "tg2", ...]
+                   },
+                   {
+                       ...
+                   }
+               ],
+               "sequences": [
+                   {
+                       "schema": "sss",
+                       "sequence": "sss"
+                   },
+                   {
+                       ...
+                   }
+               ]
+           },
+           ...
+       ]
    }
 
-The *"is_rollbackable"* and *"comment"* attributes of table groups and the *"priority"*, *"log_data_tablespace"*, *"log_index_tablespace"* and *"ignored_triggers"* attributes of tables keep their default value when they are not present in the JSON structure.
+The ``is_rollbackable`` and ``comment`` attributes for table groups, and the ``priority``, ``log_data_tablespace``, ``log_index_tablespace``, and ``ignored_triggers`` attributes for tables, retain their default values if they are not present in the JSON structure.
 
 .. _parameters_json:
 
-JSON structure describing parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+JSON Structure for Parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The JSON structure that describes parameters is an attribute named *"parameters"* of type array, containing sub-structures with *"key"* and *"value"* attributes. ::
+The JSON structure describing parameters is an array named ``parameters``, containing substructures with ``key`` and ``value`` attributes. ::
 
    {
-     "parameters": [
-       {
-          "key": "...",
-          "value": "..."
-       },
-       {
-          ...
-       }
-     ]
+       "parameters": [
+           {
+               "key": "...",
+               "value": "..."
+           },
+           {
+               ...
+           }
+       ]
    }
 
-Parameters that are not described in the structure keep their default value.
+Parameters not described in the structure retain their default values.
+
+----
 
 .. _export_groups_conf:
 
-Export a table groups configuration
-------------------------------------
+Exporting a Table Groups Configuration
+--------------------------------------
 
-Two versions of the *emaj_export_groups_configuration()* function export a description of one or several table groups as a JSON structure.
+The ``emaj_export_groups_configuration()`` function exports the description of one or more table groups as a JSON structure. 2 variants exist.
 
-A table groups configuration can be written to a file with::
+A table groups configuration can be written to **a flat file** with::
 
-   SELECT emaj_export_groups_configuration('<file.path>' [, <groups.names.array>] );
+   SELECT emaj_export_groups_configuration(p_location, p_groups);
 
-The file path must be accessible in write mode by the PostgreSQL instance.
+If the **file path is omitted** or set to *NULL*, the function directly returns the **JSON structure** containing the configuration::
 
-The second parameter is optional. It lists in an array the table groups names to process. If the parameter is not supplied or is set to *NULL*, the configuration of all table groups is exported.
+   SELECT emaj_export_groups_configuration(p_groups);
 
-The function returns the number of exported table groups.
+**Input Parameters**
 
-If the file path is not supplied or is set to *NULL*, the function directly returns the JSON structure containing the configuration. This allows to visualize the structure or store it into a relational table. For instance::
+- ``p_location`` (*TEXT*, optional): **Output file** location.
+- ``p_groups`` (*TEXT[]*, optional): Array of **Table groups** to export. If omitted or set to *NULL*, the configuration of **all** table groups is exported.
+
+**Returned data**
+
+When the function writes the configuration into a flat file, it returns the number of exported table groups.
+
+Otherwise, it returns the JSON structure containing the table groups configuration.
+
+**Notes**
+
+If present, the file path must be writable by the PostgreSQL instance.
+
+The second variant allows visualization or storage in a relational table. For example::
 
    INSERT INTO my_table (my_groups_json)
-       VALUES ( emaj_export_groups_configuration() );
+       VALUES (emaj_export_groups_configuration());
 
-The generated JSON structure contains the :ref:`"tables_groups"<tables_groups_json>` attribute described above, preceded by a "_comment" attribute. ::
+The generated JSON structure contains the :ref:`"tables_groups" <tables_groups_json>` attribute described above, preceded by a ``_comment`` attribute. ::
 
    {
-   	   "_comment": "Generated on database <db> with E-Maj version <version> at <date_time>, including all table groups",
-   	   "tables_groups": [
-          ...
-   	   ]
+       "_comment": "Generated on database <db> with E-Maj version <version> at <date_time>, including all table groups",
+       "tables_groups": [
+           ...
+       ]
    }
 
 .. _export_param_conf:
 
-Export a parameters configuration
----------------------------------
+Exporting a Parameters Configuration
+------------------------------------
 
-Two versions of the *emaj_export_parameters_configuration()* function export the :ref:`E-Maj parameters<emaj_param>` into a JSON structure.
+The ``emaj_export_parameters_configuration()`` function exports :ref:`E-Maj parameters <emaj_param>` as a JSON structure. It has also 2 variants.
 
-The parameters data can be written to a file with::
+The parameters data can be written to a **flat file** with::
 
-   SELECT emaj_export_parameters_configuration('<file.path>' [,<include.default?>]);
+   SELECT emaj_export_parameters_configuration(p_location, p_includeDefault);
 
-The file path must be accessible in write mode by the PostgreSQL instance.
+If the **file path** is **omitted** or set to *NULL*, the function directly returns the **JSON structure** containing the parameter values.
 
-The second function parameter is optional. It defines whether E-Maj parameters whose current value equals their default value must be exported. By default, only parameters whose current value differs from their default value are exported.
+   SELECT emaj_export_parameters_configuration(p_includeDefault);
 
-The function returns the number of exported parameters.
+**Input Parameters**
 
-If the file path is not supplied or is set to *NULL*, the function directly returns the JSON structure containing the parameters value. This allows to vizualize or store it into a relational table. For instance::
+- ``p_location`` (*TEXT*, optional): **Output file** location.
+- ``p_includeDefault`` (*BOOLEAN*, optional):
+
+   - **FALSE**, default: Only parameters with values different from their defaults are exported.
+   - **TRUE**: All parameters are exported.
+
+**Returned data**
+
+When the function writes the configuration into a flat file, it returns the number of exported parameters.
+
+Otherwise, it returns the JSON structure containing the parameters configuration.
+
+**Notes**
+
+If present, the file path must be writable by the PostgreSQL instance.
+
+The second variant allows visualization or storage in a relational table. For example::
 
    INSERT INTO my_table (my_parameters_json)
-       VALUES ( emaj_export_parameters_configuration([<include.default?>]) );
+       VALUES (emaj_export_parameters_configuration(TRUE));
 
-The generated JSON structure contains the :ref:`"parameters"<parameters_json>` attribute described above, preceded by two *"_comment"* and *"_help"* attributes. ::
+The generated JSON structure contains the :ref:`"parameters" <parameters_json>` attribute described above, preceded by ``_comment`` and ``_help`` attributes. ::
 
    {
        "_comment": "E-Maj parameters, generated from the database <db> with E-Maj version <version> at <date_time>",
-       	"_help": "Known parameter keys: <list of known keys>",
+       "_help": "Known parameter keys: <list of known keys>",
        "parameters": [
            ...
        ]
@@ -139,81 +170,108 @@ The generated JSON structure contains the :ref:`"parameters"<parameters_json>` a
 
 .. caution::
 
-   If the dblink_user_password parameter exists in the configuration, it is important to take great care to limit the access to the exported file or relational table in order to avoid compromizing the password it contains.
+   If the **dblink_user_password** parameter is included in the configuration, ensure that access to the exported file or relational table is restricted to prevent compromising the password it contains.
 
 .. _import_groups_conf:
 
-Import a table groups configuration
-------------------------------------
+Importing a Table Groups Configuration
+--------------------------------------
 
-Two versions of the *emaj_import_groups_configuration()* function import a table groups description as a JSON structure.
+The ``emaj_import_groups_configuration()`` function imports a table groups description from a JSON structure. It has 2 variants that just differ in its first parameter.
 
-A table groups configuration can be read from a file with::
+A table groups configuration can be read from a **flat file** with::
 
-   SELECT emaj_import_groups_configuration('<file.path>' [,
-             <groups.names.array> [, <alter_started_groups> [, <mark> [,
-             <drop_other_groups> ]]]]);
+   SELECT emaj_import_groups_configuration(p_location, p_groups, p_allowGroupsUpdate, p_mark,
+                                           p_dropOtherGroups);
 
-The file must be accessible in read mode by the PostgreSQL instance.
+A **JSON description** of the table groups configuration can be directly loaded with::
 
-The file must contain a JSON structure with an attribute named :ref:`"tables_groups"<tables_groups_json>`, of type array, and containing sub-structures describing each table group, as described above.
+   SELECT emaj_import_groups_configuration(p_json, p_groups, p_allowGroupsUpdate, p_mark,
+                                           p_dropOtherGroups);
 
-The function can directly import a file generated by the :ref:`emaj_export_groups_configuration()<export_groups_conf>` function.
+**Input Parameters**
 
-The second parameter is of type array and is optional. It contains the list of the table groups to import. By default, all table groups described in the file are imported.
+- ``p_location`` (*TEXT*): **Input file** location containing the JSON groups configuration.
+- ``p_json`` (*JSON*): **JSON groups configuration**.
+- ``p_groups`` (*TEXT[]*, optional): Array of **Table groups** to import. If omitted or set to *NULL*, the configuration of **all** table groups is imported.
+- ``p_allowGroupsUpdate`` (*BOOLEAN*, optional):
 
-If a table group to import does not exist, it is created and its tables and sequences are assigned into it.
+   - **FALSE**, default: Existing table groups in *LOGGING* state are not allowed to be altered.
+   - **TRUE**: Existing table groups in *LOGGING* state are allowed to be altered.
+- ``p_mark`` (*TEXT*, optional): **Mark** set on table groups in **LOGGING** state. By default, the generated mark is **"IMPORT_%"**, where **"%"** represents the current time, formatted as **"hh.min.ss.mmmm"**.
+- ``p_dropOtherGroups`` (*BOOLEAN*, optional):
 
-If a table group to import already exists, its configuration is adjusted to reflect the target configuration: some tables and sequences may be added or removed, and some attributes may be modified. When the table group is in *LOGGING* state, its configuration adjustment is only possible if the third parameter is explicitly set to *TRUE*.
+   - **FALSE**, default: Existing table group not present in the configuration are left unchanged.
+   - **TRUE**: Existing table group not present in the configuration are dropped.
 
-If an existing table group is missing in the configuration or is not listed as to be imported, it is left unchanged by default. But if the fifth parameter is set to *TRUE*, this group is dropped, whatever its state.
-
-The fourth parameter defines the mark to set on table groups in *LOGGING* state. By default, the generated mark is "IMPORT_%", where the % character represents the current time, formatted as "hh.min.ss.mmmm".
+**Returned data**
 
 The function returns the number of imported table groups.
 
-In the second function version, the first input parameter directly contains the JSON description of the groups to load, the other parameters being unchanged ::
+**Notes**
 
-   SELECT emaj_import_groups_configuration(
-             '<JSON.structure> [, <groups.names.array> [,
-             <alter_started_groups> [, <mark> [,
-             <drop_other_groups> ]]]]);
+If the ``p_location`` parameter is set:
 
-This structure may be read from a relational table::
+- The file must be readable by the PostgreSQL instance.
+- The file must contain a JSON structure with an attribute named :ref:`"tables_groups" <tables_groups_json>`, an array containing substructures describing each table group, as described above.
+- The function can directly import a file generated by the :ref:`emaj_export_groups_configuration() <export_groups_conf>` function.
 
-   SELECT emaj_import_groups_configuration (my_groups_json, ...)
+If the ``p_json`` parameter is set:
+
+- It must contain a JSON structure with an attribute named :ref:`"tables_groups" <tables_groups_json>`, an array containing substructures describing each table group, as described above.
+- This structure can be read from a relational table::
+
+   SELECT emaj_import_groups_configuration(my_groups_json, ...)
        FROM my_table;
+
+If a table group to import does not exist, it is created, and its tables and sequences are assigned to it.
+
+If a table group to import already exists, its configuration is adjusted to match the target configuration: tables and sequences may be added or removed, and attributes may be modified. If the table group is in **LOGGING** state, its configuration can only be adjusted if the ``p_allowGroupsUpdate`` parameter is explicitly set to *TRUE*.
+
+If an existing table group is missing from the configuration or is not listed for import, it remains unchanged by default. However, if the ``p_dropOtherGroups`` parameter is set to *TRUE*, this group is dropped, regardless of its state.
 
 .. _import_param_conf:
 
-Import a parameters configuration
----------------------------------
+Importing a Parameters Configuration
+-------------------------------------
 
-Two versions of the *emaj_import_parameters_configuration()* function import :ref:`E-Maj parameters<emaj_param>` from a JSON structure.
+The ``emaj_import_parameters_configuration()`` function imports :ref:`E-Maj parameters <emaj_param>` from a JSON structure.  It has 2 variants that just differ in its first parameter.
 
-A file containing parameters to load can be read with::
+A **file** containing parameters to load can be read with::
 
-   SELECT emaj_import_parameters_configuration('<file.path>' [,
-             <reset.other.parameters?> ]);
+   SELECT emaj_import_parameters_configuration(p_location, p_resetOtherParameters);
 
-The file path must be accessible in read mode by the PostgreSQL instance.
+A **JSON description** of the parameters configuration can be directly loaded with::
 
-The file must contain a JSON structure having an attribute named :ref:`"parameters"<parameters_json>`, of type array, and containing sub-structures with the attributes "key" and "value".
+   SELECT emaj_import_parameters_configuration(p_paramsJson, p_resetOtherParameters);
 
-If a paramater has no *"value"* attribute or if this attribute is set to *NULL*, the parameter is reset to its default value.
+**Input Parameters**
 
-The function can directly load a file generated by the :ref:`emaj_export_parameters_configuration()<export_param_conf>` function.
+- ``p_location`` (*TEXT*): **Input file** location containing the JSON parameters configuration.
+- ``p_json`` (*JSON*): **JSON parameters configuration**.
+- ``p_resetOtherParameters`` (*BOOLEAN*, optional):
 
-The second parameter, boolean, is optional. It tells whether E-Maj parameters that are not listed in the JSON structure must be reset to their default value. By default, these parameters are left unchanged (differential mode load). If the value of this second parameter is set to *TRUE*, the function performs a full replacement of the parameters configuration (full mode load).
+   - **FALSE**, default: Parameters not present in the loaded configuration remain unchanged (**differential mode** load).
+   - **TRUE**: Parameters not present in the loaded configuration are reset to their default value (**full mode** load).
+
+**Returned data**
 
 The function returns the number of imported parameters.
 
-In the second function version, the first input parameter of the function directly contains the JSON structure of the parameters to load. ::
+**Notes**
 
-   SELECT emaj_import_parameters_configuration('<JSON.structure>' [,
-              <reset.other.parameters?> ]);
+If the ``p_location`` parameter is set:
 
-This structure can be read from a relational table::
+- The file path must be readable by the PostgreSQL instance.
+- The file must contain a JSON structure with an attribute named :ref:`"parameters" <parameters_json>`, an array containing substructures with **"key"** and **"value"** attributes.
+- The function can directly load a file generated by the :ref:`emaj_export_parameters_configuration() <export_param_conf>` function.
 
-   SELECT emaj_import_parameters_configuration (my_parameters_json, TRUE)
+If the ``p_json`` parameter is set:
+
+- It must contain a JSON structure with an attribute named :ref:`"parameters" <parameters_json>`, an array containing substructures with **"key"** and **"value"** attributes.
+- This structure can be read from a relational table::
+
+   SELECT emaj_import_parameters_configuration(my_parameters_json, TRUE)
        FROM my_table;
+
+If a parameter to import has no **"value"** attribute or if this attribute is set to *NULL*, the parameter is reset to its default value.

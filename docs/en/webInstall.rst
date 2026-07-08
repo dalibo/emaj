@@ -1,30 +1,31 @@
-Install the Emaj_web client
+Install the Emaj_web Client
 ===========================
 
-Prerequisite
-------------
+Prerequisites
+-------------
 
-*Emaj_web* requires a web server with a php interpreter, and its *pgsql* and *intl* extensions.
+**Emaj_web** requires a web server with a PHP interpreter and its **pgsql** and **intl** extensions.
 
+----
 
-Download the software
+Download the Software
 ---------------------
 
-The *Emaj_web* application can be downloaded from the following git repository:
-https://github.com/dalibo/emaj_web
+The **Emaj_web** application can be downloaded from the following Git repository:
+`https://github.com/dalibo/emaj_web <https://github.com/dalibo/emaj_web>`_.
 
+----
 
 Configure Emaj_web
 ------------------
 
-The configuration is centralized into a single file: *emaj_web/conf/config.inc.php*. It contains the general parameters of the applications, and the description of the PostgreSQL instances connections.
+Configuration is centralized in a single file: **emaj_web/conf/config.inc.php**. This file contains the general application parameters and the descriptions of the PostgreSQL instance connections.
 
-When the number of instances is large, it is possible to split them into *instances groups*. A group can contain instances or other instance groups.
+When the number of instances is large, they can be split into **instance groups**. A group can contain instances or other instance groups.
 
-In order to submit batch rollbacks (i.e. without blocking the use of the browser while the rollback operation is in progress), it is necessary to specify a value for two configuration parameters:
+To submit batch rollbacks (i.e., without blocking browser use while the rollback operation is in progress), it is necessary to specify values for two configuration parameters:
 
-* *$conf['psql_path']* defines the access path of the *psql* executable file,
-* *$conf['temp_dir']* defines a temporary directory that rollback functions can use.
+* **$conf['psql_path']**: Defines the access path to the **psql** executable file.
+* **$conf['temp_dir']**: Defines a temporary directory that rollback functions can use.
 
-The *emaj_web/conf/config.inc.php-dist* file may be used as a configuration template.
-
+The **emaj_web/conf/config.inc.php-dist** file can be used as a configuration template.

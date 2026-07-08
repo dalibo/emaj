@@ -1,108 +1,112 @@
 Architecture
 ============
 
-In order to be able to perform a rollback operation without having previously kept a physical image of the PostgreSQL instance's files, all updates applied on application tables must be recorded, so that they can be cancelled. 
+To enable rollback operations **without requiring a physical backup** of the PostgreSQL instance files, E-Maj records all changes applied to application tables so they can be reversed later.
 
-With E-Maj, this updates recording takes the following form.
-
-Logged SQL statements
+Logged SQL Statements
 *********************
-The recorded update operations concerns the following SQL verbs:
 
-* rows insertions:
+E-Maj records the following SQL operations:
 
-  * INSERT, either elementary (INSERT … VALUES) or set oriented (INSERT … SELECT)
-  * COPY … FROM
+* **Row insertions**:
 
-* rows updates:
+  - ``INSERT`` (elementary: ``INSERT ... VALUES`` or set-oriented: ``INSERT ... SELECT``)
+  - ``COPY ... FROM``
 
-  * UPDATE
+* **Row updates**:
 
-* rows deletions:
+  - ``UPDATE``
 
-  * DELETE
+* **Row deletions**:
 
-* tables truncations
+  - ``DELETE``
 
-  * TRUNCATE 
+* **Table truncations**:
 
-For statements that process several rows, each creation, update or deletion is individually recorded. For instance, if a *DELETE FROM <table>* is performed against a table having 1 million rows, 1 million row deletion events are recorded.
+  - ``TRUNCATE``
 
-At *TRUNCATE* SQL execution time, the whole table content is recorded before its effective deletion.
+For statements affecting multiple rows (e.g., ``DELETE FROM <table>``), **each individual row change is recorded separately**. For example, deleting 1 million rows results in 1 million deletion events being logged.
 
-Created objects
+For ``TRUNCATE`` operations, the **entire table content is recorded** before the table is truncated.
+
+----
+
+Created Objects
 ***************
 
-For each application table, the following objects are created:
+For each application table, E-Maj creates the following objects:
 
-* a dedicated **log table**, containing data corresponding to the updates applied on the application table,
-* a **trigger** and a specific **function**, that, for each row creation (*INSERT*, *COPY*), change (*UPDATE*) or suppression (*DELETE*), record into the log table all data needed to potentially cancel later this elementary action,
-* another **trigger**, that processes TRUNCATE SQL statements,
-* a **sequence** used to quickly count the number of updates recorded in log tables between 2 marks.
+* A **dedicated log table** containing data corresponding to updates applied to the application table.
+* A **trigger** and a **specific function** that, for each row change (``INSERT``, ``COPY``, ``UPDATE``, or ``DELETE``), record all data needed to potentially reverse the action later.
+* An **additional trigger** to handle ``TRUNCATE`` statements.
+* A **sequence** used to quickly count the number of changes recorded in log tables between two marks.
 
 .. image:: images/created_objects.png
    :align: center
 
-A **log table** has the same structure as its corresponding application table. However, it contains some :ref:`additional technical columns<logTableStructure>`.
+A **log table** has the **same structure** as its corresponding application table but includes :ref:`additional technical columns<logTableStructure>`.
 
-To let E-Maj work, some **other technical objects** are also created at extension installation time:
+To support E-Maj functionality, the following **technical objects** are also created during extension installation:
 
 * 19 tables,
-* 1 sequence named *emaj_global_seq* used to assign to every update recorded in any log table of the database a unique identifier with an increasing value over time,
-* 8 composite and 3 enum types,
+* 1 sequence named *emaj_global_seq*, which assigns a **unique, time-increasing identifier** to every change recorded in any log table of the database,
+* 8 composite types and 3 enum types,
 * 1 view,
-* more than 180 functions, more than 80 of them being directly :doc:`callable by users<functionsList>`,
+* Over 180 functions, with **more than 80 directly callable by users** (see :doc:`functionsList`),
 * 1 trigger,
-* 1 specific schema, named emaj, that contains all these relational objects,
-* 2 roles acting as groups (NOLOGIN): *emaj_adm* to manage E-Maj components, and *emaj_viewer* to only look at E-Maj components
+* 1 dedicated schema named *emaj*, containing all these relational objects,
+* 2 roles (NOLOGIN):
+
+  - ``emaj_adm`` to manages E-Maj components
+  - ``emaj_viewer`` for read-only access to E-Maj components.
 * 3 event triggers.
 
-The *emaj_adm* role is the owner of all log schemas, tables, sequences and functions.
+The ``emaj_adm`` role owns all log schemas, tables, sequences, and functions.
+
+----
 
 Schemas
 *******
 
-Almost all technical objects created at E-Maj installation are located into the schema named **emaj**. The only exception is the event trigger *emaj_protection_trg* that belongs to the *public* schema.
+Almost all technical objects created during E-Maj installation are stored in the **emaj** schema. The only exception is the ``emaj_protection_trg`` event trigger, which resides in the ``public`` schema.
 
-All objects linked to application tables are stored into schemas named *emaj_<schema>*, where <schema> is the schema name of the application tables.
+All objects linked to application tables are stored in schemas named ``emaj_<schema>``, where *<schema>* is the schema name of the application tables.
 
-The creation and the suppression of log schemas are only managed by E-Maj functions. They should NOT contain any other objects than those created by the extension.
+.. note::
+   Log schemas are **exclusively managed** by E-Maj functions. They **must not** contain any objects other than those created by the extension.
 
+----
 
-Norm for E-Maj objects naming
-*****************************
+Naming Conventions for E-Maj Objects
+************************************
 
-For an application table, the log objects name is prefixed with the table name. More precisely, for an application table:
+For an application table, log objects are named using the table name as a prefix:
 
-* the name of the **log table** is: 
-	<table.name>_log
+* **Log table**: ``<table_name>_log``
+* **Log function**: ``<table_name>_log_fnct``
+* **Log sequence**: ``<table_name>_log_seq``
 
-* the name of the **log function** is: 
-	<table.name>_log_fnct
+For application tables with **long names (over 50 characters)**, the prefix is generated to comply with PostgreSQL naming rules and avoid conflicts.
 
-* the name of the **sequence** associated to the log table is:
-	<table.name>_log_seq
+A log table name may include a suffix like ``_1``, ``_2``, etc. In such cases, it refers to an **old log table** renamed by an ``emaj_alter_group`` operation.
 
-For application tables whose name is very long (over 50 characters), the prefix used to build the log objects name is generated so it respects the PostgreSQL naming rules and avoids name conflict.
+E-Maj **function names** follow a naming convention:
 
-A log table name may contain a suffix like “_1”, “_2”, etc. In such a case, it deals with an old log table that has been renamed by an emaj_alter_group operation.
+* Functions prefixed with ``emaj_`` are **user-callable**.
+* Functions prefixed with ``_`` are **internal** and should not be called directly.
 
-Other E-Maj **function** names are also normalised:
+**Triggers** created on application tables share the same names:
 
-* function names that begin with `emaj_` are functions that are callable by users,
-* function names that begin with `_` are internal functions that should not be called directly.
+* ``emaj_log_trg``: Logs row-level operations (``INSERT``, ``UPDATE``, ``DELETE``, ``COPY``).
+* ``emaj_trunc_trg``: Handles ``TRUNCATE`` operations.
 
-**Triggers** created on application tables have the same name:
+**Event trigger** names start with ``emaj_`` and end with ``_trg``.
 
-* *emaj_log_trg* for the log triggers,
-* *emaj_trunc_trg* for the triggers that manage *TRUNCATE* verbs.
-
-The name of **event triggers** starts with `emaj_` and ends with `_trg`.
-
+----
 
 Tablespaces
 ***********
 
-When the extension is installed, the E-Maj technical tables are stored into the default tablespace set at instance or database level or explicitely set for the current session.
+By default, E-Maj technical tables are stored in the **default tablespace** set at the instance, database, or session level.
 
-The same rule applies for log tables and index. But using :ref:`table group parameters<table_emaj_properties>`, it is also possible to store log tables and/or their index into specific tablespaces.
+The same rule applies to **log tables and their indexes**. However, using :ref:`table group parameters<table_emaj_properties>`, you can specify **custom tablespaces** for log tables and/or their indexes.

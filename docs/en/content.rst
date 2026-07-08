@@ -1,82 +1,52 @@
 E-Maj distribution content
 ==========================
 
-Once :doc:`installed <install>`, an E-Maj version contents the following files.
+Once :doc:`installed <install>`, an E-Maj version contains the following files.
 
 +---------------------------------------------+---------------------------------------------------------------------+
-| Files                                       | Usage                                                               |
+| **Files**                                   | **Usage**                                                           |
 +=============================================+=====================================================================+
-| sql/emaj--<version>.sql                     | installation script of the extension                                |
+| sql/emaj--<version>.sql                     | Extension installation script                                       |
 +---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj-<version>.sql                      | alternate *psql* installation script                                |
+| sql/emaj-<version>.sql                      | Alternate *psql* installation script                                |
 +---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.7.0--4.7.1.sql                  | extension upgrade script from 4.7.0 to 4.7.1                        |
+| sql/emaj--<old_version>--<new_version>.sql  | Extension upgrade scripts (e.g., from 4.7.0 to 4.7.1).              |
 +---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.6.0--4.7.0.sql                  | extension upgrade script from 4.6.0 to 4.7.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.5.0--4.6.0.sql                  | extension upgrade script from 4.5.0 to 4.6.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.4.0--4.5.0.sql                  | extension upgrade script from 4.4.0 to 4.5.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.3.1--4.4.0.sql                  | extension upgrade script from 4.3.1 to 4.4.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.3.0--4.3.1.sql                  | extension upgrade script from 4.3.0 to 4.3.1                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.2.0--4.3.0.sql                  | extension upgrade script from 4.2.0 to 4.3.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.1.0--4.2.0.sql                  | extension upgrade script from 4.1.0 to 4.2.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.0.1--4.1.0.sql                  | extension upgrade script from 4.0.1 to 4.1.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--4.0.0--4.0.1.sql                  | extension upgrade script from 4.0.0 to 4.0.1                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--3.4.0--4.0.0.sql                  | extension upgrade script from 3.4.0 to 4.0.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--3.3.0--3.4.0.sql                  | extension upgrade script from 3.3.0 to 3.4.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--3.2.0--3.3.0.sql                  | extension upgrade script from 3.2.0 to 3.3.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--3.1.0--3.2.0.sql                  | extension upgrade script from 3.1.0 to 3.2.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--3.0.0--3.1.0.sql                  | extension upgrade script from 3.0.0 to 3.1.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj--2.3.1--3.0.0.sql                  | extension upgrade script from 2.3.1 to 3.0.0                        |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj_demo.sql                           | *psql* E-Maj demonstration script                                   |
+| sql/emaj_demo.sql                           | *psql* script for E-Maj demonstration                               |
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj_prepare_parallel_rollback_test.sql | *psql* test script for parallel rollbacks                           |
 +---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj_uninstall.sql                      | *psql* script to uninstall the E-Maj components                     |
+| sql/emaj_uninstall.sql                      | *psql* script to uninstall E-Maj components                         |
 +---------------------------------------------+---------------------------------------------------------------------+
-| README.md                                   | reduced extension's documentation                                   |
+| README.md                                   | Reduced extension documentation                                     |
 +---------------------------------------------+---------------------------------------------------------------------+
-| CHANGES.md                                  | release notes                                                       |
+| CHANGES.md                                  | Release notes                                                       |
 +---------------------------------------------+---------------------------------------------------------------------+
-| AUTHORS.md                                  | who are the authors                                                 |
+| AUTHORS.md                                  | Who are the authors                                                 |
 +---------------------------------------------+---------------------------------------------------------------------+
-| LICENSE                                     | information about E-Maj license                                     |
+| LICENSE                                     | E-Maj license information                                           |
 +---------------------------------------------+---------------------------------------------------------------------+
-| META.json                                   | technical data for PGXN                                             |
+| META.json                                   | Technical data for PGXN                                             |
 +---------------------------------------------+---------------------------------------------------------------------+
-| emaj.control                                | extension control file used by the integrated extensions management |
+| emaj.control                                | Extension control file for PostgreSQL's extensions management       |
 +---------------------------------------------+---------------------------------------------------------------------+
 | Makefile                                    | E-Maj install/uninstall description for the make command            |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_doc_en.pdf               | English version of the full E-Maj documentation                     |
+| client/emajParallelRollback.pl              | *Perl* client to spawn parallel rollbacks                           |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_doc_fr.pdf               | French version of the full E-Maj documentation                      |
+| client/emajRollbackMonitor.pl               | *Perl* client to monitor rollbacks                                  |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.en.odp              | English version of the E-Maj presentation                           |
+| client/emajStat.pl                          | *Perl* client to monitor changes recording                          |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.fr.odp              | French version of the E-Maj presentation                            |
+| doc/Emaj.<version>_doc_en.pdf               | English version of the full E-Maj documentation (PDF)               |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.en.pdf              | English version of the E-Maj presentation (pdf version)             |
+| doc/Emaj.<version>_doc_fr.pdf               | French version of the full E-Maj documentation (PDF)                |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.fr.pdf              | French version of the E-Maj presentation (pdf version)              |
+| doc/Emaj.<version>_pres.en.odp              | English version of the E-Maj presentation (OpenDocument)            |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajParallelRollback.pl              | *perl* client to spawn parallel rollbacks                           |
+| doc/Emaj.<version>_pres.fr.odp              | French version of the E-Maj presentation (OpenDocument)             |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajRollbackMonitor.pl               | *perl* client to monitor rollbacks                                  |
+| doc/Emaj.<version>_pres.en.pdf              | English version of the E-Maj presentation (PDF)                     |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajStat.pl                          | *perl* client to monitor changes recording                          |
+| doc/Emaj.<version>_pres.fr.pdf              | French version of the E-Maj presentation (PDF)                      |
 +---------------------------------------------+---------------------------------------------------------------------+

@@ -1,70 +1,81 @@
-Generate SQL scripts to replay logged changes
-=============================================
+Generating SQL Scripts to Replay Logged Changes
+===============================================
 
 .. _emaj_gen_sql_group:
 
-Log tables contain all needed information to replay changes. Therefore, it is possible to generate SQL statements corresponding to all changes that occurred between two marks or between a mark and the current state. This is the purpose of the *emaj_gen_sql_group()* function.
+Log tables contain all the information needed to replay changes. Therefore, it is possible to generate SQL statements corresponding to all changes that occurred between two marks or between a mark and the current state. This is the purpose of the ``emaj_gen_sql_group()`` function.
 
-So these changes can be replayed after the corresponding tables have been restored in their state at the initial mark, without being obliged to rerun application programs.
+These changes can then be replayed after the corresponding tables have been restored to their state at the initial mark, without needing to re-run application programs.
 
-To generate this SQL script, just execute the following statement::
+To generate this SQL script, execute the following statement::
 
-   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', '<file>'
-               [, <tables/sequences.array>);
+   SELECT emaj.emaj_gen_sql_group(p_groupName, p_firstMark, p_lastMark, p_location, p_tblseqs);
 
-A *NULL* value or an empty string may be used as end mark, representing the current state.
 
-The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
+**Input Parameters**
 
-If the marks range is not contained by a single *log session*, i.e. if group stops/restarts occured between these marks, a warning message is raised, indicating that data changes may have been not recorded.
+- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_firstMark`` (*TEXT*): **First mark name**. The keyword **EMAJ_LAST_MARK** represents the last set mark.
+- ``p_lastMark`` (*TEXT*): **Last mark name**. The keyword **EMAJ_LAST_MARK** represents the last set mark. A *NULL* value or an empty string represents the current state.
+- ``p_location`` (*TEXT*): Output **script location**. If *NULL*, SQL statements are generated into a temporary table.
+- ``p_tblseqs`` (*TEXT[]*, optional): Array of **tables or sequences** to filter. *NULL* means all tables and sequences are processed.
 
-If supplied, the output file name must be an absolute pathname. It must have the appropriate permission so that the PostgreSQL instance can write to it. If the file already exists, its content is overwritten.
+**Returned data**
 
-The output file name may be set to NULL. In this case, the SQL script is prepared in a temporary table that can then be accessed through a temporary view, *emaj_sql_script*. Using *psql*, the script can be exported with both commands::
+The function returns the number of generated statements (excluding comments and transaction management statements).
 
-   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', NULL
-               [, <tables/sequences.array>);
-   \copy (SELECT * FROM emaj_sql_script) TO ‘file’
+**Notes**
 
-This method allows to generate a script in a file located outside the file systems accessible by the PostgreSQL instance.
+The table group can be in either **IDLE** or **LOGGING** state.
 
-The last parameter of the *emaj_gen_sql_group()* function is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the table group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
+If the marks range is not contained within a single *log session* (i.e., if the group was stopped or restarted between these marks), a warning message is raised, indicating that some data changes may not have been recorded.
+
+If provided, the ``p_location`` parameter must be an **absolute pathname**. The PostgreSQL instance must have write permissions for this file. If the file already exists, its content will be overwritten.
+
+If the ``p_location`` parameter is set to *NULL*, the SQL script is prepared in a **temporary table**, which can then be accessed through the *emaj_sql_script* temporary view. Using *psql*, the script can be exported with the following commands::
+
+   SELECT emaj.emaj_gen_sql_group('<group_name>', '<start_mark>', '<end_mark>', NULL
+               [, <tables_sequences_array>]);
+   \copy (SELECT * FROM emaj_sql_script) TO 'file'
+
+This method allows generating a script in a file located outside the file systems accessible by the PostgreSQL instance.
+
+The ``p_tblseqs`` parameter of the function is optional. It **filters the tables and sequences** of the requested table group to process. If the parameter is omitted or set to *NULL*, all tables and sequences in the table group are processed. If specified, it must be a non-empty array of text elements, each representing a schema-qualified table or sequence name. Both syntaxes are supported::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
 or::
 
-   '{ "sch1.tbl1" , "sch1.tbl2" }'
-
-The function returns the number of generated statements (not including comments and transaction management statements).
-
-The table group may be in *IDLE* or in *LOGGING* state while the function is called.
-
-In order to generate the script, all tables must have an explicit *PRIMARY KEY*.
+   '{ "sch1.tbl1", "sch1.tbl2" }'
 
 .. caution::
 
-   If a tables and sequences list is specified to limit the *emaj_gen_sql_group()* function's work, it is the user's responsibility to take into account the possible presence of foreign keys, in order to let the function produce a viable SQL script.
+   All tables must have an explicit **PRIMARY KEY** to generate the script.
 
-Statements are generated in the order of their initial execution.
+If a list of tables and sequences is specified to limit the scope of the ``emaj_gen_sql_group()`` function, it is the user's responsibility to account for any foreign key constraints to ensure the function produces a viable SQL script.
 
-The statements are inserted into a single transaction. They are surrounded by a *BEGIN TRANSACTION;* statement and a *COMMIT;* statement. An initial comment specifies the characteristics of the script generation: generation date and time, related table group and used marks. 
+Statements are generated in the order of their original execution.
+
+The statements are inserted into a single transaction. They are enclosed between a *BEGIN TRANSACTION;* statement and a *COMMIT;* statement. An initial comment specifies the script generation details, including the generation date and time, the related table group, and the marks used.
 
 At the end of the script, sequences belonging to the table group are set to their final state.
 
-Then, the generated file may be executed as is by *psql*, using a connection role that has enough rights on accessed tables and sequences.
+The generated file can then be executed as-is by *psql* using a connection role with sufficient privileges on the accessed tables and sequences.
 
-The used technology may result to doubled backslashes in the output file. These doubled characters must be suppressed before executing the script, for instance, in Unix/Linux environment, using a command like::
+The technics used may result in doubled backslashes in the output file. These doubled characters must be removed before executing the script. For example, in a Unix/Linux environment, use a command like::
 
-   sed 's/\\\\/\\/g' <file.name> | psql ...
+   sed 's/\\\\/\\/g' <file_name> | psql ...
 
-As the function can generate a large, or even very large, file (depending on the log volume), it is the user's responsibility to provide a sufficient disk space.
+As the function can generate a large or very large file (depending on the log volume), users must ensure sufficient disk space is available.
 
-It is also the user's responsibility to deactivate application triggers, if any exist, before executing the generated script.
+Users are also responsible for deactivating any application triggers before executing the generated script.
 
-Using the *emaj_gen_sql_groups()* function, it is possible to generate a sql script related to several groups::
+**Multi-groups operation**
 
-   SELECT emaj.emaj_gen_sql_groups('<group.names.array>', '<start.mark>', '<end.mark>', '<file>'
-               [, <tables/sequences.array>);
+Using the ``emaj_gen_sql_groups()`` function, it is possible to generate a SQL script for multiple groups::
 
-More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
+   SELECT emaj.emaj_gen_sql_groups(p_groupName, p_firstMark, p_lastMark, p_location, p_tblseqs);
+
+The differences with the *emaj_gen_sql_group()* function are:
+
+- The first parameter is a *TEXT array* representing all table groups to process. For more information, see :doc:`multi-groups functions <multiGroupsFunctions>`.

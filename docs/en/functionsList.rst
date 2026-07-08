@@ -1,15 +1,15 @@
 E-Maj functions list
 ====================
 
-The E-Maj functions that are available to users can be grouped into 3 categories. They are listed below, in alphabetic order.
+The E-Maj functions that are available to users can be grouped into **3 categories**. They are listed below, in **alphabetic order**.
 
-They are all callable by roles having *emaj_adm* privileges. The charts also specifys those callable by *emaj_viewer* roles (sign *(V)* behind the function name).
+They are all callable by roles having ``emaj_adm`` privileges. The charts also specifies those callable by ``emaj_viewer`` roles (sign **(V)** behind the function name).
 
 Tables or sequences level functions
 -----------------------------------
 
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| Functions                                        | Input parameters              | Output data                           |
+| **Functions**                                    | **Input parameters**          | **Output data**                       |
 +==================================================+===============================+=======================================+
 | :ref:`emaj_assign_sequence                       | | schema TEXT,                | 1 INT                                 |
 | <assign_table_sequence>`                         | | sequence TEXT,              |                                       |
@@ -172,12 +172,13 @@ Tables or sequences level functions
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 
+----
 
 Groups level functions
 ----------------------
 
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| Functions                                        | Input parameters              | Output data                           |
+| **Functions**                                    | **Input parameters**          | **Output data**                       |
 +==================================================+===============================+=======================================+
 | :ref:`emaj_comment_group                         | | group TEXT,                 |                                       |
 | <emaj_comment_group>`                            | | comment TEXT                |                                       |
@@ -379,10 +380,12 @@ Groups level functions
 | <emaj_unprotect_mark_group>`                     | | mark TEXT                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 
+----
+
 General purpose functions
 -------------------------
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| Functions                                        | Input parameters              | Output data                           |
+| **Functions**                                    | **Input parameters**          | **Output data**                       |
 +==================================================+===============================+=======================================+
 | :ref:`emaj_cleanup_rollback_state                |                               | #.rollback INT                        |
 | <emaj_cleanup_rollback_state>`                   |                               |                                       |

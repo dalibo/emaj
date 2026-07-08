@@ -1,19 +1,19 @@
-Modifying table groups
+Modifying Table Groups
 =======================
 
-Several event types may lead to alter a table group:
+Several event types may lead to altering a table group:
 
-* the table group definition may change, some tables or sequences may have been added or suppressed,
-* one of the parameters linked to a table (priority, tablespaces,...) may have been modified,
-* the structure of one or several application tables of the table group may have changed, such as an added or dropped column or a column type change,
-* a table or sequence may change its name or its schema.
+* The table group definition may change: some **tables or sequences may have been added or removed**.
+* One of the **Input Parameters** linked to a table (priority, tablespaces, etc.) may have been modified.
+* The **structure** of one or more application tables in the table group may have changed, such as an added or dropped column or a column type change.
+* A table or sequence may change its **name** or its **schema**.
 
 When the modification concerns a table group in *LOGGING* state, it may be necessary to temporarily remove the table or sequence from its table group, with some impacts on potential future E-Maj rollback operations.
 
-Here are the possible actions.
+Below are the possible actions.
 
 +------------------------------------------------------+----------------------------------------------+
-| Actions                                              | Method                                       |
+| Action                                               | Method                                       |
 +======================================================+==============================================+
 | Add a table/sequence to a group                      | Tables/sequences assignment functions        |
 +------------------------------------------------------+----------------------------------------------+
@@ -46,217 +46,247 @@ Here are the possible actions.
 | Other forms of ALTER SEQUENCE                        | No E-Maj impact                              |
 +------------------------------------------------------+----------------------------------------------+
 
-Adjusting the structure of in *LOGGING* state groups may have consequences on E-Maj rollback or SQL script generation (see below).
+Adjusting the structure of table groups in *LOGGING* state may have consequences on E-Maj rollback or SQL script generation (see below).
 
-Even if the table group is in *LOGGING* state, an E-Maj rollback operation targeting a mark set before a group’s change does NOT automatically revert this group’s change. However the E-Maj administrator can perform by himself the changes that would reset the group to its previous state.
+Even if the table group is in *LOGGING* state, an E-Maj **rollback** operation targeting a mark set before a group change **does not** automatically **revert** this **group change**. However, the E-Maj administrator can manually perform the changes that would reset the group to its previous state.
+
+----
 
 .. _dynamic_ajustment:
 
-Add tables or sequences to a table group
------------------------------------------
+Adding Tables or Sequences to a Table Group
+-------------------------------------------
 
-The functions that :ref:`assign one or several tables or sequences<assign_table_sequence>` into a table group that are used at group’s creation time are also usable during the whole group’s life.
+The functions that :ref:`assign one or more tables or sequences<assign_table_sequence>` to a table group, which are used at group creation time, are also usable during the entire life of the group.
 
 When executing these functions, the table group can be either in *IDLE* or in *LOGGING* state.
 
-When the group is in *LOGGING* state, an exclusive lock is set on all tables of the group.
+When the group is in *LOGGING* state:
 
-When the table group is in *LOGGING* state, a mark is set. Its name is defined by the last parameter of the function. This parameter is optional. If not supplied, the mark name is generated, with a *ASSIGN* prefix.
+- An *EXCLUSIVE* lock is set on all tables of the group.
+- A mark is set. Its name is defined by the ``p_mark`` parameter of the function. This parameter is optional. If not supplied, the mark name is generated with an *ASSIGN* prefix.
+
+----
 
 .. _remove_table_sequence:
 
-Remove tables from their table group
--------------------------------------
+Removing Tables from Their Table Group
+--------------------------------------
 
-The 3 following functions allow to remove one or several tables from their table group::
+The three following functions allow removing one or more tables from their table group::
 
-	SELECT emaj.emaj_remove_table('<schema>', '<table>' [,'<mark>'] );
+   SELECT emaj.emaj_remove_table(p_schema, p_table, p_mark);
 
-or ::
+or::
 
-	SELECT emaj.emaj_remove_tables('<schema>', '<tables.array>' [,'<mark>'] );
+   SELECT emaj.emaj_remove_tables(p_schema, p_tables, p_mark);
 
-or ::
+or::
 
-	SELECT emaj.emaj_remove_tables('<schema>', '<tables.to.include.filter>',
-               '<tables.to.exclude.filter>' [,'<mark>'] );
+   SELECT emaj.emaj_remove_tables(p_schema, p_tablesIncludeFilter, p_tablesExcludeFilter, p_mark);
 
-They are very similar to the tables assignment functions.
+Input parameters and returned data are similar to the :ref:`table assignment functions<assign_table_sequence>`.
 
-When several tables are removed, they do not necessarily belongs to the same group.
+**Notes**
 
-When the table group or groups are in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *REMOVE* prefix.
+When multiple tables are removed, they do not necessarily belong to the same group.
 
-Remove sequences from their table group
-----------------------------------------
+When the table group or groups are in *LOGGING* state and no mark is supplied in the parameters, the mark is generated with a *REMOVE* prefix.
 
-The 3 following functions allow to remove one or several sequences from their table group::
+----
 
-	SELECT emaj.emaj_remove_sequence('<schema>', '<sequence>' [,'<mark>'] );
+Removing Sequences from Their Table Group
+-----------------------------------------
 
-or ::
+The three following functions allow removing one or more sequences from their table group::
 
-	SELECT emaj.emaj_remove_sequences('<schema>', '<sequences.array>' [,'<mark>'] );
+   SELECT emaj.emaj_remove_sequence(p_schema, p_sequence, p_mark);
 
-or ::
+or::
 
-	SELECT emaj.emaj_remove_sequences('<schema>', '<sequences.to.include.filter>',
-               '<sequences.to.exclude.filter>' [,'<mark>'] );
+   SELECT emaj.emaj_remove_sequences(p_schema, p_sequences, p_mark);
 
-They are very similar to the sequences assignment functions.
+or::
 
-When the table group is in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *REMOVE* prefix,
+   SELECT emaj.emaj_remove_sequences(p_schema, p_sequencesIncludeFilter, p_sequencesExcludeFilter, p_mark);
+
+Input parameters and returned data are similar to the :ref:`sequence assignment functions<assign_table_sequence>`.
+
+**Notes**
+
+When the table group is in *LOGGING* state and no mark is supplied in the parameters, the mark is generated with a *REMOVE* prefix.
+
+----
 
 .. _move_table_sequence:
 
-Move tables to another table group
------------------------------------
+Moving Tables to Another Table Group
+------------------------------------
 
-3 functions allow to move one or several tables to another table group::
+Three functions allow moving one or more tables to another table group::
 
-	SELECT emaj.emaj_move_table('<schema>', '<table>', '<new.group' [,'<mark>'] );
+   SELECT emaj.emaj_move_table(p_schema, p_table, p_newGroup, p_mark);
 
-or ::
+or::
 
-	SELECT emaj.emaj_move_tables('<schema>', '<tables.array>', '<new.group' [,'<mark>'] );
+   SELECT emaj.emaj_move_tables(p_schema, p_tables, p_newGroup, p_mark);
 
-or ::
+or::
 
-	SELECT emaj.emaj_move_tables('<schema>', '<tables.to.include.filter>',
-               '<tables.to.exclude.filter>', '<new.group' [,'<mark>'] );
+   SELECT emaj.emaj_move_tables(p_schema, p_tablesIncludeFilter, p_tablesExcludeFilter, p_newGroup, p_mark);
 
-When serveral tables are moved to another table group, they do not necessarily belong to the same source group.
+Input parameters and returned data are similar to the :ref:`table assignment functions<assign_table_sequence>`.
 
-When the table group is in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *MOVE* prefix,
+**Notes**
 
-Move sequences to another table group
---------------------------------------
+When several tables are moved to another table group, they do not necessarily belong to the same source group.
 
-3 functions allow to move one or several sequences to another table group::
+When the table group is in *LOGGING* state and no mark is supplied in the parameters, the mark is generated with a *MOVE* prefix.
 
-	SELECT emaj.emaj_move_sequence('<schema>', '<sequence>', '<new.group' [,'<mark>'] );
+----
 
-or ::
+Moving Sequences to Another Table Group
+---------------------------------------
 
-	SELECT emaj.emaj_move_sequences('<schema>', '<sequences.array>', '<new.group' [,'<mark>'] );
+Three functions allow moving one or more sequences to another table group::
 
-or ::
+   SELECT emaj.emaj_move_sequence(p_schema, p_sequence, p_newGroup, p_mark);
 
-	SELECT emaj.emaj_move_sequences('<schema>', '<sequences.to.include.filter>',
-               '<sequences.to.exclude.filter>', '<new.group' [,'<mark>'] );
+or::
 
-When serveral sequences are moved to another table group, they do not necessarily belong to the same source group.
+   SELECT emaj.emaj_move_sequences(p_schema, p_sequences, p_newGroup, p_mark);
 
-When the table group is in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *MOVE* prefix,
+or::
+
+   SELECT emaj.emaj_move_sequences(p_schema, p_sequencesIncludeFilter, p_sequencesExcludeFilter, p_newGroup, p_mark);
+
+Input parameters and returned data are similar to the :ref:`sequence assignment functions<assign_table_sequence>`.
+
+**Notes**
+
+When several sequences are moved to another table group, they do not necessarily belong to the same source group.
+
+When the table group is in *LOGGING* state and no mark is supplied in the parameters, the mark is generated with a *MOVE* prefix.
+
+----
 
 .. _modify_table:
 
-Modify tables properties
-------------------------
+Modifying Table Properties
+--------------------------
 
-3 functions allow to modify the properties of one or several tables from a single schema::
+Three functions allow modifying the properties of one or more tables from a single schema::
 
-	SELECT emaj.emaj_modify_table('<schema>', '<table>', '<modified.properties>' [,'<mark>']]);
+   SELECT emaj.emaj_modify_table(p_schema, p_table, p_changedProperties, p_mark);
 
-or ::
+or::
 
-	SELECT emaj.emaj_modify_tables('<schema>', '<tables.array>', '<modified.properties>' [,'<mark>']]);
+   SELECT emaj.emaj_modify_tables(p_schema, p_tables, p_changedProperties, p_mark);
 
-or ::
+or::
 
-	SELECT emaj.emaj_modify_tables('<schema>', '<tables.to.include.filter>',
-               '<tables.to.exclude.filter>', '<modified.properties>' [,'<mark>']]);
+   SELECT emaj.emaj_modify_tables(p_schema, p_tablesIncludeFilter, p_tablesExcludeFilter, p_changedProperties, p_mark);
 
-The <modified.properties> parameter is of type JSONB. Its elementary fields are the same as the <properties> parameter of the :ref:`tables assignment functions<assign_table_sequence>`. But this <modified.properties> parameter only contains ... the properties to modify. The not listed properties remain unchanged. It is possible to reset a property to its default value by setting a *NULL* value (the json null).
+Input parameters and returned data are similar to the :ref:`table assignment functions<assign_table_sequence>`.
+
+**Notes**
+
+The ``p_changedProperties`` parameter is of type *JSONB*. Its elementary fields are the same as the ``p_properties`` parameter of the :ref:`table assignment functions<assign_table_sequence>`. However, this ``p_changedProperties`` parameter only contains the properties to modify. The properties not listed remain unchanged. It is possible to reset a property to its default value by setting it to *null* (the *JSON null*).
 
 The functions return the number of tables that have effectively changed at least one property.
 
-When the table group is in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *MODIFY* prefix,
+When the table group is in *LOGGING* state and no mark is supplied in the parameters, the mark is generated with a *MODIFY* prefix.
+
+----
 
 .. _get_assigned_group:
 
-Knowing the table group a table or a sequence is assigned to
--------------------------------------------------------------
+Determining the Table Group a Table or Sequence Is Assigned To
+--------------------------------------------------------------
 
 Two functions return the table group name a table or a sequence is assigned to::
 
-   SELECT emaj.emaj_get_assigned_group_table(‘<schema>’,’<table>’);
+   SELECT emaj.emaj_get_assigned_group_table(p_schema, p_table);
 
-   SELECT emaj.emaj_get_assigned_group_sequence(‘<schema>’,’<sequence>’);
+   SELECT emaj.emaj_get_assigned_group_sequence(p_schema, p_sequence);
 
 If the table or sequence is not currently assigned to a group, both functions return a *NULL* value.
 
-Thanks to these functions, it’s easy to assign or move or leave as is a table or a sequence, depending on its state.
+Thanks to these functions, it is easy to assign, move, or leave a table or a sequence as is, depending on its state.
 
-The functions are callable by *emaj_viewer* roles.
+These functions are callable by ``emaj_viewer`` roles.
 
-Incidence of tables or sequences addition or removal in a group in LOGGING state
---------------------------------------------------------------------------------
+----
 
-.. caution::
-
-	Once a table or a sequence is removed from a table group, any rollback operation will leave this object unchanged. Once unlinked from its table group, the application table or sequence can be altered or dropped. 
-
-The historical data linked to the object (logs, marks traces,...) are kept as is so that they can be later examined. However, they remain linked to the table group that owned the object. To avoid any confusion, log tables are renamed, adding a numeric  suffix to its name. These logs and marks traces will only be deleted by a :ref:`group’s reset <emaj_reset_group>` operation or by the :ref:`deletion of the oldest marks <emaj_delete_before_mark_group>` of the group.
+Impact of Adding or Removing Tables or Sequences in a *LOGGING* Group
+---------------------------------------------------------------------
 
 .. caution::
 
-	When a table or a sequence is added into a table group in *LOGGING* state, it is then processed by any further rollback operation. But if the rollback operation targets a mark set before the addition into the group, the table or the sequence is left in its state at the time of the addition into the group and a warning message is issued. Such a table or sequence will not be processed by a SQL script generation function call if the requested start mark has been set before the addition of the table or sequence into the group
+   Once a table or a sequence is removed from a table group, any rollback operation will leave this object unchanged. Once unlinked from its table group, the application table or sequence can be altered or dropped.
 
-Some graphs help to more easily visualize the consequences of the addition or the removal of a table or a sequence into/from a table group in *LOGGING* state.
+The historical data linked to the object (logs, mark traces, etc.) are kept as is so that they can be examined later. However, they remain linked to the table group that owned the object. To avoid any confusion, log tables are renamed by adding a numeric suffix to their names. These logs and mark traces will only be deleted by a :ref:`group reset <emaj_reset_group>` operation or by the :ref:`deletion of the oldest marks <emaj_delete_before_mark_group>` of the group.
 
-Let’s use a table group containing 4 tables (t1 to t4) and 4 marks set over time (m1 to m4). At m2, t3 has been added to the group while t4 has been removed. At m3, t2 has been removed from the group while t4 has been re-added.
+.. caution::
+
+   When a table or a sequence is added to a table group in *LOGGING* state, it is then processed by any further rollback operation. However, if the rollback operation targets a mark set before the addition to the group, the table or sequence is left in its state at the time of the addition to the group, and a warning message is issued. Such a table or sequence will not be processed by a SQL script generation function call if the requested start mark was set before the addition of the table or sequence to the group.
+
+Some graphs help to more easily visualize the consequences of adding or removing a table or a sequence to/from a table group in *LOGGING* state.
+
+Let’s consider a table group containing 4 tables (t1 to t4) and 4 marks set over time (m1 to m4). At m2, t3 was added to the group while t4 was removed. At m3, t2 was removed from the group while t4 was re-added.
 
 .. image:: images/logging_group_changes.png
    :align: center
 
-A rollback to the mark m1:
+A rollback to the mark m1 would:
 
-* would process the table t1,
-* would **NOT** process the table t2, for lack of log after m3,
-* would process the table t3, but only up to m2,
-* would process the table t4, but only up to m3, for lack of log between m2 and m3.
+* Process the table t1.
+* **Not** process the table t2, due to lack of logs after m3.
+* Process the table t3, but only up to m2.
+* Process the table t4, but only up to m3, due to lack of logs between m2 and m3.
 
 .. image:: images/logging_group_rollback.png
    :align: center
 
 A log statistics report between the marks m1 and m4 would contain:
 
-* 1 row for t1 (m1,m4),
-* 1 row for t2 (m1,m3),
-* 1 row for t3 (m2,m4),
-* 2 rows for t4 (m1,m2) and (m3,m4).
+* 1 row for t1 (m1, m4).
+* 1 row for t2 (m1, m3).
+* 1 row for t3 (m2, m4).
+* 2 rows for t4 (m1, m2) and (m3, m4).
 
 .. image:: images/logging_group_stat.png
    :align: center
 
-The SQL script generation for the marks interval m1 to m4:
+The SQL script generation for the marks interval m1 to m4 would:
 
-* would process the table t1,
-* would process the table t2, but only up the mark m3,
-* would **NOT** process the table t3, for lack of log before m2,
-* would process the table t4, but only up to the mark m2, for lack of log between m2 and m3.
+* Process the table t1.
+* Process the table t2, but only up to the mark m3.
+* **Not** process the table t3, due to lack of logs before m2.
+* Process the table t4, but only up to the mark m2, due to lack of logs between m2 and m3.
 
 .. image:: images/logging_group_gen_sql.png
    :align: center
 
-If the structure of an application table has been inadvertently changed while it belonged to a table group in *LOGGING* state, the mark set and rollback operations will be blocked by the E-Maj internal checks. To avoid stopping, altering and then restarting the table group, it is possible to only remove the concerned table from its group and then to re-add it.
+If the structure of an application table has been inadvertently changed while it belonged to a table group in *LOGGING* state, the mark set and rollback operations will be blocked by E-Maj internal checks. To avoid stopping, altering, and then restarting the entire table group, it is possible to simply remove the concerned table from its group and then re-add it.
 
-When a table changes its affected group, the impact on the ability to generate a SQL script or to rollback the source and destination table groups is similar to removing the table from its source group and then adding the table to the destination group.
+When a table changes its assigned group, the impact on the ability to generate a SQL script or to roll back the source and destination table groups is similar to removing the table from its source group and then adding the table to the destination group.
 
-Repair a table group
----------------------
+----
 
-Eventhough the event triggers created by E-Maj limit the risk, some E-Maj components that support an application table (log table, function or trigger) may have been dropped. In such a case, the associated table group cannot work correctly anymore.
+Repairing a Table Group
+-----------------------
 
-In order to solve the issue without stopping the table group if it is in *LOGGING* state (and thus loose the benefits of the recorded logs), it is possible to remove the table from its group and then re-add it, by chaining both commands::
+Although the event triggers created by E-Maj limit the risk, some E-Maj components that support an application table (log table, function, or trigger) may have been dropped. In such a case, the associated table group can no longer work correctly.
 
-   SELECT emaj.emaj_remove_table('<schema>', '<table>' [,'<mark>']);
+To solve the issue without stopping the table group if it is in *LOGGING* state (and thus losing the benefits of the recorded logs), it is possible to remove the table from its group and then re-add it by chaining both commands::
 
-   SELECT emaj.emaj_assign_table('<schema>', '<table>', '<group>' [,'properties' [,'<mark>']] );
+   SELECT emaj.emaj_remove_table(p_schema, p_table, p_mark);
 
-Of course, once the table is removed from its group, the content of the associated logs cannot be used for a potential rollback or script generation anymore.
+   SELECT emaj.emaj_assign_table(p_schema, p_table, p_group, p_properties, p_mark);
+
+Of course, once the table is removed from its group, the content of the associated logs can no longer be used for a potential rollback or script generation.
 
 However, if the log sequence is missing (which should never be the case) and the table group is in *LOGGING* state, it is necessary to :ref:`force the group’s stop<emaj_force_stop_group>` before removing and re-assigning the table.
 
-It may also happen that an application table or sequence has been accidentaly dropped. In this case, the table of sequence can be simply a posteriori removed from its group, by executing the appropriate *emaj_remove_table()* or *emaj_remove_sequence()* function.
+It may also happen that an application table or sequence has been accidentally dropped. In this case, the table or sequence can be simply removed a posteriori from its group by executing the appropriate *emaj_remove_table()* or *emaj_remove_sequence()* function.

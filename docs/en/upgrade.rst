@@ -1,165 +1,188 @@
-Upgrade an existing E-Maj version
+Upgrade an Existing E-Maj Version
 =================================
 
-General approach
+General Approach
 ----------------
 
-The first step consists in :doc:`installing the new version of the E-Maj software <install>`.
+The first step is to :doc:`install the new version of the E-Maj software <install>`.
 
-It is also necessary to check whether some :ref:`preliminary operations <preliminary_operations>` must be executed.
+You should also check whether any :ref:`preliminary operations <preliminary_operations>` need to be performed.
 
-Then the process to upgrade an E-Maj extension in a database depends on the already installed E-Maj version and the way it has been installed.
+The upgrade process for an E-Maj extension in a database depends on the currently installed E-Maj version and the method used for the initial installation.
 
-Any E-Maj environment installed into a database can be upgraded by a simple :ref:`uninstall and re-install<uninstall_reinstall>`.
+Any E-Maj environment can be upgraded using a simple :ref:`uninstall and re-install <uninstall_reinstall>` process.
 
-For E-Maj versions installed as an *EXTENSION*, and with version id greater or equal 2.3.1, it is possible to :ref:`upgrade the version<extension_upgrade>` without being obliged to uninstall the version. This approach keeps all logs, allowing to examine prior changes and even process E-Maj rollbacks targeting a mark set before the version upgrade.
+For E-Maj versions **installed as an EXTENSION** with a version ID greater than or equal to 2.3.1, you can :ref:`upgrade the version <extension_upgrade>` without uninstalling the existing version. This approach **preserves all logs**, allowing you to examine prior changes and perform E-Maj rollbacks targeting marks set before the upgrade.
 
-For E-Maj versions that have been installed by a *psql* script (so not as an *EXTENSION*), there is no particular update procedure. On such environments, a simple  E-Maj deletion and then re-installation has to be done.
+For E-Maj versions installed via a *psql* script (not as an *EXTENSION*), no specific upgrade procedure exists. In such cases, you must **delete and reinstall** E-Maj.
 
 .. caution::
+   Verify the :doc:`PostgreSQL and E-Maj versions compatibility matrix <versionsMatrix>` to ensure the upgrade is supported. If your PostgreSQL version is too old, **upgrade PostgreSQL first** before migrating E-Maj to a newer version.
 
-   It is important to verify the :doc:`PostgreSQL and E-Maj versions compatibility matrix<versionsMatrix>` to be sure that the E-Maj version upgrade is possible. If the PostgreSQL version is too old, it must be upgraded **before** migrating E-Maj to a higher version.
+----
 
 .. _uninstall_reinstall:
 
-Upgrade by deletion and re-installation
+Upgrade by Deletion and Reinstallation
 ---------------------------------------
 
-For this upgrade path, it is not necessary to use the full procedure described in :doc:`uninstall`. In particular, the tablespace and both roles can remain as is. However, it may be judicious to save some useful pieces of information. Here is a suggested procedure.
+For this upgrade method, you do not need to follow the full :doc:`uninstall <uninstall>` procedure. The tablespace and roles can remain unchanged. However, it is advisable to back up useful information. Below is a recommended procedure.
 
-Stop table groups
+Stop Tables Groups
 ^^^^^^^^^^^^^^^^^^
 
-If some table groups are in *LOGGING* state, they must be stopped, using the :ref:`emaj_stop_group() <emaj_stop_group>` function (or the :ref:`emaj_force_stop_group() <emaj_force_stop_group>` function if :ref:`emaj_stop_group() <emaj_stop_group>` returns an error).
+If any table groups are in *LOGGING* state, stop them using:
 
-Save user data
+- The :ref:`emaj_stop_group() <emaj_stop_group>` function, **or**
+- The :ref:`emaj_force_stop_group() <emaj_force_stop_group>` function (if :ref:`emaj_stop_group() <emaj_stop_group>` returns an error).
+
+Save User Data
 ^^^^^^^^^^^^^^
 
 The procedure depends on the installed E-Maj version.
 
-**Installed version >= 3.3**
+**Installed Version ≥ 3.3.0**
+You can export the full table groups configuration and E-Maj parameters to flat files::
 
-The full existing table groups configuration, as well as E-Maj parameters, can be saved on flat files, using::
+   SELECT emaj.emaj_export_groups_configuration('<file_path_1>');
+   SELECT emaj.emaj_export_parameters_configuration('<file_path_2>');
 
-   SELECT emaj.emaj_export_groups_configuration('<file.path.1>');
+**Installed Version < 3.3.0**
+If your E-Maj version is prior to 3.3.0, the export functions are unavailable.
 
-   SELECT emaj.emaj_export_parameters_configuration('<file.path.2>');
+Starting from E-Maj 4.0, table groups configuration no longer uses the *emaj_group_def* table. To rebuild table groups after upgrading, you must either:
 
-**Installed version < 3.3**
+- Edit a JSON configuration file for import, **or**
+- Execute a set of table/sequence assignment functions.
 
-If the installed E-Maj version is prior 3.3.0, these export functions are not available.
-
-As starting from E-Maj 4.0 the table groups configuration doesn’t use the *emaj_group_def* table anymore, rebuilding the table groups after the E-Maj version upgrade will need either to edit a JSON configuration file to import or to execute a set of tables/sequences assignment functions.
-
-If the emaj_param tables contains specific parameters, it can be duplicated ouside the *emaj* schema::
+If the *emaj_param* table contains custom parameters, back it up outside the *emaj* schema::
 
    CREATE TABLE public.sav_param AS
        SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
 
-If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as "not to be automatically disabled at E-Maj rollback time", the *emaj_ignored_app_trigger* table can also be saved::
+If the installed E-Maj version is **3.1.0 or higher** and application triggers were registered as "not to be automatically disabled at E-Maj rollback time," back up the *emaj_ignored_app_trigger* table::
 
    CREATE TABLE public.sav_ignored_app_trigger AS
        SELECT * FROM emaj.emaj_ignored_app_trigger;
 
-E-Maj deletion and re-installation
+E-Maj Deletion and Reinstallation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once connected as super-user, just chain the execution of the *uninstall.sql* script, of the current version and then the extension creation. ::
+As a superuser, execute the following commands in sequence::
 
    \i <old_emaj_directory>/sql/emaj_uninstall.sql
-
    CREATE EXTENSION emaj CASCADE;
 
-Restore user data
+Restore User Data
 ^^^^^^^^^^^^^^^^^
 
-**Previous version >= 3.3**
+**Previous Version ≥ 3.3.0**
+Reload the exported table groups and parameters configurations::
 
-The exported table groups and parameters configurations can be reloaded with::
+   SELECT emaj.emaj_import_parameters_configuration('<file_path_2>', TRUE);
+   SELECT emaj.emaj_import_groups_configuration('<file_path_1>');
 
-   SELECT emaj.emaj_import_parameters_configuration('<file.path.2>', TRUE);
+**Previous Version < 3.3.0**
+Reload the saved parameters and application triggers configurations::
 
-   SELECT emaj.emaj_import_groups_configuration('<file.path.1>');
-
-**Previous version < 3.3**
-
-The saved parameters and application triggers configurations can be reloaded with statements like::
-
-   SELECT emaj.emaj_set_param(param_key,
-                              coalesce(param_value_text, param_value_numeric::TEXT,
-                                       param_value_boolean::TEXT, param_value_interval::TEXT))
-       FROM public.sav_param;
+   SELECT emaj.emaj_set_param(
+       param_key,
+       COALESCE(
+           param_value_text,
+           param_value_numeric::TEXT,
+           param_value_boolean::TEXT,
+           param_value_interval::TEXT
+       )
+   ) FROM public.sav_param;
 
    INSERT INTO emaj.emaj_ignored_app_trigger
        SELECT * FROM public.sav_ignored_app_trigger;
 
-The table groups need to be rebuilt using the :doc:`standard methods<groupsCreationFunctions>` of the new version.
+Rebuild the table groups using the :doc:`standard methods <groupsCreationFunctions>` of the new version.
 
-Then, temporary tables or files can be deleted.
+Finally, delete temporary tables or files.
+
+----
 
 .. _extension_upgrade:
 
-Upgrade an E-Maj version installed as an EXTENSION
+Upgrade an E-Maj Version Installed as an EXTENSION
 --------------------------------------------------
 
-An existing version that has been installed as an extension can be upgraded using the SQL statement::
+To upgrade an existing E-Maj version installed as an extension, use the following SQL command::
 
    ALTER EXTENSION emaj UPDATE;
 
-The PostgreSQL extension manager determines the scripts to execute depending on the current installed E-Maj version and the version found in the *emaj.control* file.
+PostgreSQL’s extension manager automatically determines the scripts to execute based on the currently installed E-Maj version and the version specified in the ``emaj.control`` file.
 
-The operation is very quick et does not alter table groups. They may remain in *LOGGING* state during the upgrade. As for previous upgrades, this means that:
+This operation is **fast** and **does not disrupt table groups**. They can remain in the *LOGGING* state during the upgrade. This means:
 
-* updates on application tables can continue to be recorded during and after this version change,
-* a *rollback* on a mark set before the version change can also be performed after the migration.
+- Changes on application tables continue to be recorded during and after the version change.
+- E-Maj Rollbacks to marks set before the version change can still be performed after the upgrade.
 
-Version specific details:
+Version-Specific Details
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-* The  procedure that upgrades a version **2.3.1** into **3.0.0** changes the structure of log tables: both *emaj_client_ip* and *emaj_client_port* columns are not created anymore. Existing log tables are not modified. Only the new log tables are impacted. But the administrator can :ref:`add these columns<addLogColumns>`, by using the *'alter_log_tables'* parameter.
+- **Upgrading from 2.3.1 to 3.0.0**:
+  The log tables structure changes: the ``emaj_client_ip`` and ``emaj_client_port`` columns are no longer created. Existing log tables remain unchanged; only new log tables are affected. Administrators can :ref:`add these columns <addLogColumns>` using the ``alter_log_tables`` parameter.
 
-* The procedure that upgrades a version **3.0.0** into **3.1.0** renames existing log objects. This leads to locking the application tables, which may generate conflicts with the parallel use of these tables. This procedure also issues a warning message indicating that the changes in E-Maj rollback functions regarding the application triggers processing may require changes in user’s procedures.
+- **Upgrading from 3.0.0 to 3.1.0**:
+  Existing log objects are renamed, which **locks application tables** and may cause conflicts with concurrent operations. A warning message is displayed, indicating that changes to E-Maj rollback functions regarding application triggers may require updates to user procedures.
 
-* The procedure that upgrades a version **3.4.0** into **4.0.0** updates the log tables content for TRUNCATE recorded statements. The upgrade duration depends on the global log tables size.
+- **Upgrading from 3.4.0 to 4.0.0**:
+  The log tables content for ``TRUNCATE`` statements is updated. The upgrade duration depends on the **total size of the log tables**.
 
-* The procedure that upgrades a version **4.1.0** into **4.2.0** checks that all event triggers exist. If some are missing, the E-Maj environment must be recreated (alternatively, the *sql/emaj_upgrade_after_postgres_upgrade.sql* script provided by the 4.1.0 E-maj version could be searched and executed to create the missing event triggers).
+- **Upgrading from 4.1.0 to 4.2.0**:
+  The upgrade checks for missing event triggers. If any are missing, the E-Maj environment must be recreated. Alternatively, you can execute the ``sql/emaj_upgrade_after_postgres_upgrade.sql`` script (provided with E-Maj 4.1.0) to create the missing triggers.
 
-* The procedure that upgrades a version **4.3.1** into **4.4.0** reads the *emaj_hist* table content in order to build 3 histories populating the 3 new internal tables. Although rather short, the upgrade duration depends on the *emaj_hist* table size.
-      
-      
-Compatibility break
--------------------
+- **Upgrading from 4.3.1 to 4.4.0**:
+  The ``emaj_hist`` table content is read to populate three new internal history tables. Although brief, the upgrade duration depends on the ``emaj_hist`` table size.
 
-As a general rule, upgrading the E-Maj version does not change the way to use the extension. There is an ascending compatibility between versions. The exceptions to this rule are presented below.
+----
 
-Upgrading towards version 4.0.0
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Compatibility Breaks
+--------------------
 
-The compatibility breaks of the 4.0.0 E-Maj version mainly deal with the way to manage table groups configurations. The 3.2.0 version brought the ability to dynamicaly manage the assignment of tables and sequences into table groups. The 3.3.0 version allowed to describe table groups configuration with JSON structures. Since, these technics have existed beside the historical way to handle table group using the *emaj_group_def* table. Starting with the 4.0.0 version, this historical way to manage table groups configurations has disappeared.
+As a general rule, upgrading E-Maj does **not** change how the extension is used. There is **ascending compatibility** between versions. Exceptions to this rule are detailed below.
 
-More precisely:
+Upgrading to Version 4.0.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* The table *emaj_group_def* does not exist anymore.
-* The :ref:`emaj_create_group()<emaj_create_group>` function only creates empty table groups, that must be then populated with functions of the :ref:`emaj_assign_table() / emaj_assign_sequence()<assign_table_sequence>` family, or the :ref:`emaj_import_groups_configuration()<import_groups_conf>` function. The third and last parameter of the :ref:`emaj_create_group()<emaj_create_group>` function has disappeared. It allowed to create empty table groups.
-* The now useless *emaj_alter_group()*, *emaj_alter_groups()* and *emaj_sync_def_group()* functions also disappear.
+The compatibility breaks in E-Maj 4.0.0 primarily concern **table groups configuration management**
 
-Furthermore:
+Version 3.2.0 introduced dynamic management of table and sequence assignments to table groups and version 3.3.0 allowed describing table groups configurations using JSON structures. Starting with **E-Maj 4.0.0**, the old method of managing table groups configurations via the ``emaj_group_def`` table is **removed**.
 
-* The *emaj_ignore_app_trigger()* function is deleted. The triggers to ignore at E-Maj rollback time can be registered with the functions of the :ref:`emaj_assign_table()<assign_table_sequence>` family.
-* In JSON structures managed by the :ref:`emaj_export_groups_configuration()<export_groups_conf>` and :ref:`emaj_import_groups_configuration()<import_groups_conf>` functions, the format of the "ignored_triggers" property that lists the triggers to ignore at E-Maj rollback time has been simplified. It is now a simple text array.
-* The old family of E-Maj rollback functions that just returned an integer has been deleted. Only the functions returning a set of messages remain.
-* The name of function parameters have changed: “v\_” prefixes have been transformed into “p\_”. This only impacts function calls formated with named parameters. But this practice is unusual.
+Concretely:
 
-Upgrading towards version 4.3.0
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- The ``emaj_group_def`` table **no longer exists**.
+- The :ref:`emaj_create_group() <emaj_create_group>` function now **only creates empty table groups**, which must then be populated using either functions from the :ref:`emaj_assign_table() / emaj_assign_sequence() <assign_table_sequence>` family, or the :ref:`emaj_import_groups_configuration() <import_groups_conf>` function.
+- The third parameter of the :ref:`emaj_create_group() <emaj_create_group>` function (previously used to create empty table groups) is **removed**.
 
-Before E-Maj 4.3.0, the *emaj_log_stat_group()*, *emaj_gen_sql_group()* and *emaj_snap_log_group()* functions families accepted a NULL value or an empty string as the first mark name of the requested time range, this value representing the oldest known mark for the table group or groups. The concept being ambiguous, especially with multi-groups functions, this feature has been removed in version 4.3.0.
+Additionally:
 
-The *emaj_snap_log_group()* function has been replaced by both :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` and :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>` functions, providing much larger features. In order to create a files set of log tables extracts, the statement::
+- The ``emaj_ignore_app_trigger()`` function is **deleted**. Triggers to ignore during E-Maj rollback can now be registered using functions from the :ref:`emaj_assign_table() <assign_table_sequence>` family.
+- The format of the ``ignored_triggers`` property in JSON structures (managed by :ref:`emaj_export_groups_configuration() <export_groups_conf>` and :ref:`emaj_import_groups_configuration() <import_groups_conf>`) is **simplified** to a text array.
+- The old E-Maj rollback functions that returned only an integer are **deleted**. Only functions returning a set of messages remain.
+- Function parameter names have changed: the *v_* prefix is replaced with *p_*. This only affects function calls using named parameters, which is uncommon.
 
-   SELECT emaj.emaj_snap_log_group(<group>, <start.mark>, <end_mark>, <directory>, <copy.options>);
+Upgrading to Version 4.3.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-can be easily changed into::
+Prior to E-Maj 4.3.0, the ``emaj_log_stat_group()``, ``emaj_gen_sql_group()``, and ``emaj_snap_log_group()`` function families accepted ``NULL`` or an empty string as the first mark name of the requested time range, representing the oldest known mark for the table group(s). This feature was ambiguous, especially for multi-group functions, and has been **removed** in 4.3.0.
 
-   SELECT emaj.emaj_dump_changes_group(<group>, <start.mark>, <end.mark>, 'COPY_OPTIONS=(<copy.options>)', NULL, <directory>);
+The ``emaj_snap_log_group()`` function is replaced by:
 
-Note that none of the start and end marks can now be NULL. Furthermore, data format about sequences has changed: while 2 files grouped the initial and final sequences states respectively, there is now one file per sequence with the same elementary information.
+- :ref:`emaj_dump_changes_group() <emaj_dump_changes_group>`
+- :ref:`emaj_gen_sql_dump_changes_group() <emaj_gen_sql_dump_changes_group>`
+
+These new functions offer **enhanced features**. To migrate from ``emaj_snap_log_group()``, update your statement as follows:
+
+**Before (E-Maj < 4.3.0):**
+
+SELECT emaj.emaj_snap_log_group(<group>, <start_mark>, <end_mark>, <directory>, <copy_options>);
+
+**After (E-Maj ≥ 4.3.0):**
+
+SELECT emaj.emaj_dump_changes_group(<group>, <start_mark>, <end_mark>, 'COPY_OPTIONS=(<copy_options>)', NULL, <directory>);
+
+Note that none of the start and end marks can now be NULL. Furthermore, data format about sequences has changed. While 2 files grouped the initial and final sequences states respectively, there is now one file per sequence with the same elementary information.

@@ -1,49 +1,56 @@
-Set-up the E-Maj access policy 
-==============================
+Setting Up the E-Maj Access Policy
+==================================
 
-A bad usage of E-Maj can break the database integrity. So it is advisable to only authorise its use to specific skilled users.
+A misuse of E-Maj can compromise database integrity. Therefore, it is advisable to restrict its use to specific, skilled users.
 
-E-Maj roles
+E-Maj Roles
 -----------
 
-To use E-Maj, it is possible to log on as *superuser*. But for safety reasons, it is preferable to take advantage of both roles created by the installation script:
+To use E-Maj, it is possible to log in as a *SUPERUSER*. However, for safety reasons, it is preferable to use the two roles created by the installation script:
 
-* **emaj_adm** is used as the administration role ; it can execute all functions and access to all E-Maj tables, with reading and writing rights ; *emaj_adm* is the owner of all log objects (schemas, tables, sequences, functions),
-* **emaj_viewer** is used for read only purpose ; it can only execute informative or statistics functions and can only read E-Maj tables.
+* **emaj_adm**: Used as the **E-Maj administration** role.
 
-All rights given to *emaj_viewer* are also given to *emaj_adm*.
+   * It can execute all functions and access all E-Maj tables with read and write privileges.
+   * It owns all log objects (schemas, tables, sequences, functions).
+* **emaj_viewer**: Used for **read-only** purposes. 
 
-When created, these roles have no connection capability (no defined password and *NOLOGIN* option). It is recommended NOT to give them any connection capability. Instead, it is sufficient to give the rights they own to other roles, with *GRANT* SQL verbs.
+   * It can only execute informative or statistical functions and can only read E-Maj tables.
 
-Let’s note that :ref:`both roles may not exist<roles_limits>` if the role who installed the extension had not the *SUPERUSER* privileges.
+All privileges granted to ``emaj_viewer`` are also granted to ``emaj_adm``.
 
-Giving E-Maj rights
--------------------
+When created, these roles have no login capability (no defined password and *NOLOGIN* option). It is recommended **not** to grant them any login capability. Instead, it is sufficient to grant the privileges they own to other roles using *GRANT* SQL commands.
 
-Once logged on as *superuser* in order to have the sufficient rights, execute one of the following commands to give a role all rights associated to one of both *emaj_adm* or *emaj_viewer* roles::
+Note that :ref:`both roles may not exist<roles_limits>` if the role that installed the extension did not have *SUPERUSER* privileges.
 
-   GRANT emaj_adm TO <my.emaj.administrator.role>;
-   GRANT emaj_viewer TO <my.emaj.viewer.role>;
+----
 
-Of course, *emaj_adm* or *emaj_viewer* rights can be given to several roles.
+Granting E-Maj privileges
+-------------------------
 
+Once logged in as a *SUPERUSER* to obtain the necessary privileges, execute one of the following commands to grant a role all privileges associated with either ``emaj_adm`` or ``emaj_viewer``::
 
-Giving rights on application tables and objects
------------------------------------------------
+   GRANT emaj_adm TO <my_emaj_administrator_role>;
+   GRANT emaj_viewer TO <my_emaj_viewer_role>;
 
-It is not necessary to grant any privilege on application tables and sequences to *emaj_adm* and *emaj_viewer*. The functions that need to access these objects are executed with the extension installation role, i.e. a *superuser* role.
+Of course, ``emaj_adm`` or ``emaj_viewer`` privileges can be granted to multiple roles.
 
+----
 
-Synthesis
----------
+Granting privileges on Application Tables and Objects
+-----------------------------------------------------
 
-The following schema represents the recommended rights organisation for an E-Maj administrator.
+It is not necessary to grant any privileges on application tables and sequences to ``emaj_adm`` and ``emaj_viewer``. The functions that need to access these objects are executed with the extension installation role, i.e., a *SUPERUSER* role.
+
+----
+
+Summary
+-------
+
+The following schema represents the **recommended privileges organization** for an E-Maj administrator.
 
 .. image:: images/rights.png
    :align: center
 
-Of course the schema also applies to *emaj_viewer* role.
+Of course, the schema also applies to the ``emaj_viewer`` role.
 
-Except when explicitly noticed, the operations presented later can be indifferently executed by a *superuser* or by a role belonging to the *emaj_adm* group.
-
-
+Unless explicitly stated otherwise, the operations described later can be executed indifferently by a *SUPERUSER* or by a role belonging to the ``emaj_adm`` group.

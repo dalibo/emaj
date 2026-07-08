@@ -1,70 +1,70 @@
-Management of partitioned tables
+Management of Partitioned Tables
 ================================
 
 E-Maj is able to manage partitioned tables.
 
-Partitioning based on heritage
--------------------------------
+Partitioning Based on Inheritance
+---------------------------------
 
-When using the very old partitioning technic based on the heritage mechanism, both mother and child tables contain data. These tables can be assigned to table groups. They are handled by E-Maj as any other table.
+When using the older partitioning technique based on the inheritance mechanism, both parent and child tables contain data. These tables can be assigned to table groups. They are handled by E-Maj like any other table.
 
-Declarative partitioning
--------------------------
+----
 
-PostgreSQL 10 has introduced the declarative partitioning, which DDL handles distinct objects representing partitioned tables that describe data structures, and partitions containing data.
+Declarative Partitioning
+------------------------
 
-Assignment to table groups
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PostgreSQL 10 introduced declarative partitioning, which uses DDL to handle distinct objects representing partitioned tables that describe data structures, and partitions containing data.
 
-E-Maj can process elementary partitions of partitioned tables created with the declarative DDL. They are handled as any other tables.
+Assignment to Table Groups
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-However, as there is no need to protect mother tables, which remain empty, E-Maj refuses to include them in table groups.
+E-Maj can process elementary partitions of partitioned tables created with declarative DDL. They are handled like any other table.
 
-Partitions of a partitioned table can be assigned to different table groups. And some partitions may be left not assigned to any group.
+However, as there is no need to protect parent tables (which remain empty), E-Maj refuses to include them in table groups.
+
+Partitions of a partitioned table can be assigned to different table groups. Some partitions may also be left unassigned to any group.
 
 .. _fk_on_partitioned_tables:
 
-Foreign keys
+Foreign Keys
 ^^^^^^^^^^^^
 
-With the declarative partitioning, a *FOREIGN KEY* can be defined either at elementary partitions level or at the partitioned table level, in order to cover all partitions at once.
+With declarative partitioning, a *FOREIGN KEY* can be defined either at the elementary partition level or at the partitioned table level to cover all partitions at once.
 
-Foreign keys defined at elementary partition level follow the same usage rules as any other foreign key.
+Foreign keys defined at the elementary partition level follow the same usage rules as any other foreign key.
 
-On the contrary, a foreign key set on a partitioned table is NOT supported by E-Maj rollbacks:
+On the other hand, a foreign key set on a partitioned table is **not** supported by E-Maj rollbacks if:
 
-    • if tables/partitions linked by this key do not all belong to the same table groups to process, or
-    • if the key is of type *IMMEDIATE*, or
-    • if the key has *ON DELETE* or *ON UPDATE* clauses.
+    • Tables/partitions linked by this key do not all belong to the same table groups to process.
+    • The key is of type *IMMEDIATE*.
+    • The key has *ON DELETE* or *ON UPDATE* clauses.
 
-Indeed, it is impossible to drop and recreate a foreign key set on a partitioned table for just a partition.
+Indeed, it is impossible to drop and recreate a foreign key set on a partitioned table for just one partition.
 
-As a workaround :
+As a workaround:
 
-    • foreign keys of type *IMMEDIATE* (the default state) can easily be declared as *DEFERRABLE INITIALY IMMEDIATE*,
-    • foreign keys having *ON DELETE* or *ON UPDATE* clauses can be created on each elementary partition.
+    • Foreign keys of type *IMMEDIATE* (the default state) can easily be declared as *DEFERRABLE INITIALLY IMMEDIATE*.
+    • Foreign keys having *ON DELETE* or *ON UPDATE* clauses can be created on each elementary partition.
 
 .. _trigger_on_partitioned_tables:
 
-Application triggers
+Application Triggers
 ^^^^^^^^^^^^^^^^^^^^
 
-In a declarative partitioning context, it is possible to create a trigger on a partitioned table. As a result, each partition of the table inherits the trigger. There is no pratical issue with this on E-Maj rollbacks.
+In a declarative partitioning context, it is possible to create a trigger on a partitioned table. As a result, each partition of the table inherits the trigger. There is no practical issue with this in E-Maj rollbacks.
 
-If one wishes to let the trigger enabled during the rollback, it must be declared as such for each partition.
+If one wishes to leave the trigger enabled during the rollback, it must be declared as such for each partition.
 
-
-Partition attach / detach
+Partition Attach / Detach
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An "*ALTER TABLE ... ATTACH PARTITION ...*" SQL statement transforms an independent table into a partition. Symetrically, an "*ALTER TABLE ... DETACH PARTITION ...*" statement transforms a partition into an independent table.
+An ``ALTER TABLE ... ATTACH PARTITION ...`` SQL statement transforms an independent table into a partition. Symmetrically, an ``ALTER TABLE ... DETACH PARTITION ...`` statement transforms a partition into an independent table.
 
-In both cases, the table/partition can be already assigned to a table group at ALTER TABLE time. An E-Maj rollback targeting a mark set before the structure change will reset the table/partition content to its previous content.
+In both cases, the table/partition can already be assigned to a table group at the time of the ``ALTER TABLE`` execution. An E-Maj rollback targeting a mark set before the structure change will reset the table/partition content to its previous state.
 
-
-Partitions merge / split
+Partitions Merge / Split
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-An "*ALTER TABLE ... MERGE PARTITIONS ...*" SQL statement merges several partitions into a single one. Symetrically, a "*ALTER TABLE ... SPLIT PARTITION ...*" statement splits a partition into several partitions.
+An ``ALTER TABLE ... MERGE PARTITIONS ...`` SQL statement merges several partitions into a single one. Symmetrically, an ``ALTER TABLE ... SPLIT PARTITION ...`` statement splits a partition into several partitions.
 
-In both cases, all partitions concerned by the operation that are assigned to a table group must be removed from their group. As a result, their data content cannot be reset to a mark set before the partitions split or merge.
+In both cases, all partitions involved in the operation that are assigned to a table group must be removed from their group. As a result, their data content cannot be reset to a mark set before the partition split or merge.

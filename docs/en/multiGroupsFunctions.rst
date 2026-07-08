@@ -1,25 +1,27 @@
-Multi-groups functions
+Multi-Groups Functions
 ======================
 
-General information
+General Information
 -------------------
 
-To be able to synchronize current operations like group start or stop, set mark or rollback, usual functions dedicated to these tasks have twin-functions that process several table groups in a single call.
+To synchronize current operations such as group start or stop, mark setting, or rollback, the usual functions dedicated to these tasks have twin functions that process multiple table groups in a single call.
 
 The resulting advantages are:
 
-* to easily process all table group in a single transaction,
-* to lock tables belonging to all groups at the beginning of the operation to minimize the risk of deadlock.
+* The ability to easily process all table groups in a single transaction.
+* Locking tables belonging to all groups at the beginning of the operation to minimize the risk of deadlocks.
+
+----
 
 .. _multi_groups_functions_list:
 
-Functions list
+Functions List
 --------------
 
-The following table lists the multi-groups functions, with their relative mono-group functions, some of them being discussed later.
+The following table lists the multi-group functions along with their corresponding single-group functions. Some of these are discussed later.
 
 +------------------------------------------+---------------------------------------------------------------------------+
-| Multi-groups functions                   | Relative mono-group function                                              |
+| Multi-Group Function                     | Corresponding Single-Group Function                                       |
 +==========================================+===========================================================================+
 | **emaj.emaj_start_groups()**             | :ref:`emaj.emaj_start_group() <emaj_start_group>`                         |
 +------------------------------------------+---------------------------------------------------------------------------+
@@ -29,7 +31,7 @@ The following table lists the multi-groups functions, with their relative mono-g
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_rollback_groups()**          | :ref:`emaj.emaj_rollback_group() <emaj_rollback_group>`                   |
 +------------------------------------------+---------------------------------------------------------------------------+
-| **emaj.emaj_logged_rollback_groups()**   | :ref:`emaj.emaj_logged_rollback_group <emaj_logged_rollback_group>`       |
+| **emaj.emaj_logged_rollback_groups()**   | :ref:`emaj.emaj_logged_rollback_group() <emaj_logged_rollback_group>`     |
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_estimate_rollback_groups()** | :ref:`emaj.emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` |
 +------------------------------------------+---------------------------------------------------------------------------+
@@ -42,60 +44,66 @@ The following table lists the multi-groups functions, with their relative mono-g
 | **emaj.emaj_gen_sql_groups()**           | :ref:`emaj.emaj_gen_sql_group() <emaj_gen_sql_group>`                     |
 +------------------------------------------+---------------------------------------------------------------------------+
 
-The parameters of multi-groups functions are the same as those of their related mono-group function, except the first one. The *TEXT* table group parameter is replaced by a *TEXT ARRAY* parameter representing a table groups list.
+The parameters of multi-group functions are the same as those of their corresponding single-group functions, except for the first parameter. The *TEXT* table group parameter is replaced by a *TEXT ARRAY* parameter representing a list of table groups.
+
+----
 
 .. _multi_groups_syntax:
 
-Syntax for groups array
+Syntax for Groups Array
 -----------------------
 
-The SQL type of the <groups.array> parameter passed to the multi-groups functions is *TEXT[ ]*, i.e. an array of text data.
+The SQL type of the ``<groups_array>`` parameter passed to the multi-group functions is *TEXT[]*, i.e., an array of text data.
 
-According to SQL standard, there are 2 possible syntaxes to specify a groups array, using either braces { }, or the *ARRAY* function. 
+According to the SQL standard, there are two possible syntaxes to specify a groups array: using braces ``{ }`` or the *ARRAY* function.
 
-When using { and }, the full list is written between single quotes, then braces frame the comma separated elements list, each element been placed between double quotes. For instance, in our case, we can write::
+When using braces ``{ }``, the full list is written between single quotes, and braces frame the comma-separated list of elements. Each element is placed between double quotes. For example, in this case, you can write::
 
-  ' { "group 1" , "group 2" , "group 3" } '
+   '{ "group 1", "group 2", "group 3" }'
 
-The SQL function ARRAY builds an array of data. The list of values is placed between brackets [ ], and values are separated by comma. For instance, in our case, we can write::
+The SQL *ARRAY* function builds an array of data. The list of values is placed between brackets ``[ ]``, and values are separated by commas. For example, in this case, you can write::
 
-   ARRAY [ 'group 1' , 'group 2' , 'group 3' ]
+   ARRAY['group 1', 'group 2', 'group 3']
 
-Both syntax are equivalent. 
+Both syntaxes are equivalent.
 
-Other considerations
+----
+
+Other Considerations
 --------------------
 
-A table groups list may contain duplicate values, *NULL* values or empty strings. These *NULL* values or empty strings are simply ignored. If a table group name is listed several times, only one occurrence is kept.
+A table groups list may contain duplicate values, *NULL* values, or empty strings. These *NULL* values or empty strings are simply ignored. If a table group name is listed multiple times, only one occurrence is retained.
 
-The order of the groups in the groups list is not meaningful. During the E-Maj operation, the processing order of tables only depends on the priority level defined for each table, and, for tables having the same priority level, from the alphabetic order of their schema and table names.
+The order of the groups in the groups list is not meaningful. During the E-Maj operation, the processing order of tables depends only on the priority level defined for each table and, for tables with the same priority level, on the alphabetical order of their schema and table names.
 
-Format and usage of these functions are strictly equivalent to those of their twin-functions.
+The format and usage of these functions are strictly equivalent to those of their corresponding single-group functions.
 
-However, an additional condition exists for rollback functions: the supplied mark must correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_group() <emaj_set_mark_group>` function call.
+However, an additional condition exists for rollback functions: the supplied mark must correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_groups() <emaj_set_mark_group>` function call.
+
+----
 
 .. _groups_array_building_functions:
 
-Functions to ease table groups array building
+Functions to Ease Table Groups Array Building
 ----------------------------------------------
 
-Three functions help building table groups arrays and ease :ref:`writing idempotent administration scripts<idempotent_groups_state>`. ::
+Three functions help build table groups arrays and simplify :ref:`writing idempotent administration scripts<idempotent_groups_state>`.
 
-   SELECT emaj.emaj_get_groups('<include.filter>', '<exclude.filter>');
+The *emaj_get_groups()* function returns the array of existing table groups::
 
-returns the array of existing table groups. ::
+   SELECT emaj.emaj_get_groups('<include_filter>', '<exclude_filter>');
 
-   SELECT emaj.emaj_get_logging_groups('<include.filter>', '<exclude.filter>');
+The *emaj_get_logging_groups()* function returns the array of table groups in *LOGGING* state::
 
-returns the array of table groups in *LOGGING* state. ::
+   SELECT emaj.emaj_get_logging_groups('<include_filter>', '<exclude_filter>');
 
-   SELECT emaj.emaj_get_idle_groups('<include.filter>', '<exclude.filter>');
+The *emaj_get_idle_groups()* function returns the array of table groups in *IDLE* state::
 
-returns the array of table groups in *IDLE* state.
+   SELECT emaj.emaj_get_idle_groups('<include_filter>', '<exclude_filter>');
 
-Both parameters are regular expressions that allow to respectively select and exclude table group names. By default, no filtering is performed.
+Both ``<include_filter>`` and ``<exclude_filter>`` parameters are regular expressions that respectively select and exclude table group names. By default, no filtering is performed.
 
 Examples:
 
-* *emaj_get_groups('^APP1')* selects table groups whose name starts with APP1
-* *emaj_get_logging_groups(NULL, 'excluded')* returns all table groups already started, except those having a name with the 'excluded' characters string.
+* ``emaj_get_groups('^APP1')`` selects table groups whose names start with ``APP1``.
+* ``emaj_get_logging_groups(NULL, 'excluded')`` returns all table groups already started, except those with a name containing the string ``'excluded'``.
