@@ -40,7 +40,7 @@ Après restauration des fichiers, les groupes de tables se retrouveront dans l'�
 Sauvegarde et restauration logique de base de données complète
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Pour les sauvegardes et restaurations logiques de base de données avec E-Maj, utilisant *pg_dump*, et *psql* ou *pg_restore*, il est essentiel que la base d’origine et la base restaurée utilisent la **même version d’E-Maj**. Dans le cas contraire, le contenu de certaines tables techniques peut ne pas correspondre à leur structure. La fonction :ref:`emaj_get_version()<emaj_get_version>` permet de connaître la version courante de l’extension *emaj*.
+Pour les sauvegardes et restaurations logiques de base de données avec E-Maj, utilisant *pg_dump*, et *psql* ou *pg_restore*, ou tout autre outil (*PgBackRest*, *Barman*, etc), il est essentiel que la base d’origine et la base restaurée utilisent la **même version d’E-Maj**. Dans le cas contraire, le contenu de certaines tables techniques peut ne pas correspondre à leur structure. La fonction :ref:`emaj_get_version()<emaj_get_version>` permet de connaître la version courante de l’extension *emaj*.
 
 Pour les groupes de tables arrêtés (en état *IDLE*), comme les triggers de logs sont inactifs et que le contenu des tables de log n'a pas d'importance, il n'y a aucune précaution particulière à prendre pour les retrouver dans le même état après une restauration.
 
@@ -116,7 +116,7 @@ Néanmoins, compte tenu de la façon dont PostgreSQL gère les séquences, la va
 Réplication logique intégrée
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-PostgreSQL intègre des mécanismes de réplication logique. La granularité de réplication est ici la table. L’objet de publication utilisé dans la réplication logique est assez proche du concept de groupes de tables E-Maj, à ceci près qu’une publication ne peut contenir de séquences.
+PostgreSQL intègre des mécanismes de réplication logique. La granularité de réplication est ici la table. L’objet de publication utilisé dans la réplication logique est assez proche du concept de groupes de tables E-Maj.
 
 **Réplication de tables applicatives gérées par E-Maj**
 

@@ -97,6 +97,8 @@ To insert a table group creation into an **idempotent script**, it is possible t
 
 .. _assign_table_sequence:
 
+.. _assign_table:
+
 Assigning Tables to a Table Group
 ---------------------------------
 
@@ -196,6 +198,8 @@ These functions **create** the required log tables, log functions, and triggers.
 
 ----
 
+.. _assign_sequence:
+
 Assigning Sequences to a Table Group
 ------------------------------------
 
@@ -242,9 +246,9 @@ To select all sequences of the schema ``my_schema``::
 
    'my_schema', '.*', ''
 
-To select all sequences of this schema whose names start with ``seq``::
+To select all sequences of this schema whose names end with ``seq``::
 
-   'my_schema', '^seq.*', ''
+   'my_schema', 'seq$', ''
 
 To select all sequences of this schema whose names start with ``seq``, except those that end with ``_sav``::
 

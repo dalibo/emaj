@@ -32,17 +32,6 @@ Optimizing E-Maj Operations
 
 Here is some advice to optimize E-Maj operations.
 
-Use Tablespaces
-^^^^^^^^^^^^^^^
-
-Creating tables in tablespaces located on dedicated disks or file systems is a way to more efficiently distribute access to these tables. To minimize the impact of log table access on application table access, the E-Maj administrator has two ways to use tablespaces for log tables and indexes:
-
-By setting a specific default tablespace for the session before creating table groups, log tables and indexes are created by default in this tablespace without any additional action.
-
-Alternatively, through parameters set when calling the :ref:`emaj_assign_table() <assign_table_sequence>`, :ref:`emaj_assign_tables() <assign_table_sequence>`, and :ref:`emaj_modify_table() <modify_table>` functions, it is also possible to specify a tablespace for any log table or log index.
-
-----
-
 Declare Foreign Keys as *DEFERRABLE*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -68,3 +57,14 @@ If the E-Maj rollback operations are executed by a web client, it is also possib
          SET work_mem = <value>;
    ALTER FUNCTION emaj._rlbk_session_exec(INT, INT)
          SET maintenance_work_mem = <value>;
+
+----
+
+Use Tablespaces
+^^^^^^^^^^^^^^^
+
+On servers having inefficient disks subsystem, creating tables in tablespaces located on dedicated disks or file systems is a way to more efficiently distribute access to these tables. To minimize the impact of log table access on application table access, the E-Maj administrator has two ways to use tablespaces for log tables and indexes:
+
+By setting a specific default tablespace for the session before creating table groups, log tables and indexes are created by default in this tablespace without any additional action.
+
+Alternatively, through parameters set when calling the :ref:`emaj_assign_table() <assign_table>`, :ref:`emaj_assign_tables() <assign_table_sequence>`, and :ref:`emaj_modify_table() <modify_table>` functions, it is also possible to specify a tablespace for any log table or log index.

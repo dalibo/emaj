@@ -6,7 +6,7 @@ Traçabilité des opérations
 La table emaj_hist
 ------------------
 
-Toutes les opérations réalisées par E-Maj et qui modifient d'une manière ou d'une autre un groupe de tables sont tracées dans une table nommée *emaj_hist*.
+Toutes les opérations significatives réalisées par E-Maj sont tracées dans la table *emaj_hist*.
 
 Tout utilisateur disposant des droits *emaj_adm* ou *emaj_viewer* peut visualiser le contenu de la table *emaj_hist*.
 
@@ -37,8 +37,6 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | Valeur                           | Signification                                                                         |
 +==================================+=======================================================================================+
-| ADJUST_GROUP_PROPERTIES          | ajustement du contenu de la colonne group_has_waiting_changes de la table emaj_group  |
-+----------------------------------+---------------------------------------------------------------------------------------+
 | ASSIGN_SEQUENCE                  | affectation d’une séquence à un groupe de tables                                      |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | ASSIGN_SEQUENCES                 | affectation de séquences à un groupe de tables                                        |

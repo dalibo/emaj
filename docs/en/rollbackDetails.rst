@@ -98,7 +98,7 @@ During an E-Maj rollback, these constraints are verified by PostgreSQL immediate
 Application Triggers Management
 -------------------------------
 
-Triggers belonging to tables to roll back that are not E-Maj triggers are temporarily disabled during the operation. However, this default behavior can be adjusted when :ref:`assigning a table<assign_table_sequence>` to a table group or :ref:`importing a table group configuration<import_groups_conf>`, by defining a trigger as "not to be disabled at rollback time".
+Triggers belonging to tables to roll back that are not E-Maj triggers are temporarily disabled during the operation. However, this default behavior can be adjusted when :ref:`assigning a table<assign_table>` to a table group or :ref:`importing a table group configuration<import_groups_conf>`, by defining a trigger as "not to be disabled at rollback time".
 
 The technical way to disable or not disable the application triggers depends on the *session_replication_role* parameter value set for each table to roll back.
 

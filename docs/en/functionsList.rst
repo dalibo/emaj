@@ -12,17 +12,17 @@ Tables or sequences level functions
 | **Functions**                                    | **Input parameters**          | **Output data**                       |
 +==================================================+===============================+=======================================+
 | :ref:`emaj_assign_sequence                       | | schema TEXT,                | 1 INT                                 |
-| <assign_table_sequence>`                         | | sequence TEXT,              |                                       |
+| <assign_sequence>`                               | | sequence TEXT,              |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schema TEXT,                | #.sequences INT                       |
-| <assign_table_sequence>`                         | | sequences.array TEXT[],     |                                       |
+| <assign_sequence>`                               | | sequences.array TEXT[],     |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schema TEXT,                | #.sequences INT                       |
-| <assign_table_sequence>`                         | | sequences.to.include.filter |                                       |
+| <assign_sequence>`                               | | sequences.to.include.filter |                                       |
 |                                                  | |   TEXT,                     |                                       |
 |                                                  | | sequences.to.exclude.filter |                                       |
 |                                                  | |   TEXT,                     |                                       |
@@ -30,19 +30,19 @@ Tables or sequences level functions
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_table                          | | schema TEXT,                | 1 INT                                 |
-| <assign_table_sequence>`                         | | table TEXT,                 |                                       |
+| <assign_table>`                                  | | table TEXT,                 |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_tables                         | | schema TEXT,                | #.tables INT                          |
-| <assign_table_sequence>`                         | | tables.array TEXT[],        |                                       |
+| <assign_table>`                                  | | tables.array TEXT[],        |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_tables                         | | schema TEXT,                | #.tables INT                          |
-| <assign_table_sequence>`                         | | tables.to.include.filter    |                                       |
+| <assign_table>`                                  | | tables.to.include.filter    |                                       |
 |                                                  | |   TEXT,                     |                                       |
 |                                                  | | tables.to.exclude.filter    |                                       |
 |                                                  | |   TEXT,                     |                                       |

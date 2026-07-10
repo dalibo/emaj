@@ -187,7 +187,7 @@ or::
 
    SELECT emaj.emaj_modify_tables(p_schema, p_tablesIncludeFilter, p_tablesExcludeFilter, p_changedProperties, p_mark);
 
-Input parameters and returned data are similar to the :ref:`table assignment functions<assign_table_sequence>`.
+Input parameters and returned data are similar to the :ref:`table assignment functions<assign_table>`.
 
 **Notes**
 

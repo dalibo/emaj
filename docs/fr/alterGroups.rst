@@ -174,7 +174,7 @@ ou ::
 	SELECT emaj.emaj_modify_tables('<schéma>', '<filtre.de.tables.à.inclure>',
                '<filtre.de.tables.à.exclure>','<propriétés.modifiées>' [,'<marque>']]);
 
-Le paramètre <propriétés.modifiées> est de type JSONB. Ses champs élémentaires sont les mêmes que pour le paramètre <propriétés> des :ref:`fonctions d'assignation de tables<assign_table_sequence>`. Mais ce paramètre <propriétés.modifiées> ne contient que les propriétés ... à modifier. Les propriétés non valorisées restent inchangées. On peut affecter la valeur par défaut d’une propriété en la valorisant avec un *NULL* (le null *JSON*).
+Le paramètre <propriétés.modifiées> est de type JSONB. Ses champs élémentaires sont les mêmes que pour le paramètre <propriétés> des :ref:`fonctions d'assignation de tables<assign_table>`. Mais ce paramètre <propriétés.modifiées> ne contient que les propriétés ... à modifier. Les propriétés non valorisées restent inchangées. On peut affecter la valeur par défaut d’une propriété en la valorisant avec un *NULL* (le null *JSON*).
 
 Les fonctions retournent le nombre de tables ayant subi au moins une modification de propriété.
 

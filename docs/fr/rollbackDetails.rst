@@ -91,7 +91,7 @@ Lors d’un rollback E-Maj, ces contraintes sont vérifiées par PostgreSQL, imm
 Gestion des triggers applicatifs
 --------------------------------
 
-Si des tables du groupe à traiter possèdent des triggers (déclencheurs), autres que ceux générés par E-Maj, ceux-ci sont temporairement désactivés pendant l’opération de rollback E-Maj. Mais ce comportement par défaut peut être modifié. Lors de l’:ref:`assignation d’une table<assign_table_sequence>` à un groupe de tables, ou bien en :ref:`important une configuration de groupe de tables<import_groups_conf>`, on peut enregistrer des triggers comme « ne devant pas être automatiquement désactivés lors du rollback ».
+Si des tables du groupe à traiter possèdent des triggers (déclencheurs), autres que ceux générés par E-Maj, ceux-ci sont temporairement désactivés pendant l’opération de rollback E-Maj. Mais ce comportement par défaut peut être modifié. Lors de l’:ref:`assignation d’une table<assign_table>` à un groupe de tables, ou bien en :ref:`important une configuration de groupe de tables<import_groups_conf>`, on peut enregistrer des triggers comme « ne devant pas être automatiquement désactivés lors du rollback ».
 
 Les moyens internes mis en œuvre pour désactiver ou non les triggers applicatifs varient selon la valeur du paramètre de session *session_replication_role* positionnée lors du traitement de chaque table concernée.
 

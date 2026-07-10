@@ -8,7 +8,7 @@ This page describes the tracing mechanisms of E-Maj operations.
 The emaj_hist Table
 -------------------
 
-All operations performed by E-Maj that impact a table group in any way are traced in a table named *emaj_hist*.
+All significant operations performed by E-Maj are traced in the *emaj_hist* table.
 
 Any user with ``emaj_adm`` or ``emaj_viewer`` rights can view the *emaj_hist* content.
 

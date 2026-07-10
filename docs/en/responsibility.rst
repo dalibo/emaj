@@ -26,7 +26,7 @@ Triggers may have been created on application tables. It is not uncommon for the
 In such cases, it is the E-Maj administrator's responsibility to **understand the impact** of E-Maj rollback operations on tables affected by triggers and, if needed, to take appropriate measures.
 
 By default, E-Maj rollback functions neutralize application triggers during the operation.
-However, the E-Maj administrator can change this behavior using the ``ignored_triggers`` and ``ignored_triggers_profiles`` properties of the :ref:`emaj_assign_table() <assign_table_sequence>`, :ref:`emaj_assign_tables() <assign_table_sequence>`, :ref:`emaj_modify_table() <modify_table>`, and :ref:`emaj_modify_tables() <modify_table>` functions.
+However, the E-Maj administrator can change this behavior using the ``ignored_triggers`` and ``ignored_triggers_profiles`` properties of the :ref:`emaj_assign_table() <assign_table>`, :ref:`emaj_assign_tables() <assign_table_sequence>`, :ref:`emaj_modify_table() <modify_table>`, and :ref:`emaj_modify_tables() <modify_table>` functions.
 
 If the trigger simply adjusts the content of the row to be inserted or updated, the logged data contain the final column values. In case of rollback, the log table contains the correct column content to apply. Thus, the trigger must be disabled at rollback time (the default behavior) so that it does not interfere with the processing.
 

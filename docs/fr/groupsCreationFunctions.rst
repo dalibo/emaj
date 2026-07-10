@@ -82,17 +82,19 @@ Pour insérer la création d’un groupe de tables dans un script idempotent, il
 
 .. _assign_table_sequence:
 
-Assigner des tables et séquences à un groupe de tables
-------------------------------------------------------
+.. _assign_table:
 
-Six fonctions permettent d’ajouter des tables ou des séquences dans un groupe de tables.
+Assigner des tables à un groupe de tables
+-----------------------------------------
 
-Pour **ajouter une ou plusieurs tables** dans un groupe de tables ::
+Trois fonctions permettent d’ajouter des tables à un groupe de tables.
+
+Pour **ajouter une seule table** à un groupe de tables ::
 
 	SELECT emaj.emaj_assign_table(‘<schéma>’, ’<table>’, '<nom.du.groupe>'
                [,’<propriétés>’ [,’<marque>’]]);
 
-ou ::
+Pour **ajouter plusieurs tables** d'un même schéma à un groupe de tables ::
 
 	SELECT emaj.emaj_assign_tables(‘<schéma>’, ’<tableau.de.tables>’, '<nom.du.groupe>'
                [,’<propriétés>’ [,’<marque>’]] );
@@ -102,21 +104,7 @@ ou ::
 	SELECT emaj.emaj_assign_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>',
                '<filtre.de.tables.à.exclure>', '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]] );
 
-Pour **ajouter une ou plusieurs séquences** dans un groupe de tables ::
-
-	SELECT emaj.emaj_assign_sequence('<schéma>', '<séquence>', '<nom.du.groupe>' [,'<marque>']);
-
-ou ::
-
-	SELECT emaj.emaj_assign_sequences('<schéma>', '<tableau.de.séquences>', '<nom.du.groupe>'
-               [,'<marque>'] );
-
-ou ::
-
-	SELECT emaj.emaj_assign_sequences('<schéma>', '<filtre.de.séquences.à.inclure>',
-               '<filtre.de.séquences.à.exclure>', '<nom.du.groupe>' [,’<marque>’] );
-
-Pour les fonctions traitant plusieurs tables ou séquences en une seule opération, la liste des tables ou séquences à traiter est :
+Pour les fonctions traitant plusieurs tables en une seule opération, la liste des tables à traiter est :
 
 * soit fournie par un paramètre de type tableau de TEXT,
 * soit construite à partir de deux expressions rationnelles fournies en paramètres.
@@ -125,9 +113,9 @@ Un tableau de *TEXT* est typiquement exprimé avec une syntaxe du type ::
 
 	ARRAY['élément1', 'élément2', ...]
 
-Les deux expressions rationnelles suivent la syntaxe *POSIX* (se référer à la documentation PostgreSQL pour plus de détails). La première définit un filtre de sélection des tables ou séquences dans le schéma, La seconde définit un filtre d’exclusion appliqué sur les tables ou séquences sélectionnées. Un filtre d'inclusion valorisé à *NULL* ou à une chaîne vide ne sélectionne aucun élément. Un filtre d'exclusion valorisé à *NULL* ou à une chaîne vide n'exclut aucun élément. Quelques exemples de filtres.
+Les deux expressions rationnelles suivent la syntaxe *POSIX* (se référer à la documentation PostgreSQL pour plus de détails). La première définit un filtre de sélection des tables dans le schéma, La seconde définit un filtre d’exclusion appliqué sur les tables sélectionnées. Un filtre d'inclusion valorisé à *NULL* ou à une chaîne vide ne sélectionne aucun élément. Un filtre d'exclusion valorisé à *NULL* ou à une chaîne vide n'exclut aucun élément. Quelques exemples de filtres.
 
-Pour sélectionner toutes les tables ou séquences du schéma *mon_schema*::
+Pour sélectionner toutes les tables du schéma *mon_schema*::
 
 	'mon_schema', '.*', ''
 
@@ -139,7 +127,7 @@ Pour sélectionner toutes les tables de ce schéma, et dont le nom commence par 
 
 	'mon_schema', '^tbl.*', '_sav$'
 
-Les fonctions d’assignation à un groupe de tables construisant leur sélection à partir des deux expressions rationnelles tiennent compte du contexte des tables ou séquences concernées. Ne sont pas sélectionnées par exemple : les tables ou séquences déjà affectées à un groupe, les tables sans clé primaire pour un groupe de tables *rollbackable* ou celles déclarées *UNLOGGED*.
+Les fonctions d’assignation à un groupe de tables construisant leur sélection à partir des deux expressions rationnelles tiennent compte du contexte des tables concernées. Ne sont pas sélectionnées : les tables ou séquences déjà affectées à un groupe, les tables sans clé primaire pour un groupe de tables *rollbackable* ou celles déclarées *UNLOGGED*.
 
 Le paramètre *<propriétés>* des fonctions d’ajout de tables à un groupe de tables est optionnel. Il permet de préciser les propriétés spécifiques pour la ou les tables. De type JSONB. on peut le valoriser ainsi ::
 
@@ -171,11 +159,63 @@ Les deux propriétés "ignored_triggers" et "ignored_triggers_profiles" peuvent 
 
 Davantage d'information sur la :ref:`gestion des triggers applicatifs<application_triggers>`.
 
+Si le groupe de table est actif, une marque est posée automatiquement. Si le paramètre *<marque>* est fourni avec une valeur non *NULL* et non vide, ce nom de marque est utilisé. Par défaut le nom de la marque est *'ASSIGN_%'*, où % représente l’heure courante au format *'hh.mm.ss.mmmm'*.
+
 Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou des groupes de tables concernés, afin de garantir la stabilité des groupes durant ces opérations.
 
-Toutes ces fonctions retournent le nombre de tables ou séquences ajoutées au groupe de tables.
+Toutes ces fonctions retournent le nombre de tables ajoutées au groupe de tables.
 
 Les fonctions d’assignation de tables dans un groupe de tables créent les tables de log, les fonctions et triggers de log, ainsi que les triggers traitant les exécutions de requêtes SQL *TRUNCATE*. Elles créent également les éventuels schémas de log nécessaires.
+
+.. _assign_sequence:
+
+Assigner des séquences à un groupe de tables
+--------------------------------------------
+
+Trois fonctions permettent d’ajouter des séquences à un groupe de tables.
+
+Pour **ajouter une seule séquence** dans un groupe de tables ::
+
+	SELECT emaj.emaj_assign_sequence('<schéma>', '<séquence>', '<nom.du.groupe>' [,'<marque>']);
+
+Pour **ajouter plusieurs séquences** d’un schéma à un groupe de tables : ::
+
+	SELECT emaj.emaj_assign_sequences('<schéma>', '<tableau.de.séquences>', '<nom.du.groupe>'
+               [,'<marque>'] );
+
+ou ::
+
+	SELECT emaj.emaj_assign_sequences('<schéma>', '<filtre.de.séquences.à.inclure>',
+               '<filtre.de.séquences.à.exclure>', '<nom.du.groupe>' [,’<marque>’] );
+
+Pour les fonctions traitant plusieurs séquences en une seule opération, la liste des séquences à traiter est :
+
+* soit fournie par un paramètre de type tableau de TEXT,
+* soit construite à partir de deux expressions rationnelles fournies en paramètres.
+
+Un tableau de *TEXT* est typiquement exprimé avec une syntaxe du type ::
+
+	ARRAY['élément1', 'élément2', ...]
+
+Les deux expressions rationnelles suivent la syntaxe *POSIX* (se référer à la documentation PostgreSQL pour plus de détails). La première définit un filtre de sélection des séquences dans le schéma, La seconde définit un filtre d’exclusion appliqué sur les séquences sélectionnées. Un filtre d'inclusion valorisé à *NULL* ou à une chaîne vide ne sélectionne aucun élément. Un filtre d'exclusion valorisé à *NULL* ou à une chaîne vide n'exclut aucun élément. Quelques exemples de filtres.
+
+Pour sélectionner toutes les séquences du schéma *mon_schema*::
+
+	'mon_schema', '.*', ''
+
+Pour sélectionner toutes les séquences de ce schéma, et dont le nom se termine par *'seq'*::
+
+	'mon_schema', 'seq$', ''
+
+Pour sélectionner toutes les séquences de ce schéma, et dont le nom commence par *'seq'*, à l’exception de celles dont le nom se termine par *'_sav'*::
+
+	'mon_schema', '^seq.*', '_sav$'
+
+Les fonctions d’assignation à un groupe de tables construisant leur sélection à partir des deux expressions rationnelles tiennent compte du contexte des séquences concernées. Les séquences déjà affectées à un groupe ne sont pas sélectionnées.
+
+Si le groupe de table est actif, une marque est posée automatiquement. Si le paramètre *<marque>* est fourni avec une valeur non *NULL* et non vide, ce nom de marque est utilisé. Par défaut le nom de la marque est *'ASSIGN_%'*, où % représente l’heure courante au format *'hh.mm.ss.mmmm'*.
+
+Toutes ces fonctions retournent le nombre de séquences ajoutées au groupe de tables.
 
 .. _emaj_drop_group:
 

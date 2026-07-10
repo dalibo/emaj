@@ -29,15 +29,6 @@ Optimiser le fonctionnement d'E-Maj
 
 Voici quelques conseils pour optimiser les performances d'E-Maj.
 
-Utiliser des tablespaces
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Positionner des tables sur des tablespaces permet de mieux maîtriser leur implantation sur les disques et ainsi de mieux répartir la charge d'accès à ces tables, pour peu que ces tablespaces soient physiquement implantés sur des disques ou systèmes de fichiers dédiés. Pour minimiser les perturbations que les accès aux tables de log peuvent causer aux accès aux tables applicatives, l'administrateur E-Maj dispose de deux moyens d'utiliser des tablespaces pour stocker les tables et index de log.
-
-En positionnant un tablespace par défaut pour sa session courante avant la création des groupes de tables, les tables de log seront créées par défaut dans ce tablespace, sans autre paramétrage.
-
-Mais, au travers de paramètres passées aux fonctions :ref:`emaj_assign_table(), emaj_assign_tables()<assign_table_sequence>` et :ref:`emaj_modify_table()<modify_table>`, il est également possible de spécifier, pour chaque table et index de log, un tablespace à utiliser.
-
 Déclarer les clés étrangères DEFERRABLE
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -57,7 +48,16 @@ Si les fonctions de rollback E-Maj sont directement appelées en SQL, ces param�
 
 Si les opérations de rollback E-Maj sont exécutées depuis un client web, il est également possible de valoriser ces paramètres au niveau des fonctions, en tant que *superuser* ::
 
-   ALTER FUNCTION emaj._rlbk_tbl(emaj.emaj_relation, BIGINT, BIGINT, INT, BOOLEAN)
+   ALTER FUNCTION emaj._rlbk_tbl(emaj.emaj_relation, BIGINT, BIGINT, INT, BOOLEAN, BOOLEAN)
          SET work_mem = <valeur>;
    ALTER FUNCTION emaj._rlbk_session_exec(INT, INT)
          SET maintenance_work_mem = <valeur>;
+
+Utiliser des tablespaces
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Sur des serveurs sur lequel le sous-système disque est peu performant, positionner des tables sur des tablespaces permet de mieux maîtriser leur implantation sur les disques et ainsi de mieux répartir la charge d'accès à ces tables, pour peu que ces tablespaces soient physiquement implantés sur des disques ou systèmes de fichiers dédiés. Pour minimiser les perturbations que les accès aux tables de log peuvent causer aux accès aux tables applicatives, l'administrateur E-Maj dispose de deux moyens d'utiliser des tablespaces pour stocker les tables et index de log.
+
+En positionnant un tablespace par défaut pour sa session courante avant la création des groupes de tables, les tables de log seront créées par défaut dans ce tablespace, sans autre paramétrage.
+
+Mais, au travers de paramètres passées aux fonctions :ref:`emaj_assign_table(), emaj_assign_tables()<assign_table>` et :ref:`emaj_modify_table()<modify_table>`, il est également possible de spécifier, pour chaque table et index de log, un tablespace à utiliser.

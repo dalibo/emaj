@@ -40,7 +40,7 @@ After a file-level restore, table groups are in the exact same state as at the s
 Logical Saves and Restores of Entire Database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To properly save and restore a database with E-Maj using *pg_dump* and *psql* or *pg_restore*, it is essential that both the source and restored databases use the **same E-Maj version**. If this is not the case, the content of some technical tables may not be synchronized with their structure. The :ref:`emaj_get_version()<emaj_get_version>` function allows checking the current version of the *emaj* extension.
+To properly save and restore a database with E-Maj using *pg_dump* and *psql* or *pg_restore*, or any other tool (*PgBackRest*, *Barman*, etc), it is essential that both the source and restored databases use the **same E-Maj version**. If this is not the case, the content of some technical tables may not be synchronized with their structure. The :ref:`emaj_get_version()<emaj_get_version>` function allows checking the current version of the *emaj* extension.
 
 Regarding stopped table groups (in *IDLE* state), as log triggers are disabled and the content of related log tables is meaningless, no action is required to restore them to the same state as at save time.
 
@@ -120,7 +120,7 @@ However, due to the way PostgreSQL manages sequences, the current values of sequ
 Integrated Logical Replication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-PostgreSQL includes logical replication mechanisms. The replication granularity is at the table level. The *publication* object used with logical replication is quite close to the E-Maj table group concept, except that a *publication* cannot contain sequences.
+PostgreSQL includes logical replication mechanisms. The replication granularity is at the table level. The *publication* object used with logical replication is quite close to the E-Maj table group concept.
 
 **Replication of Application Tables Managed by E-Maj**
 

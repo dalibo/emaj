@@ -160,7 +160,7 @@ Concretely:
 
 Additionally:
 
-- The ``emaj_ignore_app_trigger()`` function is **deleted**. Triggers to ignore during E-Maj rollback can now be registered using functions from the :ref:`emaj_assign_table() <assign_table_sequence>` family.
+- The ``emaj_ignore_app_trigger()`` function is **deleted**. Triggers to ignore during E-Maj rollback can now be registered using functions from the :ref:`emaj_assign_table() <assign_table>` family.
 - The format of the ``ignored_triggers`` property in JSON structures (managed by :ref:`emaj_export_groups_configuration() <export_groups_conf>` and :ref:`emaj_import_groups_configuration() <import_groups_conf>`) is **simplified** to a text array.
 - The old E-Maj rollback functions that returned only an integer are **deleted**. Only functions returning a set of messages remain.
 - Function parameter names have changed: the *v_* prefix is replaced with *p_*. This only affects function calls using named parameters, which is uncommon.

@@ -137,7 +137,7 @@ The function returns a set of rows of type *emaj.emaj_detailed_log_stat_type* co
 +--------------------------+-------------+----------------------------------------------------------------------------------------------+
 | stat_role                | TEXT        | Connection role                                                                              |
 +--------------------------+-------------+----------------------------------------------------------------------------------------------+
-| stat_verb                | TEXT        | Type of the SQL verb that performed the change, with values: *INSERT* / *UPDATE* / *DELETE*  |
+| stat_verb                | TEXT        | Type of the SQL verb that performed the change (*INSERT* / *UPDATE* / *DELETE* / *TRUNCATE*) |
 +--------------------------+-------------+----------------------------------------------------------------------------------------------+
 | stat_rows                | BIGINT      | Number of recorded row changes                                                               |
 +--------------------------+-------------+----------------------------------------------------------------------------------------------+

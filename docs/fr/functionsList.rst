@@ -12,17 +12,17 @@ Fonctions de niveau tables et séquences
 | Fonctions                                        | Paramètres en entrée          | Données restituées                    |
 +==================================================+===============================+=======================================+
 | :ref:`emaj_assign_sequence                       | | schéma TEXT,                | 1 INT                                 |
-| <assign_table_sequence>`                         | | séquence TEXT,              |                                       |
+| <assign_sequence>`                               | | séquence TEXT,              |                                       |
 |                                                  | | groupe TEXT,                |                                       |
 |                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schéma TEXT,                | nb.séquences INT                      |
-| <assign_table_sequence>`                         | | tableau.séquences TEXT[],   |                                       |
+| <assign_sequence>`                               | | tableau.séquences TEXT[],   |                                       |
 |                                                  | | groupe TEXT,                |                                       |
 |                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schéma TEXT,                | nb.séquences INT                      |
-| <assign_table_sequence>`                         | | filtre.séquences.à.inclure  |                                       |
+| <assign_sequence>`                               | | filtre.séquences.à.inclure  |                                       |
 |                                                  | |   TEXT,                     |                                       |
 |                                                  | | filtre.séquences.à.exclure  |                                       |
 |                                                  | |   TEXT,                     |                                       |
@@ -30,19 +30,19 @@ Fonctions de niveau tables et séquences
 |                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_table                          | | schéma TEXT,                | 1 INT                                 |
-| <assign_table_sequence>`                         | | table TEXT,                 |                                       |
+| <assign_table>`                                  | | table TEXT,                 |                                       |
 |                                                  | | groupe TEXT,                |                                       |
 |                                                  | | [ propriétés JSONB ]        |                                       |
 |                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_tables                         | | schéma TEXT,                | nb.tables INT                         |
-| <assign_table_sequence>`                         | | tableau.tables TEXT[],      |                                       |
+| <assign_table>`                                  | | tableau.tables TEXT[],      |                                       |
 |                                                  | | groupe TEXT,                |                                       |
 |                                                  | | [ propriétés JSONB ]        |                                       |
 |                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_tables                         | | schéma TEXT,                | nb.tables INT                         |
-| <assign_table_sequence>`                         | | filtre.tables.à.inclure     |                                       |
+| <assign_table>`                                  | | filtre.tables.à.inclure     |                                       |
 |                                                  | |   TEXT,                     |                                       |
 |                                                  | | filtre.tables.à.exclure     |                                       |
 |                                                  | |   TEXT,                     |                                       |

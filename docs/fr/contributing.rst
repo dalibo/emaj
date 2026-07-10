@@ -86,7 +86,7 @@ Un script perl, *tools/check_code.pl* permet d’effectuer quelques contrôles s
 Script d’upgrade de version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-E-Maj s’installe dans une database comme une extension. L’administrateur E-Maj doit pouvoir facilement :ref:`mettre à jour la version de l’extension<extension_upgrade>`. Un script d’upgrade de l’extension est donc fourni pour chaque version, permettant de passer de la version précédente installée à la version suivante. Le script d’upgrade se nomme *emaj- -<version_précédente>- -devel.sql*.
+Quand E-Maj est installé comme une extension, l’administrateur peut facilement :ref:`mettre à jour la version de l’extension<extension_upgrade>`. Un script d’upgrade de l’extension est donc fourni pour chaque version, permettant de passer de la version précédente installée à la version suivante. Le script d’upgrade se nomme *emaj- -<version_précédente>- -devel.sql*.
 
 Quelques règles guident les développements de ce script :
 
@@ -123,10 +123,7 @@ Le script *tools/create_cluster.sh* est une aide à la création des instances d
 Installer les dépendances logicielles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Les tests des clients peut nécessiter l’installation de quelques composants logiciels supplémentaires :
-
-* le logiciel **php** et son interface PostgreSQL,
-* le logiciel **perl** avec les modules *DBI* et *DBD::Pg*.
+Les tests des clients peut nécessiter l’installation du logiciel **perl** avec les modules *DBI* et *DBD::Pg*.
 
 Exécuter les tests de non régression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
