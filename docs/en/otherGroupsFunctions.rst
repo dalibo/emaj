@@ -177,12 +177,12 @@ The E-Maj administrator who wishes to :ref:`write idempotent SQL scripts<idempot
 
    SELECT emaj.emaj_is_group_logging(p_groupName);
 
-   SELECT emaj.emaj_does_exist_mark_group(p_groupName, p_markName);
+   SELECT emaj.emaj_does_exist_mark_group(p_groupName, p_mark);
 
 **Input Parameters**
 
 - ``p_groupName`` (*TEXT*): **Table group** to check.
-- ``p_markName`` (*TEXT*): **Mark** to check.
+- ``p_mark`` (*TEXT*): **Mark** to check.
 
 **Returned data**
 

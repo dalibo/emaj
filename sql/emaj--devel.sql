@@ -8178,11 +8178,11 @@ $_set_mark_groups_exec$
   END;
 $_set_mark_groups_exec$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_mark TEXT)
 RETURNS BOOLEAN LANGUAGE SQL STABLE AS
 $$
 -- This function returns TRUE if a mark already exists for a table group, otherwise FALSE.
-SELECT EXISTS(SELECT 1 FROM emaj.emaj_mark WHERE mark_group = p_groupName AND mark_name = p_markName);
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_mark WHERE mark_group = p_groupName AND mark_name = p_mark);
 $$;
 COMMENT ON FUNCTION emaj.emaj_does_exist_mark_group(TEXT, TEXT) IS
 $$Returns a boolean indicating whether a mark exists for a table group.$$;
@@ -8572,7 +8572,7 @@ $_delete_before_mark_group$
   END;
 $_delete_before_mark_group$;
 
-CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(p_groupName TEXT, p_markName TEXT, p_markTimeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(p_groupName TEXT, p_mark TEXT, p_markTimeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_delete_intermediate_mark_group$
 -- This function effectively deletes an intermediate mark for a group.
@@ -8621,7 +8621,7 @@ $_delete_intermediate_mark_group$
 -- Physically delete the mark from emaj_mark.
     DELETE FROM emaj.emaj_mark
       WHERE mark_group = p_groupName
-        AND mark_name = p_markName;
+        AND mark_name = p_mark;
 -- Adjust the mark_log_rows_before_next column of the previous mark.
 -- Get the name of the mark immediately preceeding the mark to delete.
     SELECT mark_name, mark_time_id INTO v_previousMark, v_previousMarkTimeId
@@ -8662,7 +8662,7 @@ $_delete_intermediate_mark_group$
     UPDATE emaj.emaj_mark
       SET mark_logged_rlbk_target_mark = NULL
       WHERE mark_group = p_groupName
-        AND mark_logged_rlbk_target_mark = p_markName;
+        AND mark_logged_rlbk_target_mark = p_mark;
 --
     RETURN;
   END;
@@ -15553,7 +15553,7 @@ $do$
       GRANT EXECUTE ON FUNCTION emaj.emaj_is_logging_group(p_groupName TEXT) TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj.emaj_get_idle_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
-      GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT) TO emaj_viewer;
+      GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_mark TEXT) TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(p_groupName TEXT, p_mark TEXT, p_isLoggedRlbk BOOLEAN) TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN)
                                 TO emaj_viewer;

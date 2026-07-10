@@ -294,6 +294,8 @@ DROP FUNCTION IF EXISTS emaj.emaj_stop_group(P_GROUPNAME TEXT,P_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_stop_groups(P_GROUPNAMES TEXT[],P_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj._stop_groups(P_GROUPNAMES TEXT[],P_MARK TEXT,P_MULTIGROUP BOOLEAN,P_ISFORCED BOOLEAN);
 DROP FUNCTION IF EXISTS emaj._set_mark_groups(P_GROUPNAMES TEXT[],P_MARK TEXT,P_COMMENT TEXT,P_MULTIGROUP BOOLEAN,P_EVENTTORECORD BOOLEAN,P_LOGGEDRLBKTARGETMARK TEXT,P_TIMEID BIGINT,P_DBLINKSCHEMA TEXT);
+DROP FUNCTION IF EXISTS emaj.emaj_does_exist_mark_group(P_GROUPNAME TEXT,P_MARKNAME TEXT);
+DROP FUNCTION IF EXISTS emaj._delete_intermediate_mark_group(P_GROUPNAME TEXT,P_MARKNAME TEXT,P_MARKTIMEID BIGINT);
 DROP FUNCTION IF EXISTS emaj._rlbk_start_mark(P_RLBKID INT,P_MULTIGROUP BOOLEAN);
 DROP FUNCTION IF EXISTS emaj.emaj_purge_histories(P_RETENTIONDELAY INTERVAL);
 DROP FUNCTION IF EXISTS emaj._purge_histories(P_RETENTIONDELAY INTERVAL);
@@ -6489,11 +6491,11 @@ $_set_mark_groups_exec$
   END;
 $_set_mark_groups_exec$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_markName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_mark TEXT)
 RETURNS BOOLEAN LANGUAGE SQL STABLE AS
 $$
 -- This function returns TRUE if a mark already exists for a table group, otherwise FALSE.
-SELECT EXISTS(SELECT 1 FROM emaj.emaj_mark WHERE mark_group = p_groupName AND mark_name = p_markName);
+SELECT EXISTS(SELECT 1 FROM emaj.emaj_mark WHERE mark_group = p_groupName AND mark_name = p_mark);
 $$;
 COMMENT ON FUNCTION emaj.emaj_does_exist_mark_group(TEXT, TEXT) IS
 $$Returns a boolean indicating whether a mark exists for a table group.$$;
@@ -6655,6 +6657,102 @@ $_delete_before_mark_group$
     RETURN v_nbMark;
   END;
 $_delete_before_mark_group$;
+
+CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(p_groupName TEXT, p_mark TEXT, p_markTimeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_delete_intermediate_mark_group$
+-- This function effectively deletes an intermediate mark for a group.
+-- It is called by the emaj_delete_mark_group() function.
+-- It deletes rows corresponding to the mark to delete from emaj_mark and emaj_sequence.
+-- The statistical mark_log_rows_before_next column's content of the previous mark is also maintained.
+-- Input: group name, mark name, mark id and mark time stamp id of the mark to delete
+  DECLARE
+    v_lsesTimeRange          INT8RANGE;
+    v_previousMark           TEXT;
+    v_nextMark               TEXT;
+    v_previousMarkTimeId     BIGINT;
+    v_nextMarkTimeId         BIGINT;
+  BEGIN
+-- Get the log session time range that contains the mark time id.
+    SELECT lses_time_range
+      INTO STRICT v_lsesTimeRange
+      FROM emaj.emaj_log_session
+      WHERE lses_group = p_groupName
+        AND p_markTimeId <@ lses_time_range;
+-- Delete the sequences related to the mark to delete, if it is not a log session boundary.
+    IF p_markTimeId <> lower(v_lsesTimeRange) AND (upper_inf(v_lsesTimeRange) OR p_markTimeId <> upper(v_lsesTimeRange) - 1) THEN
+-- Delete data related to the application sequences (those attached to the group at the set mark time, but excluding the relation time
+-- range bounds).
+      DELETE FROM emaj.emaj_sequence
+        USING emaj.emaj_relation
+        WHERE sequ_schema = rel_schema
+          AND sequ_name = rel_tblseq
+          AND rel_time_range @> sequ_time_id
+          AND rel_group = p_groupName
+          AND rel_kind = 'S'
+          AND sequ_time_id = p_markTimeId
+          AND lower(rel_time_range) <> sequ_time_id;
+-- Delete data related to the log sequences for tables (those attached to the group at the set mark time, but excluding the relation time
+-- range bounds).
+      DELETE FROM emaj.emaj_table
+        USING emaj.emaj_relation
+        WHERE tbl_schema = rel_schema
+          AND tbl_name = rel_tblseq
+          AND rel_time_range @> tbl_time_id
+          AND rel_group = p_groupName
+          AND rel_kind = 'r'
+          AND tbl_time_id = p_markTimeId
+          AND lower(rel_time_range) <> tbl_time_id;
+    END IF;
+-- Physically delete the mark from emaj_mark.
+    DELETE FROM emaj.emaj_mark
+      WHERE mark_group = p_groupName
+        AND mark_name = p_mark;
+-- Adjust the mark_log_rows_before_next column of the previous mark.
+-- Get the name of the mark immediately preceeding the mark to delete.
+    SELECT mark_name, mark_time_id INTO v_previousMark, v_previousMarkTimeId
+      FROM emaj.emaj_mark
+      WHERE mark_group = p_groupName
+        AND mark_time_id < p_markTimeId
+      ORDER BY mark_time_id DESC
+      LIMIT 1;
+-- Get the name of the first mark succeeding the mark to delete.
+    SELECT mark_name, mark_time_id INTO v_nextMark, v_nextMarkTimeId
+      FROM emaj.emaj_mark
+      WHERE mark_group = p_groupName
+        AND mark_time_id > p_markTimeId
+      ORDER BY mark_time_id
+      LIMIT 1;
+    IF NOT FOUND THEN
+-- No next mark, so update the previous mark with NULL.
+      UPDATE emaj.emaj_mark
+        SET mark_log_rows_before_next = NULL
+        WHERE mark_group = p_groupName
+          AND mark_name = v_previousMark;
+    ELSE
+-- Update the previous mark by computing the sum of _log_stat_tbl() call's result for all relations that belonged
+-- to the group at the time when the mark before the deleted mark had been set.
+      UPDATE emaj.emaj_mark
+        SET mark_log_rows_before_next =
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, v_previousMarkTimeId, v_nextMarkTimeId))
+             FROM emaj.emaj_relation
+             WHERE rel_group = p_groupName
+               AND rel_kind = 'r'
+               AND rel_time_range @> v_previousMarkTimeId
+          )
+        WHERE mark_group = p_groupName
+          AND mark_name = v_previousMark;
+    END IF;
+-- Reset the mark_logged_rlbk_target_mark column to null for other marks of the group that may have the deleted mark
+-- as target mark from a previous logged rollback operation.
+    UPDATE emaj.emaj_mark
+      SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = p_groupName
+        AND mark_logged_rlbk_target_mark = p_mark;
+--
+    RETURN;
+  END;
+$_delete_intermediate_mark_group$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_groups(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN, p_multiGroup BOOLEAN,
                                              p_isAlterGroupAllowed BOOLEAN, p_comment TEXT,
