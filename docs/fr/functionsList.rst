@@ -3,7 +3,7 @@ Liste des fonctions E-Maj
 
 Les fonctions E-Maj disponibles pour les utilisateurs peuvent être regroupées en trois catégories. Elles sont listées ci-dessous par ordre alphabétique.
 
-Toutes ces fonctions sont appelables par les rôles disposant des privilèges *emaj_adm*. Les tableaux précisent celles qui sont également appelables par les rôles *emaj_viewer* (marque *(V)* derrière le nom de la fonction).
+Toutes ces fonctions sont appelables par les rôles disposant des privilèges *emaj_adm*. Les tableaux précisent celles qui sont également appelables par les rôles **emaj_viewer** (marque *(V)* derrière le nom de la fonction).
 
 Fonctions de niveau tables et séquences
 ---------------------------------------
@@ -171,6 +171,8 @@ Fonctions de niveau tables et séquences
 |                                                  | |   TEXT,                     |                                       |
 |                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+
+----
 
 Fonctions de niveau groupe de tables
 ------------------------------------
@@ -377,6 +379,8 @@ Fonctions de niveau groupe de tables
 | :ref:`emaj_unprotect_mark_group                  | | groupe TEXT,                | 0/1 INT                               |
 | <emaj_unprotect_mark_group>`                     | | marque TEXT                 |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+
+----
 
 Fonctions de niveau général
 ---------------------------

@@ -32,12 +32,12 @@ Different levels of change visualization are available through the **consolidati
 
 Without consolidation, every elementary change recorded in the log tables is returned. This provides simple log table extracts for the specified time period.
 
-The consolidation process aims to return only the initial state (at the start mark time) and/or the final state (at the end mark time) of each primary key for which changes have been recorded. For each primary key, a row of type **OLD** (representing the initial state, if it exists) and/or a row of type **NEW** (representing the final state, if it still exists) is returned. Thus, the consolidation process requires that all examined tables have a **PRIMARY KEY**.
+The consolidation process aims to return only the initial state (at the start mark time) and/or the final state (at the end mark time) of each primary key for which changes have been recorded. For each primary key, a row of type '**OLD**' (representing the initial state, if it exists) and/or a row of type '**NEW**' (representing the final state, if it still exists) is returned. Thus, the consolidation process requires that all examined tables have a **PRIMARY KEY**.
 
 Two consolidation levels exist:
 
-* **Partial consolidation** ignores data content.
-* **Full consolidation** excludes changes that produce strictly identical data between both marks.
+- **Partial consolidation** ignores data content.
+- **Full consolidation** excludes changes that produce strictly identical data between both marks.
 
 Below are examples using a table defined as *(col1 INT PRIMARY KEY, col2 TEXT)*.
 
@@ -110,7 +110,7 @@ The ``emaj_dump_changes_group()`` function extracts changes from log tables and 
 - ``p_firstMark`` (*TEXT*): **First mark name**.
 - ``p_lastMark`` (*TEXT*): **Last mark name**. The keyword **EMAJ_LAST_MARK** represents the last set mark.
 - ``p_optionsList`` (*TEXT*): Comma-separated **options list**.
-- ``p_tblseqs`` (*TEXT[]*): Array of **tables or sequences** to filter. *NULL* means all tables and sequences are processed.
+- ``p_tblseqs`` (*TEXT[]*): Array of **tables or sequences** to process. *NULL* means all tables and sequences are processed.
 - ``p_dir`` (*TEXT*): **Output directory**.
 
 **Returned data**
@@ -139,7 +139,7 @@ Default values for **COLS_ORDER**, **EMAJ_COLUMNS**, and **ORDER_BY** depend on 
 * If **CONSOLIDATION = NONE**: *COLS_ORDER = LOG_TABLE*, *EMAJ_COLUMNS = ALL*, *ORDER_BY = TIME*;
 * If **CONSOLIDATION = PARTIAL** or **FULL**: *COLS_ORDER = PK*, *EMAJ_COLUMNS = MIN*, *ORDER_BY = PK*.
 
-The ``p_tblseqs`` parameter **filters the tables and sequences** to process for the requested table group. If set to *NULL*, all tables and sequences in the group are processed. If specified, it must be a non-empty array of text elements, each representing a schema-qualified table or sequence name. Both syntaxes are supported: ::
+The ``p_tblseqs`` parameter **selects the tables and sequences** to process for the requested table group. If set to *NULL*, all tables and sequences in the group are processed. If specified, it must be a non-empty array of text elements, each representing a schema-qualified table or sequence name. Both syntaxes are supported: ::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
@@ -147,11 +147,11 @@ or ::
 
    '{ "sch1.tbl1", "sch1.tbl2" }'
 
-The effects of this selection and the **TABLES_ONLY**/**SEQUENCES_ONLY** options are cumulative. For example, a sequence listed in the array will not be processed if the **TABLES_ONLY** option is set.
+The effects of this *p_tblseqs* parameter and the *TABLES_ONLY*/*SEQUENCES_ONLY* options are cumulative. For example, a sequence listed in the array will not be processed if the *TABLES_ONLY* option is set.
 
-The ``p_dir`` parameter specifies the output directory. It must be an **absolute pathname**, pre-created with appropriate write permissions for the PostgreSQL instance.
+The ``p_dir`` parameter specifies the **output directory**. It must be an **absolute pathname**, pre-created with appropriate write permissions for the PostgreSQL instance.
 
-If the table group structure is stable between the two marks, the function generates **one file per application table and sequence**. The naming convention is: ::
+If the table group structure is stable between the two marks, the function generates **one file per table and sequence**. The naming convention is: ::
 
    <schema_name>_<table_or_sequence_name>.changes
 
@@ -184,7 +184,7 @@ The ``emaj_gen_sql_dump_changes_group()`` function generates SQL statements to e
 - ``p_firstMark`` (*TEXT*): **First mark name**.
 - ``p_lastMark`` (*TEXT*): **Last mark name**. The keyword **EMAJ_LAST_MARK** represents the last set mark.
 - ``p_optionsList`` (*TEXT*): Comma-separated **options list**.
-- ``p_tblseqs`` (*TEXT[]*): Array of **tables or sequences** to filter. *NULL* means all tables and sequences are processed.
+- ``p_tblseqs`` (*TEXT[]*): Array of **tables or sequences** to process. *NULL* means all tables and sequences are processed.
 - ``p_scriptLocation`` (*TEXT*, optional): Output **script location**. If *NULL*, SQL statements are generated into a temporary table.
 
 **Returned data**
@@ -214,7 +214,7 @@ Default values for **COLS_ORDER**, **EMAJ_COLUMNS**, and **ORDER_BY** depend on 
 * If **CONSOLIDATION = NONE**: *COLS_ORDER = LOG_TABLE*, *EMAJ_COLUMNS = ALL*, *ORDER_BY = TIME*;
 * If **CONSOLIDATION = PARTIAL** or **FULL**: *COLS_ORDER = PK*, *EMAJ_COLUMNS = MIN*, *ORDER_BY = PK*.
 
-The ``p_tblseqs`` **filters the tables and sequences** to process for the requested table group. If set to *NULL*, all tables and sequences in the group are processed. If specified, it must be a non-empty array of text elements, each representing a schema-qualified table or sequence name. Both syntaxes are supported: ::
+The ``p_tblseqs`` parameter **selects the tables and sequences** to process for the requested table group. If set to *NULL*, all tables and sequences in the group are processed. If specified, it must be a non-empty array of text elements, each representing a schema-qualified table or sequence name. Both syntaxes are supported: ::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
@@ -222,9 +222,9 @@ or ::
 
    '{ "sch1.tbl1", "sch1.tbl2" }'
 
-The effects of this selection and the **TABLES_ONLY**/**SEQUENCES_ONLY** options are cumulative.
+The effects of this selection and the *TABLES_ONLY*/*SEQUENCES_ONLY* options are cumulative.
 
-The ``p_scriptLocation`` is optional. If omitted or set to *NULL*, generated statements are stored in the *emaj_temp_sql* temporary table for the caller's use. If provided, they are written to the specified file, which must be an **absolute pathname**. The directory must be pre-created with appropriate write permissions for the PostgreSQL instance.
+The ``p_scriptLocation`` parameter is optional. If omitted or set to *NULL*, generated statements are stored in the ``emaj_temp_sql`` **temporary table** for the caller's use. If provided, they are written to the specified **file**, which must be an absolute pathname. The directory must be pre-created with appropriate write permissions for the PostgreSQL instance.
 
 If any schema, table, or column name contains a backslash ("\\"), the *COPY* command used to generate the output script duplicates this character. If a *sed* command is available on the server, *emaj_gen_sql_dump_changes_group()* automatically removes duplicated backslashes. Otherwise, manual adjustments are required.
 
@@ -248,6 +248,7 @@ The table contains:
 * A first statement: a general comment reporting the main SQL generation details (table group, marks, options, etc.) (*sql_stmt_number* = 0);
 * If full consolidation is used, a statement to change the *enable_nestloop* configuration variable (optimizes log table analysis) (*sql_stmt_number* = 1);
 * For each table and sequence:
+
    * A comment related to the table or sequence (*sql_line_number* = 0);
    * The analysis statement, on one or multiple lines depending on the *SQL_FORMAT* option;
 * If full consolidation is used, a final statement to reset *enable_nestloop* to its previous value.
@@ -264,7 +265,7 @@ Or retrieve the SQL statement for a specific table with::
 
    SELECT sql_text FROM emaj_temp_sql
      WHERE sql_line_number >= 1
-       AND sql_schema = '<schema>' AND sql_tblseq = '<table>';
+       AND sql_schema = '<my_schema>' AND sql_tblseq = '<my_table>';
 
 The *emaj_gen_sql_dump_changes_group()* function can be called by any role with *emaj_viewer* privileges, if no output file is directly written.
 
@@ -278,6 +279,6 @@ The table group structure may change during the examined marks range.
 .. image:: images/logging_group_stat.png
    :align: center
 
-A table or sequence may be removed from or added to the group between the start and end marks. In such cases (e.g., tables *t2* and *t3* in the example above), the extraction covers only the actual period during which the table or sequence belonged to the group. For this reason, the **_INFO** file and the *emaj_temp_sql* table include details about the actual marks range used for each table or sequence.
+A table or sequence may be removed from or added to the group between the start and end marks. In such cases (e.g., tables *t2* and *t3* in the example above), the extraction covers only the actual period during which the table or sequence belonged to the group. For this reason, the **_INFO** file or the *emaj_temp_sql* table include details about the actual marks range used for each table or sequence.
 
 A table or sequence may even be removed and later reassigned to the group. In such cases (e.g., table *t4* above), multiple extractions occur. The *emaj_dump_changes_group()* function generates multiple statements in the *emaj_temp_sql* table, and the *emaj_gen_sql_dump_changes_group()* function writes multiple files for the same table or sequence. The output file name suffixes become *_1.changes*, *_2.changes*, etc.

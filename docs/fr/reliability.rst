@@ -17,17 +17,19 @@ Ces **contrôles d'intégrité du groupe de tables** vérifient que :
 * chacune des tables d'un groupe a toujours sa table de log associée, sa fonction de log ainsi que ses triggers,
 * la structure des tables de log est toujours en phase avec celle des tables applicatives associées, et comprend toujours les colonnes techniques nécessaires,
 * la liste des colonnes générées de chaque table n’a pas changé,
-* pour les groupes de tables "rollbackables", aucune table n'a été transformée en table *UNLOGGED*,
-* pour les groupes de tables "rollbackables", les tables applicatives ont toujours leur clé primaire et que leur structure n’a pas changé.
+* pour les groupes de tables *ROLLBACKABLE*, aucune table n'a été transformée en table *UNLOGGED*,
+* pour les groupes de tables *ROLLBACKABLE*, les tables applicatives ont toujours leur clé primaire et que leur structure n’a pas changé.
 
 En utilisant la fonction :ref:`emaj_verify_all() <emaj_verify_all>`, l'administrateur peut effectuer à la demande ces mêmes contrôles sur l'ensemble des groupes de tables.
+
+----
 
 .. _event_triggers:
 
 Triggers sur événements
 -----------------------
 
-L'installation d'E-Maj inclut la création de 2 triggers sur événements de type « *sql_drop* » :
+L'installation d'E-Maj inclut la création de deux triggers sur événements de type « *sql_drop* » :
 
 * *emaj_sql_drop_trg* bloque la suppression :
 
@@ -44,6 +46,11 @@ L'installation d'E-Maj inclut aussi la création d'un 3ème trigger sur événem
 
 Il est possible de désactiver/réactiver ces triggers grâce aux deux fonctions : :ref:`emaj_disable_protection_by_event_triggers() <emaj_disable_protection_by_event_triggers>` et :ref:`emaj_enable_protection_by_event_triggers() <emaj_enable_protection_by_event_triggers>`.
 
-Les protections mises en place ne protègent néanmoins pas contre tous les risques. En particulier, le renommage de tables ou de séquences ou leur changement de schéma d'appartenance ne sont pas couverts ; et certaines requêtes changeant la structure d'une table ne déclenchent aucun trigger.
+Les protections mises en place ne protègent néanmoins pas contre tous les risques. En particulier, elles ne couvrent pas :
+
+- le renommage de tables ou de séquences,
+- leur changement de schéma d'appartenance. ne sont pas couverts.
+
+De plus, certaines requêtes changeant la structure d'une table ne déclenchent aucun trigger.
 
 Notons que ces triggers sur événement peuvent ne pas exister quand l’extension *emaj* a été :ref:`installée par un rôle qui ne disposait pas des droits SUPERUSER<event_triggers_limits>`.

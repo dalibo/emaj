@@ -1,8 +1,6 @@
 Traces of Operations
 ====================
 
-This page describes the tracing mechanisms of E-Maj operations.
-
 .. _emaj_hist:
 
 The emaj_hist Table
@@ -10,7 +8,10 @@ The emaj_hist Table
 
 All significant operations performed by E-Maj are traced in the *emaj_hist* table.
 
-Any user with ``emaj_adm`` or ``emaj_viewer`` rights can view the *emaj_hist* content.
+Any user with *emaj_adm* or *emaj_viewer* rights can view the *emaj_hist* content.
+
+Table Structure
+^^^^^^^^^^^^^^^
 
 The **emaj_hist** table structure is as follows:
 
@@ -37,7 +38,7 @@ The **emaj_hist** table structure is as follows:
 The *hist_function* Column
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``hist_function`` column can take the following values:
+The *hist_function* column can take the following values:
 
 +----------------------------------+---------------------------------------------------------------------------+
 | Value                            | Meaning                                                                   |
@@ -164,7 +165,7 @@ The ``hist_function`` column can take the following values:
 The *hist_event* Column
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``hist_event`` column can take the following values:
+The *hist_event* column can take the following values:
 
 +------------------------------+----------------------------------------------------------------+
 | Value                        | Meaning                                                        |
@@ -194,8 +195,6 @@ The ``hist_event`` column can take the following values:
 | LOG_SCHEMA DROPPED           | Secondary schema dropped                                       |
 +------------------------------+----------------------------------------------------------------+
 | MARK DELETED                 | Mark deleted                                                   |
-+------------------------------+----------------------------------------------------------------+
-| NAMES PREFIX CHANGED         | E-Maj names prefix modified                                    |
 +------------------------------+----------------------------------------------------------------+
 | NOTICE                       | Warning message issued by a rollback                           |
 +------------------------------+----------------------------------------------------------------+
@@ -231,10 +230,10 @@ Other History Tables
 
 Several other internal tables store historical data:
 
-* *emaj_version_hist*: Keeps track of extension version changes.
-* *emaj_group_hist*: Records table group creations and drops.
-* *emaj_rel_hist*: Keeps track of tables and sequences assignments to table groups.
-* *emaj_log_session*: Records the periods when table groups are enabled (started).
+* **emaj_version_hist**: Keeps track of extension version changes.
+* **emaj_group_hist**: Records table group creations and drops.
+* **emaj_rel_hist**: Keeps track of tables and sequences assignments to table groups.
+* **emaj_log_session**: Records the periods when table groups are enabled (started).
 * Several other tables handle E-Maj rollback data.
 
 The Emaj_web client is the easiest way to examine the content of these tables.
@@ -254,4 +253,4 @@ By default, the retention delay for events is 1 year. However, this value can be
 
 The obsolete traces purge can also be initiated by explicitly calling the :ref:`emaj_purge_histories() <emaj_purge_histories>` function. The input parameter of the function defines a retention delay that overrides the *history_retention* E-Maj parameter.
 
-To schedule purges periodically, it is possible to set the *history_retention* parameter to a very high value (e.g., '100 YEARS'),and schedule purge operations using any tool (*crontab*, *pgAgent*, *pgTimeTable*, or any other tool).
+To schedule purges periodically, it is possible to set the *history_retention* parameter to a very high value (e.g., '100 YEARS'), and schedule purge operations using any tool (*crontab*, *pgAgent*, *pgTimeTable*, or any other tool).

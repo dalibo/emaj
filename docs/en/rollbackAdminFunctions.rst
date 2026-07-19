@@ -35,17 +35,24 @@ This duration estimate is computed using:
 * Recorded durations of already performed rollbacks for the same tables.
 * Six generic :doc:`parameters<parameters>` that are used as default values when no statistics have been recorded for the tables to process.
 
-The duration estimate **precision** cannot be high. The first reason is that the real cost of rows *INSERT*, *UPDATE*, and *DELETE* is not the same, and the proportion of each SQL type vary. The second reason is that the server load at rollback time can be very different from one run to another. However, if there is a time constraint, the order of magnitude delivered by the function can be helpful in determining whether the rollback operation can be performed in the available time interval.
+The duration estimate **precision** cannot be high. Among the reasons:
 
-If no statistics on previous rollbacks are available and the result quality is poor, it is possible to adjust the generic :doc:`parameters<parameters>`. It is also possible to manually change the *emaj.emaj_rlbk_stat* table content, which keeps a trace of previous rollback durations. For instance, rows corresponding to rollback operations performed under unusual load conditions can be deleted.
+- The average cost of rows *INSERT*, *UPDATE*, and *DELETE* is not the same and the proportion of each SQL type vary.
+- The server load at rollback time can be very different from one run to another.
+
+However, if there is a time constraint, the order of magnitude delivered by the function can be helpful in determining whether the rollback operation can be performed in the available time interval.
+
+If no statistics on previous rollbacks are available and the result quality is poor, it is possible to adjust the generic :doc:`parameters<parameters>`.
+
+It is also possible to manually change the *emaj.emaj_rlbk_stat* table content, which keeps a trace of previous rollback durations. In particular, rows corresponding to rollback operations performed under unusual load conditions can be deleted.
 
 **Multi-groups operation**
 
-Using the ``emaj_estimate_rollback_groups()`` function, it is possible to estimate the duration of a rollback operation on several groups::
+Using the ``emaj_estimate_rollback_groups()`` function, it is possible to estimate the duration of a rollback operation on **several groups**::
 
    SELECT emaj.emaj_estimate_rollback_groups(p_groupNames, p_mark, p_isLoggedRlbk);
 
-The differences with the *emaj_estimate_rollback_group()* function are:
+The difference with the *emaj_estimate_rollback_group()* function is:
 
 - The first parameter is a *TEXT array* representing all table groups to process. For more information, see :doc:`multi-groups functions <multiGroupsFunctions>`.
 
@@ -56,7 +63,7 @@ The differences with the *emaj_estimate_rollback_group()* function are:
 Monitoring Rollback Operations
 ------------------------------
 
-When the volume of recorded updates to cancel leads to a long rollback, it may be useful to monitor the operation to see how it progresses. A function, named ``emaj_rollback_activity()``, and a client, :doc:`emajRollbackMonitor <rollbackMonitorClient>`, meet this need.
+When the volume of recorded updates to cancel leads to a long rollback, it may be useful to monitor the operation to see how it progresses. The ``emaj_rollback_activity()`` function and the :doc:`emajRollbackMonitor client<rollbackMonitorClient>` meet this need.
 
 .. _emaj_rollback_activity_prerequisites:
 
@@ -69,7 +76,7 @@ If not already present, the *dblink* extension is automatically installed at *em
 
    SELECT emaj.emaj_set_param('dblink_user_password','user=<user> password=<password>');
 
-The declared connection role must have been granted the ``emaj_adm`` privilege (or be a *SUPERUSER*).
+The declared connection role must have been granted the *emaj_adm* privilege (or be a *SUPERUSER*).
 
 If the extension has been installed by a non-*SUPERUSER* role, the role must have been granted the privilege to execute the :ref:`dblink_connect_u(text,text)<rollbacks_limits>` function.
 
@@ -141,7 +148,7 @@ An in-progress **rollback** operation is in one of the following **states**:
 * *LOCKING*: The operation is setting locks.
 * *EXECUTING*: The operation is currently executing one of the planned steps.
 
-If the functions executing rollback operations cannot use *dblink* connections (extension not installed, missing or incorrect connection parameters, etc.), the ``emaj_rollback_activity()`` function does not return any rows.
+If the functions executing rollback operations cannot use *dblink* connections (extension not installed, missing or incorrect connection parameters, etc.), the *emaj_rollback_activity()* function does not return any rows.
 
 The remaining duration estimate is **approximate**. Its precision is similar to the precision of the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.
 
@@ -159,7 +166,7 @@ The ``emaj_comment_rollback()`` function allows to set, modify or delete a comme
 **Input Parameters**
 
 - ``p_rlbkId`` (*INTEGER*): E-Maj **rollback identifier**.
-- ``p_comment`` (*TEXT*): **Comment** to set, modify or delete.
+- ``p_comment`` (*TEXT*): **Comment** describing the rollback. A *NULL* value deletes any existing comment for the rollback.
 
 **Returned data**
 
@@ -169,14 +176,12 @@ The function does not return any data.
 
 The rollback identifier is available in the execution report delivered at the rollback operation completion. It is also visible in the :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function report.
 
-If the ``p_comment`` parameter is set to *NULL*, the existing comment, if any, is deleted.
-
 The comment can be added, modified, or deleted when the operation is:
 
 - either completed,
 - or even in progress, if it is visible (i.e., if the :ref:`'dblink_user_password'<emaj_param>` E-Maj parameter is set).
 
-:ref:`emaj_rollback_group(), emaj_rollback_groups()<emaj_rollback_group>`, :ref:`emaj_logged_rollback_group() or emaj_logged_rollback_groups()<emaj_logged_rollback_group>` functions also have a *p_comment* parameter that allows immediately setting a comment at E-Maj rollback submission time.
+:ref:`emaj_rollback_group(), emaj_rollback_groups()<emaj_rollback_group>`, :ref:`emaj_logged_rollback_group() and emaj_logged_rollback_groups()<emaj_logged_rollback_group>` functions have a *p_comment* parameter that allows immediately setting a comment at E-Maj rollback submission time.
 
 ----
 
@@ -257,7 +262,7 @@ The function returns a set of rows with the following columns:
 
 Mark temporal references are identifiers of the *emaj_time_stamp* table, which contains the timestamps of the most important events in the life of the table groups.
 
-The *emaj_get_consolidable_rollbacks()* function may be used by ``emaj_adm`` and ``emaj_viewer`` roles.
+The *emaj_get_consolidable_rollbacks()* function may be used by *emaj_adm* and *emaj_viewer* roles.
 
 Using this *emaj_get_consolidable_rollbacks()* function, it is easy to consolidate at once all consolidable rollbacks for all table groups to recover as much disk space as possible::
 

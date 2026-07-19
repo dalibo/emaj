@@ -30,6 +30,8 @@ Il est également possible d’exécuter un script SQL qui enchaine, dans une m�
      ...
    COMMIT;
 
+----
+
 .. _idempotent_groups_content:
 
 Constitution des groupes de tables
@@ -71,7 +73,7 @@ Pour supprimer, une fois arrêtés, les groupes de table obsolètes ::
    	 FROM unnest (emaj.emaj_get_groups () ) AS group_name
      WHERE group_name NOT IN ('monGroupe1', 'monGroupe2', ...);
 
-Pour assigner la table sch1.tbl1 ou la séquence sch1.seq1 au groupe de tables grp1, si elles ne le sont pas encore ::
+Pour assigner la table ``sch1.tbl1`` ou la séquence ``sch1.seq1`` au groupe de tables ``grp1``, si elles ne le sont pas encore ::
 
    SELECT CASE
    	   WHEN emaj_get_assigned_group_table('sch1', 'tbl1') IS NULL
@@ -89,7 +91,7 @@ Pour assigner la table sch1.tbl1 ou la séquence sch1.seq1 au groupe de tables g
    	   ELSE CONTINUE
    	 END;
 
-Par extension, pour assigner toutes les tables du schéma sch1 à un groupe de tables ::
+Par extension, pour assigner toutes les tables du schéma ``sch1`` à un groupe de tables ::
 
    SELECT CASE
    	   WHEN emaj_get_assigned_group_table(nspname, relname) IS NULL
@@ -110,6 +112,8 @@ Si les :ref:`propriétés E-Maj des tables<table_emaj_properties>` d’un groupe
    
    SELECT emaj.emaj_modify_table ('sch1', 'tbl1',
    	   '{ "priority" : 1, "ignored_triggers" : ["trg1"] }'));
+
+----
 
 .. _idempotent_groups_state:
 

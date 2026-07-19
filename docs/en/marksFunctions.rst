@@ -24,7 +24,7 @@ The function does not return any data.
 
 **Notes**
 
-A comment can also be directly set :ref:`when the mark is created<emaj_set_mark_group>`.
+A comment can also be directly recorded :ref:`when the mark is set<emaj_set_mark_group>`.
 
 Comments are particularly useful when :doc:`using Emaj_web<webUsage>`, which systematically displays them in the group marks list. They can also be found in the *mark_comment* column of the *emaj.emaj_mark* table.
 
@@ -72,7 +72,7 @@ An existing mark can be renamed using the following SQL statement::
 
 - ``p_groupName`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*): **Mark name** to rename. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
-- ``p_newName`` (*TEXT*): The **new name** for the mark.
+- ``p_newName`` (*TEXT*): The **new name** for the mark. It may contain a generic ``%`` character, which is replaced by the current time with the pattern ``hh.mm.ss.mmmm``. If the parameter is not specified, or is empty or *NULL*, a name is automatically generated: ``MARK_%``.
 
 **Returned data**
 
@@ -109,8 +109,6 @@ The table group can be either in *LOGGING* or *IDLE* state.
 A mark cannot be deleted if it is the only mark of its table group.
 
 If the deleted mark was the oldest mark of the table group, all log tables rows recorded before that mark are useless and thus deleted.
-
-If a table has been :ref:`detached from a table group in LOGGING state<remove_table_sequence>`, and the deleted mark was the last known mark for this table, the logs for the period between this mark and the preceding one are useless and thus deleted.
 
 ----
 
@@ -160,7 +158,6 @@ The ``emaj_protect_mark_group()`` function sets protection on a mark for a table
 
    SELECT emaj.emaj_protect_mark_group(p_groupName, p_mark);
 
-
 **Input Parameters**
 
 - ``p_groupName`` (*TEXT*): **Table group name**.
@@ -203,5 +200,3 @@ The function returns the integer 1 if the mark was previously protected, or 0 if
 **Notes**
 
 Once a mark protection is removed, it becomes possible to execute any type of rollback to a previous mark.
-
-A mark of an *AUDIT_ONLY* table group cannot be unprotected.

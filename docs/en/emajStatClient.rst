@@ -40,17 +40,17 @@ General Options
 Connection Options
 ^^^^^^^^^^^^^^^^^^
 
-* ``-d``: Database to connect to.
-* ``-h``: Host to connect to.
-* ``-p``: IP port to connect to.
-* ``-U``: Connection role to use.
-* ``-W``: Password associated with the role, if needed.
+* ``-d <database>``: Database to connect to.
+* ``-h <host>``: Host to connect to.
+* ``-p <IP>``: IP port to connect to.
+* ``-U <role>``: Connection role to use.
+* ``-W <password>``: Password associated with the role, if needed.
 
 To replace some or all of these parameters, the usual *PGDATABASE*, *PGPORT*, *PGHOST*, and/or *PGUSER* environment variables can be used.
 
 The supplied connection role must be allowed to :doc:`view E-Maj data<accessPolicy>`.
 
-For security reasons, it is not recommended to use the ``-W`` option to supply a password. Instead, it is advisable to use the ``.pgpass`` file (see PostgreSQL documentation).
+For security reasons, it is not recommended to use the ``-W`` option to supply a password. Instead, it is advisable to use the *.pgpass* file (see PostgreSQL documentation).
 
 ----
 
@@ -68,7 +68,7 @@ displays, every 30 seconds, the cumulative changes of the 5 most active table gr
 Display Description
 -------------------
 
-Example of display::
+Display example::
 
     E-Maj (version 4.5.0) - Monitoring logged changes on database regression (@127.0.0.1:5412)
     ----------------------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ The **second line** displays:
 * The number of table groups in *LOGGING* state, the number of tables and sequences assigned to those table groups.
 * The total number of changes recorded since the previous display and the throughput in changes per second.
 
-Then, a **table groups list** appears, with:
+Then, the **selected table groups** list appears, with:
 
 * The group name.
 * The name and timestamp of the latest mark set on the group.
@@ -102,7 +102,7 @@ Then, a **table groups list** appears, with:
 
 By default, this groups table is ordered by the number of changes since the latest mark in descending order and then by group names in ascending order. Using the ``--sort-since-previous`` option, the table is sorted first by the number of changes since the previous display. If the number of groups is greater than the ``--max-groups`` option, only the most active are displayed.
 
-Then, the lists of **selected tables and sequences** appear, with:
+Then, the **selected tables and sequences** list appear, with:
 
 * The table or sequence name, prefixed with its schema, and potentially truncated to fit the ``--max-relation-name-length`` option.
 * The group name.

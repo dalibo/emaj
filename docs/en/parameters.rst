@@ -13,11 +13,11 @@ Three parameters relate to the extension's **general functionality**:
 +----------------------+------------------------------------------------------------+---------------+
 | Key                  | Meaning                                                    | Default Value |
 +======================+============================================================+===============+
-| history_retention    | Retention period for rows in historical tables (a)         | 1 year        |
+| history_retention    | Retention period for rows in historical tables             | 1 year        |
 +----------------------+------------------------------------------------------------+---------------+
-| dblink_user_password | User and password for E-Maj rollback operations (b)        |               |
+| dblink_user_password | User and password for E-Maj rollback operations            |               |
 +----------------------+------------------------------------------------------------+---------------+
-| alter_log_table      | *ALTER TABLE* directive executed at log table creation (c) |               |
+| alter_log_table      | *ALTER TABLE* directive executed at log table creation     |               |
 +----------------------+------------------------------------------------------------+---------------+
 
 **Notes**
@@ -63,8 +63,8 @@ The ``emaj_set_param()`` function allows E-Maj administrators to modify a parame
 
 **Input Parameters**
 
-- ``p_key`` (*TEXT*): **Parameter key**.
-- ``p_value`` (*TEXT*): **Parameter value**. A *NULL* value resets the parameter to its default value.
+- ``p_key`` (*TEXT*): Parameter **key**.
+- ``p_value`` (*TEXT*): Parameter **value**. A *NULL* value resets the parameter to its default value.
 
 **Returned data**
 
@@ -74,7 +74,7 @@ The function returns the number of updated parameters (0 or 1).
 
 **Keys** are **case-insensitive**.
 
-Parameter values are character strings. For parameters representing time intervals, the string must be a valid *INTERVAL* format (e.g., ``'3 us'`` or ``'3 microseconds'``).
+Parameter values are character strings. For parameters representing time intervals, the string must be a valid *INTERVAL* format (e.g., *'3 us'* or *'3 microseconds'*).
 
 Any parameter change is logged in the :ref:`emaj_hist table <emaj_hist>`.
 
@@ -87,7 +87,7 @@ Viewing Parameters
 
 The ``emaj.emaj_all_param`` view provides administrators with a comprehensive overview of all parameters, including their current and default values.
 
-The structure of the ``emaj_all_param`` view is:
+The structure of the *emaj_all_param* view is:
 
 +----------------+------+-----------------------------------------------------------+
 | Column         | Type | Description                                               |
@@ -103,4 +103,4 @@ The structure of the ``emaj_all_param`` view is:
 | param_rank     | INT  | Parameter display rank                                    |
 +----------------+------+-----------------------------------------------------------+
 
-Users with *emaj_viewer* privileges can only read parameters using the ``emaj.emaj_visible_param`` view, which masks the ``dblink_user_password`` parameter value.
+Users with *emaj_viewer* privileges can only read parameters using the *emaj.emaj_visible_param* view, which masks the *dblink_user_password* parameter value.

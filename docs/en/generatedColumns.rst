@@ -1,7 +1,7 @@
 Management of Generated Columns
 ===============================
 
-As a reminder, PostgreSQL allows creating generated columns using the ``GENERATED ALWAYS AS expression`` clause. With the ``STORED`` attribute, the expression result is physically stored in the table. Without this attribute, the expression result is dynamically computed at query time.
+As a reminder, PostgreSQL allows creating generated columns using the **GENERATED ALWAYS AS expression** clause. With the **STORED** attribute, the expression result is physically stored in the table. Without this attribute, the expression result is dynamically computed at query time.
 
 Generated Columns in Log Tables
 -------------------------------
@@ -15,9 +15,7 @@ As a result, to visualize the impact of row changes on *STORED* generated column
 DDL Changes on Generated Columns
 --------------------------------
 
-It is possible to **change the expression** of a virtual generated column (``ALTER TABLE ... ALTER COLUMN ... SET EXPRESSION ...``) while the table belongs to a table group. However, such an operation is blocked by E-Maj if the column is *STORED*.
-
-To change the generated column expression of a table that belongs to a table group, the table must be removed from its group before the expression change and reassigned afterward. The E-Maj rollback of the table targeting a mark prior to the change then becomes impossible.
+It is possible to **change the expression** of a virtual generated column (``ALTER TABLE ... ALTER COLUMN ... SET EXPRESSION ...``) while the table belongs to a table group. However, such an operation is blocked by E-Maj if the column is *STORED*. To change the generated column expression of a table that belongs to a table group, the table must be removed from its group before the expression change and reassigned afterward. The E-Maj rollback of the table targeting a mark prior to the change then becomes impossible.
 
 PostgreSQL allows **dropping the expression** of a *STORED* generated column (``ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION``). The column then becomes a standard column and keeps its current data content. This column definition can be changed while the table is assigned to a table group. However, in the case of an E-Maj rollback, the new expression will be used to populate the application table, even to revert data changes prior to the expression change.
 

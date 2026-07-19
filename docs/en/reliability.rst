@@ -38,7 +38,7 @@ Installing E-Maj adds two event triggers of type *sql_drop*:
   * Any primary key of a table belonging to a *ROLLBACKABLE* table group.
   * Any schema containing at least one table or sequence belonging to a table group in *LOGGING* state.
 
-* *emaj_protection_trg* blocks drop attempts of the ``emaj`` extension itself and the main ``emaj`` schema.
+* *emaj_protection_trg* blocks drop attempts of the *emaj* extension itself and the main *emaj* schema.
 
 Installing E-Maj also adds an event trigger of type *table_rewrite*:
 

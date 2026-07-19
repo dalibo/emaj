@@ -54,10 +54,10 @@ Four properties are associated with tables assigned to a table group:
 
 The **priority** level is of type *INTEGER*. It is *NULL* by default. It defines a priority order for E-Maj table processing. This can be especially useful at table lock time. Indeed, by locking tables in the same order as typically done by applications, it may reduce the risk of deadlocks. E-Maj functions process tables in ascending priority order, with *NULL* being processed last. For the same priority level, tables are processed in alphabetical order of schema and table names.
 
-To optimize the performance of E-Maj installations with a large number of tables, it may be useful to spread log tables and their indexes across multiple **tablespaces**. Two properties are available to specify:
+To optimize the performance of E-Maj installations with a large number of tables, it may be useful to spread log tables and their indexes across multiple tablespaces. Two properties are available to specify:
 
-* The name of the tablespace to use for the log table of an application table.
-* The name of the tablespace to use for the index of the log table.
+* The name of the **tablespace** to use for the **log table** of an application table.
+* The name of the **tablespace** to use for the **index** of the log table.
 
 By default, these properties have a *NULL* value, meaning that the default tablespace of the current session at table group creation is used.
 
@@ -76,10 +76,10 @@ To create a table group, execute the following SQL statement::
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): The name of the group to create.
+- ``p_groupName`` (*TEXT*): The name of the table **group** to create.
 - ``p_isRollbackable`` (*BOOLEAN*, optional):
 
-   - *TRUE* (default): The group is of type *ROLLBACKABLE*.
+   - *TRUE* (default): The group is of **type** *ROLLBACKABLE*.
    - *FALSE*: The group is of type *AUDIT_ONLY*.
 - ``p_comment`` (*TEXT*, optional): **Comment** describing the group. If it is not provided or if it is set to *NULL*, no comment is registered for the group.
 
@@ -104,11 +104,11 @@ Assigning Tables to a Table Group
 
 Three functions allow assigning tables to a group.
 
-To add a single table to a table group::
+To add a **single table** to a table group::
 
    SELECT emaj.emaj_assign_table(p_schema, p_table, p_group, p_properties, p_mark);
 
-To add several tables of a single schema to a table group at once::
+To add **several tables** of a single schema to a table group at once::
 
    SELECT emaj.emaj_assign_tables(p_schema, p_tables, p_group, p_properties, p_mark);
 
@@ -119,14 +119,14 @@ or::
 
 **Input Parameters**
 
-- ``p_schema`` (*TEXT*): Schema holding the table(s) to assign.
-- ``p_table`` (*TEXT*): Name of the table to assign.
-- ``p_tables`` (*TEXT[]*): Names array of the tables to assign.
-- ``p_tablesIncludeFilter`` (*TEXT*): Regular expression to select tables.
-- ``p_tablesExludeFilter`` (*TEXT*): Regular expression to exclude tables.
-- ``p_group`` (*TEXT*): Target table group name.
-- ``p_properties`` (*JSONB*, optional): Set of table assignment properties (see notes below).
-- ``p_mark`` (*TEXT*, optional): Mark set if the target table group is in *LOGGING* state.
+- ``p_schema`` (*TEXT*): **Schema** holding the table(s) to assign.
+- ``p_table`` (*TEXT*): Name of the **table** to assign.
+- ``p_tables`` (*TEXT[]*): Names array of the **tables** to assign.
+- ``p_tablesIncludeFilter`` (*TEXT*): Regular expression to **select** tables.
+- ``p_tablesExludeFilter`` (*TEXT*): Regular expression to **exclude** tables.
+- ``p_group`` (*TEXT*): Target table **group** name.
+- ``p_properties`` (*JSONB*, optional): Set of table assignment **properties** (see notes below).
+- ``p_mark`` (*TEXT*, optional): **Mark** set if the target table group is in *LOGGING* state. It may contain a generic ``%`` character, which is replaced by the current time with the pattern ``hh.mm.ss.mmmm``. If the parameter is not specified, or is empty or *NULL*, a name is automatically generated: ``ASSIGN_%``.
 
 **Returned data**
 
@@ -178,11 +178,11 @@ where:
 
 If one of these properties is not set, its value is considered *NULL*.
 
-If specific **tablespaces** are referenced for any log table or log index, these tablespaces must exist before the function execution, and the user must have been granted the *CREATE* privilege on them.
+If specific **tablespaces** are referenced for any log table or log index, these tablespaces must exist before the function execution, and the user (or the *emaj_adm* role) must have been granted the *CREATE* privilege on them.
 
 Both the ``ignored_triggers`` and ``ignored_triggers_profiles`` properties define the **triggers** whose state must remain unchanged during E-Maj rollback operations. Both properties are of type array. The ``ignored_triggers`` property can be a simple string if it contains only one trigger.
 
-Triggers listed in the ``ignored_triggers`` property must exist for the table or tables referenced by the function call. The triggers created by E-Maj (``emaj_log_trg`` and ``emj_trunc_trg``) cannot appear in this list.
+Triggers listed in the ``ignored_triggers`` property must exist for the table or tables referenced by the function call. The triggers created by E-Maj (*emaj_log_trg* and *emj_trunc_trg*) cannot appear in this list.
 
 If multiple regular expressions are listed in the ``ignored_triggers_profiles`` property, each acts as a filter selecting triggers.
 
@@ -190,9 +190,9 @@ Both ``ignored_triggers`` and ``ignored_triggers_profiles`` properties can be us
 
 For more details, see :ref:`management of application triggers<application_triggers>`.
 
-If the target table group is currently in *LOGGING* state, a **mark** is automaticaly set. If a not *NULL* and not empty ``p_mark`` parameter is supplied, this mark name is used. Otherwise, a default ``ASSIGN_%`` is used, where ``%`` represents the current time expressed as ``hh.mm.ss.mmmm``.
+If the target table group is currently in *LOGGING* state, a **mark** is automaticaly set.
 
-For all these functions, an exclusive **lock** is set on each table of the concerned table groups to ensure group stability during these operations.
+For all these functions, an **exclusive lock** is set on each table of the concerned table groups to ensure group stability during these operations.
 
 These functions **create** the required log tables, log functions, and triggers. They also create the log schemas, if needed.
 
@@ -220,13 +220,13 @@ or::
 
 **Input Parameters**
 
-- ``p_schema`` (*TEXT*): Schema holding the sequence(s) to assign.
-- ``p_sequence`` (*TEXT*): Name of the sequence to assign.
-- ``p_sequences`` (*TEXT[]*): Names array of the sequences to assign.
-- ``p_sequencesIncludeFilter`` (*TEXT*): Regular expression to select sequences.
-- ``p_sequencesExludeFilter`` (*TEXT*): Regular expression to exclude sequences.
-- ``p_group`` (*TEXT*): Target table group name.
-- ``p_mark`` (*TEXT*, optional): Mark set if the target table group is in *LOGGING* state.
+- ``p_schema`` (*TEXT*): **Schema** holding the sequence(s) to assign.
+- ``p_sequence`` (*TEXT*): Name of the **sequence** to assign.
+- ``p_sequences`` (*TEXT[]*): Names array of the **sequences** to assign.
+- ``p_sequencesIncludeFilter`` (*TEXT*): Regular expression to **select** sequences.
+- ``p_sequencesExludeFilter`` (*TEXT*): Regular expression to **exclude** sequences.
+- ``p_group`` (*TEXT*): Target table **group** name.
+- ``p_mark`` (*TEXT*, optional): **Mark** set if the target table group is in *LOGGING* state. It may contain a generic ``%`` character, which is replaced by the current time with the pattern ``hh.mm.ss.mmmm``. If the parameter is not specified, or is empty or *NULL*, a name is automatically generated: ``ASSIGN_%``.
 
 **Returned data**
 
@@ -256,7 +256,7 @@ To select all sequences of this schema whose names start with ``seq``, except th
 
 The function that assigns sequences to table groups based on regular expressions does not process sequences already assigned to any table group.
 
-If the target table group is currently in *LOGGING* state, a **mark** is automaticaly set. If a not *NULL* and not empty ``p_mark`` parameter is supplied, this mark name is used. Otherwise, a default ``ASSIGN_%`` is used, where ``%`` represents the current time expressed as ``hh.mm.ss.mmmm``.
+If the target table group is currently in *LOGGING* state, a **mark** is automaticaly set.
 
 ----
 
@@ -271,7 +271,7 @@ To drop a table group previously created by the :ref:`emaj_create_group() <emaj_
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): The name of the group to drop.
+- ``p_groupName`` (*TEXT*): The name of the tables **group** to drop.
 
 **Returned data**
 

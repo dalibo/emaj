@@ -9,4 +9,3 @@ Seules deux actions mineures peuvent être influencées par un changement de dat
 
 * la suppression des événements les plus anciens dans la table :ref:`emaj_hist <emaj_hist>` (le délai de rétention est un intervalle de temps)
 * la recherche de la marque immédiatement antérieure à une date et une heure données, telle que restituée par la fonction :ref:`emaj_get_previous_mark_group() <emaj_get_previous_mark_group>`.
-

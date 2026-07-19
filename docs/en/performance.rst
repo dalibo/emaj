@@ -35,16 +35,14 @@ Here is some advice to optimize E-Maj operations.
 Declare Foreign Keys as *DEFERRABLE*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Foreign keys can be explicitly declared as *DEFERRABLE* at creation time. If a foreign key links two tables belonging to different table groups, or if one of them does not belong to any table group, and if the foreign key has no *ON DELETE* or *ON UPDATE* clause, it is recommended to declare it as *DEFERRABLE*. This avoids the need to drop and recreate it during subsequent E-Maj rollbacks. The foreign key checks for updated rows are simply deferred to the end of the rollback function execution, once all log tables are processed. This generally significantly speeds up the rollback operation.
-
-----
+Foreign keys can be explicitly declared as **DEFERRABLE** at creation time. If a foreign key links two tables belonging to different table groups, or if one of them does not belong to any table group, and if the foreign key has no *ON DELETE* or *ON UPDATE* clause, it is recommended to declare it as *DEFERRABLE*. This avoids the need to drop and recreate it during subsequent E-Maj rollbacks. The foreign key checks for updated rows are simply deferred to the end of the rollback function execution, once all log tables are processed. This generally significantly speeds up the rollback operation.
 
 Modify Memory Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Increasing the value of the *work_mem* parameter when performing an E-Maj rollback may improve performance.
+Increasing the value of the **work_mem** parameter when performing an E-Maj rollback may improve performance.
 
-If foreign keys need to be recreated by an E-Maj rollback operation, increasing the value of the *maintenance_work_mem* parameter may also help.
+If foreign keys need to be recreated by an E-Maj rollback operation, increasing the value of the **maintenance_work_mem** parameter may also help.
 
 If the E-Maj rollback functions are called directly in SQL, these parameters can be set at the session level using statements such as::
 
@@ -58,12 +56,10 @@ If the E-Maj rollback operations are executed by a web client, it is also possib
    ALTER FUNCTION emaj._rlbk_session_exec(INT, INT)
          SET maintenance_work_mem = <value>;
 
-----
-
 Use Tablespaces
 ^^^^^^^^^^^^^^^
 
-On servers having inefficient disks subsystem, creating tables in tablespaces located on dedicated disks or file systems is a way to more efficiently distribute access to these tables. To minimize the impact of log table access on application table access, the E-Maj administrator has two ways to use tablespaces for log tables and indexes:
+On servers having inefficient disks subsystem, creating tables in **tablespaces** located on dedicated disks or file systems is a way to more efficiently distribute access to these tables. To minimize the impact of log table access on application table access, the E-Maj administrator has two ways to use tablespaces for log tables and indexes:
 
 By setting a specific default tablespace for the session before creating table groups, log tables and indexes are created by default in this tablespace without any additional action.
 

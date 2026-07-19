@@ -11,6 +11,8 @@ Les avantages qui en résultent sont :
 * de pouvoir facilement traiter tous les groupes de tables dans une seule transaction,
 * d'assurer un verrouillage de toutes les tables à traiter en début d'opération, et ainsi minimiser les risques d'étreintes fatales.
 
+----
+
 .. _multi_groups_functions_list:
 
 Liste des fonctions multi-groupes
@@ -44,16 +46,18 @@ Le tableau suivant liste les fonctions multi-groupes existantes et leur fonction
 
 Les paramètres des fonctions multi-groupes sont les mêmes que ceux de leurs fonctions mono-groupe associées, à l’exception du premier. Le paramètre groupe de tables de type *TEXT* est remplacé par une paramètre de type *tableau de TEXT* représentant la liste des groupes de tables.
 
+----
+
 .. _multi_groups_syntax:
 
 Syntaxes pour exprimer un tableau de groupes
 --------------------------------------------
 
-Le paramètre <tableau de groupes> passé aux fonctions multi-groupes est de type SQL *TEXT[ ]*, c'est à dire un tableau de données de type *TEXT*.
+Le paramètre ``p_groupNames`` passé aux fonctions multi-groupes est de type SQL *TEXT[ ]*, c'est à dire un tableau de données de type *TEXT*.
 
-Conformément au langage SQL, il existe deux syntaxes possibles pour saisir un tableau de groupes, utilisant soit les accolades { }, soit la fonction *ARRAY*.
+Conformément au langage SQL, il existe deux syntaxes possibles pour saisir un tableau de groupes, utilisant soit les accolades ``{ }``, soit la fonction *ARRAY*.
 
-Lorsqu'on utilise les caractères {}, la liste complète est entre simples guillemets, puis les accolades encadrent la liste des éléments séparés par une virgule, chaque élément étant délimité par des doubles guillemets. Par exemple dans notre cas, nous pouvons écrire ::
+Lorsqu'on utilise les caractères ``{ }``, la liste complète est entre simples guillemets, puis les accolades encadrent la liste des éléments séparés par une virgule, chaque élément étant délimité par des doubles guillemets. Par exemple dans notre cas, nous pouvons écrire ::
 
    ' { "groupe 1" , "groupe 2" , "groupe 3" } '
 
@@ -63,39 +67,48 @@ La fonction SQL *ARRAY* permet de construire un tableau de données. La liste de
 
 Ces deux syntaxes sont équivalentes, et le choix de l'une ou de l'autre est à l'appréciation de chacun.
 
+----
+
 Autres considérations
 ---------------------
 
-Les listes de groupes de tables peuvent contenir des doublons, des valeurs *NULL* ou des chaînes vides. Ces valeurs *NULL* et ces chaînes vides sont simplement ignorées. Si un nom de groupe de tables est présent plusieurs fois, une seule occurrence du nom est retenue.
+Les listes de groupes de tables peuvent contenir des **doublons**, des valeurs *NULL* ou des chaînes vides. Ces valeurs *NULL* et ces chaînes vides sont simplement ignorées. Si un nom de groupe de tables est présent plusieurs fois, une seule occurrence du nom est retenue.
 
-L'ordre dans lequel les groupes sont listés n'a pas d'importance. L'ordre de traitement des tables dans les opérations E-Maj dépend du niveau de priorité associé à chaque table, et pour les tables de même priorité de l'ordre alphabétique de nom de schéma et nom de table, tous groupes confondus.
+L'**ordre** dans lequel les groupes sont listés n'a pas d'importance. L'ordre de traitement des tables dans les opérations E-Maj dépend du niveau de priorité associé à chaque table, et pour les tables de même priorité de l'ordre alphabétique de nom de schéma et nom de table, tous groupes confondus.
 
 Le formalisme et l'usage des autres paramètres éventuels des fonctions est strictement le même que pour les fonctions jumelles mono-groupes.
 
 Néanmoins, une condition supplémentaire existe pour les fonctions de rollbacks, La marque indiquée doit strictement correspondre à un même moment dans le temps pour chacun des groupes. En d'autres termes, cette marque doit avoir été posée par l'appel d'une même fonction :ref:`emaj_set_mark_groups() <emaj_set_mark_group>`.
+
+----
 
 .. _groups_array_building_functions:
 
 Fonctions d’aide à la construction de tableau de groupes de tables
 ------------------------------------------------------------------
 
-Trois fonctions facilitent la constitution des tableaux de groupes de tables et aident à :ref:`écrire des scripts idempotents<idempotent_groups_state>`. ::
+Trois fonctions facilitent la constitution des tableaux de groupes de tables et aident à :ref:`écrire des scripts idempotents<idempotent_groups_state>`.
 
-   SELECT emaj.emaj_get_groups('<filtre.inclusion>', '<filtre.exclusion>');
+La fonction ``emaj_get_groups`` retourne un tableau des groupes de tables existants : ::
 
-retourne un tableau des groupes de tables existants. ::
+   SELECT emaj.emaj_get_groups(p_includeFilter, p_excludeFilter);
 
-   SELECT emaj.emaj_get_logging_groups('<filtre.inclusion>', '<filtre.exclusion>');
+La fonction ``emaj_get_logging_groups`` retourne un tableau des groupes de tables démarrés : ::
 
-retourne un tableau des groupes de tables démarrés. ::
+   SELECT emaj.emaj_get_logging_groups(p_includeFilter, p_excludeFilter);
 
-   SELECT emaj.emaj_get_idle_groups('<filtre.inclusion>', '<filtre.exclusion>');
+La fonction ``emaj_get_idle_groups`` retourne un tableau des groupes de tables arrêtés : ::
 
-retourne un tableau des groupes de tables arrêtés.
+   SELECT emaj.emaj_get_idle_groups(p_includeFilter, p_excludeFilter);
 
-Les deux paramètres sont des expressions rationnelles permettant respectivement de sélectionner et d’exclure des groupes de tables sur leur nom. Par défaut, aucun filtrage n’est effectué.
+**Paramètres en entrée**
+
+- ``p_includeFilter`` (*TEXT*, optionnel): Expression rationnelle qui sélectionne les noms de groupes de tables. Si le paramètre est absent ou à *NULL*, aucun filtrage de sélection n’est effectué.
+- ``p_excludeFilter`` (*TEXT*, optionnel): Expression rationnelle qui exclue les noms de groupes de tables. Si le paramètre est absent ou à *NULL*, aucun filtrage d'exclusion n’est effectué.
+
+**Notes**
 
 Exemples :
 
-* *emaj_get_groups('^APP1')* sélectionne les groupes de tables dont le nom commence par APP1
-* *emaj_get_logging_groups(NULL, 'exclu')* retourne tous les groupes de tables démarrés, à l’exception de ceux dont le nom contient la chaîne 'exclu'.
+* ``emaj_get_groups('^APP1')`` sélectionne les groupes de tables dont le nom commence par *'APP1'*
+* ``emaj_get_logging_groups(NULL, 'exclu')`` retourne tous les groupes de tables démarrés, à l’exception de ceux dont le nom contient la chaîne *'exclu'*.

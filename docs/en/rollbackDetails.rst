@@ -73,7 +73,7 @@ On the other hand, if tables are linked to other tables that do not belong to th
 
 In this second case, checking referential integrity is performed:
 
-* Either by deferring the checks to the end of the transaction with a ``SET CONSTRAINTS ... DEFERRED`` statement executed if the key is declared *DEFERRABLE INITIALLY IMMEDIATE*.
+* Either by deferring the checks to the end of the transaction with a *SET CONSTRAINTS ... DEFERRED* statement executed if the key is declared *DEFERRABLE INITIALLY IMMEDIATE*.
 * Or by dropping the foreign key before rolling back the table and recreating it afterward.
 
 The first option is chosen if the foreign key is declared *DEFERRABLE* and does not have an *ON DELETE* or *ON UPDATE* clause.

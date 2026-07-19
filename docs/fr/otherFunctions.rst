@@ -6,18 +6,38 @@ Autres fonctions
 Obtenir la version courante de l’extension emaj
 -----------------------------------------------
 
-La fonction *emaj_get_version()* retourne l’identifiant de la version courante de l’extension *emaj*. ::
+La fonction ``emaj_get_version()`` retourne l’identifiant de la version courante de l’extension *emaj* : ::
 
    SELECT emaj.emaj_get_version();
+
+**Paramètres en entrée**
+
+La fonction n'a pas de paramètre en entrée.
+
+**Données retournées**
+
+La fonction retourne une représentation textuelle de la version courante de l'extension *emaj*.
+
+----
 
 .. _emaj_verify_all:
 
 Vérifier la consistance de l'environnement E-Maj
 ------------------------------------------------
 
-Une fonction permet de vérifier la consistance de l'environnement E-Maj. Cela consiste à  vérifier l'intégrité de chaque schéma d'E-Maj et de chaque groupe de tables créé. Cette fonction s'exécute par la requête SQL suivante ::
+La fonction ``emaj_verify_all()`` vérifie la consistance de l'environnement E-Maj. Elle vérifie l'intégrité de chaque schéma d'E-Maj et de chaque groupe de tables créé. Cette fonction s'exécute par la requête SQL suivante : ::
 
    SELECT * FROM emaj.emaj_verify_all();
+
+**Paramètres en entrée**
+
+La fonction n'a pas de paramètre en entrée.
+
+**Données retournées**
+
+La fonction retourne un ensemble de messages textuels qui décrivent les éventuelles anomalies rencontrées.
+
+**Notes**
 
 Pour chaque schéma E-Maj (*emaj* et les schémas de log), la fonction vérifie :
 
@@ -26,7 +46,7 @@ Pour chaque schéma E-Maj (*emaj* et les schémas de log), la fonction vérifie 
 
 Ensuite, pour chaque groupe de tables créé, la fonction procède aux mêmes contrôles que ceux effectués lors des opérations de démarrage de groupe, de pose de marque et de rollback (:ref:`plus de détails <internal_checks>`).
 
-La fonction retourne un ensemble de lignes qui décrivent les éventuelles anomalies rencontrées. Si aucune anomalie n'est détectée, la fonction retourne une unique ligne contenant le message ::
+Si aucune anomalie n'est détectée, la fonction retourne une unique ligne contenant le message : ::
 
    'No error detected'
 
@@ -42,17 +62,33 @@ La fonction *emaj_verify_all()* peut être exécutée par les rôles membres de 
 
 Si des anomalies sont détectées, par exemple suite à la suppression d'une table applicative référencée dans un groupe, les mesures appropriées doivent être prises. Typiquement, les éventuelles tables de log ou fonctions orphelines doivent être supprimées manuellement.
 
+----
+
 .. _emaj_get_current_log_table:
 
 Identifier la table de log courante associée à une table applicative
 --------------------------------------------------------------------
 
-La fonction *emaj_get_current_log_table()* permet d’obtenir le schéma et le nom de la table de log courante associée à une table applicative. ::
+La fonction ``emaj_get_current_log_table()`` permet d’obtenir le schéma et le nom de la table de log courante associée à une table applicative : ::
 
 	SELECT log_schema, log_table FROM
-		emaj_get_current_log_table(<schéma>, <table>);
+		emaj_get_current_log_table(p_app_schema, p_app_table);
 
-La fonction retourne toujours 1 ligne. Si la table applicative n’appartient pas actuellement à un groupe de tables, les colonnes *log_schema* et *log_table* ont une valeur NULL.
+**Paramètres en entrée**
+
+- ``p_app_schema`` (*TEXT*) : Nom du **schéma** applicatif.
+- ``p_app_table`` (*TEXT*) : Nom de la **table applicative**.
+
+**Données retournées**
+
+La fonction retourne une ligne avec les 2 colonnes :
+
+- ``log_schema`` (*TEXT*) : **Schéma de log**.
+- ``log_table`` (*TEXT*) : **Table de log** qui recueille actuellement les changements de données (la table applicative peut avoir plusieurs tables de log si elle a été retirée puis réassignée à un groupe).
+
+**Notes**
+
+Si la table applicative n'appartient actuellement à aucun groupe, les colonnes *log_schema* et *log_table* prennent la valeur *NULL*.
 
 La fonction *emaj_get_current_log_table()* peut être exécutée par les rôles membres de *emaj_adm* et *emaj_viewer*.
 
@@ -62,6 +98,8 @@ Il est ainsi possible de construire une requête accédant à une table de log. 
 		|| quote_ident(log_schema) || '.' || quote_ident(log_table)
 		FROM emaj.emaj_get_current_log_table('monschema','matable');
 
+----
+
 .. _emaj_purge_histories:
 
 Purger les historiques
@@ -69,11 +107,17 @@ Purger les historiques
 
 E-Maj historise certaines données : traces globales de fonctionnement, détail des rollbacks E-Maj, évolutions de structures de groupes de tables (:ref:`plus de détails...<emaj_hist>`), Les traces les plus anciennes sont automatiquement purgées par l’extension. Mais une fonction permet également de déclencher la purge de manière manuelle ::
 
-   SELECT emaj.emaj_purge_histories(['<délai.rétention>']);
+   SELECT emaj.emaj_purge_histories(p_retentionDelay);
 
-Le paramètre <délai.rétention> est de type *INTERVAL*. S’il est présent, il surcharge le paramètre E-Maj *'history_retention'*.
+**Paramètres en entrée**
+
+- ``p_retentionDelay`` (*INTERVAL*, optionnel) : **Délai de rétention** des historiques. S’il est présent, il surcharge le paramètre E-Maj *history_retention*.
+
+**Données retournées**
 
 La fonction retourne un message de synthèse des suppressions effectuées.
+
+----
 
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:
@@ -83,55 +127,25 @@ Désactiver/réactiver les triggers sur événements
 
 L'installation de l'extension E-Maj créé et active des :ref:`triggers sur événements <event_triggers>` pour la protéger. En principe, ces triggers doivent rester en l'état. Mais si l'administrateur E-Maj a absolument besoin de les désactiver temporairement, il dispose de deux fonctions.
 
-Pour désactiver les triggers sur événement existants ::
+Pour **désactiver** les **triggers sur événement** existants : ::
 
    SELECT emaj.emaj_disable_protection_by_event_triggers();
 
+**Paramètres en entrée**
+
+La fonction n'a pas de paramètre en entrée.
+
+**Données retournées**
+
 La fonction retourne le nombre de triggers désactivés.
 
-Pour réactiver les triggers sur événement existants ::
+Pour **réactiver les triggers** sur événement existants : ::
 
    SELECT emaj.emaj_enable_protection_by_event_triggers();
 
+**Paramètres en entrée**
+
+La fonction n'a pas de paramètre en entrée.
+
+**Données retournées**
 La fonction retourne le nombre de triggers réactivés.
-
-.. _emaj_snap_group:
-
-Vider les tables et séquences d'un groupe de tables
----------------------------------------------------
-
-Il peut s'avérer utile de prendre des images de toutes les tables et séquences appartenant à un groupe, afin de pouvoir en observer le contenu ou les comparer. Une fonction permet d'obtenir le vidage sur fichiers des tables d'un groupe ::
-
-   SELECT emaj.emaj_snap_group('<nom.du.groupe>', '<répertoire.de.stockage>', '<options.COPY>');
-
-Le nom du répertoire fourni doit être un chemin absolu. Ce répertoire doit exister au préalable et avoir les permissions adéquates pour que l'instance PostgreSQL puisse y écrire. 
-
-Le troisième paramètre précise le format souhaité pour les fichiers générés. Il prend la forme d'une chaîne de caractères reprenant la syntaxe précise des options disponibles pour la commande SQL *COPY TO*. Voir la documentation de PostgreSQL pour le détail des options disponibles (https://www.postgresql.org/docs/current/sql-copy.html).
-
-La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
-
-Cette fonction *emaj_snap_group()* génère un fichier par table et par séquence appartenant au groupe de tables cité. Ces fichiers sont stockés dans le répertoire ou dossier correspondant au second paramètre de la fonction. D'éventuels fichiers de même nom se trouveront écrasés.
-
-Le nom des fichiers créés est du type : *<nom.du.schema>_<nom.de.table/séquence>.snap*
-
-Pour faciliter la manipulation des fichiers générés, d’éventuels caractères espaces, "/", "\\", "$", ">", "<", "|", simples ou doubles guillemets et "\*" sont remplacés par des "_". Attention, cette adaptation des noms de fichier peut conduire à des doublons, le dernier fichier généré écrasant alors les précédents.
-
-Les fichiers correspondant aux séquences ne comportent qu'une seule ligne, qui contient les caractéristiques de la séquence.
-
-Les fichiers correspondant aux tables contiennent un enregistrement par ligne de la table, dans le format spécifié en paramètre. Ces enregistrements sont triés dans l'ordre croissant de la clé primaire (ou dans l’ordre de toutes les colonnes, en l’absence de clé primaire). Chaque ligne contient toutes les colonnes de la table, y compris les colonnes générées.
-
-En fin d'opération, un fichier *_INFO* est créé dans ce même répertoire. Il contient un message incluant le nom du groupe de tables et la date et l'heure de l'opération.
-
-Il n'est pas nécessaire que le groupe de tables soit dans un état inactif, c'est-à-dire qu'il ait été arrêté au préalable. 
-
-Comme la fonction peut générer de gros ou très gros fichiers (dépendant bien sûr de la taille des tables), il est de la responsabilité de l'utilisateur de prévoir un espace disque suffisant.
-
-Avec cette fonction, un test simple de fonctionnement d'E-Maj peut enchaîner :
-
-* :ref:`emaj_create_group() <emaj_create_group>`,
-* :ref:`emaj_start_group() <emaj_start_group>`,
-* emaj_snap_group(<répertoire_1>),
-* mises à jour des tables applicatives,
-* :ref:`emaj_rollback_group() <emaj_rollback_group>`,
-* emaj_snap_group(<répertoire_2>),
-* comparaison du contenu des deux répertoires par une commande *diff* par exemple.

@@ -7,23 +7,25 @@ Limites générales
 L'utilisation de l'extension E-Maj présente quelques limitations.
 
 * La **version PostgreSQL** minimum requise est la version 14.
-* Toutes les tables appartenant à un groupe de tables de type "*rollbackable*" doivent avoir une **clé primaire** explicite (*PRIMARY KEY*). Si une table n’a pas de clé primaire explicite mais a un index *UNIQUE* référençant des colonnes *NOT NULL*, alors il est préférable de transformer cet index en clé primaire explicite.
-* Les tables *UNLOGGED* ne peuvent pas appartenir à un groupe de tables de type "*rollbackable*".
+* Toutes les tables appartenant à un groupe de tables de type "*ROLLBACKABLE*" doivent avoir une **clé primaire** explicite (*PRIMARY KEY*). Si une table n’a pas de clé primaire explicite mais a un index *UNIQUE* référençant des colonnes *NOT NULL*, alors il est préférable de transformer cet index en clé primaire explicite.
+* Les tables *UNLOGGED* ne peuvent pas appartenir à un groupe de tables de type "*ROLLBACKABLE*".
 * Les tables temporaires (*TEMPORARY*) ne sont pas gérées par E-Maj
 * Dans certaines configurations, les clés étrangères (*FOREIGN KEYs*) définies au niveau des tables partitionnées ne sont pas supportées par les opérations de rollback E-Maj (:ref:`plus de détails<fk_on_partitioned_tables>`).
 * Si une **opération de DDL** est exécutée sur une table applicative appartenant à un groupe de tables, il n'est pas possible pour E-Maj de remettre la table dans un état antérieur (:doc:`plus de détails<alterGroups>`).
+
+----
 
 .. _non_superuser_install_limits:
 
 Limites des installations réalisées sans droit SUPERUSER
 --------------------------------------------------------
 
-Un rôle qui n’a pas les droits SUPERUSER peut :ref:`installer l’extension emaj avec le script psql <create_emaj_extension_by_script>` emaj-<version>.sql. Mais dans ce cas, il existe un certain nombre de limitations dans l’utilisation et le fonctionnement de l’extension. Ces limitations dépendent des droits réels que détient ce rôle, soit au moment de l’installation, soit lors de l’utilisation.
+Un rôle qui n’a pas les droits SUPERUSER peut :ref:`installer l’extension emaj avec le script psql <create_emaj_extension_by_script>` *emaj-<version>.sql*. Mais dans ce cas, il existe un certain nombre de limitations dans l’utilisation et le fonctionnement de l’extension. Ces limitations dépendent des droits réels que détient ce rôle, soit au moment de l’installation, soit lors de l’utilisation.
 
 Propriétaire des tables et séquences
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-La principale contrainte porte sur le propriétaire des tables et séquences. **Seules des tables et des séquences appartenant au rôle ayant installé emaj peuvent être assignées à un groupe de tables**.
+La principale contrainte porte sur le propriétaire des tables et séquences. **Seules des tables et des séquences appartenant au rôle ayant installé emaj** peuvent être assignées à un groupe de tables.
 
 .. _roles_limits:
 
@@ -34,7 +36,7 @@ Si, lors de l’installation, le rôle *emaj_adm* n’existe pas, ou si le rôle
 
 Si, lors de l’installation, le rôle *emaj_viewer* n’existe pas, et si le rôle de l’installateur ne dispose pas du droit *CREATEROLE*, *emaj_viewer* n’est pas créé et E-Maj fonctionnera sans ce rôle de consultation.
 
-Avant l’installation d’*emaj*, un rôle disposant des droits nécessaires peut exécuter les requêtes ::
+Avant d'installer *emaj*, un rôle disposant des droits nécessaires peut exécuter les requêtes ::
 
    CREATE ROLE emaj_adm;
    GRANT emaj_adm TO <rôle.installateur> WITH ADMIN TRUE;
@@ -51,7 +53,6 @@ Triggers sur événements
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Des :ref:`triggers sur événements<event_triggers>` protègent l’environnement E-Maj. Si le rôle qui installe l’extension ne dispose pas des droits nécessaires, ces triggers sur événements ne sont pas créés, diminuant le niveau de protection de l’environnement.
-
 
 Importation et exportation de fichiers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

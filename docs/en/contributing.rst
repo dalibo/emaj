@@ -1,7 +1,7 @@
 Contributing to E-Maj Development
 =================================
 
-Contributions to the development and improvement of the **E-Maj** extension are welcome. This page provides guidelines to make the contribution process easier.
+**Contributions** to the development and improvement of the E-Maj extension are **welcome**. This page provides guidelines to make the contribution process easier.
 
 Building the E-Maj Environment
 -------------------------------
@@ -13,14 +13,14 @@ Clone the E-Maj Repository
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The first step is to clone the repository locally on your computer.
-You can do this either via the **GitHub** web interface or by running the following command in your terminal::
+You can do this either via the *GitHub* web interface or by running the following command in your terminal::
 
    git clone https://github.com/dalibo/emaj.git
 
 E-Maj Directory Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once cloned, you will have access to the full directory tree (excluding web clients). It contains all the directories and files described in the :doc:`appendix <content>`, except for the *doc* directory, which is maintained separately (see the :ref:`Documentation <documenting>` section below).
+Once cloned, you will have access to the full directory tree (excluding web clients). It contains all the directories and files described in the :doc:`appendix <content>`, except for the **doc** directory, which is maintained separately (see the :ref:`Documentation <documenting>` section below).
 
 The main directory also includes:
 
@@ -49,7 +49,7 @@ The repository includes a template file, **tools/emaj_tools.env-dist**, which yo
 
 The **emaj_tools.env** file must include:
 
-* A list of **PostgreSQL** versions supported by the current E-Maj version, for which a PostgreSQL instance exists for testing (``EMAJ_USER_PGVER`` variable).
+* A list of **PostgreSQL versions** supported by the current E-Maj version, for which a PostgreSQL instance exists for testing (*EMAJ_USER_PGVER* variable).
 * For each PostgreSQL version used in tests, **6 variables** describing:
 
   - The location of the binaries.
@@ -76,64 +76,67 @@ Coding Rules
 The **emaj--devel.sql** script must adhere to the following rules:
 
 * **Script Structure**:
-  After verifying the execution conditions, objects must be created in this order:
-  roles, enumerated types, sequences, tables (with their indexes and constraints), composite types, E-Maj parameters, low-level functions, elementary functions (for managing tables and sequences), functions for managing table groups, general-purpose functions, event triggers, grants, and additional actions for extensions.
-  The script ends with final operations.
+
+  - Check of execution conditions (PostgreSQL version).
+  - Objects creation, in this order: roles, enumerated types, sequences, tables (with their indexes and constraints), composite types, E-Maj parameters, low-level functions, elementary functions (for managing tables and sequences), functions for managing table groups, general-purpose functions, event triggers, grants, and additional actions for extensions.
+  - A few final operations.
+
+* **Schema location**:
+
+  - All objects are created in the **emaj** schema, except the *_emaj_protection_event_trigger_fnct()* function, which is created in the *public* schema.
 
 * **Naming Conventions**:
 
-  - All objects are created in the ``emaj`` schema, except the ``_emaj_protection_event_trigger_fnct()`` function, which is created in the ``public`` schema.
   - Table and sequence names must be prefixed with **emaj_**.
   - Function names must be prefixed with **emaj_** if they are usable by end users, or with **_** for internal functions.
 
 * **Comments**:
-  Internal tables and user-callable functions **must** include comments.
+
+  - Internal tables and user-callable functions **must** include comments.
 
 * **Formatting**:
 
-  - SQL keywords must be in **UPPERCASE**.
-  - Object names must be in **lowercase**.
-  - Code must be indented with **2 spaces**.
-  - Lines must **not** contain tab characters, must **not** exceed **140 characters**, and must **not** end with spaces.
+  - SQL keywords must be in UPPERCASE.
+  - Object names must be in lowercase.
+  - Code must be indented with 2 spaces.
+  - Lines must not contain tab characters, must not exceed 140 characters, and must not end with spaces.
 
 * **Function Structure**:
-  Code delimiters must include the function name surrounded by **$** (or **$do$** for code blocks).
+
+  - Code delimiters must include the function name surrounded by **$** (or **$do$** for code blocks).
 
 * **Variable Naming**:
+
   - **v_** for simple variables.
   - **p_** for function parameters.
-  - **r_** for **RECORD** type variables.
+  - **r_** for *RECORD* type variables.
 
 * **Compatibility**:
-  The code must be compatible with all **PostgreSQL** versions supported by the current E-Maj version. If strictly necessary, the code may be differentiated based on the PostgreSQL version.
 
-A **Perl** script, **tools/check_code.pl**, performs checks on the code format of the extension creation script and detects unused variables. This script is automatically called in non-regression test scenarios.
+  - The code must be compatible with all PostgreSQL versions supported by the current E-Maj version. If strictly necessary, the code may be differentiated based on the PostgreSQL version.
+
+A *Perl* script, **tools/check_code.pl**, performs checks on the code format of the extension creation script and detects unused variables. It is called in non-regression test scenarios.
 
 Version Upgrade Script
 ^^^^^^^^^^^^^^^^^^^^^^
 
-When E-Maj is installed as a **PostgreSQL** extension, the E-Maj administrator is able to easily :ref:`upgrade the extension <extension_upgrade>`. An upgrade script is provided for each version to upgrade from the previous version to the next. It is named **emaj--<previous_version>--devel.sql**.
+When E-Maj is installed as a **PostgreSQL extension**, the E-Maj administrator is able to easily :ref:`upgrade the extension <extension_upgrade>`. An upgrade script is provided for each version to upgrade from the previous version to the next. It is named **emaj--<previous_version>--devel.sql**.
 
 **Development Rules for Upgrade Scripts**:
 
 * Develop and maintain the upgrade script **simultaneously** with the main **emaj--devel.sql** script. This ensures that tests for a change include upgrade version cases.
-
 * Apply the **same coding rules** as for the main script.
-
-* Ensure, as much as possible, that the upgrade operation can process **table groups in logging state** without losing the ability to perform E-Maj rollbacks on marks set prior to the version upgrade.
+* Ensure, as much as possible, that the upgrade operation can process **table groups in logging state** without losing the ability to perform *E-Maj rollbacks* on marks set prior to the version upgrade.
 
 At the beginning of a new version, the upgrade script is built using a template (**tools/emaj_upgrade.template**).
 
-As development progresses, a **Perl** script helps synchronize the creation, deletion, or replacement of functions.
-It compares the **emaj--devel.sql** script with the script that creates the previous version and updates the **emaj--<previous_version>--devel.sql** script.
-To ensure proper functionality, it is essential to maintain the tags that frame the part of the script describing functions.
+As development progresses, a **Perl** script helps **synchronize the creation, deletion, or replacement of functions**. It compares the **emaj--devel.sql** script with the script that creates the previous version and updates the **emaj--<previous_version>--devel.sql** script. To ensure proper functionality, it is essential to maintain both tags that frame the part of the script describing functions.
 
-After configuring the parameters (see the **TOOLS/README** file), run::
+After configuring the parameters (see the *TOOLS/README* file), run::
 
    perl tools/sync_fct_in_upgrade_script.pl
 
-Other parts of the script must be coded manually.
-If the structure of an internal table changes, the table content must be migrated (refer to scripts for prior version upgrades as examples).
+Other parts of the script must be coded manually. If the structure of an internal table changes, the table content must be migrated (refer to scripts for prior version upgrades as examples).
 
 ----
 
@@ -142,17 +145,14 @@ If the structure of an internal table changes, the table content must be migrate
 Testing
 -------
 
-Through its **rollback** functions, the E-Maj extension updates database content.
-Therefore, **reliability** is a key characteristic, and thorough testing is essential.
+Through its *rollback* functions, the E-Maj extension updates database content. Therefore, **reliability** is a key characteristic, and thorough testing is essential.
 
 Create PostgreSQL Instances
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Ideally, E-Maj should be tested with **all PostgreSQL versions** supported by the extension.
 
-The **tools/create_cluster.sh** script helps create test instances.
-Its content provides details about the instance to be created.
-It can also be executed (after setting parameters as indicated in **tools/README**):::
+The **tools/create_cluster.sh** script helps create test instances. Its content provides details about the instance to be created. It can also be executed (after setting parameters as indicated in **tools/README**)::
 
    tools/create_cluster.sh <PostgreSQL_major_version>
 
@@ -178,29 +178,26 @@ The test system includes several scenarios:
 * A **full standard scenario**.
 * The same scenario, but installing the extension using the **emaj-devel.sql** script (for cases where ``CREATE EXTENSION emaj`` is not possible).
 * The same scenario, but installing the extension from the previous version with an immediate upgrade to the current version.
-* A shorter scenario installing the extension with the **emaj-devel.sql** script, but using a role without **SUPERUSER** privileges.
+* A shorter scenario installing the extension with the **emaj-devel.sql** script, but using a role **without SUPERUSER** privileges.
 * A scenario testing an upgrade from the previous extension version to the current one while table groups are in the **LOGGING state**.
 * A similar scenario, but upgrading from the oldest E-Maj version available for the oldest supported PostgreSQL version.
 * Two scenarios testing extension **uninstallation and re-installation**, using either ``CREATE EXTENSION emaj`` or the **emaj-devel.sql** script.
 * Two scenarios testing a **PostgreSQL version upgrade**, using either **pg_dump** and **psql**, or the **pg_upgrade** tool.
 
-These scenarios call **psql** scripts, all located in the **test/sql** directory.
-The scripts chain E-Maj function calls in different contexts and include SQL statements to prepare or verify results.
+These scenarios call **psql scripts**, all located in the **test/sql** directory. The scripts chain E-Maj function calls in different contexts and include SQL statements to prepare or verify results.
 
 At the end of the scripts, internal sequences are often reset to ensure that inserting a single function call does not affect the results of subsequent scripts.
 
-**psql** test scripts must be maintained alongside the extension source.
+*psql* test scripts must be maintained alongside the extension source.
 
 The Expected Results
 ''''''''''''''''''''
 
-For each **psql** script, the test tool generates a result file.
-These files are specific to each PostgreSQL version and are stored in the **test/<PostgreSQL_version>/results** directory.
+For each *psql* script, the test tool generates a **result file**. These files are specific to each PostgreSQL version and are stored in the **test/<PostgreSQL_version>/results** directory.
 
 At the end of a test run, the tool compares these files with reference files located in the **test/<PostgreSQL_version>/expected** directory.
 
-Unlike the files in **test/<PostgreSQL_version>/results**, the files in **test/<PostgreSQL_version>/expected** are part of the **Git** repository.
-They must always remain consistent with the extension source and the **psql** test scripts.
+Unlike the files in **test/<PostgreSQL_version>/results**, the files in **test/<PostgreSQL_version>/expected** are part of the **Git** repository. They must always remain consistent with the extension source and the *psql* test scripts.
 
 The Test Tool
 '''''''''''''
@@ -209,17 +206,17 @@ The test tool, **regress.sh**, combines all test functions.
 
 Before using it, ensure that:
 
-* The PostgreSQL instances to be used are already created.
+* The **PostgreSQL instances** to be used are already created.
 * The **tools/emaj_tools.env** file is properly configured.
-* The **test/<PostgreSQL_version>/results** directories are manually created.
+* The **test/<PostgreSQL_version>/results** directories are created.
 
 The test tool can be launched with the command::
 
    tools/regress.sh
 
-As it starts by copying the **emaj.control** file into the **SHAREDIR/extension** directory of each configured PostgreSQL version, it may prompt for the Linux account password to execute **sudo** commands.
+As it starts by copying the **emaj.control** file into the **SHAREDIR/extension** directory of each configured PostgreSQL version, it may prompt for the Linux account password to execute *sudo* commands.
 
-The tool automatically generates the **emaj-devel.sql** script used to create the extension with **psql**.
+The tool automatically generates the **emaj-devel.sql** script used to create the extension with *psql*.
 
 It then displays a menu of available tests. Example output::
 
@@ -260,7 +257,7 @@ It is **critical** to execute these test sets for every E-Maj change.
 Validate Results
 ''''''''''''''''
 
-After executing a **psql** script, **regress.sh** compares the outputs with the expected outputs and reports the result as **ok** or **FAILED**.
+After executing a *psql* script, **regress.sh** compares the outputs with the expected outputs and reports the result as **'ok'** or **'FAILED'**.
 
 Example output from the test tool (for a scenario combining installation and version upgrade, with a detected difference)::
 
@@ -300,7 +297,7 @@ Example output from the test tool (for a scenario combining installation and ver
 
 If any script fails, **analyze the differences** by reviewing the **test/<PostgreSQL_version>/regression.diffs** file. Ensure that the differences are directly linked to changes in the extension source code or test scripts.
 
-Once the differences are validated, copy the contents of the **test/<PostgreSQL_version>/results** directories into the **test/<PostgreSQL_version>/expected** directories. A **shell** script processes all PostgreSQL versions in a single command::
+Once the differences are validated, copy the contents of the **test/<PostgreSQL_version>/results** directories into the **test/<PostgreSQL_version>/expected** directories. A *shell* script processes all PostgreSQL versions in a single command::
 
    sh tools/copy2Expected.sh
 
@@ -317,25 +314,24 @@ PostgreSQL test instances are configured to count function executions. The **che
 Error Messages Test Coverage
 ''''''''''''''''''''''''''''
 
-A **Perl** script extracts **error** and **warning** messages from the **sql/emaj--devel.sql** file. It then extracts messages from the files in a **test/<nn>/expected** directory and displays any error or warning messages not covered by tests.
+A *Perl* script extracts error and warning messages from the **sql/emaj--devel.sql** file. It then extracts messages from the files in a **test/<nn>/expected** directory and displays any error or warning messages not covered by tests.
 
 The script can be run with the command::
 
    perl tools/check_error_messages.pl
 
-Some messages (e.g., internal errors that are difficult to reproduce) are known to be uncovered by tests. These messages are hardcoded in the **Perl** script and excluded from the final report.
+Some messages (e.g., internal errors that are difficult to reproduce) are known to be uncovered by tests. These messages are hardcoded in the *Perl* script and excluded from the final report.
 
 Evaluate Performance
 ^^^^^^^^^^^^^^^^^^^^
 
-The **tools/performance** directory contains shell scripts to measure performance.
-As results depend entirely on the platform and environment, no reference results are provided.
+The **tools/performance** directory contains shell scripts to measure performance. As results depend entirely on the platform and environment, no reference results are provided.
 
 The scripts cover the following areas:
 
 * **dump_changes/dump_changes_perf.sh**: Measures the performance of change dump operations at various consolidation levels.
 * **large_group/large_group.sh**: Evaluates the behavior of groups containing a large number of tables.
-* **log_overhead/pgbench.sh**: Evaluates the logging mechanism overhead using **pgbench**.
+* **log_overhead/pgbench.sh**: Evaluates the logging mechanism overhead using *pgbench*.
 * **rollback/rollback_perf.sh**: Evaluates E-Maj rollback performance with different table profiles.
 
 For all these files, some variables must be configured at the beginning of the scripts.
@@ -347,8 +343,7 @@ For all these files, some variables must be configured at the beginning of the s
 Documenting
 -----------
 
-The **LibreOffice** documentation is managed by the maintainers and has its own **GitHub** repository: **emaj_doc**.
-Thus, the **doc** directory in the main repository remains empty.
+The *LibreOffice* documentation is managed by the maintainers and has its own **GitHub** repository: **emaj_doc**. Thus, the **doc** directory in the main repository remains empty.
 
 The **online documentation** is managed using **Sphinx** and is located in the **docs** directory.
 
@@ -358,11 +353,11 @@ The documentation is available in **English** and **French**.
 Depending on the language, source files are located in **docs/en** and **docs/fr**.
 These documents are written in **reStructuredText** format.
 
-To compile the documentation for a specific language, navigate to **docs/<language>** and run:::
+To compile the documentation for a specific language, navigate to **docs/<language>** and run::
 
    make html
 
-Once compilation is successful, the documentation can be accessed locally in a browser by opening the **docs/<language>/_build/html/index.html** file.
+Once compilation is successful, the documentation can be accessed locally in a browser by opening the ``docs/<language>/_build/html/index.html`` file.
 
 The documentation on **readthedocs.org** is automatically updated whenever the main **GitHub** repository is updated.
 
@@ -391,5 +386,6 @@ In the first case, both changes must be **synchronized**.
 The project is maintained in the **GitHub** repository:
 `https://github.com/dalibo/emaj_web <https://github.com/dalibo/emaj_web>`_.
 
-**Note**: The web client interfaces with **emaj** extensions that may be running different versions.
-The **libraries/version.inc.php** file defines the supported version ranges.
+.. caution::
+
+  The Emaj_web interfaces with **emaj** extensions that may be running different versions. The **libraries/version.inc.php** file defines the supported version ranges.

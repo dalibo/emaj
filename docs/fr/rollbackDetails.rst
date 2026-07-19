@@ -4,7 +4,7 @@ Le rollback E-Maj sous le capot
 Planification et exécution
 --------------------------
 
-Les rollbacks E-Maj sont des opérations complexes. Ils peuvent être tracés ou non, concerner un ou plusieurs groupes de tables, avec ou sans parallélisme, et être lancés par l’appel direct d’une fonction SQL ou par le biais d’un client. Un rollback E-Maj est donc découpé en étapes élémentaires.
+Les rollbacks E-Maj sont des opérations complexes. Ils peuvent être tracés ou non, concerner un ou plusieurs groupes de tables, avec ou sans parallélisme, et être lancés par l’appel direct d’une fonction SQL ou par le biais d’un client. Un rollback E-Maj est donc découpé en **étapes élémentaires**.
 
 Un rollback E-Maj est exécuté en deux phases : une phase de planification et une phase d’exécution du plan.
 
@@ -27,7 +27,7 @@ Ensuite, pour chaque table pour laquelle existent des mises à jour à annuler, 
 
 * la préparation de triggers applicatifs ;
 * la désactivation des triggers E-Maj ;
-* la suppression ou le positionnement en mode DEFERRED de clés étrangères ;
+* la suppression ou le positionnement en mode *DEFERRED* de clés étrangères ;
 * le rollback de la table ;
 * la suppression de contenu de la table de log ;
 * la recréation ou remise en l’état de clés étrangères ;
@@ -40,6 +40,8 @@ A chaque étape élémentaire, la fonction qui pilote l’exécution du plan met
 
 Si le paramètre *dblink_user_password* est valorisé, les mises à jour de la table *emaj_rlbk_plan* sont réalisées dans des transactions autonomes, de sorte qu’il est possible de visualiser l’avancement du rollback en temps réel. C’est ce que font la fonction :ref:`emaj_rollback_activity()<emaj_rollback_activity>` et les clients :doc:`emajRollbackMonitor<parallelRollbackClient>` et :doc:`Emaj_web<webUsage>`. Si la connexion dblink n’est pas utilisable, la fonction :ref:`emaj_verify_all()<emaj_verify_all>` en indique la raison.
 
+----
+
 .. _single_table_rollback:
 
 Traitement de rollback d’une table
@@ -50,10 +52,11 @@ Le traitement de rollback d’une table consiste à remettre le contenu de la ta
 Pour optimiser l’opération et éviter que chaque mise à jour élémentaire à annuler ne fasse l’objet d‘une requête SQL, le traitement d’une table enchaîne 4 requêtes ensemblistes :
 
 * création et alimentation d’une table temporaire contenant toutes les clés primaires à traiter ;
-* suppression de la table à traiter de toutes les lignes correspondant à des changements à annuler de type INSERT et UPDATE ;
-* ANALYZE de la table de log si le rollback est tracé et si le nombre de mises à jour est supérieur à 1000 (pour éviter un mauvais plan d’exécution sur la dernière requête) ;
-* insertion dans la table des lignes les plus anciennes correspondant aux changements à annuler de type UPDATE et DELETE.
+* suppression de la table à traiter de toutes les lignes correspondant à des changements à annuler de type *INSERT* et *UPDATE* ;
+* *ANALYZE* de la table de log si le rollback est tracé et si le nombre de mises à jour est supérieur à 1000 (pour éviter un mauvais plan d’exécution sur la dernière requête) ;
+* insertion dans la table des lignes les plus anciennes correspondant aux changements à annuler de type *UPDATE* et *DELETE*.
 
+----
 
 Gestion des clés étrangères
 ---------------------------
@@ -81,12 +84,16 @@ Une :ref:`clé étrangère définie au niveau d‘une table partitionnée<fk_on_
 * la clé étrangère est de type *DEFERRABLE*
 * et la clé étrangère ne portent pas de clause *ON DELETE* ou *ON UPDATE*.
 
+----
+
 Autres contraintes d’intégrité
 ------------------------------
 
 Les tables peuvent porter d’autres contraintes d’intégrité : *NOT NULL*, *CHECK*, *UNIQUE* et *EXCLUDE*. Mais celles-ci ne concernent que le contenu de la table qui les porte, sans lien avec d’autres tables.
 
 Lors d’un rollback E-Maj, ces contraintes sont vérifiées par PostgreSQL, immediatement à chaque changement de donnée, ou à la fin de la transaction pour les contraintes *UNIQUE* et *EXCLUDE* qui sont définies comme *DEFERRED*. Compte tenu du :ref:`fonctionnement du rollback E-Maj d’une table<single_table_rollback>`, aucune action particulière n’est effectuée pour supporter ces contraintes, et aucune violation d’intégrité n’est à craindre si toutes les contraintes existaient déjà lors de la pose de la marque cible du rollback E-Maj.
+
+----
 
 Gestion des triggers applicatifs
 --------------------------------

@@ -19,7 +19,7 @@ It serves two primary purposes:
 
 * **Logical Restoration**: Using these recorded updates, E-Maj can logically restore sets of tables to predefined states, without requiring a full restore of the PostgreSQL instance (cluster) or reloading the entire content of the affected tables.
 
-In other words, E-Maj is a PostgreSQL extension that enables fine-grained write logging and time travel on subsets of the database.
+In other words, E-Maj is a PostgreSQL extension that enables fine-grained **write logging and time travel on subsets of the database**.
 
 It provides an efficient solution to:
 
@@ -36,7 +36,7 @@ In a **test environment**, E-Maj streamlines operations by allowing easy restora
 Main components
 ***************
 
-E-Maj consists of several components:
+The **E-Maj solution** consists of several components:
 
 * a PostgreSQL **extension** object created in each database, named *emaj* and containing tables, functions, sequences, etc.,
 * a set of **command-line external clients**,

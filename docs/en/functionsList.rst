@@ -3,7 +3,7 @@ E-Maj functions list
 
 The E-Maj functions that are available to users can be grouped into **3 categories**. They are listed below, in **alphabetic order**.
 
-They are all callable by roles having ``emaj_adm`` privileges. The charts also specifies those callable by ``emaj_viewer`` roles (sign **(V)** behind the function name).
+They are all callable by roles having *emaj_adm* privileges. The charts also specifies those callable by **emaj_viewer** roles (sign **(V)** behind the function name).
 
 Tables or sequences level functions
 -----------------------------------

@@ -6,7 +6,7 @@ Gérer les paramètres E-Maj
 Les paramètres
 --------------
 
-L'extension dispose de 9 paramètres, modifiables par les administrateurs E-Maj.
+L'extension dispose de **9 paramètres**, modifiables par les administrateurs E-Maj.
 
 Trois paramètres concernent le **fonctionnement générale** de l’extension.
 
@@ -14,20 +14,24 @@ Trois paramètres concernent le **fonctionnement générale** de l’extension.
 | Clé                  | Signification                                           | Valeur par défaut |
 +======================+=========================================================+===================+
 | history_retention    | | Durée de rétention des lignes dans les tables         | 1 an              |
-|                      | | d’historiques (a)                                     |                   |
+|                      | | d’historiques                                         |                   |
 +----------------------+---------------------------------------------------------+-------------------+
 | dblink_user_password | | Utilisateur et mot de passe utilisables par les       |                   |
-|                      | | opérations de rollback E-Maj (b)                      |                   |
+|                      | | opérations de rollback E-Maj                          |                   |
 +----------------------+---------------------------------------------------------+-------------------+
 | alter_log_table      | | Directive d’ALTER TABLE exécuté à la création des     |                   |
-|                      | | tables de log (c)                                     |                   |
+|                      | | tables de log                                         |                   |
 +----------------------+---------------------------------------------------------+-------------------+
 
-(a) Le contenu doit être interprétable comme une donnée *INTERVAL* ; une valeur >= 100 désactive la :ref:`purge des historiques<emaj_purge_histories>`.
+**Notes**
 
-(b) Nécessaire pour :ref:`suivre l’avancement<emaj_rollback_activity>` ou :doc:`paralléliser<parallelRollbackClient>` des rollbacks E-Maj ; format = 'user=<user> password=<password>' ; ces fonctionnalités sont désactivées par défaut.
+Le contenu du paramètre ``history_retention`` doit être interprétable comme une donnée *INTERVAL* ; une valeur >= 100 désactive la :ref:`purge des historiques<emaj_purge_histories>`.
 
-(c) Permet d':ref:`ajouter une ou plusieurs colonnes techniques<addLogColumns>` aux tables de log ; par défaut, aucun *ALTER TABLE* n'est exécuté.
+Le paramètre ``dblink_user_password`` est nécessaire pour :ref:`suivre l’avancement<emaj_rollback_activity>` ou :doc:`paralléliser<parallelRollbackClient>` des rollbacks E-Maj ; format = ``user=<user> password=<password>`` ; ces fonctionnalités sont désactivées par défaut.
+
+Le paramètre ``alter_log_table`` permet d':ref:`ajouter une ou plusieurs colonnes techniques<addLogColumns>` aux tables de log ; par défaut, aucun *ALTER TABLE* n'est exécuté.
+
+----
 
 Six autres paramètres concernent le **modèle d’estimation des durées de rollback E-Maj**, notamment utilisé par la fonction :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>`. Leur contenu doit être interprétable comme une donnée *INTERVAL*. Ces paramètres peuvent être ajustés pour mieux représenter la performance du serveur qui héberge la base de données.
 
@@ -49,29 +53,42 @@ Six autres paramètres concernent le **modèle d’estimation des durées de rol
 | avg_fkey_check_duration        | Durée moyenne du contrôle d'une clé étrangère    | 20 µs             |
 +--------------------------------+--------------------------------------------------+-------------------+
 
+----
+
 .. _emaj_set_param:
 
 Modifier les paramètres
 -----------------------
 
-La fonction *emaj_set_param()* permet aux administrateurs de modifier une valeur de paramètre. ::
+La fonction ``emaj_set_param`()`` permet aux administrateurs de modifier une valeur de paramètre : ::
 
-   SELECT emaj.emaj_set_param('<clé>', '<valeur>');
+   SELECT emaj.emaj_set_param(p_key, p_value);
 
-Les valeurs de clé sont insensibles à la casse.
+**Paramètres en entrée**
 
-Les valeurs de paramètres sont des chaînes de caractères. Pour les paramètres représentant un intervalle de temps, la chaîne doit être une représentation valide d’une donnée INTERVAL (ex : '3 us' ou '3 micro-seconds').
+- ``p_key`` (*TEXT*) : **Clé** du paramètre.
+- ``p_value`` (*TEXT*) : **Valeur** du paramètre. *NULL* remet le paramètre à sa valeur par défaut.
 
-Pour remettre un paramètre à sa valeur par défaut, il suffit de positionner le second paramètre de la fonction à NULL.
+**Données retournées**
+
+La fonction retourne le nombre de paramètres modifiés (0 ou 1).
+
+**Notes**
+
+Les **clés** sont **insensibles à la casse**.
+
+Les valeurs de paramètres sont des chaînes de caractères. Pour les paramètres représentant un intervalle de temps, la chaîne doit être une représentation valide d’une donnée *INTERVAL* (ex : *'3 us'* ou *'3 micro-seconds'*).
 
 Toute modification de paramètre est tracée dans la :ref:`table emaj_hist<emaj_hist>`.
 
 Des fonctions :ref:`emaj_export_parameters_configuration()<export_param_conf>` et :ref:`emaj_import_parameters_configuration()<import_param_conf>` permettent également de sauver les valeurs de paramètres et de les restaurer.
 
+----
+
 Voir les paramètres
 -------------------
 
-La vue *emaj.emaj_all_param* permet aux administrateurs de voir tous les paramètres, avec leur valeur par défaut et leur valeur courante.
+La vue ``emaj.emaj_all_param`` permet aux administrateurs de voir tous les paramètres, avec leur valeur par défaut et leur valeur courante.
 
 La structure de la vue *emaj_all_param* est la suivante :
 

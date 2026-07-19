@@ -48,7 +48,7 @@ To **modify** an existing comment, simply call the function again for the same t
 
 To **delete** a comment, call the function with a *NULL* value as the comment.
 
-Comments are particularly useful when :doc:`using Emaj_web<webUsage>`, which systematically displays them in the group lists. They can also be found in the ``group_comment`` column of the ``emaj.emaj_group`` table.
+Comments are particularly useful when :doc:`using Emaj_web<webUsage>`, which systematically displays them in the group lists. They can also be found in the *group_comment* column of the *emaj.emaj_group* table.
 
 ----
 
@@ -96,8 +96,6 @@ The ``emaj_unprotect_group()`` function **removes existing protection** from a t
 The function returns the integer 1 if the table group was previously protected, or 0 if it was not already protected.
 
 **Notes**
-
-An *AUDIT_ONLY* table group cannot be unprotected.
 
 Once the protection of a table group is removed, it becomes possible to execute any type of rollback operation on the group.
 
@@ -162,7 +160,7 @@ It is recommended to use this function only if it is truly needed.
 
 .. note::
 
-   Since the :ref:`emaj_force_stop_group()<emaj_force_stop_group>` function was created, the ``emaj_force_drop_group()`` function has become obsolete. It may be removed in a future version.
+   Since the :ref:`emaj_force_stop_group()<emaj_force_stop_group>` function was created, this *emaj_force_drop_group()* function has become obsolete. It may be removed in a future version.
 
 ----
 
@@ -201,6 +199,61 @@ By using these functions in a *WHERE* clause, it is possible, for instance, to c
 
 ----
 
+.. _emaj_snap_group:
+
+Snapping Tables and Sequences of a Table Group
+----------------------------------------------
+
+The ``emaj_snap_group()`` function allows users to take snapshots of all tables and sequences belonging to a group for analysis or comparison. It dumps all tables and sequences of a group to files with the following command::
+
+   SELECT emaj.emaj_snap_group(p_groupName, p_dir, p_copyOptions);
+
+**Input Parameters**
+
+- ``p_groupName`` (*TEXT*): **Table group** to snap.
+- ``p_dir`` (*TEXT*): Target **Output directory**.
+- ``p_copyOptions`` (*TEXT*): **COPY TO options**.
+
+**Returned data**
+
+The function returns the number of tables and sequences in the group.
+
+**Notes**
+
+The table group may be either in *IDLE* or in *LOGGING* state to perform a snapshot.
+
+The ``p_dir`` parameter must be an **absolute pathname** and must have been previously created. The PostgreSQL instance must have write permissions for this directory.
+
+The ``p_copyOptions`` parameter defines the output file format. It is a character string matching the syntax available for the *COPY TO* SQL statement. Refer to the `PostgreSQL documentation <https://www.postgresql.org/docs/current/sql-copy.html>`_ for details about available options.
+
+The *emaj_snap_group()* function generates one file per table and sequence in the specified table group. These files are stored in the directory specified as the ``p_dir`` parameter.
+
+New files overwrite existing files with the same name.
+
+Generated files are **named** using the following pattern: ``<schema_name>_<table_or_sequence_name>.snap``.
+
+To simplify file manipulation, inconvenient characters in file names (spaces, "/", "\\", "$", ">", "<", "|", single or double quotes, and "*") are replaced with underscores ("_"). Note that these adjustments may lead to duplicate filenames, with the last generated file overwriting previous ones.
+
+Each file corresponding to a **sequence** contains a single row with all the sequence's characteristics.
+
+Files corresponding to **tables** contain one record per row in the specified format. These records are sorted by primary key in ascending order (or by all columns if the table has no primary key). Each row includes all table columns, including generated columns.
+
+At the end of the operation, a file named **_INFO** is created in the same directory. It contains a message including the table group name and the date and time of the snapshot operation.
+
+As this function may generate large or very large files (depending on table sizes), users must ensure sufficient disk space is available.
+
+Using this function, a simple test of E-Maj behavior could involve the following steps:
+
+* :ref:`emaj_create_group() <emaj_create_group>`,
+* :ref:`emaj_start_group() <emaj_start_group>`,
+* ``emaj_snap_group(<directory_1>)``,
+* Updates to application tables,
+* :ref:`emaj_rollback_group() <emaj_rollback_group>`,
+* ``emaj_snap_group(<directory_2>)``,
+* Comparison of both directories' contents, using a *diff* command, for example.
+
+----
+
 .. _emaj_forget_group:
 
 Erasing Traces of a Dropped Table Group
@@ -215,6 +268,7 @@ When a table group is dropped, data about its previous life (creations, drops, s
 - ``p_groupName`` (*TEXT*): **Table group** to process.
 
 **Returned data**
+
 The function returns the number of deleted traces.
 
 **Notes**

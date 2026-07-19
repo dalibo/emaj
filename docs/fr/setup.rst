@@ -1,21 +1,24 @@
 Créer l'extension emaj dans une base de données
 ===============================================
 
-Si une extension existe déjà dans la base de données, mais dans une ancienne version d'E-Maj, il faut la :doc:`mettre à jour <upgrade>`.
+Si une ancienne version de l'extension E-Maj existe déjà dans la base de données, il faut d'abord la :doc:`mettre à jour <upgrade>`.
 
-La façon standard d’installer E-Maj consiste à créer un objet *EXTENSION* (au sens de PostgreSQL). Pour ce faire, l’utilisateur doit être connecté à la base de données en tant que super-utilisateur.
+La **façon standard d’installer** E-Maj consiste à créer un objet *EXTENSION* (au sens de PostgreSQL). Pour ce faire, l’utilisateur doit disposer des droits **SUPERUSER**.
 
-Pour les environnements pour lesquels il n’est pas possible de procéder ainsi (cas des :ref:`installations minimales<minimum_install>`), on peut exécuter un script *psql*.
+Dans les environnements où il n’est pas possible d'avoir ces droits (cas des :ref:`installations minimales<minimum_install>`), on peut exécuter un script *psql* à la place.
+
+----
 
 .. _preliminary_operations:
 
 Opération préliminaire facultative
 ----------------------------------
 
-Les tables techniques de l’extension sont créées dans le tablespace par défaut. Si l’administrateur E-Maj veut stocker les tables techniques dans un tablespace dédié, il peut le créer si besoin et le définir comme tablespace par défaut pour la session ::
+Les tables techniques de l’extension sont créées dans le tablespace par défaut. Si l’administrateur E-Maj veut stocker les tables techniques dans un **tablespace** dédié, il peut le créer si besoin et le définir comme tablespace par défaut pour la session : ::
 
 	SET default_tablespace = <nom.tablespace>;
 
+----
 
 .. _create_emaj_extension:
 
@@ -30,60 +33,73 @@ Après avoir vérifié que la version de PostgreSQL est compatible avec cette ve
 
 .. caution::
 
-   Le schéma *emaj* ne doit contenir que des objets liés à E-Maj. 
+   Le schéma **emaj** ne doit contenir **que des objets liés à E-Maj**.
 
 S'ils n'existent pas déjà, les 2 rôles *emaj_adm* et *emaj_viewer* sont également créés.
 
 Enfin, le script d'installation examine la configuration de l'instance. Le cas échéant, il affiche un message d'avertissement concernant le :ref:`paramètre max_prepared_transactions<parallel_rollback_prerequisite>`.
+
+----
 
 .. _create_emaj_extension_by_script:
 
 Création de l’extension par script
 ----------------------------------
 
-Lorsque la création de l’objet *EXTENSION* emaj n’est pas permise, il est possible de créer tous les composants nécessaires par un script *psql* ::
+Lorsque la création de l’objet *EXTENSION* emaj n’est pas permise, il est possible d'utiliser un script *psql* : ::
 
 	\i <répertoire_emaj>/sql/emaj-<version>.sql
 
 où <répertoire_emaj> est le répertoire issu de l’:ref:`installation du logiciel<minimum_install>` et <version> la version courante d’E-Maj.
 
 .. caution::
-
 	Il n’est pas indispensable d’avoir le droit *SUPERUSER* pour exécuter ce script d’installation. Mais si ce n’est pas le cas, les fonctionnalités sont limitées et dépendent des droits dont dispose le rôle d’installation. Ces limites et leurs mitigations éventuelles sont :ref:`détaillées ici<non_superuser_install_limits>`.
+
+----
 
 Adaptation du fichier de configuration postgresql.conf
 ------------------------------------------------------
 
-Deux paramètres de configuration peuvent devoir être modifiés dans le fichier *postgresql.conf* :
+Deux paramètres de configuration peuvent devoir être modifiés dans le fichier **postgresql.conf** :
 
-  * **max_locks_per_transaction**, pour gérer des groupes de tables comprenant un nombre élevé de tables. Les fonctions principales d'E-Maj posent un verrou sur chacune des tables des groupes traités. Si une opération E-Maj échoue et retourne un message d'erreur indiquant que toutes les entrées de la table des verrous sont utilisées, la valeur de ce paramètre doit être augmentée. Sa valeur par défaut est de 128 (à partir de PostgreSQL 19 et 64 dans les versions précédentes).
+- ``max_locks_per_transaction`` :
 
-  * **max_prepared_transactions**, pour pouvoir utiliser l'outil de :doc:`rollback E-Maj parallélisé<parallelRollbackClient>`. Par défaut, la valeur du paramètre est 0, bloquant l’utilisation de transactions préparées. La valeur du paramètre doit être au moins égale au nombre de rollbacks E-Maj parallélisés concurrents.
+   Les fonctions principales d'E-Maj posent un verrou sur chacune des tables des groupes traités. Si une opération E-Maj échoue et retourne un message d'erreur indiquant que toutes les entrées de la table des verrous sont utilisées, la valeur de ce paramètre doit être augmentée. Sa valeur par défaut est de 128 (à partir de PostgreSQL 19 et 64 dans les versions précédentes).
 
-La modification de ces paramètres nécessite un arrêt-relance de l’instance.
+- ``max_prepared_transactions`` :
 
+   Nécessaire pour utiliser l'outil de :doc:`rollback E-Maj parallélisé<parallelRollbackClient>`. La valeur par défaut, 0, bloque l’utilisation de transactions préparées. La valeur du paramètre doit être au moins égale au nombre de rollbacks E-Maj parallélisés concurrents.
+
+.. note::
+   La modification de ces paramètres nécessite un **arrêt-relance de l’instance**.
+
+----
 
 Paramétrage d'E-Maj
 -------------------
 
 Un certain nombre de paramètres influence le fonctionnement d'E-Maj. Le détail des paramètres est présenté :ref:`ici <emaj_param>`.
 
-Cette étape de valorisation des paramètres est optionnelle. Leur valeur par défaut permet à E-Maj de fonctionner correctement.
+Cette étape de valorisation des paramètres est **optionnelle**. Leur valeur par défaut permet à E-Maj de fonctionner correctement.
 
-Néanmoins, si l'administrateur E-Maj souhaite bénéficier du :ref:`suivi des opérations de rollback E-Maj<emaj_rollback_activity>`, ou effectuer des :doc:`rollbacks E-Maj parallélisés<parallelRollbackClient>`, il est nécessaire de valoriser le paramètre **dblink_user_password**.
+Néanmoins, si l'administrateur E-Maj souhaite bénéficier du :ref:`suivi des opérations de rollback E-Maj<emaj_rollback_activity>`, ou effectuer des :doc:`rollbacks E-Maj parallélisés<parallelRollbackClient>`, il est nécessaire de valoriser le paramètre ``dblink_user_password``.
+
+----
 
 Test et démonstration
 ---------------------
 
-Il est possible de tester le bon fonctionnement des composants E-Maj installés et d'en découvrir les principales fonctionnalités en exécutant un script de démonstration. Sous *psql*, il suffit d'exécuter le script *emaj_demo.sql* fourni avec l'extension ::
+Pour tester le bon fonctionnement des composants E-Maj installés et d'en découvrir les principales fonctionnalités, exécuter le script *psql* de démonstration *emaj_demo.sql* : ::
 
    \i <répertoire_emaj>/sql/emaj_demo.sql
 
-Si aucune erreur n'est rencontrée, le script affiche ce message final ::
+Si aucune erreur n'est rencontrée, le script affiche ce message final : ::
 
    ### This ends the E-Maj demo. Thank You for using E-Maj and have fun!
 
-L'examen des messages affichés par l'exécution du script permet de découvrir les principales fonctionnalités de l'extension. Après l'exécution du script, l'environnement de démonstration est laissé en l'état. On peut alors l'examiner et jouer avec. Pour le supprimer, exécuter la fonction de nettoyage qu'il a généré ::
+L'examen des messages affichés par l'exécution du script permet de découvrir les principales fonctionnalités de l'extension. Après l'exécution du script, l'environnement de démonstration est laissé en l'état. On peut alors l'examiner et jouer avec.
+
+Pour supprimer cet environnement de démonstration, exécuter la fonction de nettoyage : ::
 
    SELECT emaj.emaj_demo_cleanup();
 

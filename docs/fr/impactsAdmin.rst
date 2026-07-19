@@ -22,12 +22,13 @@ Lié à une contrainte de PostgreSQL, seul le rollback des séquences applicativ
 
 Au cas où un rollback serait en cours au moment de l'arrêt de l'instance, il est recommandé de procéder à nouveau à ce même rollback juste après le redémarrage de l'instance, afin de s'assurer que les séquences et tables applicatives restent bien en phase.
 
+----
+
 Sauvegarde et restauration
 --------------------------
 
 .. caution::
    E-Maj peut permettre de diminuer la fréquence avec laquelle les sauvegardes sont nécessaires. Mais E-Maj ne peut se substituer totalement aux sauvegardes habituelles, qui restent nécessaires pour conserver sur un support externe des images complètes des bases de données !
-
 
 Sauvegarde et restauration au niveau fichier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -35,7 +36,6 @@ Sauvegarde et restauration au niveau fichier
 Lors des sauvegardes ou des restauration des instances au niveau fichier, il est essentiel de sauver ou restaurer **TOUS** les fichiers e l'instance, y compris ceux stockés sur des tablespaces dédiés.
 
 Après restauration des fichiers, les groupes de tables se retrouveront dans l'état dans lequel ils se trouvaient lors de la sauvegarde, et l'activité de la base de données peut reprendre sans opération E-Maj particulière.
-
 
 Sauvegarde et restauration logique de base de données complète
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -61,7 +61,7 @@ La restauration de la structure de la base de données génère 2 messages d'err
     ERROR:  event trigger "emaj_protection_trg" already exists
     ...
 
-L'affichage de ces messages est normal et n'est pas le signe d'une restauration défectueuse. En effet, ces 2 objets sont créés avec l'extension mais en sont détachés ensuite, de sorte que le trigger puisse être capable de bloquer la suppression éventuelle de l'extension. L'outil *pg_dump* les sauvegarde donc comme des objets indépendants. Lors de la restauration, ces objets sont donc créés 2 fois, une première fois avec l'extension emaj et une seconde fois en tant qu'objet indépendant. C'est cette seconde tentative de création qui provoque les 2 messages d'erreur.
+L'affichage de ces messages est normal et n'est pas le signe d'une restauration défectueuse. En effet, ces deux objets sont créés avec l'extension mais en sont détachés ensuite, de sorte que le trigger puisse être capable de bloquer la suppression éventuelle de l'extension. L'outil *pg_dump* les sauvegarde donc comme des objets indépendants. Lors de la restauration, ces objets sont donc créés deux fois, une première fois avec l'extension emaj et une seconde fois en tant qu'objet indépendant. C'est cette seconde tentative de création qui provoque les deux messages d'erreur.
 
 Sauvegarde et restauration logique de base de données partielle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -72,9 +72,11 @@ Restaurer un sous-ensemble des tables applicatives et/ou des tables de log compo
 
 S'il s'avère nécessaire de procéder à une restauration partielle de tables applicatives, il faut faire suivre cette restauration de la suppression puis recréation du ou des groupes de tables touchées par l'opération.
 
-De la même manière il est fortement déconseillé de procéder à une restauration partielle des tables du schéma *emaj*.
+De la même manière il est fortement conseillé de **ne pas** procéder à une restauration partielle des tables du schéma *emaj*.
 
 Le seul cas de restauration partielle sans risque concerne la restauration du contenu complet du schéma *emaj*, ainsi que de toutes les tables et séquences appartenant à tous les groupes de tables créés dans la base de données.
+
+----
 
 Chargement de données
 ---------------------
@@ -83,6 +85,7 @@ Au delà de l'utilisation de *pg_restore* ou de *psql* avec un fichier issu de *
 
 Pour l'utilisation d'autres outils de chargement, il convient de vérifier que les triggers sont bien activés à chaque insertion de ligne.
 
+----
 
 Réorganisation des tables de la base de données
 -----------------------------------------------
@@ -102,6 +105,7 @@ L'index correspondant à la clé primaire de chaque table des schémas d'E-Maj e
 
 Dans le cas d'une utilisation en mode continu d'E-Maj, c'est à dire sans arrêt et relance réguliers des groupes de tables, mais avec suppression des marques les plus anciennes, il est recommandé de procéder régulièrement à des réorganisations des tables de log E-Maj. Ceci permet ainsi de récupérer de l'espace disque inutilisé suite aux suppressions des marques.
 
+----
 
 Utilisation d'E-Maj avec de la réplication
 ------------------------------------------
@@ -146,10 +150,7 @@ A partir d’E-Maj 4.0, il est techniquement possible de mettre une table de log
 
 Tables applicatives et tables de log peuvent être répliquées simultanément. Mais comme dans le cas précédent, ces logs ne sont utilisables qu’à des fins de **consultation**. Les éventuelles opérations de rollback E-Maj ne peuvent s’effectuer que côté *publisher*.
 
-
 Autres solutions de réplication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-L'utilisation d'E-Maj avec des solutions de réplication externe basées sur des triggers, tels que *Slony* ou *Londiste*, nécessite réflexion... On 
-évitera probablement de mettre sous réplication les tables de log et les tables techniques d'E-Maj.
-
+L'utilisation d'E-Maj avec des solutions de réplication externe basées sur des triggers, tels que *Slony* ou *Londiste*, nécessite réflexion... On évitera probablement de mettre sous réplication les tables de log et les tables techniques d'E-Maj.

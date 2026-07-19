@@ -20,7 +20,7 @@ Accessing **Emaj_web** in a browser displays the welcome page.
 
 To sign in to a database, select the target instance in the left browser or in the *Servers* tab, then enter the connection identifier and password. Multiple connections can remain open simultaneously.
 
-Once connected to a database where the ``emaj`` extension is installed, the user can interact with the extension depending on the role they have (*superuser*, ``emaj_adm``, or ``emaj_viewer``).
+Once connected to a database where the *emaj extension* is installed, the user can interact with the extension depending on the role they have (*superuser*, *emaj_adm*, or *emaj_viewer*).
 
 On the left, the browser tree displays all configured instances, which may be split into instance groups, and all the databases they contain. By expanding a database object, the user can access the E-Maj table groups and the existing schemas.
 
@@ -54,7 +54,7 @@ For each table group, the following attributes are displayed:
 
 * Its creation date and time.
 * The number of application tables and sequences it contains.
-* Its type (**ROLLBACKABLE** or **AUDIT_ONLY**, protected against rollback or not).
+* Its type (*ROLLBACKABLE* or *AUDIT_ONLY*, protected against rollback or not).
 * The number of marks it has.
 * Its associated comment, if any.
 
@@ -77,7 +77,7 @@ The page headers contain:
 * A breadcrumb trail.
 * A button to directly go to the bottom of the page.
 
-The user can navigate **Emaj_web** functions using four icon bars:
+The user can navigate *Emaj_web* functions using four **icon bars**:
 
 - One for general-purpose functions.
 - Two similar bars for functions concerning a single table group or a single table.
@@ -101,7 +101,7 @@ The user can navigate **Emaj_web** functions using four icon bars:
 
    Figure 5 – Sequences icons bar.
 
-For ``emaj_viewer`` roles, some icons are not visible.
+For *emaj_viewer* roles, some icons are not visible.
 
 On most tables, it is possible to dynamically sort displayed rows using small vertical arrows on the right side of column titles.
 
@@ -124,7 +124,7 @@ Cells containing event timestamps or durations display the full data content in 
 Table Group Details
 --------------------
 
-From the table groups list page, it is possible to get more information about a specific table group by clicking on its name. This page is also accessible via the *Properties* icon in the groups bar and through the left browsing tree.
+From the table groups list page, it is possible to get more information about a specific table group by clicking on its name. This page is also accessible via the **Properties** icon in the groups bar and through the left browsing tree.
 
 .. figure:: images/emajweb_groupproperties.png
    :align: center
@@ -154,13 +154,13 @@ For each mark, several buttons are available to perform the actions permitted by
 Statistics
 ----------
 
-Using the *Changes Statistics* tab in the group’s bar, users can obtain statistics about recorded changes for tables or sequences for the selected table group and a given time interval. This time interval is defined as either between two marks or between a mark and the current state.
+Using the **Changes Statistics** tab in the group’s bar, users can obtain statistics about recorded changes for tables or sequences for the selected table group and a given time interval. This time interval is defined as either between two marks or between a mark and the current state.
 
 Three types of statistics can be produced:
 
 * An estimate of the number of changes for each table.
 * An estimate of the number of increments and property changes per sequence.
-* A precise count of changes per table, statement type (**INSERT/UPDATE/DELETE/TRUNCATE**), and role.
+* A precise count of changes per table, statement type (*INSERT/UPDATE/DELETE/TRUNCATE*), and role.
 
 The figure below shows an example of detailed statistics for tables.
 
@@ -185,7 +185,7 @@ On each line of the statistics table, the user can click on a button to easily v
 Table Group Content
 --------------------
 
-Using the *Content* tab in the group’s bar, it is possible to get a summary of a table group's content.
+Using the **Content** tab in the group’s bar, it is possible to get a summary of a table group's content.
 
 For each table in the group, the displayed sheet shows its E-Maj characteristics, as well as the disk space used by its log table and index.
 
@@ -200,7 +200,7 @@ For each table in the group, the displayed sheet shows its E-Maj characteristics
 Table Group History
 --------------------
 
-The *History* tab displays the periods when the table group existed and the periods when the group was in **LOGGING** state (*log sessions*). The historical depth depends on the *history_retention* parameter.
+The **History** tab displays the periods when the table group existed and the periods when the group was in *LOGGING* state (*log sessions*). The historical depth depends on the *history_retention* parameter.
 
 .. figure:: images/emajweb_grouphistory.png
    :align: center
@@ -213,7 +213,7 @@ The *History* tab displays the periods when the table group existed and the peri
 Schemas and Table Groups Configuration
 ---------------------------------------
 
-The *Schemas* tab displays the list of schemas contained in the database.
+The **Schemas** tab displays the list of schemas contained in the database.
 
 By selecting one, two additional lists are displayed: the tables and the sequences contained in that schema.
 
@@ -232,7 +232,7 @@ By clicking on a table or sequence name or on an eye icon, users can view detail
 Table Details
 -------------
 
-By selecting a table from a schema’s table list, the user reaches a *Properties* tab that shows the current E-Maj properties, the table structure, and its triggers.
+By selecting a table from a schema’s table list, the user reaches a **Properties** tab that shows the current E-Maj properties, the table structure, and its triggers.
 
 E-Maj properties such as table group assignment, movement, or removal are available through appropriate buttons.
 
@@ -244,7 +244,7 @@ E-Maj properties such as table group assignment, movement, or removal are availa
 
 Thanks to the specific table tabs bar, three other functions are available.
 
-The *Change Statistics* tab provides statistics about changes recorded for the table over a specified time frame, similar to table group statistics. However, they differ in several ways:
+The **Change Statistics** tab provides statistics about changes recorded for the table over a specified time frame, similar to table group statistics. However, they differ in several ways:
 
 * Only a single table is processed.
 * One statistic row is provided per elementary mark interval.
@@ -258,9 +258,9 @@ As with table groups, an eye icon allows viewing changes in detail.
 
    Figure 14 – Table changes statistics.
 
-The *Content* tab allows visualizing the current table rows.
+The **Content** tab allows visualizing the current table rows.
 
-Lastly, the *History* tab shows the E-Maj property changes for the table, particularly its table group assignments.
+Lastly, the **History** tab shows the E-Maj property changes for the table, particularly its table group assignments.
 
 .. figure:: images/emajweb_tablehistory.png
    :align: center
@@ -273,7 +273,7 @@ Lastly, the *History* tab shows the E-Maj property changes for the table, partic
 Sequence Details
 ----------------
 
-For sequences, the *Properties* tab shows the E-Maj properties and the characteristics of a single sequence. Some buttons allow modifying the sequence’s E-Maj properties (table group assignment, movement, or removal).
+For sequences, the **Properties** tab shows the E-Maj properties and the characteristics of a single sequence. Some buttons allow modifying the sequence’s E-Maj properties (table group assignment, movement, or removal).
 
 .. figure:: images/emajweb_sequenceproperties.png
    :align: center
@@ -283,7 +283,7 @@ For sequences, the *Properties* tab shows the E-Maj properties and the character
 
 Thanks to the sequence-specific tabs bar, two other functions are available.
 
-The *Changes Statistics* tab returns statistics about the sequence state evolution over a specified time frame. For each elementary mark interval, it displays:
+The **Changes Statistics** tab returns statistics about the sequence state evolution over a specified time frame. For each elementary mark interval, it displays:
 
 * The number of sequence increments.
 * A flag indicating whether another sequence property has changed (minimum value, maximum value, increment, etc.).
@@ -295,7 +295,7 @@ The *Changes Statistics* tab returns statistics about the sequence state evoluti
 
    Figure 17 – Sequence statistics.
 
-Lastly, the *History* tab shows the E-Maj property changes for the sequence, particularly its assignment to table groups.
+Lastly, the **History** tab shows the E-Maj property changes for the sequence, particularly its assignment to table groups.
 
 .. figure:: images/emajweb_sequencehistory.png
    :align: center
@@ -308,7 +308,7 @@ Lastly, the *History* tab shows the E-Maj property changes for the sequence, par
 Triggers
 --------
 
-The *Triggers* tab lists the application triggers (those not linked to E-Maj), with their main characteristics.
+The **Triggers** tab lists the application triggers (those not linked to E-Maj), with their main characteristics.
 
 A button allows toggling their deactivation mode during E-Maj rollback operations.
 
@@ -323,7 +323,7 @@ A button allows toggling their deactivation mode during E-Maj rollback operation
 Monitoring Rollback Operations
 ------------------------------
 
-Using the *Rollback Operations* tab in the main bar, users can monitor rollback operations. Three different lists are displayed:
+Using the **E-Maj Rollback** tab in the main bar, users can monitor rollback operations. Three different lists are displayed:
 
 * In-progress rollback operations, including their characteristics, estimates of the percentage completed, and the remaining duration.
 * Completed operations.
@@ -342,7 +342,7 @@ Clicking on a rollback identifier in one of these tables displays a page with de
 * The rollback properties.
 * Its progress.
 * The final report returned to the user when the operation is completed.
-* The detail of the operation plan, showing each elementary step with its duration and, optionally, estimates computed by **E-Maj** at the operation initialization.
+* The detail of the operation plan, showing each elementary step with its duration and, optionally, estimates computed by E-Maj at the operation initialization.
 * Information about rollback sessions.
 
 .. figure:: images/emajweb_rollbackdetails.png
@@ -356,7 +356,7 @@ Clicking on a rollback identifier in one of these tables displays a page with de
 E-Maj Activity
 --------------
 
-The *Activity* tab allows monitoring E-Maj log trigger activity in real time.
+The **Activity** tab allows monitoring E-Maj log trigger activity in real time.
 
 .. figure:: images/emajweb_activity.png
    :align: center
@@ -389,17 +389,17 @@ The page can be refreshed either manually or automatically. The automatic refres
 E-Maj Environment State
 -----------------------
 
-By selecting the *E-Maj* tab in the main bar, the user reaches an overview of the E-Maj environment state.
+By selecting the **E-Maj** tab in the main bar, the user reaches an overview of the E-Maj environment state.
 
-First, the installed **PostgreSQL** and **E-Maj** versions are displayed.
+First, the installed PostgreSQL and*E-Maj **versions** are displayed.
 
-If the user is connected with a *superuser* role, some buttons allow creating, updating, or dropping the ``emaj`` extension, depending on the context.
+If the user is connected with a *SUPERUSER* role, some buttons allow creating, updating, or dropping the *emaj* extension, depending on the context.
 
-Next, the disk space used by **E-Maj** (log tables, technical tables, and their indexes) and the portion of the global database space it represents are displayed.
+Next, the **disk space** used by E-Maj (log tables, technical tables, and their indexes) and the portion of the global database space it represents are displayed.
 
-The environment integrity is then checked, and the result of the :ref:`emaj_verify_all() <emaj_verify_all>` function execution is displayed.
+The environment **integrity** is then checked, and the result of the :ref:`emaj_verify_all() <emaj_verify_all>` function execution is displayed.
 
-The page ends with the list of all extension parameters.
+The page ends with the list of all **extension parameters**.
 
 Two buttons allow exporting and importing parameter configurations to or from a local file.
 

@@ -20,7 +20,7 @@ The E-Maj extension has the following usage limits:
 Limits for Installations Without SUPERUSER Privileges
 -----------------------------------------------------
 
-A non-SUPERUSER role can :ref:`install the E-Maj extension with the psql script<create_emaj_extension_by_script>` (e.g., ``emaj-<version>.sql``). However, in this case, there are some limits on the extension's usage or behavior. These limits depend on the effective rights owned by the installer role, either at installation time or at runtime.
+A non-SUPERUSER role can :ref:`install the E-Maj extension with the psql script<create_emaj_extension_by_script>` (e.g., *emaj-<version>.sql*). However, in this case, there are some limits on the extension's usage or behavior. These limits depend on the effective rights owned by the installer role, either at installation time or at runtime.
 
 Tables and Sequences Ownership
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -32,11 +32,11 @@ The main constraint concerns the ownership of tables and sequences assigned to t
 emaj_adm and emaj_viewer Roles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If, at installation time, the ``emaj_adm`` role does not exist or the installer role does not have *ADMIN* rights on ``emaj_adm``, E-Maj will work without this role, and the installer role will be the only E-Maj administrator.
+If, at installation time, the *emaj_adm* role does not exist or the installer role does not have *ADMIN* rights on *emaj_adm*, E-Maj will work without this role, and the installer role will be the only E-Maj administrator.
 
-If, at installation time, the ``emaj_viewer`` role does not exist and the installer role does not have the *CREATEROLE* privilege, ``emaj_viewer`` is not created, and E-Maj will work without a read-only role.
+If, at installation time, the *emaj_viewer* role does not exist and the installer role does not have the *CREATEROLE* privilege, *emaj_viewer* is not created, and E-Maj will work without a read-only role.
 
-Before installing E-Maj, a role with sufficient privileges can execute the following statements::
+Before installing *emaj*, a role with sufficient privileges can execute the following statements::
 
    CREATE ROLE emaj_adm;
    GRANT emaj_adm TO <installer_role> WITH ADMIN TRUE;

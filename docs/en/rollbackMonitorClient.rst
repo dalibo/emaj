@@ -24,32 +24,32 @@ The syntax is::
 General Options
 ^^^^^^^^^^^^^^^
 
-* ``-i <time interval between displays>``: Time interval between displays (in seconds, default = 5s).
-* ``-n <number of displays>``: Number of displays (default = 1, 0 for infinite loop).
-* ``-a <maximum time interval for rollback operations to display>``: Maximum time interval for rollback operations to display (in hours, default = 24h).
-* ``-l <maximum number of completed rollback operations to display>``: Maximum number of completed rollback operations to display (default = 3).
+* ``-i <time interval>``: Time interval between displays (in seconds, default = 5s).
+* ``-n <iteration>``: Number of displays (default = 1, 0 for infinite loop).
+* ``-a <oldest completed rollback>``: Maximum time interval for rollback operations to display (in hours, default = 24h).
+* ``-l <maximum completed rollbacks>``: Maximum number of completed rollback operations to display (default = 3).
 * ``--help``: Displays only the command help.
 * ``--version``: Displays only the software version.
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^
 
-* ``-d <database to connect to>``: Database to connect to.
-* ``-h <host to connect to>``: Host to connect to.
-* ``-p <IP port to connect to>``: IP port to connect to.
-* ``-U <connection role to use>``: Connection role to use.
-* ``-W <password associated with the role>``: Password associated with the role.
+* ``-d <database>``: Database to connect to.
+* ``-h <host>``: Host to connect to.
+* ``-p <IP>``: IP port to connect to.
+* ``-U <role>``: Connection role to use.
+* ``-W <password>``: Password associated with the role, if needed.
 
 To replace some or all of these parameters, the usual *PGDATABASE*, *PGPORT*, *PGHOST*, and/or *PGUSER* environment variables can be used.
 
 The supplied connection role must be allowed to :doc:`view E-Maj data<accessPolicy>`.
 
-For security reasons, it is not recommended to use the ``-W`` option to supply a password. Instead, it is advisable to use the ``.pgpass`` file (see PostgreSQL documentation).
+For security reasons, it is not recommended to use the ``-W`` option to supply a password. Instead, it is advisable to use the *.pgpass* file (see PostgreSQL documentation).
 
 ----
 
-Examples
---------
+Command Examples
+----------------
 
 The command::
 

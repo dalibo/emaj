@@ -11,14 +11,16 @@ Utiliser Emaj_web
       }
     </style>
 
+----
+
 Accès à Emaj_web et aux bases de données
 ----------------------------------------
 
-L’accès à Emaj_web depuis un navigateur affiche la page d’accueil.
+L’accès à **Emaj_web** depuis un navigateur affiche la page d’accueil.
 
-Pour se connecter à une base de données, sélectionnez l’instance souhaitée dans l’arborescence de gauche ou dans l’onglet « serveurs », et remplissez les identifiants et mots de passe de connexion. Plusieurs connexions peuvent rester ouvertes simultanément.
+Pour se connecter à une base de données, sélectionnez l’instance souhaitée dans l’arborescence de gauche ou dans l’onglet « *serveurs* », et remplissez les identifiants et mots de passe de connexion. Plusieurs connexions peuvent rester ouvertes simultanément.
 
-Une fois connecté à une base de données dans laquelle l'extension emaj a été installée, l’utilisateur interagit avec l’extension en fonction des droits dont il dispose (super-utilisateur, *emaj_adm* ou *emaj_viewer*).
+Une fois connecté à une base de données dans laquelle l'*extension emaj* a été installée, l’utilisateur interagit avec l’extension en fonction des droits dont il dispose (super-utilisateur, *emaj_adm* ou *emaj_viewer*).
 
 Située à gauche, l'arborescence de navigation offre la visibilité de toutes les instances configurées, réparties éventuellement dans des groupes d’instances, et des bases de données qu’elles contiennent. En dépliant l’objet base de données, on accède aux groupes de tables E-Maj et aux schémas existants.
 
@@ -29,6 +31,8 @@ Située à gauche, l'arborescence de navigation offre la visibilité de toutes l
    Figure 1 – Arborescence de navigation.
 
 Les deux icônes en bas et à droite (non visible ici) permettent d’ajuster la largeur de l’arborescence de navigation.
+
+----
 
 Listes des groupes de tables
 ----------------------------
@@ -43,8 +47,8 @@ En sélectionnant une base de données, l'utilisateur accède à une page qui li
 
 Deux listes distinctes sont affichées :
 
-* les groupes de tables en état « *démarrés* »,
-* les groupes de tables en état « *arrêtés* ».
+* les groupes de tables en état « **démarrés** »,
+* les groupes de tables en état « **arrêtés** ».
 
 Pour chaque groupe de tables créé, sont affichés les attributs suivants :
 
@@ -60,6 +64,8 @@ En dessous, trois boutons permettent de créer un nouveau groupe de tables, d’
 
 Enfin, est affiché la liste des groupes de tables qui ont été supprimés.
 
+----
+
 Quelques détails de l'interface utilisateur
 -------------------------------------------
 
@@ -71,7 +77,7 @@ Les entêtes de page contiennent :
 * un fil d’ariane permettant de se repérer dans l’arborescence,
 * et un bouton pour aller directement en bas de page.
 
-Quatre barres d'icônes permettent de naviguer dans les différentes fonctions d'Emaj_web : l'une regroupe les fonctions globales de l'interface, deux autres, similaires, les fonctions associées respectivement à un groupe de tables et à une table particulière, et la dernière les fonctions associées à une séquence particulière.
+Quatre **barres d'icônes** permettent de naviguer dans les différentes fonctions d'Emaj_web : l'une regroupe les fonctions globales de l'interface, deux autres, similaires, les fonctions associées respectivement à un groupe de tables et à une table particulière, et la dernière les fonctions associées à une séquence particulière.
 
 .. figure:: images/emajweb_maintabs.png
    :align: center
@@ -109,11 +115,12 @@ Les colonnes contenant des commentaires ont une taille limitée. Mais le contenu
 
 Les cellules contenant des horodatages d’événement ou des durées affichent en infobulle la valeur complète de la donnée.
 
+----
 
 Détail d'un groupe de tables
 ----------------------------
 
-Depuis la page listant les groupes de tables, il est possible d'en savoir davantage sur un groupe de tables particulier en cliquant sur son nom. Cette page est aussi accessible par l'icône « *Propriétés* » de la barre des groupes ou par l'arborescence de gauche.
+Depuis la page listant les groupes de tables, il est possible d'en savoir davantage sur un groupe de tables particulier en cliquant sur son nom. Cette page est aussi accessible par l'icône « **Propriétés** » de la barre des groupes ou par l'arborescence de gauche.
 
 .. figure:: images/emajweb_groupproperties.png
    :align: center
@@ -138,10 +145,12 @@ L'utilisateur trouve ensuite un tableau des marques positionnées pour le groupe
 
 Pour chaque marque, plusieurs boutons permettent d'exécuter toute action que son état permet.
 
+----
+
 Statistiques
 ------------
 
-L'onglet « *Statistiques / Mises à jour* » de la barre des groupes permet d'obtenir, pour le groupe de tables et sur un intervalle de temps donné, des statistiques sur les mises à jour enregistrées pour les tables et les changements apportés aux séquences. L’intervalle de temps est défini soit par deux marques soit par une marque et la situation courante.
+L'onglet « **Statistiques / Mises à jour** » de la barre des groupes permet d'obtenir, pour le groupe de tables et sur un intervalle de temps donné, des statistiques sur les mises à jour enregistrées pour les tables et les changements apportés aux séquences. L’intervalle de temps est défini soit par deux marques soit par une marque et la situation courante.
 
 Trois types de statistiques peuvent être obtenues :
 
@@ -167,10 +176,12 @@ Sur chacune des lignes du tableau de statistiques, un bouton permet à l'utilisa
 
    Figure 9 – Formulaire de génération des requêtes de consultation des changements 
 
+----
+
 Contenu d'un groupe de tables
 -----------------------------
 
-L'onglet « *Contenu* » de la barre des groupes permet d'obtenir une vision synthétique du contenu d'un groupe de tables.
+L'onglet « **Contenu** » de la barre des groupes permet d'obtenir une vision synthétique du contenu d'un groupe de tables.
 
 Pour chaque table du groupe, le tableau affiché reprend ses propriétés E-Maj, ainsi que la place prise par ses table et index de log.
 
@@ -180,10 +191,12 @@ Pour chaque table du groupe, le tableau affiché reprend ses propriétés E-Maj,
 
    Figure 10 – Contenu d'un groupe de tables.
 
+----
+
 Historique des groupes de tables
 --------------------------------
 
-L’onglet « *Historique* » permet de visualiser les périodes durant lesquelles un groupe de tables existe, ainsi que celles durant lesquelles le groupe est démarré (les *sessions de log*). La profondeur d’historique conservé dépend du paramètre *history_retention*.
+L’onglet « **Historique** » permet de visualiser les périodes durant lesquelles un groupe de tables existe, ainsi que celles durant lesquelles le groupe est démarré (les *sessions de log*). La profondeur d’historique conservé dépend du paramètre *history_retention*.
 
 .. figure:: images/emajweb_grouphistory.png
    :align: center
@@ -191,10 +204,12 @@ L’onglet « *Historique* » permet de visualiser les périodes durant lesque
 
    Figure 11 – Historique d'un groupe de tables.
 
+----
+
 Schémas et configuration des groupes de tables
 ----------------------------------------------
 
-L’onglet « *Schémas* » permet de lister les schémas présents dans la base de données. 
+L’onglet « **Schémas** » permet de lister les schémas présents dans la base de données. 
 
 En en sélectionnant un, deux listes sont alors affichées : celle des tables puis celle des séquences contenues dans ce schéma.
 
@@ -208,10 +223,12 @@ Pour chaque liste, on trouve les propriétés E-Maj et quelques caractéristique
 
 En cliquant sur un nom de table ou de séquence ou sur une icône œil associée, on peut obtenir des détails sur les caractéristiques et le contenu de la table ou de la séquence.
 
+----
+
 Détails d’une table
 -------------------
 
-En sélectionnant l’une des tables d’un schéma, on accède à un premier onglet « *Propriétés* » qui montre les propriétés E-Maj courantes, la structure de la table, et ses éventuels triggers.
+En sélectionnant l’une des tables d’un schéma, on accède à un premier onglet « **Propriétés** » qui montre les propriétés E-Maj courantes, la structure de la table, et ses éventuels triggers.
 
 L’onglet permet aussi de modifier les propriétés E-Maj de la table (assignation à un groupe de tables, sortie ou changement de groupe de tables, modification des autres propriétés).
 
@@ -223,7 +240,7 @@ L’onglet permet aussi de modifier les propriétés E-Maj de la table (assignat
 
 Grâce à la barre d’onglets propres aux tables, on accède alors à 3 autres fonctions.
 
-L’onglet « *Statistiques / Mises à jour* » fournit des statistiques sur les changements enregistrés pour la table, sur une tranche de temps, de manière similaire aux statistiques sur les groupes de tables. Néanmoins, elles diffèrent sur plusieurs points :
+L’onglet « **Statistiques / Mises à jour** » fournit des statistiques sur les changements enregistrés pour la table, sur une tranche de temps, de manière similaire aux statistiques sur les groupes de tables. Néanmoins, elles diffèrent sur plusieurs points :
 
 * une seule table est traitée,
 * mais on obtient une ligne par intervalle élémentaire de marques,
@@ -237,9 +254,9 @@ Comme pour les groupes de tables, une icône « oeil » sur chaque ligne perme
 
    Figure 14 – Statistiques des mises à jour pour une table.
 
-L’onglet « Contenu » permet de visualiser les lignes présentes dans la table.
+L’onglet « **Contenu** » permet de visualiser les lignes présentes dans la table.
 
-Enfin, l’onglet « *Historique* » montre l’évolution des propriétés E-Maj de la table, en particulier ses rattachements aux groupes de tables.
+Enfin, l’onglet « **Historique** » montre l’évolution des propriétés E-Maj de la table, en particulier ses rattachements aux groupes de tables.
 
 .. figure:: images/emajweb_tablehistory.png
    :align: center
@@ -247,10 +264,12 @@ Enfin, l’onglet « *Historique* » montre l’évolution des propriétés E-
 
    Figure 15 – Historique E-Maj d’une table.
 
+----
+
 Détails d’une séquence
 ----------------------
 
-Pour les séquences, l’onglet « *Propriétés* » montre les propriétés E-Maj et les caractéristiques courantes de la séquence. Des boutons permettent aussi de modifier les propriétés E-Maj de la séquence (assignation à un groupe de tables, sortie ou changement de groupe de tables).
+Pour les séquences, l’onglet « **Propriétés** » montre les propriétés E-Maj et les caractéristiques courantes de la séquence. Des boutons permettent aussi de modifier les propriétés E-Maj de la séquence (assignation à un groupe de tables, sortie ou changement de groupe de tables).
 
 .. figure:: images/emajweb_sequenceproperties.png
    :align: center
@@ -260,7 +279,7 @@ Pour les séquences, l’onglet « *Propriétés* » montre les propriétés E
 
 Grâce à la barre d’onglets propres aux séquences, on accède alors à deux autres fonctions.
 
-L’onglet « *Statistiques / Mises à jour* » fournit des statistiques sur l’évolution de l’état de la séquence au fil du temps, avec, pour chaque intervalle élémentaire de marques :
+L’onglet « **Statistiques / Mises à jour** » fournit des statistiques sur l’évolution de l’état de la séquence au fil du temps, avec, pour chaque intervalle élémentaire de marques :
 
 * le nombre d’incréments de la séquence,
 * un indicateur permettant de savoir si une autre caractéristique de la séquence (valeur minimum, maximum, incrément, etc) a été modifiée,
@@ -272,7 +291,7 @@ L’onglet « *Statistiques / Mises à jour* » fournit des statistiques sur l
 
    Figure 17 – Statistiques d’une séquence.
 
-Enfin, l’onglet « *Historique* » montre l’évolution des propriétés E-Maj de la séquence, en particulier ses rattachements aux groupes de tables.
+Enfin, l’onglet « **Historique** » montre l’évolution des propriétés E-Maj de la séquence, en particulier ses rattachements aux groupes de tables.
 
 .. figure:: images/emajweb_sequencehistory.png
    :align: center
@@ -280,10 +299,12 @@ Enfin, l’onglet « *Historique* » montre l’évolution des propriétés E-
 
    Figure 18 – Historique E-Maj d’une séquence.
 
+----
+
 Triggers
 --------
 
-L’onglet « *Triggers* » liste les triggers applicatifs (ceux qui ne sont pas liés à E-Maj), avec leurs principales caractéristiques.
+L’onglet « **Triggers** » liste les triggers applicatifs (ceux qui ne sont pas liés à E-Maj), avec leurs principales caractéristiques.
 
 Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
 
@@ -293,11 +314,12 @@ Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
 
    Figure 19 – Liste des triggers applicatifs
 
+----
 
 Suivre les opérations de rollback
 ---------------------------------
 
-Une page, accessible par l'icône « *Rollbacks* » de la barre globale, permet de suivre les opérations de rollback. Trois listes distinctes sont affichées :
+Une page, accessible par l'icône « **Rollbacks E-Maj** » de la barre globale, permet de suivre les opérations de rollback. Trois listes distinctes sont affichées :
 
 * les opérations de rollback en cours, avec le rappel des caractéristiques de l'opération et une estimation de la part de l'opération déjà effectuée et de la durée restante,
 * les opérations de rollback terminées,
@@ -327,10 +349,12 @@ On y trouve plus précisément des données concernant :
 
    Figure 21 – Détails d’une opération de rollback.
 
+----
+
 Activité E-Maj
 --------------
 
-L’onglet *"Activité"* permet de suivre en temps réel l’activité de mise à jour des triggers de log E-Maj.
+L’onglet « **Activité** » permet de suivre en temps réel l’activité de mise à jour des triggers de log E-Maj.
 
 .. figure:: images/emajweb_activity.png
    :align: center
@@ -358,20 +382,22 @@ Les groupes, tables et séquences sont triés par ordre décroissant du nombre d
 
 La page peut être rafraichie soit manuellement soit automatiquement. Le délai de rafraichissement automatique est configurable pour l’installation Emaj_web (10 secondes par défaut).
 
+----
+
 État de l'environnement E-Maj
 -----------------------------
 
-En sélectionnant l’onglet « *E-Maj* » de la barre principale, l'utilisateur accède à une synthèse de l'état de l'environnement E-Maj.
+En sélectionnant l’onglet « **E-Maj** » de la barre principale, l'utilisateur accède à une synthèse de l'état de l'environnement E-Maj.
 
-Sont d'abord restitués les versions de PostgreSQL et d'E-Maj installées.
+Sont d'abord restitués les **versions** de PostgreSQL et d'E-Maj installées.
 
-Lorsque l’utilisateur est connecté avec un rôle "*superuser*", des boutons permettent, en fonction du contexte, de créer, mettre à jour ou supprimer l’extension *emaj*.
+Lorsque l’utilisateur est connecté avec un rôle "*SUPERUSER*", des boutons permettent, en fonction du contexte, de créer, mettre à jour ou supprimer l’extension *emaj*.
 
-Ensuite sont affichés : la place disque occupée par E-Maj (tables de log, tables techniques et index associés) et la part que cela représente dans la taille globale de la base de données.
+Ensuite sont affichés : la **place disque** occupée par E-Maj (tables de log, tables techniques et index associés) et la part que cela représente dans la taille globale de la base de données.
 
-Puis l'intégrité de l'environnement est testé ; le résultat de l'exécution de la fonction :ref:`emaj_verify_all() <emaj_verify_all>` est affiché.
+Puis **l'intégrité** de l'environnement est testé ; le résultat de l'exécution de la fonction :ref:`emaj_verify_all() <emaj_verify_all>` est affiché.
 
-Enfin sont listés tous les paramètres de l’extension emaj.
+Enfin sont listés tous les **paramètres de l’extension**.
 
 Deux boutons en bas de page permettent d’exporter ou d’importer une configuration de paramètres vers ou à partir d’un fichier local.
 

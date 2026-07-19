@@ -10,6 +10,9 @@ Toutes les opérations significatives réalisées par E-Maj sont tracées dans l
 
 Tout utilisateur disposant des droits *emaj_adm* ou *emaj_viewer* peut visualiser le contenu de la table *emaj_hist*.
 
+Structure de la table
+^^^^^^^^^^^^^^^^^^^^^
+
 La structure de la table **emaj_hist** est la suivante.
 
 +--------------+-------------+---------------------------------------------------------------------------+
@@ -31,6 +34,9 @@ La structure de la table **emaj_hist** est la suivante.
 +--------------+-------------+---------------------------------------------------------------------------+
 |hist_txid     | BIGINT      | numéro de la transaction à l'origine de l'événement                       |
 +--------------+-------------+---------------------------------------------------------------------------+
+
+La colonne *hist_function*
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 La colonne *hist_function* peut prendre les valeurs suivantes.
 
@@ -156,6 +162,9 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 | UNPROTECT_MARK_GROUP             | suppression d'une protection contre les rollbacks sur une marque d'un groupe          |
 +----------------------------------+---------------------------------------------------------------------------------------+
 
+La colonne *hist_event*
+^^^^^^^^^^^^^^^^^^^^^^^
+
 La colonne *hist_event* peut prendre les valeurs suivantes.
 
 +------------------------------+------------------------------------------------------------------------+
@@ -214,18 +223,22 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 | WARNING                      | message d’avertissement issu d’un rollback                             |
 +------------------------------+------------------------------------------------------------------------+
 
+----
+
 Autres tables historiques
 -------------------------
 
 Plusieurs autres tables internes historisent les opérations :
 
-* *emaj_version_hist* conserve la trace des changements de version de l’extension ;
-* *emaj_group_hist* enregistre les créations et suppressions des groupes de tables ;
-* *emaj_rel_hist* conserve les assignations des tables et séquences aux groupes de tables ;
-* *emaj_log_session* enregistre les périodes durant lesquelles les groupes de tables sont actifs (démarrés) ;
+* **emaj_version_hist** : conserve la trace des changements de version de l’extension ;
+* **emaj_group_hist** : enregistre les créations et suppressions des groupes de tables ;
+* **emaj_rel_hist** : conserve les assignations des tables et séquences aux groupes de tables ;
+* **emaj_log_session** : enregistre les périodes durant lesquelles les groupes de tables sont actifs (démarrés) ;
 * et plusieurs tables supportant les opérations de rollback E-Maj.
 
 Le client Emaj_web est le moyen le plus facile pour examiner le contenu de ces tables.
+
+----
 
 Purge des traces obsolètes
 --------------------------
@@ -240,7 +253,4 @@ Par défaut, la durée de rétention des événements est de 1 an. Mais cette va
 
 La purge des données périmées peut également être initiée par l’appel explicite de la fonction :ref:`emaj_purge_histories() <emaj_purge_histories>` . La paramètre en entrée de cette fonction définit un délai de rétention qui surcharge le paramètre E-Maj *history_retention*.
 
-Pour planifier des purges régulières, il est donc possible de :
-
-* positionner une valeur de paramètre *history_retention* très élevée (par exemple *'100 YEARS'*) ;
-* et planifier les purges par un ordonnanceur quelconque (crontab, pgAgent, pgTimeTable ou tout autre outil).
+Pour planifier des purges régulières, il est donc possible de positionner une valeur de paramètre *history_retention* très élevée (par exemple *'100 YEARS'*) et planifier les purges par un ordonnanceur quelconque (crontab, pgAgent, pgTimeTable ou tout autre outil).

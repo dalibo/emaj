@@ -3,15 +3,16 @@ Client de suivi des rollbacks
 
 E-Maj fournit un client externe qui se lance en ligne de commande et qui permet de suivre l'avancement des opérations de rollback en cours. 
  
-
 Préalables
 ----------
 
-L’outil proposé est codé en *perl*. Il nécessite que le logiciel **perl** avec les modules *DBI* et *DBD::Pg* soient installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l’instance PostgreSQL).
+L’outil proposé est codé en *perl*. Il nécessite que le logiciel **Perl** avec les modules *DBI* et *DBD::Pg* soient installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l’instance PostgreSQL).
 
 Pour disposer d’informations précises sur l’avancement des opérations de rollback en cours, il est nécessaire de valoriser le paramètre E-Maj :doc:`dblink_user_password<parameters>`. :ref:`Plus de détails...<emaj_rollback_activity_prerequisites>`
 
 Si l’extension a été installée par un rôle qui ne dispose pas du droit *SUPERUSER*, il faut également que ce rôle ait :ref:`reçu le droit d’exécuter la fonction dblink_connect_u(text,text)<rollbacks_limits>`.
+
+----
 
 Syntaxe
 -------
@@ -20,45 +21,53 @@ La syntaxe de la commande est la suivante : ::
 
    emajRollbackMonitor.pl [OPTIONS]...
 
-Options générales :
+Options générales
+^^^^^^^^^^^^^^^^^
 
-* -i <intervalle de temps entre 2 affichages> (en secondes, défaut = 5s)
-* -n <nombre d'affichages> (défaut = 1, 0 pour une boucle infinie)
-* -a <intervalle de temps maximum pour les opérations de rollback terminés à afficher> (en heures, défaut = 24h)
-* -l <nombre maximum d'opérations de rollback terminés à afficher> (défaut = 3)
-* --help affiche uniquement une aide sur la commande
-* --version affiche uniquement la version du logiciel
+* ``-i <délai>`` : intervalle de temps entre 2 affichages (en secondes, défaut = 5s).
+* ``-n <itération>`` : nombre d'affichages (défaut = 1, 0 pour une boucle infinie).
+* ``-a <plus vieux rollbacks terminés>`` : intervalle de temps maximum pour les opérations de rollback terminés à afficher (en heures, défaut = 24h).
+* ``-l <maximum rollbacks terminés>`` : nombre maximum d'opérations de rollback terminés à afficher (défaut = 3).
+* ``--help`` : affiche uniquement une aide sur la commande.
+* ``--version`` :  affiche uniquement la version du logiciel.
 
-Options de connexion :
+Options de connexion
+^^^^^^^^^^^^^^^^^^^^
 
-* -d <base de données à atteindre>
-* -h <hôte à atteindre>
-* -p <port ip à utiliser>
-* -U <rôle de connexion>
-* -W <mot de passe associé à l'utilisateur>
+* ``-d <database>`` : base de données à atteindre.
+* ``-h <hôte>`` : hôte à atteindre.
+* ``-p <IP>`` : port IP à utiliser.
+* ``-U <rôle>`` : rôle de connexion.
+* ``-W <mot de passe>`` : mot de passe associé au rôle de connexion, si nécessaire.
 
 Pour remplacer tout ou partie des paramètres de connexion, les variables habituelles *PGDATABASE*, *PGPORT*, *PGHOST* et/ou *PGUSER* peuvent être également utilisées.
 
 Le rôle de connexion fourni doit avoir les :doc:`droits de consultation E-Maj<accessPolicy>`.
 
-Pour des raisons de sécurité, il n'est pas recommandé d'utiliser l'option -W pour fournir un mot de passe. Il est préférable d'utiliser le fichier *.pgpass* (voir la documentation de PostgreSQL).
+Pour des raisons de sécurité, il n'est pas recommandé d'utiliser l'option ``-W`` pour fournir un mot de passe. Il est préférable d'utiliser le fichier *.pgpass* (voir la documentation de PostgreSQL).
 
-Exemples
---------
+----
 
-La commande ::
+Exemples de commande
+--------------------
+
+La commande : ::
 
    emajRollbackMonitor.pl -i 3 -n 10
 
 affiche 10 fois la liste des opérations de rollback en cours et celles des au plus 3 dernières opérations terminés depuis 24 heures, avec 3 secondes entre chaque affichage.
 
-La commande ::
+La commande : ::
 
    emajRollbackMonitor.pl -a 12 -l 10
 
 affichera une seule fois la liste des opérations de rollback en cours et celle des au plus 10 opérations terminées dans les 12 dernières heures.
 
-Exemple d'affichage de l'outil ::
+----
+
+Exemple d'affichage
+-------------------
+::
 
     E-Maj (version 4.2.0) - Monitoring rollbacks activity
    ---------------------------------------------------------------
