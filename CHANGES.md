@@ -122,7 +122,7 @@ E-Maj - Change log
   * Fix emaj functions exceptions raised when the emaj schema is set in the
     search_path.
 
-4.5.0 (2025-Sept-6)
+4.5.0 (2024-Sept-6)
 ------
 ###Enhancements:###
   * E-Maj is compatible with PostgreSQL V17.
