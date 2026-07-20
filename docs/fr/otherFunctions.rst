@@ -72,12 +72,12 @@ Identifier la table de log courante associée à une table applicative
 La fonction ``emaj_get_current_log_table()`` permet d’obtenir le schéma et le nom de la table de log courante associée à une table applicative : ::
 
 	SELECT log_schema, log_table FROM
-		emaj_get_current_log_table(p_app_schema, p_app_table);
+		emaj_get_current_log_table(p_schema, p_table);
 
 **Paramètres en entrée**
 
-- ``p_app_schema`` (*TEXT*) : Nom du **schéma** applicatif.
-- ``p_app_table`` (*TEXT*) : Nom de la **table applicative**.
+- ``p_schema`` (*TEXT*) : Nom du **schéma** applicatif.
+- ``p_table`` (*TEXT*) : Nom de la **table applicative**.
 
 **Données retournées**
 

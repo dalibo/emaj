@@ -72,12 +72,12 @@ Identifying the Current Log Table for an Application Table
 The ``emaj_get_current_log_table()`` function retrieves the schema and table names of the log table linked to a given application table. ::
 
    SELECT log_schema, log_table FROM
-       emaj_get_current_log_table(p_app_schema, p_app_table);
+       emaj_get_current_log_table(p_schema, p_table);
 
 **Input Parameters**
 
-- ``p_app_schema`` (*TEXT*): Application **schema name**.
-- ``p_app_table`` (*TEXT*): Application **table name**.
+- ``p_schema`` (*TEXT*): Application **schema name**.
+- ``p_table`` (*TEXT*): Application **table name**.
 
 **Returned data**
 

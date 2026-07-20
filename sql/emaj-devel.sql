@@ -3305,7 +3305,7 @@ $_modify_tables$
   END;
 $_modify_tables$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(p_app_schema TEXT, p_app_table TEXT,
+CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(p_schema TEXT, p_table TEXT,
                                                            OUT log_schema TEXT, OUT log_table TEXT)
 LANGUAGE plpgsql AS
 $emaj_get_current_log_table$
@@ -3317,8 +3317,8 @@ $emaj_get_current_log_table$
 -- Get the requested data from the emaj_relation table.
     SELECT rel_log_schema, rel_log_table INTO log_schema, log_table
       FROM emaj.emaj_relation
-      WHERE rel_schema = p_app_schema
-        AND rel_tblseq = p_app_table
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
         AND upper_inf(rel_time_range);
 --
     RETURN;
@@ -15512,7 +15512,7 @@ $do$
                                 OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
                                 OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
                                 OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT) TO emaj_viewer;
-      GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(p_app_schema TEXT, p_app_table TEXT,
+      GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(p_schema TEXT, p_table TEXT,
                                 OUT log_schema TEXT, OUT log_table TEXT) TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj._get_current_seq(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT) TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT)

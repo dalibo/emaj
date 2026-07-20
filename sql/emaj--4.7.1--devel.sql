@@ -280,6 +280,7 @@ $$Contains marks set on E-Maj table groups.$$;
 DROP FUNCTION IF EXISTS emaj._emaj_param_change_fnct();
 DROP FUNCTION IF EXISTS emaj._dblink_open_cnx(P_CNXNAME TEXT,P_CALLERROLE TEXT,OUT P_STATUS INT,OUT P_SCHEMA TEXT);
 DROP FUNCTION IF EXISTS emaj._check_new_mark(P_GROUPNAMES TEXT[],P_MARK TEXT);
+DROP FUNCTION IF EXISTS emaj.emaj_get_current_log_table(P_APP_SCHEMA TEXT,P_APP_TABLE TEXT,OUT LOG_SCHEMA TEXT,OUT LOG_TABLE TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_import_groups_configuration(P_JSON JSON,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_import_groups_configuration(P_LOCATION TEXT,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj._import_groups_conf(P_JSON JSON,P_GROUPS TEXT[],P_ALLOWGROUPSUPDATE BOOLEAN,P_LOCATION TEXT,P_MARK TEXT);
@@ -2331,7 +2332,7 @@ $_modify_tables$
   END;
 $_modify_tables$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(p_app_schema TEXT, p_app_table TEXT,
+CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(p_schema TEXT, p_table TEXT,
                                                            OUT log_schema TEXT, OUT log_table TEXT)
 LANGUAGE plpgsql AS
 $emaj_get_current_log_table$
@@ -2343,8 +2344,8 @@ $emaj_get_current_log_table$
 -- Get the requested data from the emaj_relation table.
     SELECT rel_log_schema, rel_log_table INTO log_schema, log_table
       FROM emaj.emaj_relation
-      WHERE rel_schema = p_app_schema
-        AND rel_tblseq = p_app_table
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
         AND upper_inf(rel_time_range);
 --
     RETURN;
@@ -12317,6 +12318,8 @@ GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_all_param FROM emaj_viewer;
 
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(p_schema TEXT, p_table TEXT,
+                                                          OUT log_schema TEXT, OUT log_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_current_seq(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_schema(p_schema TEXT, p_exceptionIfMissing BOOLEAN, p_checkNotEmaj BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_table(p_schema TEXT, p_table TEXT) TO emaj_viewer;
@@ -12324,6 +12327,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_get_assigned_group_sequence(p_schema TEXT, p
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_logging_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_idle_groups(p_includeFilter TEXT, p_excludeFilter TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_does_exist_mark_group(p_groupName TEXT, p_mark TEXT) TO emaj_viewer;
 
 ----------------------------------------------------------------
 --                                                            --
