@@ -3,26 +3,28 @@
 -- Corrupt a log schema by adding an unattended object.
 CREATE SEQUENCE emaj_emaj_demo_app_schema.not_an_emaj_seq;
 -- Try to uninstall the extension. It fails because of the extra sequence.
-\i sql/emaj_uninstall.sql
--- emaj_uninstall.sql
---
--- E-MAJ uninstall script : Version <devel>
--- 
--- This software is distributed under the GNU General Public License.
---
--- This script uninstalls any E-Maj environment.
--- It drops all components previously created either by a "CREATE EXTENSION emaj;" statement or using a psql script.
---
--- When emaj is installed as an EXTENSION, the script must be executed by a role having SUPERUSER privileges.
--- Otherwise it must be executed by the emaj schema owner.
---
--- After its execution, some operations may have to be done manually.
-\set ON_ERROR_STOP ON
-\set ECHO none
->>> Starting the E-Maj uninstallation procedure...
-psql:sql/emaj_uninstall.sql:23: WARNING:  emaj_drop_extension - schema consistency checks: Error: In schema "emaj_emaj_demo_app_schema", the sequence "emaj_emaj_demo_app_schema"."not_an_emaj_seq" is not linked to any created table group.
-psql:sql/emaj_uninstall.sql:23: ERROR:  emaj_drop_extension: There are 1 unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.
+SELECT emaj.emaj_drop_extension();
+WARNING:  emaj_drop_extension - schema consistency checks: Error: In schema "emaj_emaj_demo_app_schema", the sequence "emaj_emaj_demo_app_schema"."not_an_emaj_seq" is not linked to any created table group.
+ERROR:  emaj_drop_extension: There are 1 unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.
 CONTEXT:  PL/pgSQL function emaj.emaj_drop_extension() line 55 at RAISE
+-- So drop this sequence and retry.
+DROP SEQUENCE emaj_emaj_demo_app_schema.not_an_emaj_seq;
+-- Call the emaj_drop_extension function.
+SELECT emaj.emaj_drop_extension();
+NOTICE:  drop cascades to 5 other objects
+DETAIL:  drop cascades to table emaj_demo_app_schema.mytbl1
+drop cascades to table emaj_demo_app_schema.mytbl2
+drop cascades to table emaj_demo_app_schema."myTbl3"
+drop cascades to table emaj_demo_app_schema.mytbl4
+drop cascades to sequence emaj_demo_app_schema.myseq1
+NOTICE:  drop cascades to 6 other objects
+DETAIL:  drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl1
+drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl2
+drop cascades to table emaj_parallel_rollback_test_app_schema."myTbl3"
+drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl4
+drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl2b
+drop cascades to function emaj_parallel_rollback_test_app_schema.mytbl2trgfct()
+NOTICE:  drop cascades to event trigger emaj_protection_trg
 WARNING:  emaj_drop_extension: The emaj_adm role is also referenced in some other databases (postgres, regression_1, regression_2)
 WARNING:  emaj_drop_extension: There are remaining roles (_regress_emaj_adm1, _regress_emaj_adm2) who have been granted emaj_adm role.
 WARNING:  emaj_drop_extension: For these reasons, emaj_adm has not been dropped by this script.
@@ -33,13 +35,19 @@ WARNING:  emaj_drop_extension: For these reasons, the emaj_viewer role has not b
  
 (1 row)
 
+-- Check that the extension and the emaj schema are not known anymore.
+\dx emaj
               List of installed extensions
  Name | Version | Default version | Schema | Description 
 ------+---------+-----------------+--------+-------------
 (0 rows)
 
+\dn emaj
 List of schemas
  Name | Owner 
 ------+-------
 (0 rows)
 
+-- Drop the extra extensions to get a stable re-install test.
+DROP EXTENSION dblink;
+DROP EXTENSION btree_gist;

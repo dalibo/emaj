@@ -27,9 +27,6 @@ This function performs the following steps:
 - Drops the extension and the main *emaj* schema.
 - Drops the *emaj_adm* and *emaj_viewer* roles if they are not linked to any objects in the current database or other databases in the instance.
 
-.. note::
-   In E-Maj versions 4.4.0 and earlier, the extension was removed by executing the *sql/emaj_uninstall.sql* script. Although deprecated, this method remains valid.
-
 ----
 
 Uninstall the E-Maj Software

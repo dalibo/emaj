@@ -130,7 +130,6 @@
 	mv README.md.bak README.md
 	mv emaj.control.bak emaj.control
 	mv tar.index.bak tar.index
-	mv sql/emaj_uninstall.sql.bak sql/emaj_uninstall.sql
 	mv sql/emaj_demo.sql.bak sql/emaj_demo.sql
 	mv sql/emaj-devel.sql.bak sql/emaj-devel.sql
 	git add sql/emaj-devel.sql

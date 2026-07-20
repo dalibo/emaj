@@ -16,8 +16,6 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +----------------------------------------------+-----------------------------------------------------------------------------+
 | sql/emaj_prepare_parallel_rollback_test.sql  | script *psql* de test pour les rollbacks parallélisés                       |
 +----------------------------------------------+-----------------------------------------------------------------------------+
-| sql/emaj_uninstall.sql                       | script *psql* de désinstallation                                            |
-+----------------------------------------------+-----------------------------------------------------------------------------+
 | README.md                                    | documentation réduite de l'extension                                        |
 +----------------------------------------------+-----------------------------------------------------------------------------+
 | CHANGES.md                                   | notes de versions                                                           |

@@ -45,6 +45,8 @@ E-Maj - Change log
   * Improve checks of the input JSON structure when importing a table group
     configuration.
   * Remove both deprecated php clients.
+  * Remove the obsolete emaj_uninstall.sql script. The emaj_drop_extension()
+    function replaces it since 2 years.
   * Minor code changes.
 
 ###Bug fixes:###

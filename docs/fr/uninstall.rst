@@ -27,9 +27,6 @@ Cette fonction effectue les actions suivantes :
 - elle supprime l'extension et le schéma principal *emaj*,
 - elle supprime les rôles *emaj_adm* et *emaj_viewer* s'ils ne sont pas associés à d'autres rôles ou à d'autres bases de données de l'instance et ne possèdent pas de droits sur d'autres tables. 
 
-.. note::
-   Dans les versions d’E-Maj 4.4.0 et antérieures la suppression de l’extension *emaj* s’effectuait par l’exécution du script *sql/emaj_uninstall.sql*. Bien que dépréciée, cette façon de procéder est toujours possible.
-
 ----
 
 Désinstaller le logiciel E-Maj

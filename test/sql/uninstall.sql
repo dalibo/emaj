@@ -5,7 +5,7 @@
 CREATE SEQUENCE emaj_emaj_demo_app_schema.not_an_emaj_seq;
 
 -- Try to uninstall the extension. It fails because of the extra sequence.
-\i sql/emaj_uninstall.sql
+SELECT emaj.emaj_drop_extension();
 
 -- So drop this sequence and retry.
 DROP SEQUENCE emaj_emaj_demo_app_schema.not_an_emaj_seq;

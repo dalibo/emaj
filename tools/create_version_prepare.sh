@@ -69,7 +69,7 @@
 	done
 
 # Process sql directory: change version identifiers and rename scripts in development version
-	find sql/*devel.sql sql/emaj_demo.sql sql/emaj_prepare_parallel_rollback_test.sql sql/emaj_uninstall.sql -type f -exec sed -i.bak "s/<devel>/${NEW}/g" '{}' \;
+	find sql/*devel.sql sql/emaj_demo.sql sql/emaj_prepare_parallel_rollback_test.sql -type f -exec sed -i.bak "s/<devel>/${NEW}/g" '{}' \;
 	git mv sql/emaj--devel.sql sql/emaj--${NEW}.sql
 	git mv sql/emaj-devel.sql sql/emaj-${NEW}.sql
 
