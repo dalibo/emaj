@@ -14,94 +14,10 @@ Tout environement E-Maj installé dans une base de données peut être mis à jo
 
 Pour les versions d'E-Maj **installées comme une EXTENSION** et dont la version est supérieure ou égale à 2.3.1, il est possible de procéder à une :ref:`mise à jour sans désinstallation<extension_upgrade>`.  Cette méthode présente l’avantage de **conserver tous les logs**, permettant ainsi d'examiner les changements enregistrés, voire d’effectuer un rollback E-Maj ciblant une marque posée avant la mise à jour de la version.
 
-Notons que pour les versions d'E-Maj qui ont été installée par le **script psql** (et qui ne constitue donc pas une *EXTENSION*), il n'existe pas de procédure spécifique de mise à jour. Sur ces environnements, il faut **désinstaller puis réinstaller** E-Maj.
+Pour les versions d'E-Maj **installées par le script psql** (et qui ne constitue donc pas une *EXTENSION*), il n'existe pas de procédure spécifique de mise à jour. Sur ces environnements, il faut **désinstaller puis réinstaller** E-Maj.
 
 .. caution::
    Vérifier la :doc:`matrice de compatibilité des versions PostgreSQL et E-Maj<versionsMatrix>` pour s'assurer que la mise à jour de la version existante d’E-Maj est possible. Si la version de PostgreSQL utilisée est trop ancienne, il faut la faire évoluer **avant** de migrer E-Maj dans une version supérieure.
-
-----
-
-.. _uninstall_reinstall:
-
-Mise à jour par désinstallation puis réinstallation
----------------------------------------------------
-
-Pour ce type de mise à jour, il n'est pas nécessaire d'utiliser la procédure de :doc:`désinstallation complète <uninstall>`. Les tablespaces et les rôles peuvent notamment rester en l'état. En revanche, il peut s'avérer judicieux de sauvegarder quelques données utiles. C'est pourquoi, la démarche suivante est proposée.
-
-Arrêter des groupes de tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Si certains groupes de tables sont encore actifs, il faut au préalable les arrêter à l'aide de la fonction :ref:`emaj_stop_group() <emaj_stop_group>` (ou de la fonction :ref:`emaj_force_stop_group() <emaj_force_stop_group>` si *emaj_stop_group()* retourne une erreur).
-
-Sauvegarder les données utilisateurs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-La procédure dépend de la version E-Maj installée.
-
-**Version installée ≥ 3.3**
-
-La configuration complète des groupes de tables existants ainsi que les paramètres E-Maj peuvent être sauvegardés sur un fichier par : ::
-
-   SELECT emaj.emaj_export_groups_configuration('<chemin.fichier.1>');   
-   SELECT emaj.emaj_export_parameters_configuration('<chemin.fichier.2>');
-
-**Version installée < 3.3**
-
-Si la version E-Maj installée est antérieure à 3.3.0, ces fonctions d’exportation ne sont pas disponibles. 
-
-La reconstruction des **groupes de tables** après mise à jour de la version E-Maj nécessite :
-
-- soit la constitution manuelle d’un fichier JSON de configuration des groupes de tables,
-- soit l’utilisation des fonctions d’assignation des tables et séquences.
-
-Si la table *emaj_param* contient des **paramètres** spécifiques, elle peut être dupliquée en dehors du schéma *emaj* : ::
-
-   CREATE TABLE public.sav_param AS
-       SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
-
-Si la version E-Maj installée est une version 3.1.0 ou supérieure, et si des **triggers applicatifs** ont été enregistrés comme "ne devant pas être automatiquement désactivés lors des opérations de rollback E-Maj", on peut également sauver la table *emaj_ignored_app_trigger* : ::
-
-   CREATE TABLE public.sav_ignored_app_trigger AS
-       SELECT * FROM emaj.emaj_ignored_app_trigger;
-
-Supprimer et réinstaller E-Maj
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Une fois connecté en tant que super-utilisateur, il suffit d'enchaîner le script de désinstallation *uninstall.sql* de la version en place puis la création de l’extension : ::
-
-   \i <répertoire_ancien_emaj>/sql/emaj_uninstall.sql
-   CREATE EXTENSION emaj CASCADE;
-
-Restaurer les données utilisateurs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**Version précédente installée ≥ 3.3**
-
-Les configurations de groupes de tables et de paramètres exportées peuvent être rechargées par : ::
-
-   SELECT emaj.emaj_import_parameters_configuration('<chemin.fichier.2>', TRUE);
-   SELECT emaj.emaj_import_groups_configuration('<chemin.fichier.1>');
-
-**Version précédente installée < 3.3**
-
-Les éventuelles configurations de paramètres et de triggers applicatifs sauvegardées peuvent être rechargées par des requêtes du type : ::
-
-   SELECT emaj.emaj_set_param(
-            param_key,
-            COALESCE(
-                param_value_text,
-                param_value_numeric::TEXT,
-                param_value_boolean::TEXT,
-                param_value_interval::TEXT
-            ))
-     FROM public.sav_param;
-
-   INSERT INTO emaj.emaj_ignored_app_trigger
-       SELECT * FROM public.sav_ignored_app_trigger;
-
-Les groupes de tables doivent également être recréés par les :doc:`moyens disponibles<groupsCreationFunctions>` dans la nouvelle version.
-
-Les tables ou fichiers temporaires peuvent alors être supprimés.
 
 ----
 
@@ -146,6 +62,94 @@ Spécificités liées aux versions
 
 ----
 
+.. _uninstall_reinstall:
+
+Mise à jour par désinstallation puis réinstallation
+---------------------------------------------------
+
+Pour ce type de mise à jour, il n'est pas nécessaire d'utiliser la procédure de :doc:`désinstallation complète <uninstall>`. Les tablespaces et les rôles peuvent notamment rester en l'état. En revanche, il peut s'avérer judicieux de sauvegarder quelques données utiles. C'est pourquoi, la démarche suivante est proposée.
+
+Arrêter des groupes de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Arrêtez les éventuels groupes de tables actifs, avec la fonction :ref:`emaj_stop_group() <emaj_stop_group>` (ou la fonction :ref:`emaj_force_stop_group() <emaj_force_stop_group>` si *emaj_stop_group()* retourne une erreur).
+
+Sauvegarder les données utilisateurs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+La procédure dépend de la version E-Maj installée.
+
+**Version installée ≥ 3.3**
+
+Sauvegardez sur fichiers la configuration complète des groupes de tables existants et des paramètres E-Maj par : ::
+
+   SELECT emaj.emaj_export_groups_configuration('<chemin.fichier.1>');   
+   SELECT emaj.emaj_export_parameters_configuration('<chemin.fichier.2>');
+
+**Version installée < 3.3**
+
+Les fonctions d’exportation ne sont pas disponibles.
+
+Si la table *emaj_param* contient des **paramètres** spécifiques, dupliquez la en dehors du schéma *emaj* : ::
+
+   CREATE TABLE public.sav_param AS
+       SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
+
+Préparer manuellement la nouvelle configuration des **groupes de tables**, en constituant manuellement :
+
+- soit un :ref:`fichier JSON de configuration des groupes de tables<tables_groups_json>`,
+- soit un script enchaînant les :doc:`fonctions de création des groupes et d’assignation des tables et séquences<groupsCreationFunctions>`.
+
+Si la version E-Maj installée est une version 3.1.0 ou supérieure, et si des **triggers applicatifs** ont été enregistrés comme "ne devant pas être automatiquement désactivés lors des opérations de rollback E-Maj", ajustez la structure *JSON* à importer ou les attributs ``ignored_triggers`` et ``ignored_triggers_profiles`` du paramètre ``p_properties`` des fonctions d'assignation des tables.
+
+Supprimer et réinstaller E-Maj
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Une fois connecté en tant que super-utilisateur, supprimez puis recréez l'extension *emaj*.
+
+**Version précédente installée ≥ 4.5** ::
+
+   SELECT emaj.emaj_drop_extension();
+   CREATE EXTENSION emaj CASCADE;
+
+**Version précédente installée < 4.5** ::
+
+   \i <répertoire_ancien_emaj>/sql/emaj_uninstall.sql
+   CREATE EXTENSION emaj CASCADE;
+
+Restaurer les données utilisateurs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Version précédente installée ≥ 3.3**
+
+Rechargez les configurations de groupes de tables et de paramètres exportées par : ::
+
+   SELECT emaj.emaj_import_parameters_configuration('<chemin.fichier.2>', TRUE);
+   SELECT emaj.emaj_import_groups_configuration('<chemin.fichier.1>');
+
+**Version précédente installée < 3.3**
+
+Rechargez les éventuels **paramètres** par : ::
+
+   SELECT emaj.emaj_set_param(
+            param_key,
+            COALESCE(
+                param_value_text,
+                param_value_numeric::TEXT,
+                param_value_boolean::TEXT,
+                param_value_interval::TEXT
+            ))
+     FROM public.sav_param;
+
+Recréez les **groupes de tables** :
+
+- soit en important le fichier de configuration *JSON* avec la fonction :ref:`emaj_import_groups_configuration()<import_groups_conf>`,
+- soit en exécutant le script SQL appelant les fonctions de création des groupes et d’assignation des tables et séquences.
+
+Supprimez les tables et fichiers temporaires.
+
+----
+
 Ruptures de compatibilité
 -------------------------
 
@@ -159,14 +163,20 @@ Les ruptures de compatibilité de la version 4.0.0 d’E-Maj portent essentielle
 Plus précisément :
 
 1. la table *emaj_group_def* n’existe plus,
+
+
 2. la fonction :ref:`emaj_create_group()<emaj_create_group>` crée uniquement des groupes de tables vides, qu’il faut alimenter ensuite avec les fonctions de la famille d’:ref:`emaj_assign_table() / emaj_assign_sequence()<assign_table_sequence>` ou bien la fonction :ref:`emaj_import_groups_configuration()<import_groups_conf>` ; en conséquence, le 3ème paramètre de la fonction :ref:`emaj_create_group()<emaj_create_group>`, qui permettait de demander la création d’un groupe de tables vide, disparaît,
+
 3. les fonctions *emaj_alter_group()*, *emaj_alter_groups()* et *emaj_sync_def_group()* disparaissent également.
 
 De plus :
 
 4. La fonction *emaj_ignore_app_trigger()* est supprimée. On peut dorénavant spécifier les trigggers à ignorer lors des opérations de rollback E-Maj directement par les fonctions de la famille de :ref:`emaj_assign_table()<assign_table>`.
+
 5. Dans les structures JSON gérées par les fonctions :ref:`emaj_export_groups_configuration()<export_groups_conf>` et :ref:`emaj_import_groups_configuration()<import_groups_conf>`, le format de la propriété ``ignored_triggers`` spécifiant les triggers à ignorer lors des opérations de rollback E-Maj a été simplifiée, il s’agit maintenant d’un simple tableau de texte.
+
 6. L’ancienne famille de fonctions de rollback E-Maj retournant un simple entier est supprimée et seules les fonctions retournant un ensemble de messages sont conservées.
+
 7. Le nom des paramètres des fonctions a été modifié. Les préfixes "*v_*" ont été changés en "*p_*". Ceci n’a d’impact que dans les rares cas où les appels de fonctions sont formatés avec des paramètres nommés.
 
 Passage en version 4.3.0
@@ -191,3 +201,16 @@ Passage en version 4.3.0
 
    - aucun des deux paramètres de marques ne peut être *NULL*,
    - le format des informations concernant les séquences est modifié : les deux fichiers listant l’état des séquences aux marque début et fin sont remplacés par un fichier distinct par séquence, contenant les mêmes informations.
+
+Passage en version 5.0.0
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Les *INSERT*/*UPDATE*/*DELETE* directs dans la table *emaj_param* pour valoriser les paramètres E-Maj doivent être remplacés par des appels de la fonction :ref:`emaj_set_param()<emaj_set_param>`.
+
+2. L'arrêt d'un groupe de tables déjà arrêté doit être explicitement autorisé par la valorisation à *TRUE* du nouveau paramètre ``idleGroupsAllowed`` des fonctions :ref:`emaj_stop_group()<emaj_stop_group>` et :ref:`emaj_stop_groups()<emaj_stop_group>`.
+
+3. Obsolètes, les clients en mode caractères codés en *Php* sont supprimés. Il faut utiliser leur équivalent *Perl*.
+
+4. Obsolète, le script *emaj_uninstall.sql* de suppression d'E-Maj est supprimé. Il faut appeler à la place la fonction :doc:`emaj_drop_extension()<uninstall>`.
+
+5. Le nom de quelques paramètres de fonctions a été modifié. Si des appels de fonction utilisent des paramètres nommés, ce qui est rare, se référer à la documentation des fonctions pour ajuster les appels.
