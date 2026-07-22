@@ -10,11 +10,11 @@ Commenting a Mark
 
 It is possible to set, modify or delete a comment on a mark with::
 
-   SELECT emaj.emaj_comment_mark_group(p_groupName, p_mark, p_comment);
+   SELECT emaj.emaj_comment_mark_group(p_group, p_mark, p_comment);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*): **Mark name**. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 - ``p_comment`` (*TEXT*): New **comment** describing the mark. A *NULL* value deletes any existing comment for the mark.
 
@@ -37,15 +37,15 @@ Searching for a Mark
 
 The ``emaj_get_previous_mark_group()`` function provides the name of the latest mark before either a given date and time or another mark for a table group::
 
-   SELECT emaj.emaj_get_previous_mark_group(p_groupName, p_datetime);
+   SELECT emaj.emaj_get_previous_mark_group(p_group, p_datetime);
 
 or::
 
-   SELECT emaj.emaj_get_previous_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_get_previous_mark_group(p_group, p_mark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_datetime`` (*TIMESTAMPTZ*): **Date and time** to search.
 - ``p_mark`` (*TEXT*): **Mark name** to search. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 
@@ -66,11 +66,11 @@ Renaming a Mark
 
 An existing mark can be renamed using the following SQL statement::
 
-   SELECT emaj.emaj_rename_mark_group(p_groupName, p_mark, p_newName);
+   SELECT emaj.emaj_rename_mark_group(p_group, p_mark, p_newName);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*): **Mark name** to rename. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 - ``p_newName`` (*TEXT*): The **new name** for the mark. It may contain a generic ``%`` character, which is replaced by the current time with the pattern ``hh.mm.ss.mmmm``. If the parameter is not specified, or is empty or *NULL*, a name is automatically generated: ``MARK_%``.
 
@@ -91,11 +91,11 @@ Deleting a Mark
 
 A mark can also be deleted using the following SQL statement::
 
-   SELECT emaj.emaj_delete_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_delete_mark_group(p_group, p_mark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*): **Mark name** to delete. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 
 **Returned data**
@@ -119,11 +119,11 @@ Deleting Oldest Marks
 
 To easily delete all marks prior to a given mark in a single operation, execute the following statement::
 
-   SELECT emaj.emaj_delete_before_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_delete_before_mark_group(p_group, p_mark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*): The **new oldest mark name** of the group. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 
 **Returned data**
@@ -156,11 +156,11 @@ To complement the mechanism of :ref:`table group protection <emaj_protect_group>
 
 The ``emaj_protect_mark_group()`` function sets protection on a mark for a table group::
 
-   SELECT emaj.emaj_protect_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_protect_mark_group(p_group, p_mark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*): **Mark name** to protect. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 
 **Returned data**
@@ -185,12 +185,12 @@ When a mark is set, it is not protected. Protected marks of a table group automa
 
 The ``emaj_unprotect_mark_group()`` function removes existing protection from a table group mark::
 
-   SELECT emaj.emaj_unprotect_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_unprotect_mark_group(p_group, p_mark);
 
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*): **Mark name** to unprotect. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 
 **Returned data**

@@ -9,11 +9,11 @@ Ceci peut permettre de ré-appliquer des mises à jour après avoir restauré le
 
 Pour générer ce script SQL, il suffit d'exécuter une requête : ::
 
-   SELECT emaj.emaj_gen_sql_group(p_groupName, p_firstMark, p_lastMark, p_location, p_tblseqs);
+   SELECT emaj.emaj_gen_sql_group(p_group, p_firstMark, p_lastMark, p_location, p_tblseqs);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_firstMark`` (*TEXT*) : Nom de la **marque** représentant le **début** de la période. Le mot clé *EMAJ_LAST_MARK* représente la dernière marque posée.
 - ``p_lastMark`` (*TEXT*) : Nom de la **marque** représentant le **fin** de la période. Le mot clé *EMAJ_LAST_MARK* représente la dernière marque posée. Une valeur *NULL* représente la situation courante.
 - ``p_location`` (*TEXT*) : Localisation du **fichier de sortie**. Si *NULL*, les requêtes sont générées dans une table temporaire.
@@ -72,7 +72,7 @@ Il est aussi de la responsabilité de l'utilisateur de désactiver d'éventuels 
 
 La fonction ``emaj_gen_sql_groups()`` permet de générer des scripts SQL portant sur **plusieurs groupes** de tables ::
 
-   SELECT emaj.emaj_gen_sql_groups(p_groupName, p_firstMark, p_lastMark, p_location, p_tblseqs);
+   SELECT emaj.emaj_gen_sql_groups(p_group, p_firstMark, p_lastMark, p_location, p_tblseqs);
 
 La différence avec la fonction *emaj_gen_sql_group()* est la suivante :
 

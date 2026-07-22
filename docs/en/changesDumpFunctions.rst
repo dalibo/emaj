@@ -101,12 +101,12 @@ Dumping Changes on Files
 
 The ``emaj_dump_changes_group()`` function extracts changes from log tables and the sequences states table for a given table group, then creates files in the PostgreSQL instance's disk space using *COPY TO* statements. ::
 
-   SELECT emaj.emaj_dump_changes_group(p_groupName, p_firstMark, p_lastMark,
+   SELECT emaj.emaj_dump_changes_group(p_group, p_firstMark, p_lastMark,
                                        p_optionsList, p_tblseqs, p_dir);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_firstMark`` (*TEXT*): **First mark name**.
 - ``p_lastMark`` (*TEXT*): **Last mark name**. The keyword **EMAJ_LAST_MARK** represents the last set mark.
 - ``p_optionsList`` (*TEXT*): Comma-separated **options list**.
@@ -175,12 +175,12 @@ Generating SQL to Dump Changes
 
 The ``emaj_gen_sql_dump_changes_group()`` function generates SQL statements to extract changes from log tables and the sequences states table for a given table group. It produces either a temporary table or a flat file::
 
-   SELECT emaj.emaj_gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark,
+   SELECT emaj.emaj_gen_sql_dump_changes_group(p_group, p_firstMark, p_lastMark,
                                                p_optionsList, p_tblseqs, p_scriptLocation);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_firstMark`` (*TEXT*): **First mark name**.
 - ``p_lastMark`` (*TEXT*): **Last mark name**. The keyword **EMAJ_LAST_MARK** represents the last set mark.
 - ``p_optionsList`` (*TEXT*): Comma-separated **options list**.

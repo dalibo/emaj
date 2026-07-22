@@ -10,11 +10,11 @@ Commenter une marque
 
 Il est possible d'ennregistrer, modifier ou supprimer un commentaire sur une marque avec : ::
 
-   SELECT emaj.emaj_comment_mark_group(p_groupName, p_mark, p_comment);
+   SELECT emaj.emaj_comment_mark_group(p_group, p_mark, p_comment);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*) : **Marque** à commenter. Le mot clé '*EMAJ_LAST_MARK*' peut être utilisé comme nom de marque à commenter pour indiquer la dernière marque posée.
 - ``p_comment`` (*TEXT*) : **Commentaire** décrivant la marque. Une valeur *NULL* supprime tout commentaire existant.
 
@@ -37,15 +37,15 @@ Rechercher une marque
 
 La fonction ``emaj_get_previous_mark_group()`` permet de connaître, pour un groupe de tables, le nom de la dernière marque qui précède soit une date et une heure donnée, soit une autre marque. ::
 
-   SELECT emaj.emaj_get_previous_mark_group(p_groupName, p_datetime);
+   SELECT emaj.emaj_get_previous_mark_group(p_group, p_datetime);
 
 ou ::
 
-   SELECT emaj.emaj_get_previous_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_get_previous_mark_group(p_group, p_mark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_datetime`` (*TIMESTAMPTZ*) : **Date et heure** à rechercher.
 - ``p_mark`` (*TEXT*) : **Marque** à rechercher. Le mot clé ``EMAJ_LAST_MARK`` peut être utilisé comme nom de marque à commenter pour indiquer la dernière marque posée.
 
@@ -66,11 +66,11 @@ Renommer une marque
 
 Une marque existante peut être renommée avec la requête SQL : ::
 
-   SELECT emaj.emaj_rename_mark_group(p_groupName, p_mark, p_newName);
+   SELECT emaj.emaj_rename_mark_group(p_group, p_mark, p_newName);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*) : **Marque** à renommer. Le mot clé ``EMAJ_LAST_MARK`` peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 - ``p_newMark`` (*TEXT*) : **Nouveau nom** de la marque. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou a une valeur non *NULL* ou vide, un nom de marque est généré : ``MARK_%``.
 
@@ -91,11 +91,11 @@ Effacer une marque
 
 Une marque peut également être effacée par l'intermédiaire de la requête SQL : ::
 
-   SELECT emaj.emaj_delete_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_delete_mark_group(p_group, p_mark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*) : **Marque** à effacer. Le mot clé ``EMAJ_LAST_MARK`` peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
 **Données retournées**
@@ -119,11 +119,11 @@ Effacer les marques les plus anciennes
 
 Pour facilement effacer en une seule opération toutes les marques d'un groupe de tables antérieures à une marque donnée, on peut exécuter la requête : ::
 
-   SELECT emaj.emaj_delete_before_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_delete_before_mark_group(p_group, p_mark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*) : Nom de la nouvelle **plus ancienne marque**. Le mot clé ``EMAJ_LAST_MARK`` peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
 **Données retournées**
@@ -156,11 +156,11 @@ Pour compléter le mécanisme de :ref:`protection des groupes de tables <emaj_pr
 
 La fonction ``emaj_protect_mark_group()`` pose une protection sur une marque d'un groupe de tables : ::
 
-   SELECT emaj.emaj_protect_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_protect_mark_group(p_group, p_mark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*) : **Marque** à protéger. Le mot clé ``EMAJ_LAST_MARK`` peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
 **Données retournées**
@@ -185,11 +185,11 @@ Lorsqu'une marque est posée, elle n'est pas protégée. Les marques protégées
 
 La fonction ``emaj_unprotect_mark_group()`` ôte une protection existante sur une marque d'un groupe de tables : ::
 
-   SELECT emaj.emaj_unprotect_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_unprotect_mark_group(p_group, p_mark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*) : **Marque** à déprotéger. Le mot clé ``EMAJ_LAST_MARK`` peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
 **Données retournées**

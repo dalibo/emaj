@@ -53,7 +53,7 @@ The parameters of multi-group functions are the same as those of their correspon
 Syntax for Groups Array
 -----------------------
 
-The ``p_groupNames`` parameter passed to the multi-group functions is of SQL type *TEXT[]*, i.e., an array of text data.
+The ``p_groups`` parameter passed to the multi-group functions is of SQL type *TEXT[]*, i.e., an array of text data.
 
 According to the SQL standard, there are two possible syntaxes to specify a groups array: using braces ``{ }`` or the *ARRAY* function.
 

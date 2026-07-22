@@ -8,11 +8,11 @@ Resetting Log Tables of a Group
 
 In standard use, all log tables of a table group are purged at :ref:`emaj_start_group <emaj_start_group>` time. However, it is possible to reset log tables using the following SQL statement::
 
-   SELECT emaj.emaj_reset_group(p_groupName);
+   SELECT emaj.emaj_reset_group(p_group);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to reset.
+- ``p_group`` (*TEXT*): **Table group** to reset.
 
 **Returned data**
 
@@ -31,11 +31,11 @@ Commenting a Group
 
 It is possible to set a comment on a group :ref:`when it is created<emaj_create_group>`. However, this can also be done later with::
 
-   SELECT emaj.emaj_comment_group(p_groupName, p_comment);
+   SELECT emaj.emaj_comment_group(p_group, p_comment);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to comment.
+- ``p_group`` (*TEXT*): **Table group** to comment.
 - ``p_comment`` (*TEXT*, optional): **Comment** describing the table group.
 
 **Returned data**
@@ -61,11 +61,11 @@ At certain times, it may be useful to protect table groups against accidental ro
 
 The ``emaj_protect_group()`` function **sets protection** on a table group::
 
-   SELECT emaj.emaj_protect_group(p_groupName);
+   SELECT emaj.emaj_protect_group(p_group);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to protect.
+- ``p_group`` (*TEXT*): **Table group** to protect.
 
 **Returned data**
 
@@ -85,11 +85,11 @@ When a table group is started, it is not protected. When a table group that is p
 
 The ``emaj_unprotect_group()`` function **removes existing protection** from a table group::
 
-   SELECT emaj.emaj_unprotect_group(p_groupName);
+   SELECT emaj.emaj_unprotect_group(p_group);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to unprotect.
+- ``p_group`` (*TEXT*): **Table group** to unprotect.
 
 **Returned data**
 
@@ -110,11 +110,11 @@ Forced Stop of a Table Group
 
 It may occur that a corrupted table group cannot be stopped. This may be the case, for instance, if an application table belonging to a table group has been inadvertently dropped while the group was in *LOGGING* state. If the usual :ref:`emaj_stop_group() <emaj_stop_group>` or :doc:`emaj_stop_groups() <multiGroupsFunctions>` functions return an error, it is possible to force a group stop using the ``emaj_force_stop_group()`` function::
 
-   SELECT emaj.emaj_force_stop_group(p_groupName);
+   SELECT emaj.emaj_force_stop_group(p_group);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to stop.
+- ``p_group`` (*TEXT*): **Table group** to stop.
 
 **Returned data**
 
@@ -142,11 +142,11 @@ Forced Drop of a Table Group
 
 It may happen that a damaged table group cannot be stopped. But, if it is not stopped, it cannot be dropped. To drop a table group while it is still in *LOGGING* state, a special function exists::
 
-   SELECT emaj.emaj_force_drop_group(p_groupName);
+   SELECT emaj.emaj_force_drop_group(p_group);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to drop.
+- ``p_group`` (*TEXT*): **Table group** to drop.
 
 **Returned data**
 
@@ -171,15 +171,15 @@ Checking the Existence or State of a Table Group or a Mark
 
 The E-Maj administrator who wishes to :ref:`write idempotent SQL scripts<idempotent_groups_content>` to manage table groups can benefit from a few useful functions: ``emaj_does_exist_group()``, ``emaj_is_group_logging()``, and ``emaj_does_exist_mark_group()``::
 
-   SELECT emaj.emaj_does_exist_group(p_groupName);
+   SELECT emaj.emaj_does_exist_group(p_group);
 
-   SELECT emaj.emaj_is_group_logging(p_groupName);
+   SELECT emaj.emaj_is_group_logging(p_group);
 
-   SELECT emaj.emaj_does_exist_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_does_exist_mark_group(p_group, p_mark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to check.
+- ``p_group`` (*TEXT*): **Table group** to check.
 - ``p_mark`` (*TEXT*): **Mark** to check.
 
 **Returned data**
@@ -206,11 +206,11 @@ Snapping Tables and Sequences of a Table Group
 
 The ``emaj_snap_group()`` function allows users to take snapshots of all tables and sequences belonging to a group for analysis or comparison. It dumps all tables and sequences of a group to files with the following command::
 
-   SELECT emaj.emaj_snap_group(p_groupName, p_dir, p_copyOptions);
+   SELECT emaj.emaj_snap_group(p_group, p_dir, p_copyOptions);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to snap.
+- ``p_group`` (*TEXT*): **Table group** to snap.
 - ``p_dir`` (*TEXT*): Target **Output directory**.
 - ``p_copyOptions`` (*TEXT*): **COPY TO options**.
 
@@ -261,11 +261,11 @@ Erasing Traces of a Dropped Table Group
 
 When a table group is dropped, data about its previous life (creations, drops, starts, stops) are retained in two historical tables with the same retention as for other :doc:`historical data<traces>`. However, when dropping a table group that was mistakenly created, it may be useful to erase these traces immediately to avoid polluting these histories. A dedicated function is available for this purpose::
 
-   SELECT emaj.emaj_forget_group(p_groupName);
+   SELECT emaj.emaj_forget_group(p_group);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** to process.
+- ``p_group`` (*TEXT*): **Table group** to process.
 
 **Returned data**
 

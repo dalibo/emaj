@@ -25,11 +25,11 @@ Global Statistics About Log Tables Contents for One or More Table Groups
 
 Full global statistics about log content for a table group are available with this SQL statement::
 
-   SELECT * FROM emaj.emaj_log_stat_group(p_groupName, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_log_stat_group(p_group, p_firstMark, p_lastMark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_firstMark`` (*TEXT*): **Mark name** representing the period **lower** bound. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 - ``p_lastMark`` (*TEXT*): **Mark name** representing the period **upper** bound. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark. A *NULL* value represents the current state.
 
@@ -87,7 +87,7 @@ However, returned values may be **approximate** (in fact, overestimated). This o
 
 Using the ``emaj_log_stat_groups()`` function, log statistics can be obtained for **several groups** at once::
 
-   SELECT * FROM emaj.emaj_log_stat_groups(p_groupNames, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_log_stat_groups(p_groups, p_firstMark, p_lastMark);
 
 The difference with the *emaj_log_stat_group()* function is:
 
@@ -102,11 +102,11 @@ Detailed Statistics About Logs for One or More Table Groups
 
 Scanning log tables provides **more detailed information** at a **higher response time** cost. Full detailed statistics can be obtained with the following SQL statement::
 
-   SELECT * FROM emaj.emaj_detailed_log_stat_group(p_groupName, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_detailed_log_stat_group(p_group, p_firstMark, p_lastMark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_firstMark`` (*TEXT*): **Mark name** representing the period lower bound. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 - ``p_lastMark`` (*TEXT*): **Mark name** representing the period upper bound. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark. A *NULL* value represents the current state.
 
@@ -156,7 +156,7 @@ If a table is removed from its group and later reassigned to it during the reque
 
 Using the ``emaj_detailed_log_stat_groups()`` function, detailed log statistics can be obtained for several groups at once::
 
-   SELECT * FROM emaj.emaj_detailed_log_stat_groups(p_groupNames, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_detailed_log_stat_groups(p_groups, p_firstMark, p_lastMark);
 
 The difference with the *emaj_detailed_log_stat_group()* function is:
 
@@ -171,11 +171,11 @@ Statistics About Sequence Changes for One or More Table Groups
 
 Global statistics about how sequences of a table group change are available with this SQL statement::
 
-   SELECT * FROM emaj.emaj_sequence_stat_group(p_groupName, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_sequence_stat_group(p_group, p_firstMark, p_lastMark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_firstMark`` (*TEXT*): **Mark name** representing the period lower bound. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 - ``p_lastMark`` (*TEXT*): **Mark name** representing the period upper bound. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark. A *NULL* value represents the current state.
 
@@ -231,7 +231,7 @@ For a given sequence, the number of increments is computed as the difference bet
 
 Using the ``emaj_sequence_stat_groups()`` function, log statistics can be obtained for several groups at once::
 
-   SELECT * FROM emaj.emaj_sequence_stat_groups(p_groupNames, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_sequence_stat_groups(p_groups, p_firstMark, p_lastMark);
 
 The difference with the *emaj_sequence_stat_group()* function is:
 

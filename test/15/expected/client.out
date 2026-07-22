@@ -65,7 +65,7 @@ SELECT emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::JSONB);
 Calling the _rlbk_init() function failed.
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
+SQL statement "SELECT emaj._rlbk_check(p_groups, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------

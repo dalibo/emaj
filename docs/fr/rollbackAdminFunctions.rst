@@ -10,11 +10,11 @@ Estimer la durée d'un rollback
 
 La fonction ``emaj_estimate_rollback_group()`` permet d'obtenir une estimation de la durée que prendrait le rollback d'un groupe de tables à une marque donnée. Elle peut être appelée de la façon suivante : ::
 
-   SELECT emaj.emaj_estimate_rollback_group(p_groupName, p_mark, p_isLoggedRlbk);
+   SELECT emaj.emaj_estimate_rollback_group(p_group, p_mark, p_isLoggedRlbk);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*) : Nom de la **marque cible**. Le mot clé ``EMAJ_LAST_MARK`` représente la dernière marque posée.
 - ``p_isLoggedRlbk`` (*BOOLEAN*) :
 
@@ -50,7 +50,7 @@ Il est également possible de modifier manuellement le contenu de la table *emaj
 
 La fonction ``emaj_estimate_rollback_groups()`` permet d’estimer la durée d’un rollback portant sur **plusieurs groupes** de tables : ::
 
-   SELECT emaj.emaj_estimate_rollback_groups(p_groupNames, p_mark, p_isLoggedRlbk);
+   SELECT emaj.emaj_estimate_rollback_groups(p_groups, p_mark, p_isLoggedRlbk);
 
 La différence avec la fonction *emaj_estimate_rollback_group()* est la suivante :
 
@@ -194,11 +194,11 @@ Les fonctions :ref:`emaj_rollback_group(), emaj_rollback_groups()<emaj_rollback_
 
 Suite à l'exécution d'un « *rollback tracé* », et une fois que l'enregistrement de l'opération de rollback devient inutile, il est possible de « consolider » ce rollback, c'est à dire, en quelque sorte, de le transformer en « *rollback non tracé* ». A l'issue de l'opération de consolidation, les logs entre la marque cible du rollback et la marque de fin de rollback sont supprimés. La fonction ``emaj_consolidate_rollback_group()`` répond à ce besoin : ::
 
-   SELECT emaj.emaj_consolidate_rollback_group(p_groupName, p_endRlbkMark);
+   SELECT emaj.emaj_consolidate_rollback_group(p_group, p_endRlbkMark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_endRlbkMark`` (*TEXT*) : Nom de la **marque de fin** posée par le rollback à consolider. Le mot clé ``EMAJ_LAST_MARK`` peut être utilisé comme nom de marque à commenter pour indiquer la dernière marque posée.
 
 **Données retournées**

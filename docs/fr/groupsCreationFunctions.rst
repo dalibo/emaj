@@ -72,11 +72,11 @@ Créer des groupes de tables
 
 Pour créer un groupe de tables, il exécuter la requête SQL suivante : ::
 
-   SELECT emaj.emaj_create_group(p_groupName, p_isRollbackable, p_comment);
+   SELECT emaj.emaj_create_group(p_group, p_isRollbackable, p_comment);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à créer.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à créer.
 - ``p_isRollbackable`` (*BOOLEAN*, optionnel) :
 
    - *TRUE* (par défaut) : Le groupe est de **type** *ROLLBACKABLE*.
@@ -267,11 +267,11 @@ Supprimer un groupe de tables
 
 Pour supprimer un groupe de tables créé au préalable par la fonction :ref:`emaj_create_group() <emaj_create_group>`, exécuter la requête SQL : ::
 
-   SELECT emaj.emaj_drop_group(p_groupName);
+   SELECT emaj.emaj_drop_group(p_group);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de table à supprimer.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de table à supprimer.
 
 **Données retournées**
 

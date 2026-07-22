@@ -10,11 +10,11 @@ Estimating Rollback Duration
 
 The ``emaj_estimate_rollback_group()`` function returns an estimate of the time needed to roll back a table group to a given mark. It can be called with a statement like::
 
-   SELECT emaj.emaj_estimate_rollback_group(p_groupName, p_mark, p_isLoggedRlbk);
+   SELECT emaj.emaj_estimate_rollback_group(p_group, p_mark, p_isLoggedRlbk);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*): Target **mark name**. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 - ``p_isLoggedRlbk`` (*BOOLEAN*):
 
@@ -50,7 +50,7 @@ It is also possible to manually change the *emaj.emaj_rlbk_stat* table content, 
 
 Using the ``emaj_estimate_rollback_groups()`` function, it is possible to estimate the duration of a rollback operation on **several groups**::
 
-   SELECT emaj.emaj_estimate_rollback_groups(p_groupNames, p_mark, p_isLoggedRlbk);
+   SELECT emaj.emaj_estimate_rollback_groups(p_groups, p_mark, p_isLoggedRlbk);
 
 The difference with the *emaj_estimate_rollback_group()* function is:
 
@@ -192,11 +192,11 @@ The comment can be added, modified, or deleted when the operation is:
 
 Following the execution of an E-Maj *logged rollback*, and once the rollback operation recording becomes useless, it is possible to "*consolidate*" this rollback, meaning to some extent transforming it into an *unlogged rollback*. At the consolidation operation completion, marks and logs between the rollback target mark and the end rollback mark are deleted. The ``emaj_consolidate_rollback_group()`` function meets this need::
 
-   SELECT emaj.emaj_consolidate_rollback_group(p_groupName, p_endRlbkMark);
+   SELECT emaj.emaj_consolidate_rollback_group(p_group, p_endRlbkMark);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_endRlbkMark`` (*TEXT*): The name of the **mark that closed** the rollback operation. The ``'EMAJ_LAST_MARK'`` keyword can be used to represent the last set mark.
 
 **Returned data**

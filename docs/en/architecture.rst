@@ -98,7 +98,7 @@ E-Maj **function names** follow a naming convention:
 **Triggers** created on application tables share the same names:
 
 * ``emaj_log_trg``: Logs row-level operations (*INSERT*, *UPDATE*, *DELETE*).
-* ``emaj_trunc_trg``: Handles *TRUNCATE operations.
+* ``emaj_trunc_trg``: Handles *TRUNCATE* operations.
 
 **Event trigger** names start with ``emaj_`` and end with ``_trg``.
 

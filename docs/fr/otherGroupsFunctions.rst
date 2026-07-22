@@ -8,11 +8,11 @@ Réinitialiser les tables de log d'un groupe
 
 En standard, et sauf indication contraire, les tables de log sont vidées lors du démarrage du groupe de tables auquel elles appartiennent. En cas de besoin, il est néanmoins possible de réinitialiser ces tables de log avec la requête SQL suivante ::
 
-   SELECT emaj.emaj_reset_group(p_groupName);
+   SELECT emaj.emaj_reset_group(p_group);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à réinitialiser.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à réinitialiser.
 
 **Données retournées**
 
@@ -31,11 +31,11 @@ Commenter un groupe de tables
 
 Il est possible de positionner un commentaire sur un groupe quelconque lors de :ref:`sa création<emaj_create_group>`. Mais on peut le faire également plus tard avec : ::
 
-   SELECT emaj.emaj_comment_group(p_groupName, p_comment);
+   SELECT emaj.emaj_comment_group(p_group, p_comment);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à réinitialiser.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à réinitialiser.
 - ``p_comment`` (*TEXT*, optionnel) : **Commentaire** décrivant le groupe de tables.
 
 **Données retournées**
@@ -61,11 +61,11 @@ Il peut être utile à certains moments de se protéger contre des rollbacks int
 
 La fonction ``emaj_protect_group()`` **pose une protection** sur un groupe de tables. ::
 
-   SELECT emaj.emaj_protect_group(p_groupName);
+   SELECT emaj.emaj_protect_group(p_group);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à protéger.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à protéger.
 
 **Données retournées**
 
@@ -85,11 +85,11 @@ Au démarrage d'un groupe de tables, ce dernier n'est pas protégé. Lorsqu'il e
 
 La fonction ``emaj_unprotect_group()`` **ôte une protection** existante sur un groupe de tables. ::
 
-   SELECT emaj.emaj_unprotect_group(p_groupName);
+   SELECT emaj.emaj_unprotect_group(p_group);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à déprotéger.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à déprotéger.
 
 **Données retournées**
 
@@ -110,11 +110,11 @@ Arrêt forcé d'un groupe de tables
 
 Il peut arriver qu'un groupe de tables endommagé ne puisse pas être arrêté. C'est par exemple le cas si une table applicative du groupe de tables a été supprimée par inadvertance alors que ce dernier était actif. Si les fonctions usuelles :ref:`emaj_stop_group() <emaj_stop_group>` ou :doc:`emaj_stop_groups() <multiGroupsFunctions>` retournent une erreur, il est possible de forcer l'arrêt d'une groupe de tables à l'aide de la fonction ``emaj_force_stop_group()``. ::
 
-   SELECT emaj.emaj_force_stop_group(p_groupName);
+   SELECT emaj.emaj_force_stop_group(p_group);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à arrêter.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à arrêter.
 
 **Données retournées**
 
@@ -142,11 +142,11 @@ Suppression forcée d'un groupe de tables
 
 Il peut arriver qu'un groupe de tables endommagé ne puisse pas être arrêté. Mais n'étant pas arrêté, il est impossible de le supprimer. Pour néanmoins pouvoir supprimer un groupe de tables en état actif, une fonction spéciale est disponible. ::
 
-   SELECT emaj.emaj_force_drop_group(p_groupName);
+   SELECT emaj.emaj_force_drop_group(p_group);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à supprimer.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à supprimer.
 
 **Données retournées**
 
@@ -171,15 +171,15 @@ Connaitre l’existence ou l’état d'un groupe de tables ou d'une marque
 
 L’administrateur E-Maj souhaitant :ref:`écrire des scripts SQL idempotents pour administrer ses groupes de tables<idempotent_groups_content>` dispose de quelques fonctions utiles : ``emaj_does_exist_group()``, ``emaj_is_logging_group()`` et ``emaj_does_exist_mark_group()``. ::
 
-   SELECT emaj.emaj_does_exist_group(p_groupName);
+   SELECT emaj.emaj_does_exist_group(p_group);
 
-   SELECT emaj.emaj_is_logging_group(p_groupName);
+   SELECT emaj.emaj_is_logging_group(p_group);
 
-   SELECT emaj.emaj_does_exist_mark_group(p_groupName, p_mark);
+   SELECT emaj.emaj_does_exist_mark_group(p_group, p_mark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à examiner.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à examiner.
 - ``p_mark`` (*TEXT*) : **Marque** à examiner.
 
 **Données retournées**
@@ -206,11 +206,11 @@ Vider les tables et séquences d'un groupe de tables
 
 La fonction ``emaj_snap_group()`` permet de prendre des images de toutes les tables et séquences appartenant à un groupe, afin de pouvoir en observer le contenu ou les comparer. Elle vide sur fichiers toutes les tables et séquences d'un groupe de tables : ::
 
-   SELECT emaj.emaj_snap_group(p_groupName, p_dir, p_copyOptions);
+   SELECT emaj.emaj_snap_group(p_group, p_dir, p_copyOptions);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à vider.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à vider.
 - ``p_dir`` (*TEXT*) : **Répertoire de sortie**.
 - ``p_copyOptions`` (*TEXT*) : **Options des COPY TO**.
 
@@ -261,11 +261,11 @@ Effacer les traces de suppression d’un groupe de tables
 
 Lorsqu’un groupe de tables est supprimé, des données sur sa vie antérieure (créations, suppressions, démarrages et arrêts) sont conservées dans deux tables d’historiques, avec une même rétention que les autres :doc:`données historiques<traces>`. Mais en cas de suppression d’un groupe de tables qui a été créé par erreur, il peut s’avérer utile d’effacer immédiatement ces traces, afin de ne pas polluer ces historiques. Pour ce faire, une fonction spéciale est disponible ::
 
-   SELECT emaj.emaj_forget_group(p_groupName);
+   SELECT emaj.emaj_forget_group(p_group);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à traiter.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à traiter.
 
 **Données retournées**
 

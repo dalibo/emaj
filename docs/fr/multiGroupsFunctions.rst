@@ -53,7 +53,7 @@ Les paramètres des fonctions multi-groupes sont les mêmes que ceux de leurs fo
 Syntaxes pour exprimer un tableau de groupes
 --------------------------------------------
 
-Le paramètre ``p_groupNames`` passé aux fonctions multi-groupes est de type SQL *TEXT[ ]*, c'est à dire un tableau de données de type *TEXT*.
+Le paramètre ``p_groups`` passé aux fonctions multi-groupes est de type SQL *TEXT[ ]*, c'est à dire un tableau de données de type *TEXT*.
 
 Conformément au langage SQL, il existe deux syntaxes possibles pour saisir un tableau de groupes, utilisant soit les accolades ``{ }``, soit la fonction *ARRAY*.
 

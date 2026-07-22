@@ -20,11 +20,11 @@ Démarrer un groupe de tables
 
 "*Démarrer un groupe de tables*" consiste à activer l'enregistrement des mises à jour des tables du groupe. Pour ce faire, il faut exécuter la commande ::
 
-   SELECT emaj.emaj_start_group(p_groupName, p_mark, p_resetLogs, p_loggingGroupAllowed);
+   SELECT emaj.emaj_start_group(p_group, p_mark, p_resetLogs, p_loggingGroupAllowed);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à démarrer.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à démarrer.
 - ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque** initiale. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou a une valeur non *NULL* ou vide, un nom de marque est généré : ``START_%``.
 - ``p_resetLogs`` (*BOOLEAN*, optionnel) :
 
@@ -64,7 +64,7 @@ Pour être certain qu'aucune transaction impliquant les tables du groupe n'est e
 
 Grace à la fonction ``emaj_start_groups()``, **plusieurs groupes** de tables peuvent être démarrés en même temps : ::
 
-   SELECT emaj.emaj_start_groups(p_groupNames, p_mark, p_resetLogs, p_loggingGroupsAllowed);
+   SELECT emaj.emaj_start_groups(p_groups, p_mark, p_resetLogs, p_loggingGroupsAllowed);
 
 Les différences avec la fonction *emaj_start_group()* sont les suivantes :
 
@@ -81,11 +81,11 @@ Poser une marque intermédiaire
 
 Lorsque toutes les tables et séquences d'un groupe sont jugées dans un **état stable** pouvant servir de référence pour un éventuel *rollback*, une marque peut être posée. Ceci s'effectue par la requête SQL suivante ::
 
-   SELECT emaj.emaj_set_mark_group(p_groupName, p_mark, p_comment);
+   SELECT emaj.emaj_set_mark_group(p_group, p_mark, p_comment);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque**. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou a une valeur non *NULL* ou vide, un nom de marque est généré : ``MARK_%``.
 - ``p_comment`` (*TEXT*, optionnel) : **Commentaire** décrivant la marque. S’il n’est pas fourni ou s’il est valorisé à *NULL*, aucun commentaire n’est enregistré.
 
@@ -113,7 +113,7 @@ Pour insérer la pose d’une marque dans un script idempotent, il est possible 
 
 Grace à la fonction ``emaj_set_mark_groups()``, une marque peut être posée sur **plusieurs groupes** de tables même temps : ::
 
-   SELECT emaj.emaj_set_mark_groups(p_groupNames, p_mark, p_comment);
+   SELECT emaj.emaj_set_mark_groups(p_groups, p_mark, p_comment);
 
 La différence avec la fonction *emaj_set_mark_group()* est la suivante :
 
@@ -129,11 +129,11 @@ Exécuter un rollback E-maj simple d'un groupe de tables
 
 S'il est nécessaire de remettre les tables et séquences d'un groupe dans l'état dans lequel elles se trouvaient lors de la prise d'une marque, il faut procéder à un **rollback E-Maj**. Pour un rollback simple (« *unlogged* » ou « *non tracé* »), il suffit d'exécuter la requête SQL suivante : ::
 
-   SELECT * FROM emaj.emaj_rollback_group(p_groupName, p_mark, p_isAlterGroupAllowed, p_comment);
+   SELECT * FROM emaj.emaj_rollback_group(p_group, p_mark, p_isAlterGroupAllowed, p_comment);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_mark`` (*TEXT*) : Nom de la **marque cible**. Le mot clé ``EMAJ_LAST_MARK`` représente la dernière marque posée.
 - ``p_isAlterGroupAllowed`` (*BOOLEAN*, optionnel) :
 
@@ -181,7 +181,7 @@ Lorsque le volume de mises à jour à annuler est important et que l'opération 
 
 Grace à la fonction ``emaj_rollback_groups()``, **plusieurs groupes** de tables peuvent être « rollbackés » en même temps : ::
 
-   SELECT * FROM emaj.emaj_rollback_groups(p_groupNames, p_mark, p_isAlterGroupAllowed, p_comment);
+   SELECT * FROM emaj.emaj_rollback_groups(p_groups, p_mark, p_isAlterGroupAllowed, p_comment);
 
 Les différences avec la fonction *emaj_rollback_group()* sont les suivantes :
 
@@ -199,7 +199,7 @@ Une autre fonction permet d'exécuter un **rollback tracé** (*logged rollback*)
 
 Pour exécuter un rollback tracé sur un groupe de tables, il suffit d'exécuter la requête SQL suivante::
 
-   SELECT * FROM emaj.emaj_logged_rollback_group(p_groupName, p_mark, p_isAlterGroupAllowed, p_comment);
+   SELECT * FROM emaj.emaj_logged_rollback_group(p_group, p_mark, p_isAlterGroupAllowed, p_comment);
 
 Les deux fonctions :ref:`emaj_rollback_group()<emaj_rollback_group>` et *emaj_logged_rollback_group()* partagent :
 
@@ -235,7 +235,7 @@ Une :ref:`fonction de « consolidation »<emaj_consolidate_rollback_group>` de
 
 Grace à la fonction ``emaj_logged_rollback_groups()``, **plusieurs groupes** de tables peuvent être « rollbackés » en même temps : ::
 
-   SELECT * FROM emaj.emaj_logged_rollback_groups (p_groupNames, p_mark, p_isAlterGroupAllowed, p_comment);
+   SELECT * FROM emaj.emaj_logged_rollback_groups (p_groups, p_mark, p_isAlterGroupAllowed, p_comment);
 
 Les différences avec la fonction *emaj_logged_rollback_group()* sont les suivantes :
 
@@ -251,11 +251,11 @@ Arrêter un groupe de tables
 
 Lorsqu'on souhaite **arrêter l'enregistrement des mises à jour** des tables d'un groupe, il est possible de désactiver le log par la commande SQL : ::
 
-   SELECT emaj.emaj_stop_group(p_groupName, p_mark, p_resetLogs, p_idleGroupAllowed);
+   SELECT emaj.emaj_stop_group(p_group, p_mark, p_resetLogs, p_idleGroupAllowed);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables à arrêter.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables à arrêter.
 - ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque** d'arrêt. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou a une valeur non *NULL* ou vide, un nom de marque est généré : ``STOP_%``.
 - ``p_resetLogs`` (*BOOLEAN*, optionnel) :
 
@@ -292,7 +292,7 @@ La pose de **verrous** de type *SHARE ROW EXCLUSIVE* peut se traduire par la sur
 
 Grace à la fonction ``emaj_stop_groups()``, **plusieurs groupes** de tables peuvent être arrêtés en même temps : ::
 
-   SELECT emaj.emaj_stop_groups(p_groupNames, p_mark, p_resetLogs, p_idleGroupsAllowed);
+   SELECT emaj.emaj_stop_groups(p_groups, p_mark, p_resetLogs, p_idleGroupsAllowed);
 
 Les différences avec la fonction *emaj_stop_group()* sont les suivantes :
 

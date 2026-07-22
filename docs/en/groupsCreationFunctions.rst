@@ -72,11 +72,11 @@ Creating a Table Group
 
 To create a table group, execute the following SQL statement::
 
-   SELECT emaj.emaj_create_group(p_groupName, p_isRollbackable, p_comment);
+   SELECT emaj.emaj_create_group(p_group, p_isRollbackable, p_comment);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): The name of the table **group** to create.
+- ``p_group`` (*TEXT*): The name of the table **group** to create.
 - ``p_isRollbackable`` (*BOOLEAN*, optional):
 
    - *TRUE* (default): The group is of **type** *ROLLBACKABLE*.
@@ -267,11 +267,11 @@ Dropping a Table Group
 
 To drop a table group previously created by the :ref:`emaj_create_group() <emaj_create_group>` function, execute the SQL command::
 
-   SELECT emaj.emaj_drop_group(p_groupName);
+   SELECT emaj.emaj_drop_group(p_group);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): The name of the tables **group** to drop.
+- ``p_group`` (*TEXT*): The name of the tables **group** to drop.
 
 **Returned data**
 

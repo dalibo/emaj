@@ -9,12 +9,12 @@ These changes can then be replayed after the corresponding tables have been rest
 
 To generate this SQL script, execute the following statement::
 
-   SELECT emaj.emaj_gen_sql_group(p_groupName, p_firstMark, p_lastMark, p_location, p_tblseqs);
+   SELECT emaj.emaj_gen_sql_group(p_group, p_firstMark, p_lastMark, p_location, p_tblseqs);
 
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_firstMark`` (*TEXT*): **First mark name**. The keyword *EMAJ_LAST_MARK* represents the last set mark.
 - ``p_lastMark`` (*TEXT*): **Last mark name**. The keyword *EMAJ_LAST_MARK* represents the last set mark. A *NULL* value or an empty string represents the current state.
 - ``p_location`` (*TEXT*): Output **script location**. If *NULL*, SQL statements are generated into a temporary table.
@@ -73,7 +73,7 @@ Users are also responsible for deactivating any application triggers before exec
 
 Using the ``emaj_gen_sql_groups()`` function, it is possible to generate a SQL script for **multiple groups**::
 
-   SELECT emaj.emaj_gen_sql_groups(p_groupName, p_firstMark, p_lastMark, p_location, p_tblseqs);
+   SELECT emaj.emaj_gen_sql_groups(p_group, p_firstMark, p_lastMark, p_location, p_tblseqs);
 
 The differences with the *emaj_gen_sql_group()* function are:
 

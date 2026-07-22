@@ -23,11 +23,11 @@ Statistiques générales sur le contenu des tables de logs
 
 On peut obtenir les statistiques globales complètes pour un groupe de tables à l'aide de la requête SQL ::
 
-   SELECT * FROM emaj.emaj_log_stat_group(p_groupName, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_log_stat_group(p_group, p_firstMark, p_lastMark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_firstMark`` (*TEXT*) : Nom de la **marque** représentant le **début** de la période. Le mot clé ``EMAJ_LAST_MARK`` représente la dernière marque posée.
 - ``p_lastMark`` (*TEXT*) : Nom de la **marque** représentant le **fin** de la période. Le mot clé ``EMAJ_LAST_MARK`` représente la dernière marque posée. Une valeur *NULL* représente la situation courante.
 
@@ -85,7 +85,7 @@ Mais, les valeurs retournées peuvent être **approximatives** (en fait surestim
 
 Des statistiques peuvent être obtenues sur **plusieurs groupes** de tables en même temps, en utilisant la fonction ``emaj_log_stat_groups()`` : ::
 
-   SELECT * FROM emaj.emaj_log_stat_groups(p_groupNames, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_log_stat_groups(p_groups, p_firstMark, p_lastMark);
 
 La différence avec la fonction *emaj_log_stat_group()* est la suivante :
 
@@ -100,11 +100,11 @@ Statistiques détaillées sur les logs d’un ou plusieurs groupes de tables
 
 Le parcours des tables de log permet d'obtenir des informations plus **détaillées**, au prix d'un temps de réponse **plus long**. Ainsi, on peut obtenir les statistiques détaillées complètes à l'aide de la requête SQL : ::
 
-   SELECT * FROM emaj.emaj_detailed_log_stat_group(p_groupName, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_detailed_log_stat_group(p_group, p_firstMark, p_lastMark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_firstMark`` (*TEXT*) : Nom de la **marque** représentant le **début** de la période. Le mot clé ``EMAJ_LAST_MARK`` représente la dernière marque posée.
 - ``p_lastMark`` (*TEXT*) : Nom de la **marque** représentant le **fin** de la période. Le mot clé ``EMAJ_LAST_MARK`` représente la dernière marque posée. Une valeur *NULL* représente la situation courante.
 
@@ -154,7 +154,7 @@ Si, sur l’intervalle de temps demandé, une table a été supprimée du groupe
 
 Des statistiques détaillées peuvent être obtenues sur **plusieurs groupes** de tables en même temps, en utilisant la fonction ``emaj_detailed_log_stat_groups()`` ::
 
-   SELECT * FROM emaj.emaj_detailed_log_stat_groups(p_groupNames, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_detailed_log_stat_groups(p_groups, p_firstMark, p_lastMark);
 
 La différence avec la fonction *emaj_detailed_log_stat_group()* est la suivante :
 
@@ -169,11 +169,11 @@ Statistiques sur l’évolution des séquences d’un ou plusieurs groupes de ta
 
 On peut obtenir les statistiques sur l’évolution des séquences d'un groupe de tables à l'aide de la requête SQL ::
 
-   SELECT * FROM emaj.emaj_sequence_stat_group(p_groupName, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_sequence_stat_group(p_group, p_firstMark, p_lastMark);
 
 **Paramètres en entrée**
 
-- ``p_groupName`` (*TEXT*) : Nom du **groupe** de tables.
+- ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
 - ``p_firstMark`` (*TEXT*) : Nom de la **marque** représentant le **début** de la période. Le mot clé ``EMAJ_LAST_MARK`` représente la dernière marque posée.
 - ``p_lastMark`` (*TEXT*) : Nom de la **marque** représentant le **fin** de la période. Le mot clé ``EMAJ_LAST_MARK`` représente la dernière marque posée. Une valeur *NULL* représente la situation courante.
 
@@ -229,7 +229,7 @@ Pour une séquence donnée, le nombre d’incréments est calculé comme la diff
 
 Des statistiques peuvent être obtenues sur **plusieurs groupes** de tables en même temps, en utilisant la fonction ``emaj_sequence_stat_groups()`` ::
 
-   SELECT * FROM emaj.emaj_sequence_stat_groups(p_groupNames, p_firstMark, p_lastMark);
+   SELECT * FROM emaj.emaj_sequence_stat_groups(p_groups, p_firstMark, p_lastMark);
 
 La différence avec la fonction *emaj_sequence_stat_group()* est la suivante :
 

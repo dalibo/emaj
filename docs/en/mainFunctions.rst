@@ -20,11 +20,11 @@ Starting a Table Group
 
 Starting a table group consists of activating change recording for all tables in the group. To achieve this, execute the following command::
 
-   SELECT emaj.emaj_start_group(p_groupName, p_mark, p_resetLogs, p_loggingGroupAllowed);
+   SELECT emaj.emaj_start_group(p_group, p_mark, p_resetLogs, p_loggingGroupAllowed);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): Table **group** name.
+- ``p_group`` (*TEXT*): Table **group** name.
 - ``p_mark`` (*TEXT*, optional): Initial **mark** name. It may contain a generic ``%`` character, which is replaced by the current time with the pattern ``hh.mm.ss.mmmm``. If the parameter is not specified, or is empty or *NULL*, a name is automatically generated: ``START_%``.
 - ``p_resetLogs`` (*BOOLEAN*, optional):
 
@@ -64,7 +64,7 @@ To ensure that no transaction involving any table of the group is currently runn
 
 Thanks to the ``emaj_start_groups()`` function, **several groups** can be started at once::
 
-   SELECT emaj.emaj_start_groups(p_groupNames, p_mark, p_resetLogs, p_loggingGroupsAllowed);
+   SELECT emaj.emaj_start_groups(p_groups, p_mark, p_resetLogs, p_loggingGroupsAllowed);
 
 The differences with the *emaj_start_group()* function are:
 
@@ -81,11 +81,11 @@ Setting an Intermediate Mark
 
 When all tables and sequences of a group are considered to be in a **stable state** that can be used for a potential rollback, a mark can be set. This is done with the following SQL statement::
 
-   SELECT emaj.emaj_set_mark_group(p_groupName, p_mark, p_comment);
+   SELECT emaj.emaj_set_mark_group(p_group, p_mark, p_comment);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** name.
+- ``p_group`` (*TEXT*): **Table group** name.
 - ``p_mark`` (*TEXT*, optional): **Mark** name. It may contain a generic ``%`` character, which is replaced by the current time with the pattern ``hh.mm.ss.mmmm``. If the parameter is not specified, or is empty or *NULL*, a name is automatically generated: ``MARK_%``.
 - ``p_comment`` (*TEXT*, optional): **Comment** describing the mark. If it is not provided or if it is set to *NULL*, no comment is registered for the mark.
 
@@ -113,7 +113,7 @@ To set a mark in an idempotent script, it is possible to condition the operation
 
 Using the ``emaj_set_mark_groups()`` function, a mark can be set on **several groups** at once::
 
-   SELECT emaj.emaj_set_mark_groups(p_groupNames, p_mark, p_comment);
+   SELECT emaj.emaj_set_mark_groups(p_groups, p_mark, p_comment);
 
 The difference with the *emaj_set_mark_group()* function is :
 
@@ -128,11 +128,11 @@ Rolling Back a Table Group
 
 If it is necessary to reset tables and sequences of a group to the state they were in when a mark was set, an **E-Maj rollback** must be performed. To perform a simple ("unlogged") rollback, execute the following SQL statement::
 
-   SELECT * FROM emaj.emaj_rollback_group(p_groupName, p_mark, p_isAlterGroupAllowed, p_comment);
+   SELECT * FROM emaj.emaj_rollback_group(p_group, p_mark, p_isAlterGroupAllowed, p_comment);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group** name.
+- ``p_group`` (*TEXT*): **Table group** name.
 - ``p_mark`` (*TEXT*): **Target mark** name. The ``'EMAJ_LAST_MARK'`` keyword represents the last set mark.
 - ``p_isAlterGroupAllowed`` (*BOOLEAN*, optional):
 
@@ -180,7 +180,7 @@ When the volume of updates to cancel is high and the rollback operation is there
 
 Using the ``emaj_rollback_groups()`` function, **several groups** can be rolled back at once::
 
-   SELECT * FROM emaj.emaj_rollback_groups(p_groupNames, p_mark, p_isAlterGroupAllowed, p_comment);
+   SELECT * FROM emaj.emaj_rollback_groups(p_groups, p_mark, p_isAlterGroupAllowed, p_comment);
 
 The differences with the *emaj_rollback_group()* function are:
 
@@ -198,7 +198,7 @@ Another function executes a **"logged" rollback**. In this case, log triggers on
 
 To execute a "logged" rollback, use the following SQL statement::
 
-   SELECT * FROM emaj.emaj_logged_rollback_group(p_groupName, p_mark, p_isAlterGroupAllowed, p_comment);
+   SELECT * FROM emaj.emaj_logged_rollback_group(p_group, p_mark, p_isAlterGroupAllowed, p_comment);
 
 Both :ref:`emaj_rollback_group()<emaj_rollback_group>` and *emaj_logged_rollback_group()* functions **share**:
 
@@ -234,7 +234,7 @@ A :ref:`logged rollback consolidation <emaj_consolidate_rollback_group>` functio
 
 Using the ``emaj_logged_rollback_groups()`` function, **several groups** can be rolled back at once::
 
-   SELECT * FROM emaj.emaj_logged_rollback_groups(p_groupNames, p_mark, p_isAlterGroupAllowed, p_comment);
+   SELECT * FROM emaj.emaj_logged_rollback_groups(p_groups, p_mark, p_isAlterGroupAllowed, p_comment);
 
 The differences with the *emaj_logged_rollback_group()* function are:
 
@@ -250,11 +250,11 @@ Stopping a Table Group
 
 When you wish to **stop recording changes** for tables in a group, it is possible to deactivate the logging mechanism using the following command::
 
-   SELECT emaj.emaj_stop_group(p_groupName, p_mark, p_resetLogs, p_idleGroupAllowed);
+   SELECT emaj.emaj_stop_group(p_group, p_mark, p_resetLogs, p_idleGroupAllowed);
 
 **Input Parameters**
 
-- ``p_groupName`` (*TEXT*): **Table group name**.
+- ``p_group`` (*TEXT*): **Table group name**.
 - ``p_mark`` (*TEXT*, optional):  Name of the **stop mark**. It may contain a generic ``%`` character, which is replaced by the current time with the pattern ``hh.mm.ss.mmmm``. If the parameter is not specified, or is empty or *NULL*, a name is automatically generated: ``STOP_%``.
 - ``p_resetLogs`` (*BOOLEAN*, optional):
 
@@ -293,7 +293,7 @@ The ``<idle_group_allowed?>`` parameter allows writing idempotent administration
 
 Using the ``emaj_stop_groups()`` function, **several groups** can be stopped at once::
 
-   SELECT emaj.emaj_stop_groups(p_groupNames, p_mark, p_resetLogs, p_idleGroupsAllowed);
+   SELECT emaj.emaj_stop_groups(p_groups, p_mark, p_resetLogs, p_idleGroupsAllowed);
 
 The differences with the *emaj_stop_group()* function are:
 
