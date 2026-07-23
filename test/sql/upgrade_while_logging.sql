@@ -22,7 +22,7 @@ SELECT relname FROM pg_catalog.pg_class,
 SELECT * FROM emaj.emaj_verify_all();
 
 -- Process the extension update.
-ALTER EXTENSION emaj UPDATE TO 'devel';
+ALTER EXTENSION emaj UPDATE TO '5.0.0';
 
 -----------------------------
 -- Check installation.

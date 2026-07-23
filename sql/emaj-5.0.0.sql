@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table changes : Version <devel>
+-- E-Maj : logs and rollbacks table changes : Version 5.0.0
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -74,7 +74,7 @@ CREATE TABLE emaj.emaj_version_hist (
   EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
   );
 INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range)
-  SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]');
+  SELECT '5.0.0', TSTZRANGE(clock_timestamp(), null, '[]');
 COMMENT ON TABLE emaj.emaj_version_hist IS
 $$Contains E-Maj versions history.$$;
 
@@ -15726,7 +15726,7 @@ $do$
 -- Insert the completion event into the operations history.
     v_extraWording = coalesce(' (' || v_extraWording || ')', '');
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-      VALUES ('EMAJ_INSTALL', 'E-Maj <devel>', 'Initialisation completed' || v_extraWording);
+      VALUES ('EMAJ_INSTALL', 'E-Maj 5.0.0', 'Initialisation completed' || v_extraWording);
 --
     RETURN;
   END;

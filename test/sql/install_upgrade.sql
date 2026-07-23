@@ -24,7 +24,7 @@ SELECT extname, extversion FROM pg_extension WHERE extname = 'emaj';
 -----------------------------------------------------------
 -- Update emaj to the next version.
 -----------------------------------------------------------
-ALTER EXTENSION emaj UPDATE TO 'devel';
+ALTER EXTENSION emaj UPDATE TO '5.0.0';
 
 -----------------------------------------------------------
 -- Check installation.

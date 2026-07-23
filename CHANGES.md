@@ -1,6 +1,7 @@
 E-Maj - Change log
 ==================
-<devel>
+
+5.0.0 (2026-Jul-24)
 ------
 ###Enhancements:###
   * E-Maj now supports PostgreSQL 19.
