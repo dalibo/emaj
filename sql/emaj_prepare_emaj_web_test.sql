@@ -11,9 +11,7 @@ SELECT emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
 ------------------------------------------------------------
 -- setup emaj parameters
 ------------------------------------------------------------
-DELETE FROM emaj.emaj_param WHERE param_key = 'dblink_user_password';
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES 
-  ('dblink_user_password','user=postgres password=postgres');
+SELECT emaj.emaj_set_param('dblink_user_password', 'user=postgres password=postgres');
 
 ------------------------------------------------------------
 -- create 3 application schemas with tables, sequences, triggers
