@@ -36,10 +36,6 @@ Once :doc:`installed <install>`, an E-Maj version contains the following files.
 +---------------------------------------------+---------------------------------------------------------------------+
 | client/emajStat.pl                          | *Perl* client to monitor changes recording                          |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_doc_en.pdf               | English version of the full E-Maj documentation (PDF)               |
-+---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_doc_fr.pdf               | French version of the full E-Maj documentation (PDF)                |
-+---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_pres.en.odp              | English version of the E-Maj presentation (OpenDocument)            |
 +---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_pres.fr.odp              | French version of the E-Maj presentation (OpenDocument)             |

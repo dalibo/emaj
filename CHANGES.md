@@ -47,6 +47,8 @@ E-Maj - Change log
   * Remove both deprecated php clients.
   * Remove the obsolete emaj_uninstall.sql script. The emaj_drop_extension()
     function replaces it since 2 years.
+  * The pdf version of the documentation is no longer maintained and
+    distributed. Use the online version instead.
   * Minor code changes.
 
 ###Bug fixes:###

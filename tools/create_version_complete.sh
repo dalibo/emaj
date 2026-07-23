@@ -83,8 +83,6 @@
 # Process doc directory: copy the Libre Office source documents from the emaj_doc directory, if any
 	echo "Processing the pdf documentation..."
 
-	cp ../emaj_doc/Emaj.devel_doc_en.odt  doc/Emaj.${NEW}_doc_en.odt
-	cp ../emaj_doc/Emaj.devel_doc_fr.odt  doc/Emaj.${NEW}_doc_fr.odt
 	cp ../emaj_doc/Emaj.devel_pres_en.odp doc/Emaj.${NEW}_pres_en.odp
 	cp ../emaj_doc/Emaj.devel_pres_fr.odp doc/Emaj.${NEW}_pres_fr.odp
 	cp ../emaj_doc/Emaj.devel_overview_en.odp doc/Emaj.${NEW}_overview_en.odp
@@ -92,8 +90,6 @@
 
 # Generate the pdf files
 	cd doc
-	libreoffice --headless --convert-to pdf Emaj.${NEW}_doc_en.odt
-	libreoffice --headless --convert-to pdf Emaj.${NEW}_doc_fr.odt
 	libreoffice --headless --convert-to pdf Emaj.${NEW}_pres_en.odp
 	libreoffice --headless --convert-to pdf Emaj.${NEW}_pres_fr.odp
 	libreoffice --headless --convert-to pdf Emaj.${NEW}_overview_en.odp
@@ -101,8 +97,6 @@
 	cd ..
 
 # Add the doc files into the tar.index file
-	echo "${NEWDIR}/doc/Emaj.${NEW}_doc_en.pdf" >>tar.index
-	echo "${NEWDIR}/doc/Emaj.${NEW}_doc_fr.pdf" >>tar.index
 	echo "${NEWDIR}/doc/Emaj.${NEW}_pres_en.odp" >>tar.index
 	echo "${NEWDIR}/doc/Emaj.${NEW}_pres_fr.odp" >>tar.index
 	echo "${NEWDIR}/doc/Emaj.${NEW}_pres_en.pdf" >>tar.index

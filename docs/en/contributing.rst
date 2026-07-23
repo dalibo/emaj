@@ -343,8 +343,6 @@ For all these files, some variables must be configured at the beginning of the s
 Documenting
 -----------
 
-The *LibreOffice* documentation is managed by the maintainers and has its own **GitHub** repository: **emaj_doc**. Thus, the **doc** directory in the main repository remains empty.
-
 The **online documentation** is managed using **Sphinx** and is located in the **docs** directory.
 
 To install **Sphinx**, refer to the **docs/README.rst** file.
@@ -360,6 +358,8 @@ To compile the documentation for a specific language, navigate to **docs/<langua
 Once compilation is successful, the documentation can be accessed locally in a browser by opening the ``docs/<language>/_build/html/index.html`` file.
 
 The documentation on **readthedocs.org** is automatically updated whenever the main **GitHub** repository is updated.
+
+Note: The **doc** directory in the main repository remains empty. At E-Maj version completion, **sets of slides** are added into it. The *LibreOffice* format sources of these presentations are managed by the maintainers in its own **GitHub** repository: **emaj_doc**.
 
 ----
 

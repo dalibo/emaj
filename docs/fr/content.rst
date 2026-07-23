@@ -36,15 +36,11 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +----------------------------------------------+-----------------------------------------------------------------------------+
 | client/emajStat.pl                           | client *perl* pour suivre l'enregistrement des mises à jour                 |
 +----------------------------------------------+-----------------------------------------------------------------------------+
-| doc/Emaj.<version>_doc_en.pdf                | documentation en anglais de l'extension E-Maj                               |
+| doc/Emaj.<version>_pres.en.odp               | présentation en anglais de l'extension E-Maj (OpenDocument)                 |
 +----------------------------------------------+-----------------------------------------------------------------------------+
-| doc/Emaj.<version>_doc_fr.pdf                | documentation en français de l'extension E-Maj                              |
+| doc/Emaj.<version>_pres.fr.odp               | présentation en français de l'extension E-Maj (OpenDocument)                |
 +----------------------------------------------+-----------------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.en.odp               | présentation en anglais de l'extension E-Maj                                |
+| doc/Emaj.<version>_pres.en.pdf               | présentation en anglais de l'extension E-Maj (PDF)                          |
 +----------------------------------------------+-----------------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.fr.odp               | présentation en français de l'extension E-Maj                               |
-+----------------------------------------------+-----------------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.en.pdf               | présentation en anglais de l'extension E-Maj (version pdf)                  |
-+----------------------------------------------+-----------------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.fr.pdf               | présentation en français de l'extension E-Maj (version pdf)                 |
+| doc/Emaj.<version>_pres.fr.pdf               | présentation en français de l'extension E-Maj (PDF)                         |
 +----------------------------------------------+-----------------------------------------------------------------------------+

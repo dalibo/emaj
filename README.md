@@ -1,7 +1,7 @@
 E-Maj
 =====
 
-E-Maj: logs and rollbacks tables content changes
+E-Maj: logs and rollbacks tables content changes.
 
 Version: <devel>
 
@@ -9,7 +9,7 @@ Version: <devel>
 License
 -------
 
-This software is distributed under the GNU General Public License.
+This software is distributed under the GNU General Public License (GPL).
 
 
 Objectives
@@ -37,7 +37,7 @@ In both environments, being able to examine the history of changes performed on 
 Distribution
 ------------
 
-E-Maj is available via the PGXN platform (https://pgxn.org/dist/e-maj/). The main repository is available on github (https://github.com/dalibo/emaj).
+E-Maj is available via the PGXN platform (https://pgxn.org/dist/e-maj/). The main repository is available on GitHub (https://github.com/dalibo/emaj).
 
 
 Documentation
@@ -59,7 +59,7 @@ Emaj_web GUI
 
 **Emaj_web** is a web GUI tool that brings a user friendly E-Maj administration. It is written in PHP.
 
-The Emaj_web client is available on [github](https://github.com/dalibo/emaj_web).
+The Emaj_web client is available on [GitHub](https://github.com/dalibo/emaj_web).
 
 Its installation and its usage are also described in the [documentation](https://emaj.readthedocs.io/en/latest/webOverview.html).
 

@@ -335,9 +335,7 @@ Pour chacun de ces fichiers, des variables sont à configurer en début de scrip
 Documenter
 ----------
 
-Une documentation au format *LibreOffice* est encore gérée par les mainteneurs. Elle dispose de son propre dépôt **GitHub** : **emaj_doc**. De ce fait, le dossier **doc** du dépôt principal reste vide.
-
-La *documentation en ligne* est gérée avec **Sphinx**. Elle est localiséeœ dans le répertoire **docs**.
+La *documentation en ligne* est gérée avec **Sphinx**. Elle est localisée dans le répertoire **docs**.
 
 Pour installer **Sphinx**, se référer au fichier **docs/README.rst**.
 
@@ -349,7 +347,9 @@ Pour compiler la documentation dans une langue, se placer dans le répertoire **
 
 Quand il n’y a plus d’erreur de compilation, la documentation peut être visualisée en local sur un navigateur, en ouvrant le fichier ``docs/<langue>/_build/html/index.html``.
 
-La mise à jour de la documentation présente sur le site **readthedocs.org** est automatique dès que le dépôt présent sur **GitHub** est mis à jour.
+La mise à jour de la documentation présente sur le site **readthedocs.org** est automatique dès que le dépôt sur **GitHub** est mis à jour.
+
+Note : le dossier **doc** du dépôt principal reste vide. A la finalisation d'une version E-Maj, des **jeux de diapositives** y sont ajoutés. Les sources de ces présentations, au format *LibreOffice*, sont gérées par les mainteneurs au sein d'un dépôt **GitHub** dédié : **emaj_doc**.
 
 ----
 
