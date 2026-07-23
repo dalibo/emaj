@@ -37,9 +37,10 @@ $do$
       RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL '
                       'version should be at least 14.', current_setting('server_version');
     END IF;
--- Check the E-Maj environment state, if not yet done by a previous upgrade in the same transaction.
+-- If we are in the first upgrade step of the transaction, ...
     SELECT current_setting('emaj.upgrade_verify_txid', TRUE) INTO v_txid;
     IF v_txid IS NULL OR v_txid <> txid_current()::TEXT THEN
+-- ... check the E-Maj environment state,
       BEGIN
         SELECT count(msg) FILTER (WHERE msg = 'No error detected'),
                count(msg) FILTER (WHERE msg LIKE 'Warning:%')
@@ -61,8 +62,9 @@ $do$
       IF v_nbWarning IS NOT NULL THEN
         PERFORM set_config('emaj.upgrade_verify_txid', txid_current()::TEXT, TRUE);
       END IF;
+-- ... and lock the emaj_group table to ensure that no other E-Maj operation is currently in progress.
+      LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
     END IF;
-
   END;
 $do$;
 
