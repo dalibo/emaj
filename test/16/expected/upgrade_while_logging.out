@@ -12,7 +12,7 @@ SELECT * FROM pg_available_extension_versions WHERE name = 'emaj' ORDER BY versi
  name | version | installed | superuser | trusted | relocatable | schema |      requires       |                                            comment                                             
 ------+---------+-----------+-----------+---------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
  emaj | devel   | f         | t         | f       | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
- emaj | 4.7.1   | t         | t         | f       | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 5.0.0   | t         | t         | f       | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
 SELECT relname FROM pg_catalog.pg_class, 
@@ -48,18 +48,16 @@ SELECT relname FROM pg_catalog.pg_class,
 
 -- Check the emaj integrity before upgrading.
 SELECT * FROM emaj.emaj_verify_all();
-                                                                                 emaj_verify_all                                                                                  
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
- Warning: the emaj_param table contains unknown parameters (unknown_key).
- Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+                                                                                emaj_verify_all                                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In table group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any table group.
+ Warning: The 'dblink_user_password' parameter value is not set.
  No error detected
-(4 rows)
+(3 rows)
 
 -- Process the extension update.
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
-NOTICE:  drop cascades to view emaj_visible_param
 -----------------------------
 -- Check installation.
 -----------------------------
@@ -105,7 +103,7 @@ SELECT relname FROM pg_catalog.pg_class,
 SELECT verh_version FROM emaj.emaj_version_hist ORDER BY verh_time_range;
  verh_version 
 --------------
- 4.7.1
+ 5.0.0
  <devel>
 (2 rows)
 
@@ -1340,7 +1338,7 @@ SELECT * FROM emaj.emaj_global_seq;
 SELECT * FROM emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-        205 |      26 | t
+        203 |      28 | t
 (1 row)
 
 SELECT * FROM emaj.emaj_time_stamp_time_id_seq;
@@ -1419,23 +1417,3 @@ SELECT * FROM "emaj_phil's schema""3"."myTbl2\_log_seq";
 -----------------------------
 -- Check the changes specific to this version upgrade.
 -----------------------------
-SELECT * FROM emaj.emaj_param ORDER BY param_key;
-     param_key     | param_value 
--------------------+-------------
- history_retention | @ 1 day
-(1 row)
-
-SELECT * FROM emaj.emaj_all_param ORDER BY param_rank;
-           param_key            | param_value | param_default | param_cast | param_rank 
---------------------------------+-------------+---------------+------------+------------
- history_retention              | @ 1 day     | 1 year        | INTERVAL   |          1
- dblink_user_password           |             |               |            |          2
- alter_log_table                |             |               |            |          3
- avg_row_rollback_duration      | 100 us      | 100 us        | INTERVAL   |          4
- avg_row_delete_log_duration    | 10 us       | 10 us         | INTERVAL   |          5
- avg_fkey_check_duration        | 20 us       | 20 us         | INTERVAL   |          6
- fixed_step_rollback_duration   | 2.5 ms      | 2.5 ms        | INTERVAL   |          7
- fixed_table_rollback_duration  | 1 ms        | 1 ms          | INTERVAL   |          8
- fixed_dblink_rollback_duration | 4 ms        | 4 ms          | INTERVAL   |          9
-(9 rows)
-

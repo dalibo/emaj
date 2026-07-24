@@ -16,7 +16,7 @@ SELECT * FROM pg_extension_update_paths('emaj') ORDER BY 1, 2;
 ------------------------------------------------------------
 -- Install emaj in its previous version as an extension.
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '4.7.1' CASCADE;
+CREATE EXTENSION emaj VERSION '5.0.0' CASCADE;
 
 -- Check.
 SELECT extname, extversion FROM pg_extension WHERE extname = 'emaj';
@@ -24,7 +24,7 @@ SELECT extname, extversion FROM pg_extension WHERE extname = 'emaj';
 -----------------------------------------------------------
 -- Update emaj to the next version.
 -----------------------------------------------------------
-ALTER EXTENSION emaj UPDATE TO '5.0.0';
+ALTER EXTENSION emaj UPDATE TO 'devel';
 
 -----------------------------------------------------------
 -- Check installation.

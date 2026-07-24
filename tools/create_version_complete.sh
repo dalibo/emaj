@@ -124,20 +124,24 @@
 	mv README.md.bak README.md
 	mv emaj.control.bak emaj.control
 	mv tar.index.bak tar.index
+
 	mv sql/emaj_demo.sql.bak sql/emaj_demo.sql
 	mv sql/emaj-devel.sql.bak sql/emaj-devel.sql
 	git add sql/emaj-devel.sql
 	mv sql/emaj_prepare_parallel_rollback_test.sql.bak sql/emaj_prepare_parallel_rollback_test.sql
 	mv sql/emaj--devel.sql.bak sql/emaj--devel.sql
 	git add sql/emaj--devel.sql
+
 	mv client/emajParallelRollback.pl.bak client/emajParallelRollback.pl
 	mv client/emajRollbackMonitor.pl.bak client/emajRollbackMonitor.pl
 	mv client/emajStat.pl.bak client/emajStat.pl
+
+	mv test/sql/install.sql.bak test/sql/install.sql
+	mv test/sql/install_upgrade.sql.bak test/sql/install_upgrade.sql
+	mv test/sql/install_oldest.sql.bak test/sql/install_oldest.sql
 	mv test/sql/upgrade_while_logging.sql.bak test/sql/upgrade_while_logging.sql
 	mv test/sql/install_psql.sql.bak test/sql/install_psql.sql
-	mv test/sql/install_upgrade.sql.bak test/sql/install_upgrade.sql
-	mv test/sql/install.sql.bak test/sql/install.sql
-	mv test/sql/install_oldest.sql.bak test/sql/install_oldest.sql
+	mv test/sql/non_superuser_install.sql.bak test/sql/non_superuser_install.sql
 
 # Adjust the extension version to create into the install_previous.sql and install_upgrade.sql test scripts
 	rm test/sql/install_previous.sql.bak

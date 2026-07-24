@@ -3,7 +3,7 @@
 -----------------------------
 -- emaj installation (not as extension).
 -----------------------------
-\i sql/emaj-5.0.0.sql
+\i sql/emaj-devel.sql
 
 -----------------------------
 -- Check installation.

@@ -1,5 +1,5 @@
 --
--- E-Maj: migration from <PREVIOUS_VERSION> to <devel>
+-- E-Maj: migration from 5.0.0 to <devel>
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -27,10 +27,10 @@ $do$
     v_nbNoError              INT;
     v_nbWarning              INT;
   BEGIN
--- The current emaj version must be '<PREVIOUS_VERSION>'.
+-- The current emaj version must be '5.0.0'.
     SELECT emaj.emaj_get_version() INTO v_emajVersion;
-    IF v_emajVersion <> '<PREVIOUS_VERSION>' THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not <PREVIOUS_VERSION>',v_emajVersion;
+    IF v_emajVersion <> '5.0.0' THEN
+      RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not 5.0.0',v_emajVersion;
     END IF;
 -- The installed postgres version must be at least 14.
     IF current_setting('server_version_num')::int < 140000 THEN
@@ -76,7 +76,7 @@ $do$;
 
 -- Insert the upgrade begin record in the operation history.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj <devel>', 'Upgrade from <PREVIOUS_VERSION> started');
+  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj <devel>', 'Upgrade from 5.0.0 started');
 
 -- Lock emaj_group table to avoid any concurrent E-Maj activity.
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
@@ -191,7 +191,7 @@ WITH start_time_data AS (
 
 -- Insert the upgrade end record in the operation history.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-  VALUES ('EMAJ_INSTALL','END','E-Maj <devel>', 'Upgrade from <PREVIOUS_VERSION> completed');
+  VALUES ('EMAJ_INSTALL','END','E-Maj <devel>', 'Upgrade from 5.0.0 completed');
 
 -- Post installation checks.
 DO

@@ -1,5 +1,13 @@
 E-Maj - Change log
 ==================
+<devel>
+------
+###Enhancements:###
+
+
+###Bug fixes:###
+
+
 
 5.0.0 (2026-Jul-24)
 ------

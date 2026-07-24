@@ -690,6 +690,4 @@ SELECT col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid FROM e
 -------------------------------
 -- Specific tests for this upgrade.
 -------------------------------
-INSERT INTO emaj.emaj_param(param_key, param_value_interval) VALUES ('history_retention', '1 day'::interval);
-INSERT INTO emaj.emaj_param(param_key, param_value_text) VALUES ('unknown_key', 'unknown_value');
 RESET session_authorization;

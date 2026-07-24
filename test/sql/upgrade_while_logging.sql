@@ -22,7 +22,7 @@ SELECT relname FROM pg_catalog.pg_class,
 SELECT * FROM emaj.emaj_verify_all();
 
 -- Process the extension update.
-ALTER EXTENSION emaj UPDATE TO '5.0.0';
+ALTER EXTENSION emaj UPDATE TO 'devel';
 
 -----------------------------
 -- Check installation.
@@ -63,6 +63,3 @@ SELECT * FROM "emaj_phil's schema""3"."myTbl2\_log_seq";
 -----------------------------
 -- Check the changes specific to this version upgrade.
 -----------------------------
-
-SELECT * FROM emaj.emaj_param ORDER BY param_key;
-SELECT * FROM emaj.emaj_all_param ORDER BY param_rank;

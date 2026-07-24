@@ -8,7 +8,7 @@ SET default_tablespace TO tspemaj;
 ------------------------------------------------------------
 -- Install emaj in its previous version as an extension.
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '4.7.1' CASCADE;
+CREATE EXTENSION emaj VERSION '5.0.0' CASCADE;
 NOTICE:  installing required extension "dblink"
 NOTICE:  installing required extension "btree_gist"
 ------------------------------------------------------------
@@ -18,20 +18,20 @@ NOTICE:  installing required extension "btree_gist"
 SELECT extname, extversion FROM pg_extension WHERE extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 4.7.1
+ emaj    | 5.0.0
 (1 row)
 
 -- Check the emaj version.
 SELECT emaj.emaj_get_version();
  emaj_get_version 
 ------------------
- 4.7.1
+ 5.0.0
 (1 row)
 
 -- Check the history.
 SELECT hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user FROM emaj.emaj_hist ORDER BY hist_id;
  hist_id | hist_function | hist_event | hist_object |       hist_wording       | hist_user 
 ---------+---------------+------------+-------------+--------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 4.7.1 | Initialisation completed | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 5.0.0 | Initialisation completed | postgres
 (1 row)
 

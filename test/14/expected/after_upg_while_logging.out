@@ -588,8 +588,10 @@ SELECT hist_function, hist_event, hist_object,
  EMAJ_INSTALL             | END                | E-Maj 4.7.0                                                       | Upgrade from 4.6.0 completed                                                                  | postgres
  EMAJ_INSTALL             | BEGIN              | E-Maj 4.7.1                                                       | Upgrade from 4.7.0 started                                                                    | postgres
  EMAJ_INSTALL             | END                | E-Maj 4.7.1                                                       | Upgrade from 4.7.0 completed                                                                  | postgres
- EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 4.7.1 started                                                                    | postgres
- EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 4.7.1 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj 5.0.0                                                       | Upgrade from 4.7.1 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj 5.0.0                                                       | Upgrade from 4.7.1 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 5.0.0 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 5.0.0 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                                                          | Status 1                                                                                      | _regress_emaj_adm2
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | Unlogged rollback to mark Common (timestamp)                                                  | _regress_emaj_adm2
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5 ('dblink_user_password' parameter not set)                                        | _regress_emaj_adm2
@@ -753,7 +755,7 @@ SELECT hist_function, hist_event, hist_object,
  DROP_GROUP               | TIME STAMP SET     | 37                                                                |                                                                                               | _regress_emaj_adm2
  DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | _regress_emaj_adm2
  DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | _regress_emaj_adm2
-(313 rows)
+(315 rows)
 
 --
 -- Set sequence restart value.
