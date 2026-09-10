@@ -97,16 +97,19 @@ reg_test_version()
     EXPECTED_FILE="${EMAJ_DIR}/test/${1}/expected/${REGTEST}.out"
     ALIGN="printf ' %.0s' {1.."$((25-${#REGTEST}))"}"
     echo -n "test ${REGTEST}$(eval ${ALIGN})... " | tee -a ${OUT_FILE}
+    START=$(date +%s%N)
     PGOPTIONS="-c intervalstyle=postgres_verbose" LC_MESSAGES='C' PGTZ='PST8PDT' PGDATESTYLE='Postgres, MDY' ${PGBIN}/psql regression -X -q --echo-all <${REGTEST_FILE} >${RESULTS_FILE} 2>&1
+    END=$(date +%s%N)
+    DURATION_MS=$(echo "($END - $START) / 1000000" | bc)
     let CMP_REGTEST++
     diff -C3 ${EXPECTED_FILE} ${RESULTS_FILE} >> ${DIFF_FILE}
     if [ $? -ne 0 ]; then
       REGTEST_STATUS='FAILED'
       let CMP_FAILED++
     else
-      REGTEST_STATUS='ok'
+      REGTEST_STATUS="$(printf "ok %10d ms" $DURATION_MS)"
     fi
-    echo ${REGTEST_STATUS} | tee -a ${OUT_FILE}
+    echo "${REGTEST_STATUS}" | tee -a ${OUT_FILE}
   done
   echo
   echo '======================='
