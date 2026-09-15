@@ -17,6 +17,12 @@ The command syntax is::
 
    emajStat.pl [OPTIONS]...
 
+Generic Program Information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``--help``: Display the **help** message and exit.
+* ``--version``: Display the **version** information of the client and exit.
+
 General Options
 ^^^^^^^^^^^^^^^
 
@@ -34,8 +40,6 @@ General Options
 * ``--no-cls``: Do not clear the screen at each display.
 * ``--sort-since-previous``: Sorts groups, tables, and sequences by changes since the previous display (default = sort by changes since the latest mark).
 * ``--max-relation-name-length``: Limits the size of full table and sequence names (default = 32 characters).
-* ``--help``: Displays only the command help.
-* ``--version``: Displays only the software version.
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^

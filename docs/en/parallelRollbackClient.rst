@@ -38,6 +38,12 @@ The syntax is::
 
    emajParallelRollback.pl -g <group(s).name> -m <mark> -s <number_of_sessions> [OPTIONS]...
 
+Generic Program Information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``--help``: Display the **help** message and exit.
+* ``--version``: Display the **version** information of the client and exit.
+
 General Options
 ^^^^^^^^^^^^^^^
 
@@ -45,8 +51,6 @@ General Options
 * ``-a``: Specifies that the requested rollback is :ref:`allowed to reach a mark set before an alter group operation<emaj_rollback_group>`.
 * ``-c <comment>``: Sets a comment on the rollback operation.
 * ``-v``: Displays more information about the execution of the processing.
-* ``--help``: Displays only the command help.
-* ``--version``: Displays only the software version.
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^

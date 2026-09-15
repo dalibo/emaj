@@ -17,6 +17,12 @@ La commande a pour syntaxe : ::
 
    emajStat.pl [OPTIONS]...
 
+Informations générales sur le programme
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``--help`` : affiche uniquement l'**aide** en ligne.
+* ``--version`` : affiche uniquement les informations sur la **version** du client.
+
 Options générales
 ^^^^^^^^^^^^^^^^^
 
@@ -34,8 +40,6 @@ Options générales
 * ``--no-cls`` : permet de ne pas effacer l’écran à chaque itération.
 * ``--sort_since_previous`` : trie les groupes, tables et séquences sur le nombre de changements depuis l’affichage précédent (défaut = tri sur le nombre de changements depuis la dernière marque du groupe).
 * ``--max-relation-name-length`` : limite la taille affichée des noms complets de tables et séquences (défaut = 32 caractères).
-* ``--help`` : affiche uniquement une aide sur la commande.
-* ``--version`` : affiche uniquement la version du logiciel.
 
 Options de connexion
 ^^^^^^^^^^^^^^^^^^^^

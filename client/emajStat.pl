@@ -269,37 +269,39 @@ It monitors the tables and sequences changes logged by E-Maj.
 Usage:
   $PROGRAM [OPTION]...
 
+Generic Program Information:
+  -?, --help  Output a usage message and exit.
+  --version   Output the program version number and exit.
+
 Options:
-  --interval                 Time Interval between 2 displays (in seconds, default = 5s)
-  --iteration                Number of display iterations (default = 0 = infinite loop)
-  --include-groups           Regexp as groups include filter (def = '.*' = all)
-  --exclude-groups           Regexp as groups exclude filter (def = '' = no exclusion)
-  --max-groups               Maximum number of displayed groups (def = 5)
-  --include-tables           Regexp as tables include filter (def = '.*' = all)
-  --exclude-tables           Regexp as tables exclude filter (def = '' = no exclusion)
-  --max-tables               Maximum number of displayed tables (def = 20)
-  --include-sequences        Regexp as sequences include filter (def = '.*' = all)
-  --exclude-sequences        Regexp as sequences exclude filter (def = '' = no exclusion)
-  --max-sequences            Maximum number of displayed sequences (def = 20)
-  --no-cls                   Do not clear the screen at each display
-  --sort_since_previous      sort groups, tables and sequences on changes since previous
-                               display instead of changes since latest mark (def = false)
-  --max-relation-name-length limits the displayed relation names length (def = 32)
-  --help                     shows this help, then exit
-  --version                  displays version information, then exit
+  --interval                 Time Interval between 2 displays (in seconds, default = 5s).
+  --iteration                Number of display iterations (default = 0 = infinite loop).
+  --include-groups           Regexp as groups include filter (def = '.*' = all).
+  --exclude-groups           Regexp as groups exclude filter (def = '' = no exclusion).
+  --max-groups               Maximum number of displayed groups (def = 5).
+  --include-tables           Regexp as tables include filter (def = '.*' = all).
+  --exclude-tables           Regexp as tables exclude filter (def = '' = no exclusion).
+  --max-tables               Maximum number of displayed tables (def = 20).
+  --include-sequences        Regexp as sequences include filter (def = '.*' = all).
+  --exclude-sequences        Regexp as sequences exclude filter (def = '' = no exclusion).
+  --max-sequences            Maximum number of displayed sequences (def = 20).
+  --no-cls                   Do not clear the screen at each display.
+  --sort_since_previous      Sort groups, tables and sequences on changes since previous
+                               display instead of changes since latest mark (def = false).
+  --max-relation-name-length Limits the displayed relation names length (def = 32).
 
 Connection options:
-  -d,         Database to connect to
-  -h,         database server Host or socket directory
-  -p,         database server Port
-  -U,         User name to connect as
-  -W,         passWord associated to the user, if needed
+  -d,         Database to connect to.
+  -h,         Database server host or socket directory.
+  -p,         Database server port.
+  -U,         User name to connect as.
+  -W,         Password associated to the user, if needed.
 
 Examples:
   $PROGRAM --interval 3 --iteration 10 --include-groups '^myGroup' --max-sequences 0
-      performs 10 displays during 30 seconds of tables changes for all groups whose name
-          starts with 'MyGroup'.
-    };
+        performs 10 displays during 30 seconds of tables changes for all groups whose name
+        starts with 'MyGroup'.
+};
 	exit 0;
 }
 

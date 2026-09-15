@@ -203,26 +203,28 @@ It monitors E-Maj rollback operations in progress or recently completed.
 Usage:
   $PROGRAM [OPTION]...
 
+Generic Program Information:
+  -?, --help  Output a usage message and exit.
+  --version   Output the program version number and exit.
+
 Options:
-  -a          max time interval for completed rollback operations to display (in hours, default = 24)
-  -i          time Interval between 2 displays (in seconds, default = 5s)
-  -l          maximum completed rollback operations to display (default = 3)
-  -n          Number of displays (default = 1, 0 for infinite loop)
-  --help      shows this help, then exit
-  --version   outputs version information, then exit
+  -a          Max time interval for completed rollback operations to display (in hours, default = 24).
+  -i          Time Interval between 2 displays (in seconds, default = 5s).
+  -l          Maximum completed rollback operations to display (default = 3).
+  -n          Number of displays (default = 1, 0 for infinite loop).
 
 Connection options:
-  -d,         Database to connect to
-  -h,         database server Host or socket directory
-  -p,         database server Port
-  -U,         User name to connect as
-  -W,         passWord associated to the user, if needed
+  -d,         Database to connect to.
+  -h,         Database server host or socket directory.
+  -p,         Database server port.
+  -U,         User name to connect as.
+  -W,         Password associated to the user, if needed.
 
 Examples:
   $PROGRAM -i 3 -n 10
-              performs 10 displays during 30 seconds.
+        performs 10 displays during 30 seconds.
   $PROGRAM -a 12 -l 10
-              a single display with a maximum of 10 completed operations in the past 12 hours.
+        performs a single display with a maximum of 10 completed operations in the past 12 hours.
 };
 }
 

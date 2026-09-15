@@ -21,6 +21,12 @@ The syntax is::
 
    emajRollbackMonitor.pl [OPTIONS]...
 
+Generic Program Information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``--help``: Display the **help** message and exit.
+* ``--version``: Display the **version** information of the client and exit.
+
 General Options
 ^^^^^^^^^^^^^^^
 
@@ -28,8 +34,6 @@ General Options
 * ``-n <iteration>``: Number of displays (default = 1, 0 for infinite loop).
 * ``-a <oldest completed rollback>``: Maximum time interval for rollback operations to display (in hours, default = 24h).
 * ``-l <maximum completed rollbacks>``: Maximum number of completed rollback operations to display (default = 3).
-* ``--help``: Displays only the command help.
-* ``--version``: Displays only the software version.
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^

@@ -261,29 +261,31 @@ It performs E-Maj rollback for one or several groups and a previously set mark, 
 Usage:
   $PROGRAM -g <comma separated list of E-Maj group names> -m <E-Maj mark> -s <number of sessions> [OPTION]...
 
+Generic Program Information:
+  -?, --help  Output a usage message and exit.
+  --version   Output the program version number and exit.
+
 Options:
 
-  -l          logged rollback mode (i.e. 'rollbackable' rollback)
-  -a          flag to allow rollback to reach a mark set before alter group operations
-  -c          comment to describe the rollback operation
-  -v          verbose mode; writes more information about the processing
-  --help      shows this help, then exit
-  --version   outputs version information, then exit
+  -l          Logged rollback mode (i.e. 'rollbackable' rollback).
+  -a          Flag to allow rollback to reach a mark set before alter group operations.
+  -c          Comment to describe the rollback operation.
+  -v          Verbose mode; writes more information about the processing.
 
 Connection options:
-  -d,         database to connect to
-  -h,         database server host or socket directory
-  -p,         database server port
-  -U,         user name to connect as
-  -W,         password associated to the user, if needed
+  -d,         Database to connect to.
+  -h,         Database server host or socket directory.
+  -p,         Database server port.
+  -U,         User name to connect as.
+  -W,         Password associated to the user, if needed.
   
 Examples:
   $PROGRAM -g myGroup1 -m myMark -s 3 -c \"Revert aborted ABC chain\"
-              performs a parallel rollback of the table group myGroup1 to the mark
-              myMark, using 3 parallel sessions, with a comment.
+        performs a parallel rollback of the table group myGroup1 to the mark myMark, using 3
+        parallel sessions, with a comment.
   $PROGRAM -h localhost -p 5432 -d myDb -U emajadmin -l -g \"myGroup1,myGroup2\" -m myMark -s 5 -v
-              lets the role emajadmin perform a parallel logged rollback of 2 table
-              groups to the mark myMark using 5 parallel sessions, in verbose mode.
+        lets the role emajadmin perform a parallel logged rollback of 2 table groups to the mark
+        myMark using 5 parallel sessions, in verbose mode.
 };
 }
 

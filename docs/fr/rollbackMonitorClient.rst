@@ -21,6 +21,12 @@ La syntaxe de la commande est la suivante : ::
 
    emajRollbackMonitor.pl [OPTIONS]...
 
+Informations générales sur le programme
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``--help`` : affiche uniquement l'**aide** en ligne.
+* ``--version`` : affiche uniquement les informations sur la **version** du client.
+
 Options générales
 ^^^^^^^^^^^^^^^^^
 
@@ -28,8 +34,6 @@ Options générales
 * ``-n <itération>`` : nombre d'affichages (défaut = 1, 0 pour une boucle infinie).
 * ``-a <plus vieux rollbacks terminés>`` : intervalle de temps maximum pour les opérations de rollback terminés à afficher (en heures, défaut = 24h).
 * ``-l <maximum rollbacks terminés>`` : nombre maximum d'opérations de rollback terminés à afficher (défaut = 3).
-* ``--help`` : affiche uniquement une aide sur la commande.
-* ``--version`` :  affiche uniquement la version du logiciel.
 
 Options de connexion
 ^^^^^^^^^^^^^^^^^^^^
