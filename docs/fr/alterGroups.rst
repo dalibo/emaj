@@ -1,6 +1,16 @@
 Modifier les groupes de tables
 ==============================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Généralités
 -----------
 
@@ -241,8 +251,9 @@ Quelques graphiques permettent de visualiser plus facilement les conséquences d
 
 Prenons 4 tables affectées à un groupe (t1 à t4) et 4 marques posées au fil du temps (m1 à m4). En m2, t3 a été ajoutée au groupe et t4 en a été retirée. En m3, t2 a été retirée du groupe alors que t4 y a été remis.
 
-.. image:: images/logging_group_changes.png
+.. figure:: images/logging_group_changes.png
    :align: center
+   :class: chart
 
 Un rollback à la marque m1 :
 
@@ -251,8 +262,9 @@ Un rollback à la marque m1 :
 * traiterait la table t3, mais en ne remontant que jusqu’à m2,
 * traiterait la table t4, mais en ne remontant que jusqu’à m3, faute de log entre m2 et m3.
 
-.. image:: images/logging_group_rollback.png
+.. figure:: images/logging_group_rollback.png
    :align: center
+   :class: chart
 
 Une restitution de statistiques entre les marques m1 et m4 produirait :
 
@@ -261,8 +273,9 @@ Une restitution de statistiques entre les marques m1 et m4 produirait :
 * 1 ligne pour t3 (m2,m4),
 * 2 lignes pour t4 (m1,m2) et (m3,m4).
 
-.. image:: images/logging_group_stat.png
+.. figure:: images/logging_group_stat.png
    :align: center
+   :class: chart
 
 La génération d’un script SQL pour l’intervalle m1 à m4 :
 
@@ -271,8 +284,9 @@ La génération d’un script SQL pour l’intervalle m1 à m4 :
 * **NE** traiterait **PAS** la table t3, faute de log avant m2,
 * traiterait la table t4, mais en n’allant pas au-delà de m2, faute de log entre m2 et m3.
 
-.. image:: images/logging_group_gen_sql.png
+.. figure:: images/logging_group_gen_sql.png
    :align: center
+   :class: chart
 
 Si la structure d’une table applicative a été modifiée par mégarde alors qu’elle se trouvait dans un groupe de tables actif, les opérations de pose de marque et de rollback seront bloquées par les contrôles internes d’E-Maj. On peut éviter de devoir arrêter, modifier puis relancer le groupe de tables en retirant la table concernée de son groupe puis en la rajoutant.
 

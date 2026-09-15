@@ -1,6 +1,16 @@
 Fonctions principales
 =====================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Avant de décrire chacune des principales fonctions d'E-Maj, il est intéressant d'avoir un aperçu global de l'enchaînement typique des opérations. 
 
 Enchaînement des opérations
@@ -8,8 +18,9 @@ Enchaînement des opérations
 
 L'enchaînement des opérations possibles pour un groupe de tables peut se matérialiser par ce synoptique.
 
-.. image:: images/group_flow.png
+.. figure:: images/group_flow.png
    :align: center
+   :class: chart
 
 ----
 
@@ -25,7 +36,7 @@ Démarrer un groupe de tables
 **Paramètres en entrée**
 
 - ``p_group`` (*TEXT*) : Nom du **groupe** de tables à démarrer.
-- ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque** initiale. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou a une valeur non *NULL* ou vide, un nom de marque est généré : ``START_%``.
+- ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque** initiale. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou est une chaîne vide ou a une valeur *NULL*, un nom de marque ``START_%`` est généré.
 - ``p_resetLogs`` (*BOOLEAN*, optionnel) :
 
    - *TRUE* (par défaut) : Les tables de log du groupe sont purgées et toutes les marques posées au préalable sont supprimées.
@@ -86,7 +97,7 @@ Lorsque toutes les tables et séquences d'un groupe sont jugées dans un **état
 **Paramètres en entrée**
 
 - ``p_group`` (*TEXT*) : Nom du **groupe** de tables.
-- ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque**. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou a une valeur non *NULL* ou vide, un nom de marque est généré : ``MARK_%``.
+- ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque**. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou est une chaîne vide ou a une valeur *NULL*, un nom de marque ``MARK_%`` est généré.
 - ``p_comment`` (*TEXT*, optionnel) : **Commentaire** décrivant la marque. S’il n’est pas fourni ou s’il est valorisé à *NULL*, aucun commentaire n’est enregistré.
 
 **Données retournées**
@@ -256,7 +267,7 @@ Lorsqu'on souhaite **arrêter l'enregistrement des mises à jour** des tables d'
 **Paramètres en entrée**
 
 - ``p_group`` (*TEXT*) : Nom du **groupe** de tables à arrêter.
-- ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque** d'arrêt. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou a une valeur non *NULL* ou vide, un nom de marque est généré : ``STOP_%``.
+- ``p_mark`` (*TEXT*, optionnel) : Nom de la **marque** d'arrêt. Il peut contenir un caractère ``%`` représentant l’heure courante au format ``hh.mm.ss.mmmm``. Si le paramètre n'est pas fourni ou est une chaîne vide ou a une valeur *NULL*, un nom de marque ``STOP_%`` est généré.
 - ``p_resetLogs`` (*BOOLEAN*, optionnel) :
 
    - *FALSE* (par défaut) : Le contenu des tables de log est conservé en l'état. Les anciennes marques sont également préservées.

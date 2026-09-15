@@ -1,6 +1,16 @@
 Examining Data Content Changes
 ==============================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 .. _examining_changes:
 
 Introduction
@@ -276,8 +286,9 @@ Impact of Table Group Structure Changes
 
 The table group structure may change during the examined marks range.
 
-.. image:: images/logging_group_stat.png
+.. figure:: images/logging_group_stat.png
    :align: center
+   :class: chart
 
 A table or sequence may be removed from or added to the group between the start and end marks. In such cases (e.g., tables *t2* and *t3* in the example above), the extraction covers only the actual period during which the table or sequence belonged to the group. For this reason, the **_INFO** file or the *emaj_temp_sql* table include details about the actual marks range used for each table or sequence.
 

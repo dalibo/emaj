@@ -1,6 +1,16 @@
 Mettre en place la politique d'accès à E-Maj
 ============================================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Une mauvaise utilisation d'E-Maj peut mettre en cause l'intégrité des bases de données. Aussi est-il recommendé de n'autoriser son usage qu'à des utilisateurs qualifiés et clairement identifiés comme tels.
 
 Les rôles E-Maj
@@ -22,6 +32,8 @@ Lors de leur création, ces deux rôles ne se sont pas vus attribuer de capacit�
 
 Notons que :ref:`ces deux rôles peuvent ne pas exister<roles_limits>` quand l’extension *emaj* a été installée par un rôle qui ne disposait pas des droits *SUPERUSER*.
 
+----
+
 Attribution des droits E-Maj
 ----------------------------
 
@@ -32,19 +44,23 @@ Pour attribuer à un rôle donné tous les droits associés à l'un des deux rô
 
 Naturellement, plusieurs rôles peuvent se voir attribuer les droits *emaj_adm* ou *emaj_viewer*.
 
+----
+
 Attribution des droits sur les tables et objets applicatifs
 -----------------------------------------------------------
 
 Il n’est pas nécessaire d’attribuer aux rôles *emaj_adm* et *emaj_viewer* des droits particuliers sur les tables et séquences applicatives. Les fonctions qui nécessitent d’accéder à ces objets sont exécutées avec le rôle d’installation de l’extension *emaj*, c’est à dire un rôle de type *SUPERUSER*.
 
+----
 
 Synthèse
 --------
 
 Le schéma ci-dessous symbolise l'attribution recommandée des droits pour un administrateur E-Maj.
 
-.. image:: images/rights.png
+.. figure:: images/rights.png
    :align: center
+   :class: chart
 
 Bien évidemment, ce schéma s'applique également au rôle *emaj_viewer*.
 

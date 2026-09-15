@@ -25,7 +25,7 @@ Les tables techniques de l’extension sont créées dans le tablespace par déf
 Création standard de l’extension emaj
 -------------------------------------
 
-L'extension E-Maj peut maintenant être créée dans la base de données, en exécutant la commande SQL ::
+L'extension E-Maj peut maintenant être créée dans la base de données, en exécutant la requête SQL : ::
 
    CREATE EXTENSION emaj CASCADE;
 

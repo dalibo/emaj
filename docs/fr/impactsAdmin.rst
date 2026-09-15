@@ -1,6 +1,16 @@
 Impacts sur l'administration de l'instance et de la base de données
 ===================================================================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Arrêt/relance de l'instance
 ---------------------------
 
@@ -124,29 +134,33 @@ PostgreSQL intègre des mécanismes de réplication logique. La granularité de 
 
 **Réplication de tables applicatives gérées par E-Maj**
 
-.. image:: images/logical_repl1.png
+.. figure:: images/logical_repl1.png
    :align: center
+   :class: chart
 
 Une table applicative appartenant à un groupe de tables E-Maj peut être mise en réplication. Les éventuels rollbacks E-Maj se répliqueront naturellement côté *subscriber*, à condition qu’aucun filtre ne soit appliqué sur les types de verbes SQL répliqués.
 
 **Réplication de tables applicatives avec gestion par E-Maj côté subscriber**
 
-.. image:: images/logical_repl2.png
+.. figure:: images/logical_repl2.png
    :align: center
+   :class: chart
 
 A partir d’E-Maj 4.0, il est possible d’insérer une table applicative dans un groupe de tables E-Maj avec des mises à jour en provenance d’un flux de réplication. Toutes les opérations E-Maj sont bien sûr exécutées côté *subscriber* (démarrage/arrêt du groupe, pose de marque,...). On peut effectuer un rollback E-Maj de ce groupe de tables, une fois stoppée la réplication (pour éviter des conflits dans les mises à jour). Mais à l’issue du rollback, les tables du *publisher* et du *subscriber* ne seront plus en cohérence.
 
 **Réplication de tables de log E-Maj**
 
-.. image:: images/logical_repl3.png
+.. figure:: images/logical_repl3.png
    :align: center
+   :class: chart
 
 A partir d’E-Maj 4.0, il est techniquement possible de mettre une table de log E-Maj en réplication (en trouvant un moyen de construire le DDL de création – par *pg_dump* par exemple). Ceci peut permettre de dupliquer ou concentrer les données de log sur un autre serveur. Mais la table de log répliquée ne peut être utilisée qu’en **consultation**. En effet, les séquences de log n’étant pas répliquées, ces logs ne peuvent pas être utilisés à d’autres fins.
 
 **Réplication de tables applicatives et de tables de log E-Maj**
 
-.. image:: images/logical_repl4.png
+.. figure:: images/logical_repl4.png
    :align: center
+   :class: chart
 
 Tables applicatives et tables de log peuvent être répliquées simultanément. Mais comme dans le cas précédent, ces logs ne sont utilisables qu’à des fins de **consultation**. Les éventuelles opérations de rollback E-Maj ne peuvent s’effectuer que côté *publisher*.
 

@@ -1,6 +1,16 @@
 Architecture
 ============
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 To enable rollback operations without requiring a physical backup of the PostgreSQL instance files, E-Maj records all changes applied to application tables so they can be reversed later.
 
 Logged SQL Statements
@@ -41,8 +51,9 @@ For each application table, E-Maj creates the following objects:
 * An **additional trigger** to handle **TRUNCATE** statements.
 * A **sequence** used to quickly count the number of changes recorded in log tables between two marks.
 
-.. image:: images/created_objects.png
+.. figure:: images/created_objects.png
    :align: center
+   :class: chart
 
 A **log table** has the **same structure** as its corresponding application table but includes :ref:`additional technical columns<logTableStructure>`.
 

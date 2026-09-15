@@ -1,6 +1,16 @@
 Impacts on Instance and Database Administration
 ===============================================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Stopping and Restarting the Instance
 ------------------------------------
 
@@ -124,29 +134,33 @@ PostgreSQL includes logical replication mechanisms. The replication granularity 
 
 **Replication of Application Tables Managed by E-Maj**
 
-.. image:: images/logical_repl1.png
+.. figure:: images/logical_repl1.png
    :align: center
+   :class: chart
 
 An application table that belongs to a table group can be replicated. The effect of any rollback operation that may occur would simply be replicated on the *subscriber* side, as long as no filter has been applied to the replicated SQL command types.
 
 **Replication of Application Tables with E-Maj Activated on Subscriber Side**
 
-.. image:: images/logical_repl2.png
+.. figure:: images/logical_repl2.png
    :align: center
+   :class: chart
 
 As of E-Maj 4.0, it is possible to include an application table in a table group with updates coming from a logical replication stream. However, all E-Maj operations (starting/stopping the group, setting marks, etc.) must, of course, be executed on the *subscriber* side. An E-Maj rollback operation can be launched once the replication stream has been stopped (to avoid update conflicts). However, tables on both the *publisher* and *subscriber* sides are then no longer coherent.
 
 **Replication of E-Maj Log Tables**
 
-.. image:: images/logical_repl3.png
+.. figure:: images/logical_repl3.png
    :align: center
+   :class: chart
 
 As of E-Maj 4.0, it is technically possible to replicate an E-Maj log table (once a way to obtain the DDL that creates the log table has been found, using *pg_dump*, for instance). This allows duplicating or centralizing log content on another server. However, the replicated log table can only be used for log **auditing**. As log sequences are not replicated, these logs cannot be used for other purposes.
 
 **Replication of Application Tables and E-Maj Log Tables**
 
-.. image:: images/logical_repl4.png
+.. figure:: images/logical_repl4.png
    :align: center
+   :class: chart
 
 Application tables and log tables can be simultaneously replicated. However, as previously mentioned, these replicated logs can only be used for **auditing** purposes. E-Maj rollback operations can only be executed on the *publisher* side.
 

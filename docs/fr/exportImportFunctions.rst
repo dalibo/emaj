@@ -85,11 +85,11 @@ La fonction ``emaj_export_groups_configuration()`` exporte une description d’u
 
 On peut écrire une configuration de groupes de tables dans un **fichier plat** par : ::
 
-   SELECT emaj_export_groups_configuration(p_location, p_groups);
+   SELECT emaj.emaj_export_groups_configuration(p_location, p_groups);
 
 Si le nom du **fichier de sortie est omis** ou est *NULL*, la fonction retourne directement la **structure JSON** contenant la configuration des groupes de tables : ::
 
-   SELECT emaj_export_groups_configuration(p_groups);
+   SELECT emaj.emaj_export_groups_configuration(p_groups);
 
 **Paramètres en entrée**
 
@@ -131,11 +131,11 @@ La fonction ``emaj_export_parameters_configuration()`` exporte l’ensemble des 
 
 On peut écrire les données de paramétrage dans un **fichier plat** par : ::
 
-   SELECT emaj_export_parameters_configuration(p_location, p_includeDefault);
+   SELECT emaj.emaj_export_parameters_configuration(p_location, p_includeDefault);
 
 Si le nom du **fichier de sortie est omis** ou est *NULL*, la fonction retourne directement la **structure JSON** contenant la valeur des paramètres : ::
 
-   SELECT emaj_export_parameters_configuration(p_includeDefault);
+   SELECT emaj.emaj_export_parameters_configuration(p_includeDefault);
 
 **Paramètres en entrée**
 
@@ -185,12 +185,12 @@ La fonction ``emaj_import_groups_configuration()`` importe des groupes de tables
 
 On peut charger une configuration de groupes de tables à partir d'un **fichier plat** par : ::
 
-   SELECT emaj_import_groups_configuration(p_location, p_groups, p_allowGroupsUpdate, p_mark,
+   SELECT emaj.emaj_import_groups_configuration(p_location, p_groups, p_allowGroupsUpdate, p_mark,
                                            p_dropOtherGroups);
 
 Une **description JSON** de groupes de tables peut être directement chargée avec : ::
 
-   SELECT emaj_import_groups_configuration(p_json, p_groups, p_allowGroupsUpdate, p_mark,
+   SELECT emaj.emaj_import_groups_configuration(p_json, p_groups, p_allowGroupsUpdate, p_mark,
                                            p_dropOtherGroups);
 
 **Paramètres en entrée**
@@ -245,11 +245,11 @@ La fonction ``emaj_import_parameters_configuration()`` importe des :ref:`paramè
 
 On peut charger les paramètres depuis un **fichier plat** par : ::
 
-   SELECT emaj_import_parameters_configuration(p_location, p_resetOtherParameters);
+   SELECT emaj.emaj_import_parameters_configuration(p_location, p_resetOtherParameters);
 
 Une **description JSON** des paramètres peut être directement chargée par : ::
 
-   SELECT emaj_import_parameters_configuration(p_paramsJson, p_resetOtherParameters);
+   SELECT emaj.emaj_import_parameters_configuration(p_paramsJson, p_resetOtherParameters);
 
 **Paramètres en entrée**
 

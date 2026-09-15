@@ -5,7 +5,7 @@ An E-Maj configuration includes the set of :ref:`E-Maj parameters <emaj_param>` 
 
 Several functions allow importing or exporting these configurations to or from an external source as a **JSON structure**. These functions are particularly useful for:
 
-* Deploying a standardized table groups configuration and parameter set across multiple databases;
+* Deploying a standardized table groups and parameters configuration set across multiple databases;
 * Upgrading the *emaj* extension with a :ref:`full uninstall and reinstall <uninstall_reinstall>`.
 
 JSON Structures
@@ -85,11 +85,11 @@ The ``emaj_export_groups_configuration()`` function exports the description of o
 
 A table groups configuration can be written to **a flat file** with::
 
-   SELECT emaj_export_groups_configuration(p_location, p_groups);
+   SELECT emaj.emaj_export_groups_configuration(p_location, p_groups);
 
 If the **file path is omitted** or set to *NULL*, the function directly returns the **JSON structure** containing the configuration::
 
-   SELECT emaj_export_groups_configuration(p_groups);
+   SELECT emaj.emaj_export_groups_configuration(p_groups);
 
 **Input Parameters**
 
@@ -131,11 +131,11 @@ The ``emaj_export_parameters_configuration()`` function exports :ref:`E-Maj para
 
 The parameters data can be written to a **flat file** with::
 
-   SELECT emaj_export_parameters_configuration(p_location, p_includeDefault);
+   SELECT emaj.emaj_export_parameters_configuration(p_location, p_includeDefault);
 
 If the **file path** is **omitted** or set to *NULL*, the function directly returns the **JSON structure** containing the parameter values::
 
-   SELECT emaj_export_parameters_configuration(p_includeDefault);
+   SELECT emaj.emaj_export_parameters_configuration(p_includeDefault);
 
 **Input Parameters**
 
@@ -185,12 +185,12 @@ The ``emaj_import_groups_configuration()`` function imports a table groups descr
 
 A table groups configuration can be read from a **flat file** with::
 
-   SELECT emaj_import_groups_configuration(p_location, p_groups, p_allowGroupsUpdate, p_mark,
+   SELECT emaj.emaj_import_groups_configuration(p_location, p_groups, p_allowGroupsUpdate, p_mark,
                                            p_dropOtherGroups);
 
 A **JSON description** of the table groups configuration can be directly loaded with::
 
-   SELECT emaj_import_groups_configuration(p_json, p_groups, p_allowGroupsUpdate, p_mark,
+   SELECT emaj.emaj_import_groups_configuration(p_json, p_groups, p_allowGroupsUpdate, p_mark,
                                            p_dropOtherGroups);
 
 **Input Parameters**
@@ -245,11 +245,11 @@ The ``emaj_import_parameters_configuration()`` function imports :ref:`E-Maj para
 
 A **file** containing parameters to load can be read with::
 
-   SELECT emaj_import_parameters_configuration(p_location, p_resetOtherParameters);
+   SELECT emaj.emaj_import_parameters_configuration(p_location, p_resetOtherParameters);
 
 A **JSON description** of the parameters configuration can be directly loaded with::
 
-   SELECT emaj_import_parameters_configuration(p_paramsJson, p_resetOtherParameters);
+   SELECT emaj.emaj_import_parameters_configuration(p_paramsJson, p_resetOtherParameters);
 
 **Input Parameters**
 

@@ -1,6 +1,16 @@
 Setting Up the E-Maj Access Policy
 ==================================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 A misuse of E-Maj can compromise database integrity. Therefore, it is advisable to restrict its use to specific, skilled users.
 
 E-Maj Roles
@@ -48,8 +58,9 @@ Summary
 
 The following schema represents the **recommended privileges organization** for an E-Maj administrator.
 
-.. image:: images/rights.png
+.. figure:: images/rights.png
    :align: center
+   :class: chart
 
 Of course, the schema also applies to the *emaj_viewer* role.
 

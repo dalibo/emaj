@@ -1,6 +1,16 @@
 Examiner les changements de contenu de données
 ==============================================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 .. _examining_changes:
 
 Introduction
@@ -280,8 +290,9 @@ Les impacts des changements de structure des groupes de tables
 
 Il peut arriver que, sur l’intervalle de marques sélectionné, la structure du groupe de tables se trouve modifiée.
 
-.. image:: images/logging_group_stat.png
+.. figure:: images/logging_group_stat.png
    :align: center
+   :class: chart
 
 Une table ou une séquence peut être assignée au groupe ou retirée du groupe entre les marques début et fin sélectionnées, comme c’est le cas des tables t2 et t3 dans le graphique ci-desus. Les extractions portent alors sur les périodes réelles d’appartenance des tables et séquences à leur groupe de tables. C’est la raison pour laquelle le fichier **_INFO** ou la table *emaj_temp_sql* contiennent les informations relatives aux bornes effectivement utilisées pour chaque table ou séquence.
 

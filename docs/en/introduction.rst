@@ -1,15 +1,25 @@
 Introduction
 ============
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 License
-*******
+-------
 
 This extension and its documentation are released under the **GNU General Public License (GPL)**.
 
 ----
 
 E-Maj's objectives
-******************
+------------------
 
 E-Maj is the French acronym for "*Enregistrement des Mises À Jour*", which translates to "*Updates Recording*".
 
@@ -34,7 +44,7 @@ In a **test environment**, E-Maj streamlines operations by allowing easy restora
 ----
 
 Main components
-***************
+---------------
 
 The **E-Maj solution** consists of several components:
 
@@ -44,7 +54,8 @@ The **E-Maj solution** consists of several components:
 
 The external clients and the GUI call the functions of the *emaj* extension.
 
-.. image:: images/components.png
+.. figure:: images/components.png
    :align: center
+   :class: chart
 
 All these components are described in the documentation.

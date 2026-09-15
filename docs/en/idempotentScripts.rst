@@ -60,9 +60,9 @@ The alternative approach consists in writing a script containing all the element
 To create missing table groups.::
 
    SELECT emaj.emaj_create_group('myGroup1', ...)
-      WHERE NOT emaj.emaj_does_group_exist('myGroup1');
+      WHERE NOT emaj.emaj_does_exist_group('myGroup1');
    SELECT emaj.emaj_create_group('myGroup2', ...)
-      WHERE NOT emaj.emaj_does_group_exist('myGroup2');
+      WHERE NOT emaj.emaj_does_exist_group('myGroup2');
    ...
 
 To drop obsolete groups, once stopped.::
@@ -118,19 +118,20 @@ If E-Maj properties of tables belonging to a group have non-default values, it i
 Table Groups State
 -------------------
 
-It is possible to :ref:`set a mark<emaj_set_mark_group>` on a table group depending on its current state.::
+It is possible to :ref:`set a mark<emaj_set_mark_group>` on a table group depending on the current group state and/or the mark existence::
 
-   SELECT emaj.emaj_set_mark_group('grp1', '<mark>')
-      WHERE emaj.emaj_is_group_logging('grp1');
+   SELECT emaj.emaj_set_mark_group('<group>', '<mark>')
+      WHERE emaj.emaj_is_group_logging('<group>')
+       AND NOT emaj.emaj_does_exist_mark_group('<group>', '<mark>');
 
-To start or stop all table groups, regardless of their current state.::
+To start or stop all table groups, regardless of their current state::
 
    SELECT emaj.emaj_start_groups(emaj.emaj_get_idle_groups(),
       '<start_mark>');
 
    SELECT emaj.emaj_stop_groups(emaj.emaj_get_logging_groups());
 
-Similarly, a common :ref:`mark can be set<emaj_set_mark_group>` on all started groups with.::
+Similarly, a common :ref:`mark can be set<emaj_set_mark_group>` on all started groups with::
 
    SELECT emaj.emaj_set_mark_groups(emaj.emaj_get_logging_groups(),
       '<mark>');

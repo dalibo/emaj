@@ -1,6 +1,16 @@
 Architecture
 ============
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Pour mener à bien l'opération de rollback sans avoir conservé au préalable une image physique des fichiers de l'instance PostgreSQL, il faut pouvoir enregistrer les mises à jour effectuées sur les tables applicatives de manière à pouvoir les annuler.
 
 Les requêtes SQL tracées
@@ -40,8 +50,9 @@ Pour chaque table applicative sont créés :
 * un autre **trigger** permettant de tracer l'exécution des verbes SQL **TRUNCATE**,
 * une **séquence** qui permet de dénombrer très rapidement le nombre de mises à jour enregistrées dans les tables de log entre 2 marques.
 
-.. image:: images/created_objects.png
+.. figure:: images/created_objects.png
    :align: center
+   :class: chart
 
 Une **table de log** a la **même structure** que la table applicative correspondante. Elle comprend néanmoins quelques :ref:`colonnes techniques supplémentaires<logTableStructure>`.
 

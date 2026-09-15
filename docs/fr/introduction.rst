@@ -1,15 +1,25 @@
 Introduction
 ============
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Licence
-*******
+-------
 
 Cette extension et toute la documentation qui l'accompagne sont distribuées sous licence **GNU - General Public License** (GPL).
 
 ----
 
 Objectifs d'E-Maj
-*****************
+-----------------
 
 E-Maj est l'acronyme français de « *Enregistrement des Mises A Jour* ».
 
@@ -33,17 +43,18 @@ Dans un **environnement de test**, E-Maj permet également d'apporter de la soup
 ----
 
 Principaux composants
-*********************
+---------------------
 
 La **solution E-Maj** regroupe plusieurs composants :
 
-* un objet PostgreSQL **extension** créé dans chaque base de données, nommée *emaj* et contenant quelques tables, fonctions, séquences, ...
+* un objet PostgreSQL **extension** créé dans chaque base de données, nommée *emaj* et contenant quelques tables, fonctions, séquences, etc,
 * un ensemble de **clients externes** appelables en ligne de commande,
 * une **interface graphique web**, **Emaj_web**.
 
 Les clients externes et l’interface graphique font appel aux fonctions de l’extension *emaj*.
 
-.. image:: images/components.png
+.. figure:: images/components.png
    :align: center
+   :class: chart
 
 Tous ces composants sont décrits dans cette documentation.

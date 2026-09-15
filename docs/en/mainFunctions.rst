@@ -1,6 +1,16 @@
 Main Functions
 ==============
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Before describing each main E-Maj function, it is useful to have a global view of the typical operations chain.
 
 Operations Chain
@@ -8,8 +18,9 @@ Operations Chain
 
 The possible chaining of operations for a table group can be represented by the following schema.
 
-.. image:: images/group_flow.png
+.. figure:: images/group_flow.png
    :align: center
+   :class: chart
 
 ----
 

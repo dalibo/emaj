@@ -11,8 +11,6 @@ Utiliser Emaj_web
       }
     </style>
 
-----
-
 Accès à Emaj_web et aux bases de données
 ----------------------------------------
 

@@ -120,21 +120,22 @@ Si les :ref:`propriétés E-Maj des tables<table_emaj_properties>` d’un groupe
 État des groupes de tables
 --------------------------
 
-Il est possible de conditionner la :ref:`pose d’une marque<emaj_set_mark_group>` sur un groupe de tables par son état courant ::
+Il est possible de conditionner la :ref:`pose d’une marque<emaj_set_mark_group>` sur un groupe de tables par l'état courant du groupe et/ou la non existence préalable de la marque : ::
 
-   SELECT emaj.emaj_set_mark_group ('grp1', '<marque>')
-   	 WHERE emaj.emaj_is_logging_group('grp1');
+   SELECT emaj.emaj_set_mark_group ('<groupe>', '<marque>')
+   	 WHERE emaj.emaj_is_logging_group('<groupe>')
+       AND NOT emaj.emaj_does_exist_mark_group('<groupe>', '<marque>');
 
-Pour démarrer ou arrêter tous les groupes de tables, quel que soit leur état courant ::
+Pour démarrer ou arrêter tous les groupes de tables, quel que soit leur état courant : ::
 
    SELECT emaj.emaj_start_groups (emaj.emaj_get_idle_groups(), '<marque_start>);
    
    SELECT emaj.emaj_stop_groups (emaj.emaj_get_logging_groups());
 
-De la même manière, on peut :ref:`poser une marque<emaj_set_mark_group>` commune à l’ensemble des groupes de tables démarrés, avec ::
+De la même manière, on peut :ref:`poser une marque<emaj_set_mark_group>` commune à l’ensemble des groupes de tables démarrés, avec : ::
 
    SELECT emaj.emaj_set_mark_groups (emaj.emaj_get_logging_groups(), '<marque>');
 
-Rappelons que les fonctions :ref:`emaj_get_groups(), emaj_get_logging_groups() et emaj_get_idle_groups()<groups_array_building_functions>` ont des paramètres qui permettent de filtrer les noms de groupe.
+Notons que les fonctions :ref:`emaj_get_groups(), emaj_get_logging_groups() et emaj_get_idle_groups()<groups_array_building_functions>` ont des paramètres qui permettent de filtrer les noms de groupe.
 
 Enfin, les fonctions :ref:`emaj_protect_group() et emaj_unprotect_group()<emaj_protect_group>`, qui respectivement active ou désactive la protection d’un groupe de tables contre les rollbacks E-Maj, sont idempotentes par nature. On peut donc les appeler sans connaître le niveau de protection actuel des groupes.

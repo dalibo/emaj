@@ -1,6 +1,16 @@
 Modifying Table Groups
 =======================
 
+.. raw:: html
+
+    <style>
+      img.chart {
+		margin-bottom: 20px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Several event types may lead to altering a table group:
 
 * The table group definition may change: some **tables or sequences may have been added or removed**.
@@ -237,8 +247,9 @@ Some graphs help to more easily visualize the consequences of adding or removing
 
 Let’s consider a table group containing 4 tables (t1 to t4) and 4 marks set over time (m1 to m4). At m2, t3 was added to the group while t4 was removed. At m3, t2 was removed from the group while t4 was re-added.
 
-.. image:: images/logging_group_changes.png
+.. figure:: images/logging_group_changes.png
    :align: center
+   :class: chart
 
 A rollback to the mark m1 would:
 
@@ -247,8 +258,9 @@ A rollback to the mark m1 would:
 * Process the table t3, but only up to m2.
 * Process the table t4, but only up to m3, due to lack of logs between m2 and m3.
 
-.. image:: images/logging_group_rollback.png
+.. figure:: images/logging_group_rollback.png
    :align: center
+   :class: chart
 
 A log statistics report between the marks m1 and m4 would contain:
 
@@ -257,8 +269,9 @@ A log statistics report between the marks m1 and m4 would contain:
 * 1 row for t3 (m2, m4).
 * 2 rows for t4 (m1, m2) and (m3, m4).
 
-.. image:: images/logging_group_stat.png
+.. figure:: images/logging_group_stat.png
    :align: center
+   :class: chart
 
 The SQL script generation for the marks interval m1 to m4 would:
 
@@ -267,8 +280,9 @@ The SQL script generation for the marks interval m1 to m4 would:
 * **Not** process the table t3, due to lack of logs before m2.
 * Process the table t4, but only up to the mark m2, due to lack of logs between m2 and m3.
 
-.. image:: images/logging_group_gen_sql.png
+.. figure:: images/logging_group_gen_sql.png
    :align: center
+   :class: chart
 
 If the structure of an application table has been inadvertently changed while it belonged to a table group in *LOGGING* state, the mark set and rollback operations will be blocked by E-Maj internal checks. To avoid stopping, altering, and then restarting the entire table group, it is possible to simply remove the concerned table from its group and then re-add it.
 

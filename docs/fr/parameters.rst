@@ -25,7 +25,7 @@ Trois paramètres concernent le **fonctionnement générale** de l’extension.
 
 **Notes**
 
-Le contenu du paramètre ``history_retention`` doit être interprétable comme une donnée *INTERVAL* ; une valeur >= 100 désactive la :ref:`purge des historiques<emaj_purge_histories>`.
+Le contenu du paramètre ``history_retention`` doit être interprétable comme une donnée *INTERVAL* ; une valeur >= 100 ans désactive la :ref:`purge des historiques<emaj_purge_histories>`.
 
 Le paramètre ``dblink_user_password`` est nécessaire pour :ref:`suivre l’avancement<emaj_rollback_activity>` ou :doc:`paralléliser<parallelRollbackClient>` des rollbacks E-Maj ; format = ``user=<user> password=<password>`` ; ces fonctionnalités sont désactivées par défaut.
 
@@ -60,7 +60,7 @@ Six autres paramètres concernent le **modèle d’estimation des durées de rol
 Modifier les paramètres
 -----------------------
 
-La fonction ``emaj_set_param`()`` permet aux administrateurs de modifier une valeur de paramètre : ::
+La fonction ``emaj_set_param()`` permet aux administrateurs de modifier une valeur de paramètre : ::
 
    SELECT emaj.emaj_set_param(p_key, p_value);
 
