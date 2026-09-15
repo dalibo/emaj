@@ -17,7 +17,7 @@
 
 ----------------------------------------------------------------
 --                                                            --
---                   Checks and E-Maj roles                   --
+--                           Checks                           --
 --                                                            --
 ----------------------------------------------------------------
 
@@ -6232,7 +6232,7 @@ $emaj_export_groups_configuration$
 -- This function returns a JSON formatted structure representing some or all configured table groups
 -- The function can be called by clients like Emaj_web.
 -- This is just a wrapper of the internal _export_groups_conf() function.
--- Input: an optional array of goup's names, NULL means all table groups
+-- Input: an optional group names array, NULL means all table groups
 -- Output: the table groups content in JSON format
   BEGIN
     RETURN emaj._export_groups_conf(p_groups);
@@ -6247,7 +6247,8 @@ SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_export_groups_configuration$
 -- This function stores some or all configured table groups configuration into a file on the server.
 -- The JSON structure is built by the _export_groups_conf() function.
--- Input: an optional array of goup's names, NULL means all table groups
+-- Input: output file path name,
+--        an optional group names array, NULL means all table groups
 -- Output: the number of table groups recorded in the file.
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
@@ -6276,7 +6277,7 @@ CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_groups_conf$
 -- This function generates a JSON formatted structure representing the current configuration of some or all table groups.
--- Input: an optional array of goup's names, NULL means all table groups
+-- Input: an optional group names array, NULL means all table groups
 -- Output: the table groups configuration in JSON format
   DECLARE
     v_groupsText             TEXT;
@@ -6497,10 +6498,7 @@ $_import_groups_conf$
 -- For tables, "priority", "log_data_tablespace" and "log_index_tablespace" attributes are optional.
 -- A table group may have no "tables" or "sequences" arrays.
 -- A table may have no "ignored_triggers" array.
--- The function replaces the content of the tmp_app_table table for the imported table groups by the content of the JSON configuration.
 -- Non existing groups are created empty.
--- The _alter_groups() function is used to process the assignement, the move, the removal or the attributes change for tables and
--- sequences.
 -- Input: - the table groups configuration structure in JSON format
 --        - the array of group names to process (a NULL value process all table groups described in the JSON structure)
 --        - a boolean indicating whether table groups to import may already exist
@@ -6553,7 +6551,7 @@ $_import_groups_conf_prepare$
 -- This function prepares the effective table groups configuration import.
 -- It is called by _import_groups_conf() and by Emaj_web
 -- At the end of the function, the tmp_app_table table is updated with the new configuration of groups
---   and a temporary table is created to prepare the application triggers management
+--   and a temporary table is created to prepare the application triggers management.
 -- Input: - the table groups configuration structure in JSON format
 --        - an optional array of group names to process (a NULL value process all table groups described in the JSON structure)
 --        - an optional boolean indicating whether table groups to import may already exist (FALSE by default)
@@ -13568,8 +13566,6 @@ CREATE OR REPLACE FUNCTION emaj._export_param_conf(p_includeDefault BOOLEAN)
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_param_conf$
 -- This function generates a JSON formatted structure representing the parameters.
--- All parameters are extracted, except the "emaj_version" key that is directly linked to the extension and thus is not updatable.
--- The E-Maj version is already displayed in the generated comment at the beginning of the structure.
 -- Input: boolean indicating whether keys which current value equals their default value must be exported.
 -- Output: the parameters content in JSON format
   DECLARE
@@ -15019,8 +15015,7 @@ RETURNS TEXT[] LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_disable_event_triggers$
 -- This function disables all known E-Maj event triggers that are in enabled state.
--- The function is called by functions that alter or drop E-Maj components, such as
---   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
+-- The function is called by functions that alter or drop E-Maj components.
 -- It is also called by the user emaj_disable_event_triggers_protection() function.
 -- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers().
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger.
@@ -15037,8 +15032,7 @@ $_disable_event_triggers$
       RETURN v_eventTriggers;
     END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
--- A single operation like _alter_groups() may call the function several times. But this is not an issue as only enabled triggers are
--- disabled.
+-- A single operation may call the function several times. But this is not an issue as only enabled triggers are disabled.
     SELECT coalesce(array_agg(evtname ORDER BY evtname), ARRAY[]::TEXT[]) INTO v_eventTriggers
       FROM pg_catalog.pg_event_trigger
       WHERE evtname LIKE 'emaj%'
@@ -15061,8 +15055,7 @@ $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter.
 -- It also recreates the emaj_protection_trg event trigger if it does not exist. This event trigger is the only component
 -- that is not linked to the emaj extension and cannot be protected by another event trigger.
--- The function is called by functions that alter or drop E-Maj components, such as
---   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
+-- The function is called by functions that alter or drop E-Maj components.
 -- It is also called by the user emaj_enable_event_triggers_protection() function.
 -- Input: array of event trigger names to enable.
 -- Output: same array.
