@@ -10,7 +10,6 @@ E-Maj est disponible en téléchargement depuis les sources suivantes :
 - **Dépôts GitHub** :
 
   - Code source : `https://github.com/dalibo/emaj <https://github.com/dalibo/emaj>`_
-  - Documentation : `https://github.com/beaud76/emaj_doc <https://github.com/beaud76/emaj_doc>`_
   - Interface graphique Emaj_web: `https://github.com/dalibo/emaj_web <https://github.com/dalibo/emaj_web>`_
 
 .. caution::

@@ -10,7 +10,6 @@ E-Maj is available for download from the following sources:
 - **GitHub repositories**:
 
   - Source code: `https://github.com/dalibo/emaj <https://github.com/dalibo/emaj>`_
-  - Documentation: `https://github.com/beaud76/emaj_doc <https://github.com/beaud76/emaj_doc>`_
   - Emaj_web GUI: `https://github.com/dalibo/emaj_web <https://github.com/dalibo/emaj_web>`_
 
 .. caution::
@@ -26,7 +25,7 @@ With the pgxn Client
 
 If the *pgxn* client is installed, run the following command::
 
-  pgxn install emaj --sudo
+  pgxn install E-Maj --sudo
 
 Without the pgxn Client
 ^^^^^^^^^^^^^^^^^^^^^^^
