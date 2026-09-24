@@ -108,3 +108,7 @@ Pour installer E-Maj sous Windows, il faut :
 
    * le fichier ``emaj.control`` dans ``\extension\``,
    * les fichiers ``sql\emaj--*.sql`` dans un nouveau dossier ``\emaj\``.
+
+----
+
+Une fois le logiciel installé sur le serveur, l'extension :doc:`emaj peut être créée<setup>` dans les bases de données.

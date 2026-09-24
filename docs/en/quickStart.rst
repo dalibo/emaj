@@ -8,7 +8,7 @@ Install Software
 
 If the *pgxn* client is installed, use this single command::
 
-  pgxn install emaj --sudo
+  pgxn install E-Maj --sudo
 
 Otherwise, follow these steps::
 

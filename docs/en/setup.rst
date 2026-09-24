@@ -1,6 +1,8 @@
 Create the E-Maj Extension in a Database
 ========================================
 
+In order to create *emaj* into a database, the :doc:`software must have been installed<install>` on the server.
+
 If an older version of the E-Maj extension already exists in the database, you must :doc:`upgrade it <upgrade>` first.
 
 The **standard way** to install E-Maj is by creating an *EXTENSION* object (in PostgreSQL terminology). This requires **SUPERUSER privileges**.
@@ -29,7 +31,7 @@ To create the E-Maj extension in the database, execute the following SQL command
 
    CREATE EXTENSION emaj CASCADE;
 
-After verifying PostgreSQL version compatibility, the script creates the *emaj* schema with technical tables, functions, and other required objects.
+After verifying PostgreSQL version compatibility, the script creates the *emaj* schema with technical tables, functions, and other required objects. It also creates the *dblink* and *btree_gist* extensions if they are not yet created.
 
 .. caution::
 

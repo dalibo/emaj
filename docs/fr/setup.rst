@@ -1,6 +1,8 @@
 Créer l'extension emaj dans une base de données
 ===============================================
 
+Pour créer *emaj* dans une base de données, le :doc:`logiciel doit avoir été installé<install>` sur le serveur.
+
 Si une ancienne version de l'extension E-Maj existe déjà dans la base de données, il faut d'abord la :doc:`mettre à jour <upgrade>`.
 
 La **façon standard d’installer** E-Maj consiste à créer un objet *EXTENSION* (au sens de PostgreSQL). Pour ce faire, l’utilisateur doit disposer des droits **SUPERUSER**.
@@ -29,7 +31,7 @@ L'extension E-Maj peut maintenant être créée dans la base de données, en ex�
 
    CREATE EXTENSION emaj CASCADE;
 
-Après avoir vérifié que la version de PostgreSQL est compatible avec cette version d’E-Maj, le script crée le schéma *emaj* avec ses tables techniques, ses fonctions et quelques autres objets.
+Après avoir vérifié que la version de PostgreSQL est compatible avec cette version d’E-Maj, le script crée le schéma *emaj* avec ses tables techniques, ses fonctions et quelques autres objets. Il crée également les extensions *dblink* et *btree_gist* si elles ne le sont pas déjà.
 
 .. caution::
 
