@@ -1417,3 +1417,56 @@ SELECT * FROM "emaj_phil's schema""3"."myTbl2\_log_seq";
 -----------------------------
 -- Check the changes specific to this version upgrade.
 -----------------------------
+-- emaj schema.
+\dn emaj
+ List of schemas
+ Name |  Owner   
+------+----------
+ emaj | emaj_adm
+(1 row)
+
+-- Tables, views, composite types.
+\dtvs emaj.*
+                     List of relations
+ Schema |            Name             |   Type   |  Owner   
+--------+-----------------------------+----------+----------
+ emaj   | emaj_all_param              | view     | emaj_adm
+ emaj   | emaj_default_param          | table    | emaj_adm
+ emaj   | emaj_global_seq             | sequence | emaj_adm
+ emaj   | emaj_group                  | table    | emaj_adm
+ emaj   | emaj_group_hist             | table    | emaj_adm
+ emaj   | emaj_hist                   | table    | emaj_adm
+ emaj   | emaj_hist_hist_id_seq       | sequence | emaj_adm
+ emaj   | emaj_install_conf           | table    | emaj_adm
+ emaj   | emaj_log_session            | table    | emaj_adm
+ emaj   | emaj_mark                   | table    | emaj_adm
+ emaj   | emaj_param                  | table    | emaj_adm
+ emaj   | emaj_rel_hist               | table    | emaj_adm
+ emaj   | emaj_relation               | table    | emaj_adm
+ emaj   | emaj_relation_change        | table    | emaj_adm
+ emaj   | emaj_rlbk                   | table    | emaj_adm
+ emaj   | emaj_rlbk_plan              | table    | emaj_adm
+ emaj   | emaj_rlbk_rlbk_id_seq       | sequence | emaj_adm
+ emaj   | emaj_rlbk_session           | table    | emaj_adm
+ emaj   | emaj_rlbk_stat              | table    | emaj_adm
+ emaj   | emaj_schema                 | table    | emaj_adm
+ emaj   | emaj_seq_hole               | table    | emaj_adm
+ emaj   | emaj_sequence               | table    | emaj_adm
+ emaj   | emaj_table                  | table    | emaj_adm
+ emaj   | emaj_time_stamp             | table    | emaj_adm
+ emaj   | emaj_time_stamp_time_id_seq | sequence | emaj_adm
+ emaj   | emaj_version_hist           | table    | emaj_adm
+ emaj   | emaj_visible_param          | view     | emaj_adm
+(27 rows)
+
+-- Enum types.
+select typname, rolname
+  from pg_type join pg_namespace on (typnamespace = pg_namespace.oid) join pg_authid on (pg_authid.oid = typowner)
+  where nspname = 'emaj' and typtype = 'e';
+          typname           | rolname  
+----------------------------+----------
+ _relation_change_kind_enum | emaj_adm
+ _rlbk_status_enum          | emaj_adm
+ _rlbk_step_enum            | emaj_adm
+(3 rows)
+

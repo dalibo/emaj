@@ -15129,6 +15129,8 @@ $emaj_drop_extension$
     v_supportEmajViewer      BOOLEAN;
     v_isSuperuser            BOOLEAN;
     v_isRoleCreaterole       BOOLEAN;
+    v_isRoleEmajAdm          BOOLEAN;
+    v_emajSchemaOwner        TEXT;
     v_nbObject               INTEGER;
     v_roleToDrop             BOOLEAN;
     v_dbList                 TEXT;
@@ -15138,27 +15140,41 @@ $emaj_drop_extension$
     v_tspList                TEXT;
     r_object                 RECORD;
   BEGIN
--- Read some installation characteristics.
+-- Perform some checks to verify that the conditions to execute the function are met.
+-- Read some installation and current user characteristics.
     v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
     SELECT inst_with_emaj_adm, inst_with_emaj_viewer
       INTO STRICT v_supportEmajAdm, v_supportEmajViewer
       FROM emaj.emaj_install_conf;
--- Perform some checks to verify that the conditions to execute the function are met.
---
--- For extensions, check the current role is superuser.
-    SELECT rolsuper, rolcreaterole INTO v_isSuperuser, v_isRoleCreaterole
+    SELECT rolname
+      INTO v_emajSchemaOwner
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_roles ON (pg_roles.oid = nspowner)
+      WHERE nspname = 'emaj';
+    SELECT rolsuper, rolcreaterole,
+           CASE WHEN NOT v_supportEmajAdm THEN FALSE
+                ELSE pg_catalog.pg_has_role(rolname, 'emaj_adm', 'MEMBER') END
+      INTO v_isSuperuser, v_isRoleCreaterole, v_isRoleEmajAdm
       FROM pg_catalog.pg_roles
       WHERE rolname = current_user;
-    IF v_isEmajExtension THEN
-      IF NOT v_isSuperuser THEN
-        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
-      END IF;
-    ELSE
--- Otherwise, check the current role is the owner of the emaj schema (i.e. the role who installed emaj) or is a superuser.
-      PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
-        WHERE nspowner = pg_roles.oid AND nspname = 'emaj' AND rolname = current_user;
-      IF NOT FOUND AND NOT v_isSuperuser THEN
-        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be the owner of the emaj schema or a superuser';
+-- Check current user rights.
+    IF NOT v_isSuperuser THEN
+      IF v_isEmajExtension THEN
+-- For extensions, the current role must be superuser.
+        RAISE EXCEPTION 'emaj_drop_extension: The current role must be a superuser to be allowed to drop the EXTENSION';
+      ELSE
+        IF v_emajSchemaOwner <> current_user THEN
+          IF v_supportEmajAdm AND v_emajSchemaOwner = 'emaj_adm' THEN
+---- For emaj installed by psql script with emaj_adm capabilities, the current role must have emaj_adm rights or be a superuser.
+            IF NOT v_isRoleEmajAdm THEN
+              RAISE EXCEPTION 'emaj_drop_extension: The current role must be an emaj adminstrator or a superuser';
+            END IF;
+          ELSE
+---- For emaj installed by psql script without emaj_adm capabilities, the current role must either be the owner of the emaj schema
+----   or be a superuser.
+            RAISE EXCEPTION 'emaj_drop_extension: The current role must be the owner of the emaj schema or a superuser';
+          END IF;
+        END IF;
       END IF;
     END IF;
 --
@@ -15448,20 +15464,42 @@ DO LANGUAGE plpgsql
 $do$
   DECLARE
     v_supportEmajAdm         BOOLEAN;
+    r_object                 RECORD;
   BEGIN
 -- Get the installation configuration data.
     SELECT inst_with_emaj_adm
       INTO STRICT v_supportEmajAdm
       FROM emaj.emaj_install_conf;
--- Grant rights.
     IF v_supportEmajAdm THEN
-
--- emaj_adm can execute all emaj functions and access all emaj tables without any restrictions.
-      GRANT ALL ON SCHEMA emaj TO emaj_adm;
-      GRANT ALL ON ALL TABLES IN SCHEMA emaj TO emaj_adm;
-      GRANT ALL ON ALL SEQUENCES IN SCHEMA emaj TO emaj_adm;
+-- If it exists, emaj_adm becomes the owner of the emaj schema and all contained objects.
+-- The emaj schema.
+      ALTER SCHEMA emaj OWNER TO emaj_adm;
+-- All tables, views and composite types.
+      FOR r_object IN
+        SELECT relname, CASE relkind WHEN 'r' THEN 'TABLE' WHEN 'v' THEN 'VIEW' WHEN 'c' THEN 'TYPE' END AS object
+          FROM pg_catalog.pg_class
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+          WHERE nspname = 'emaj'
+            AND relkind IN ('r', 'v', 'c')
+      LOOP
+        EXECUTE format('ALTER %s emaj.%s OWNER TO emaj_adm',
+                           r_object.object, r_object.relname);
+      END LOOP;
+-- All enum types.
+      FOR r_object IN
+        SELECT typname
+          FROM pg_catalog.pg_type
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = typnamespace)
+          WHERE nspname = 'emaj'
+            AND typtype = 'e'
+      LOOP
+        EXECUTE format('ALTER type emaj.%s OWNER TO emaj_adm',
+                           r_object.typname);
+      END LOOP;
+-- The emaj global sequence.
+      ALTER SEQUENCE emaj.emaj_global_seq OWNER TO emaj_adm;
+-- Grant execute rights on all functions.
       GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
-
     END IF;
   END;
 $do$;
@@ -15479,19 +15517,16 @@ $do$
       FROM emaj.emaj_install_conf;
 -- Grant rights.
     IF v_supportEmajViewer THEN
-
--- emaj_viewer can only
--- ... view the emaj objects, i.e. the content of emaj and log tables,
---     except the emaj_param table that emaj_viewer should only see through the emaj_visible_param view
---     that hides the password used by the configured dblink user,
+-- if it exists, emaj_viewer can only:
+--   - view the emaj objects, i.e. the content of emaj and log tables,
       GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
       GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
       GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
-
+--   - except the emaj_param table that emaj_viewer should only see through the emaj_visible_param view
+--     that hides the password used by the configured dblink user,
       REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
       REVOKE SELECT ON TABLE emaj.emaj_all_param FROM emaj_viewer;
-
--- ... and execute a subset of emaj functions for which rights are explicitely granted.
+--   - and execute a subset of emaj functions for which rights are explicitely granted.
       GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj._clean_array(p_array TEXT[]) TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj._check_group_names(p_groups TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN,

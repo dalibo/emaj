@@ -6,7 +6,7 @@ CREATE SEQUENCE emaj_emaj_demo_app_schema.not_an_emaj_seq;
 SELECT emaj.emaj_drop_extension();
 WARNING:  emaj_drop_extension - schema consistency checks: Error: In schema "emaj_emaj_demo_app_schema", the sequence "emaj_emaj_demo_app_schema"."not_an_emaj_seq" is not linked to any created table group.
 ERROR:  emaj_drop_extension: There are 1 unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.
-CONTEXT:  PL/pgSQL function emaj.emaj_drop_extension() line 55 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_drop_extension() line 71 at RAISE
 -- So drop this sequence and retry.
 DROP SEQUENCE emaj_emaj_demo_app_schema.not_an_emaj_seq;
 -- Call the emaj_drop_extension function.

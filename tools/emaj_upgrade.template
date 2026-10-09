@@ -126,8 +126,36 @@ SELECT emaj._disable_event_triggers();
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA emaj FROM PUBLIC;
 
-GRANT ALL ON ALL TABLES IN SCHEMA emaj TO emaj_adm;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA emaj TO emaj_adm;
+-- Set the ownership of all emaj tables, views and types to emaj_adm.
+DO LANGUAGE plpgsql
+$do$
+  DECLARE
+    r_object                 RECORD;
+  BEGIN
+-- Process tables, views and composite types.
+    FOR r_object IN
+      SELECT relname, CASE relkind WHEN 'r' THEN 'TABLE' WHEN 'v' THEN 'VIEW' WHEN 'c' THEN 'TYPE' END AS object
+        FROM pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+        WHERE nspname = 'emaj'
+          AND relkind IN ('r', 'v', 'c')
+    LOOP
+      EXECUTE format('ALTER %s emaj.%s OWNER TO emaj_adm',
+                         r_object.object, r_object.relname);
+    END LOOP;
+-- Process enum types.
+    FOR r_object IN
+      SELECT typname
+        FROM pg_catalog.pg_type
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = typnamespace)
+        WHERE nspname = 'emaj'
+          AND typtype = 'e'
+    LOOP
+      EXECUTE format('ALTER type emaj.%s OWNER TO emaj_adm',
+                         r_object.typname);
+    END LOOP;
+  END;
+$do$;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
 
 GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;

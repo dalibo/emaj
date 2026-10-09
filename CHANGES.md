@@ -6,8 +6,9 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
-
-
+  * Fix a vulnerability: a role having emaj_adm privileges could acquire
+    superuser rights. The emaj schema and all its content now belongs to
+    emaj_adm.
 
 5.0.0 (2026-Jul-24)
 ------

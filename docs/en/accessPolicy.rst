@@ -20,17 +20,15 @@ To use E-Maj, it is possible to log in as a *SUPERUSER*. However, for safety rea
 
 * ``emaj_adm``: Used as the **E-Maj administration** role.
 
-   * It can execute all functions and access all E-Maj tables with read and write privileges.
-   * It owns all log objects (schemas, tables, sequences, functions).
+   * It owns the ``emaj`` schema and its content (except functions), as well as all log objects (schemas, tables, sequences, functions).
+   * It can execute all E-Maj functions.
 * ``emaj_viewer``: Used for **read-only** purposes. 
 
    * It can only execute informative or statistical functions and can only read E-Maj tables.
 
-All privileges granted to *emaj_viewer* are also granted to *emaj_adm*.
+Note that :ref:`both roles may not exist<roles_limits>` if the role that installed the extension had no *SUPERUSER* privilege.
 
-When created, these roles have no login capability (no defined password and *NOLOGIN* option). It is recommended **not** to grant them any login capability. Instead, it is sufficient to grant the privileges they own to other roles using *GRANT* SQL commands.
-
-Note that :ref:`both roles may not exist<roles_limits>` if the role that installed the extension did not have *SUPERUSER* privileges.
+At creation time, these roles have **no login capability** (*NOLOGIN* attribute and no password). It is recommended **not** to grant them any login capability. Instead, it is sufficient to grant the privileges they own to other roles using *GRANT* SQL commands.
 
 ----
 
@@ -64,4 +62,4 @@ The following schema represents the **recommended privileges organization** for 
 
 Of course, the schema also applies to the *emaj_viewer* role.
 
-Unless explicitly stated otherwise, the operations described later can be executed indifferently by a *SUPERUSER* or by a role belonging to the *emaj_adm* group.
+Unless explicitly stated otherwise, the operations described later can be executed by any role having *emaj_adm* privileges.

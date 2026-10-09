@@ -695,6 +695,286 @@ $_enable_event_triggers$
   END;
 $_enable_event_triggers$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_drop_extension()
+RETURNS VOID LANGUAGE plpgsql AS
+$emaj_drop_extension$
+-- This function drops emaj from the current database, with both installation kinds,
+-- - either as EXTENSION (i.e. with a CREATE EXTENSION SQL statement),
+-- - or with the alternate psql script.
+  DECLARE
+    v_isEmajExtension        BOOLEAN;
+    v_supportEmajAdm         BOOLEAN;
+    v_supportEmajViewer      BOOLEAN;
+    v_isSuperuser            BOOLEAN;
+    v_isRoleCreaterole       BOOLEAN;
+    v_isRoleEmajAdm          BOOLEAN;
+    v_emajSchemaOwner        TEXT;
+    v_nbObject               INTEGER;
+    v_roleToDrop             BOOLEAN;
+    v_dbList                 TEXT;
+    v_granteeRoleList        TEXT;
+    v_granteeClassList       TEXT;
+    v_granteeFunctionList    TEXT;
+    v_tspList                TEXT;
+    r_object                 RECORD;
+  BEGIN
+-- Perform some checks to verify that the conditions to execute the function are met.
+-- Read some installation and current user characteristics.
+    v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
+    SELECT inst_with_emaj_adm, inst_with_emaj_viewer
+      INTO STRICT v_supportEmajAdm, v_supportEmajViewer
+      FROM emaj.emaj_install_conf;
+    SELECT rolname
+      INTO v_emajSchemaOwner
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_roles ON (pg_roles.oid = nspowner)
+      WHERE nspname = 'emaj';
+    SELECT rolsuper, rolcreaterole,
+           CASE WHEN NOT v_supportEmajAdm THEN FALSE
+                ELSE pg_catalog.pg_has_role(rolname, 'emaj_adm', 'MEMBER') END
+      INTO v_isSuperuser, v_isRoleCreaterole, v_isRoleEmajAdm
+      FROM pg_catalog.pg_roles
+      WHERE rolname = current_user;
+-- Check current user rights.
+    IF NOT v_isSuperuser THEN
+      IF v_isEmajExtension THEN
+-- For extensions, the current role must be superuser.
+        RAISE EXCEPTION 'emaj_drop_extension: The current role must be a superuser to be allowed to drop the EXTENSION';
+      ELSE
+        IF v_emajSchemaOwner <> current_user THEN
+          IF v_supportEmajAdm AND v_emajSchemaOwner = 'emaj_adm' THEN
+---- For emaj installed by psql script with emaj_adm capabilities, the current role must have emaj_adm rights or be a superuser.
+            IF NOT v_isRoleEmajAdm THEN
+              RAISE EXCEPTION 'emaj_drop_extension: The current role must be an emaj adminstrator or a superuser';
+            END IF;
+          ELSE
+---- For emaj installed by psql script without emaj_adm capabilities, the current role must either be the owner of the emaj schema
+----   or be a superuser.
+            RAISE EXCEPTION 'emaj_drop_extension: The current role must be the owner of the emaj schema or a superuser';
+          END IF;
+        END IF;
+      END IF;
+    END IF;
+--
+-- Check that no E-Maj schema contains any non E-Maj object.
+    v_nbObject = 0;
+    FOR r_object IN
+      SELECT msg FROM emaj._verify_all_schemas() msg
+        WHERE msg NOT LIKE 'Error: The E-Maj schema % does not exist anymore.'
+      LOOP
+-- An E-Maj schema contains objects that do not belong to the extension.
+      RAISE WARNING 'emaj_drop_extension - schema consistency checks: %', r_object.msg;
+      v_nbObject = v_nbObject + 1;
+    END LOOP;
+    IF v_nbObject > 0 THEN
+      RAISE EXCEPTION 'emaj_drop_extension: There are % unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall'
+                      ' function.', v_nbObject;
+    END IF;
+--
+-- OK, perform the removal actions.
+--
+-- Disable event triggers that would block the DROP EXTENSION command.
+    PERFORM emaj._disable_event_triggers();
+--
+-- If the emaj_demo_cleanup function exists (created by the emaj_demo.sql script), execute it.
+    PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+      WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_demo_cleanup';
+    IF FOUND THEN
+      PERFORM emaj.emaj_demo_cleanup();
+    END IF;
+-- If the emaj_parallel_rollback_test_cleanup function exists (created by the emaj_prepare_parallel_rollback_test.sql script), execute it.
+    PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+      WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_parallel_rollback_test_cleanup';
+    IF FOUND THEN
+      PERFORM emaj.emaj_parallel_rollback_test_cleanup();
+    END IF;
+--
+-- Drop all created groups, bypassing potential errors, to remove all components not directly linked to the EXTENSION.
+    PERFORM emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
+--
+-- Drop the emaj extension, if it is an EXTENSION.
+    DROP EXTENSION IF EXISTS emaj CASCADE;
+--
+-- Drop the primary schema.
+    DROP SCHEMA IF EXISTS emaj CASCADE;
+--
+-- Drop the event trigger that protects the extension against unattempted drop and its function (they are external to the extension).
+    DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
+--
+-- Determine whether the emaj_adm role can be dropped.
+-- If emaj_adm is not supported in this emaj instance, just warn.
+    IF NOT v_supportEmajAdm THEN
+      RAISE WARNING 'emaj_drop_extension: The emaj_adm role is not supported in this database.';
+    ELSIF NOT v_isRoleCreaterole THEN
+      RAISE WARNING 'emaj_drop_extension: The current role has not the CREATEROLE rights needed to drop emaj_adm.';
+    ELSE
+      v_roleToDrop = TRUE;
+-- Is emaj_adm also used in other databases of the cluster ?
+      v_dbList = NULL;
+      SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+        INTO v_dbList
+        FROM pg_database db
+             JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+             JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+        WHERE rolname = 'emaj_adm'
+          AND datname <> current_database();
+      IF v_dbList IS NOT NULL THEN
+        RAISE WARNING 'emaj_drop_extension: The emaj_adm role is also referenced in some other databases (%)', v_dbList;
+        v_roleToDrop = FALSE;
+      END IF;
+-- Is emaj_adm granted to other roles ?
+      v_granteeRoleList = NULL;
+      SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+        INTO v_granteeRoleList
+        FROM pg_catalog.pg_roles q
+             JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+             JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+        WHERE r.rolname = 'emaj_adm';
+      IF v_granteeRoleList IS NOT NULL THEN
+        RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_adm role.',
+              v_granteeRoleList;
+        v_roleToDrop = FALSE;
+      END IF;
+-- Is emaj_adm granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
+      v_granteeClassList = NULL;
+      SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+        INTO v_granteeClassList
+        FROM pg_catalog.pg_namespace
+             JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+        WHERE array_to_string (relacl, ';') LIKE '%emaj_adm=%';
+      IF v_granteeClassList IS NOT NULL THEN
+        IF length(v_granteeClassList) > 200 THEN
+          v_granteeClassList = substr(v_granteeClassList, 1, 200) || '...';
+        END IF;
+        RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on tables, views or sequences (%).',
+                      v_granteeClassList;
+        v_roleToDrop = FALSE;
+      END IF;
+-- Is emaj_adm granted to functions (other than just dropped emaj ones) ?
+      v_granteeFunctionList = NULL;
+      SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+        INTO v_granteeFunctionList
+        FROM pg_catalog.pg_namespace
+             JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+        WHERE array_to_string (proacl, ';') LIKE '%emaj_adm=%';
+      IF v_granteeFunctionList IS NOT NULL THEN
+        IF length(v_granteeFunctionList) > 200 THEN
+          v_granteeClassList = substr(v_granteeFunctionList, 1, 200) || '...';
+        END IF;
+        RAISE WARNING 'emaj_drop_extension: The emaj_adm role has some remaining grants on functions (%).',
+                      v_granteeFunctionList;
+        v_roleToDrop = FALSE;
+      END IF;
+-- If emaj_adm can be dropped, do it.
+      IF v_roleToDrop THEN
+-- Revoke first the remaining grants set on tablespaces
+        SELECT string_agg(spcname, ', ')
+          INTO v_tspList
+          FROM pg_catalog.pg_tablespace
+          WHERE array_to_string (spcacl, ';') LIKE '%emaj_adm=%';
+        IF v_tspList IS NOT NULL THEN
+          EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_adm';
+        END IF;
+-- ... and drop the role.
+        DROP ROLE emaj_adm;
+        RAISE WARNING 'emaj_drop_extension: the emaj_adm role has been dropped.';
+      ELSE
+        RAISE WARNING 'emaj_drop_extension: For these reasons, emaj_adm has not been dropped by this script.';
+      END IF;
+    END IF;
+--
+-- Determine whether the emaj_viewer role can be dropped.
+-- If emaj_viewer is not supported in this emaj instance, just warn.
+    IF NOT v_supportEmajViewer THEN
+      RAISE WARNING 'emaj_drop_extension: The emaj_viewer role is not supported in this database.';
+    ELSIF NOT v_isRoleCreaterole THEN
+      RAISE WARNING 'emaj_drop_extension: The current role has not the CREATEROLE rights needed to drop emaj_viewer.';
+    ELSE
+--
+-- Is emaj_viewer also used in other databases of the cluster ?
+      v_dbList = NULL;
+      SELECT string_agg(DISTINCT datname, ', ' ORDER BY datname)
+        INTO v_dbList
+        FROM pg_database db
+             JOIN pg_catalog.pg_shdepend shd ON (dbid = db.oid)
+             JOIN pg_catalog.pg_roles r ON (r.oid = refobjid)
+        WHERE rolname = 'emaj_viewer'
+          AND datname <> current_database();
+      IF v_dbList IS NOT NULL THEN
+        RAISE WARNING 'emaj_drop_extension: The emaj_viewer role is also referenced in some other databases (%)', v_dbList;
+        v_roleToDrop = FALSE;
+      END IF;
+--
+-- Is emaj_viewer granted to other roles ?
+      v_granteeRoleList = NULL;
+      SELECT string_agg(q.rolname, ', ' ORDER BY q.rolname)
+        INTO v_granteeRoleList
+        FROM pg_catalog.pg_roles q
+             JOIN pg_catalog.pg_auth_members m ON (m.member = q.oid)
+             JOIN pg_catalog.pg_roles r ON (r.oid = m.roleid)
+        WHERE r.rolname = 'emaj_viewer';
+      IF v_granteeRoleList IS NOT NULL THEN
+        RAISE WARNING 'emaj_drop_extension: There are remaining roles (%) who have been granted emaj_viewer role.',
+                      v_granteeRoleList;
+        v_roleToDrop = FALSE;
+      END IF;
+--
+-- Is emaj_viewer granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
+      v_granteeClassList = NULL;
+      SELECT string_agg(nspname || '.' || relname, ', ' ORDER BY nspname, relname)
+        INTO v_granteeClassList
+        FROM pg_catalog.pg_namespace
+             JOIN pg_catalog.pg_class ON (relnamespace = pg_namespace.oid)
+        WHERE array_to_string (relacl, ';') LIKE '%emaj_viewer=%';
+      IF v_granteeClassList IS NOT NULL THEN
+        IF length(v_granteeClassList) > 200 THEN
+          v_granteeClassList = substr(v_granteeClassList, 1, 200) || '...';
+        END IF;
+        RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on tables, views or sequences (%).',
+                      v_granteeClassList;
+        v_roleToDrop = FALSE;
+      END IF;
+--
+-- Is emaj_viewer granted to functions (other than just dropped emaj ones) ?
+      v_granteeFunctionList = NULL;
+      SELECT string_agg(nspname || '.' || proname || '()', ', ' ORDER BY nspname, proname)
+        INTO v_granteeFunctionList
+        FROM pg_catalog.pg_namespace
+             JOIN pg_catalog.pg_proc ON (pronamespace = pg_namespace.oid)
+        WHERE array_to_string (proacl, ';') LIKE '%emaj_viewer=%';
+      IF v_granteeFunctionList IS NOT NULL THEN
+        IF length(v_granteeFunctionList) > 200 THEN
+          v_granteeFunctionList = substr(v_granteeFunctionList, 1, 200) || '...';
+        END IF;
+        RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has some remaining grants on functions (%).',
+                      v_granteeFunctionList;
+        v_roleToDrop = FALSE;
+      END IF;
+--
+-- If emaj_viewer can be dropped, do it.
+      IF v_roleToDrop THEN
+-- Revoke first the remaining grants set on tablespaces
+        SELECT string_agg(spcname, ', ')
+          INTO v_tspList
+          FROM pg_catalog.pg_tablespace
+          WHERE array_to_string (spcacl, ';') LIKE '%emaj_viewer=%';
+        IF v_tspList IS NOT NULL THEN
+          EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_viewer';
+        END IF;
+-- ... and drop the role.
+        DROP ROLE emaj_viewer;
+        RAISE WARNING 'emaj_drop_extension: The emaj_viewer role has been dropped.';
+      ELSE
+        RAISE WARNING 'emaj_drop_extension: For these reasons, the emaj_viewer role has not been dropped by this script.';
+      END IF;
+    END IF;
+--
+    RETURN;
+  END;
+$emaj_drop_extension$;
+COMMENT ON FUNCTION emaj.emaj_drop_extension() IS
+$$Uninstalls the E-Maj components from the current database.$$;
+
 --<end_functions>                                pattern used by the tool that extracts and inserts the functions definition
 
 ----------------------------------------------------------------
@@ -711,8 +991,40 @@ $_enable_event_triggers$;
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA emaj FROM PUBLIC;
 
-GRANT ALL ON ALL TABLES IN SCHEMA emaj TO emaj_adm;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA emaj TO emaj_adm;
+-- Set the ownership of all emaj objects to emaj_adm.
+ALTER SCHEMA emaj OWNER TO emaj_adm;
+ALTER SEQUENCE emaj.emaj_global_seq OWNER TO emaj_adm;
+-- Process tables, views and types.
+DO LANGUAGE plpgsql
+$do$
+  DECLARE
+    r_object                 RECORD;
+  BEGIN
+-- Process tables, views and composite types.
+    FOR r_object IN
+      SELECT relname, CASE relkind WHEN 'r' THEN 'TABLE' WHEN 'v' THEN 'VIEW' WHEN 'c' THEN 'TYPE' END AS object
+        FROM pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+        WHERE nspname = 'emaj'
+          AND relkind IN ('r', 'v', 'c')
+    LOOP
+      EXECUTE format('ALTER %s emaj.%s OWNER TO emaj_adm',
+                         r_object.object, r_object.relname);
+    END LOOP;
+-- Process enum types.
+    FOR r_object IN
+      SELECT typname
+        FROM pg_catalog.pg_type
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = typnamespace)
+        WHERE nspname = 'emaj'
+          AND typtype = 'e'
+    LOOP
+      EXECUTE format('ALTER type emaj.%s OWNER TO emaj_adm',
+                         r_object.typname);
+    END LOOP;
+  END;
+$do$;
+
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
 
 GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;

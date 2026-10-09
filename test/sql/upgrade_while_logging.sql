@@ -63,3 +63,11 @@ SELECT * FROM "emaj_phil's schema""3"."myTbl2\_log_seq";
 -----------------------------
 -- Check the changes specific to this version upgrade.
 -----------------------------
+-- emaj schema.
+\dn emaj
+-- Tables, views, composite types.
+\dtvs emaj.*
+-- Enum types.
+select typname, rolname
+  from pg_type join pg_namespace on (typnamespace = pg_namespace.oid) join pg_authid on (pg_authid.oid = typowner)
+  where nspname = 'emaj' and typtype = 'e';
