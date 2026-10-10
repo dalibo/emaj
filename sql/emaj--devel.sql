@@ -5809,7 +5809,7 @@ $_check_fk_groups$
         ORDER BY 1, 2, 3
     LOOP
       RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" references the table "%.%" that is outside the groups (%).',
-        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq, r_fk.nspname, r_fk.relname, array_to_string(p_groups, ',');
+        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq, r_fk.nspname, r_fk.relname, array_to_string(p_groups, ', ');
     END LOOP;
 -- Issue a warning if a table of the groups is referenced by a table outside the groups.
     FOR r_fk IN
@@ -5839,7 +5839,7 @@ $_check_fk_groups$
     LOOP
       RAISE WARNING '_check_fk_groups: The table "%.%" is referenced by the foreign key "%" on the table "%.%" that is outside'
                     ' the groups (%).', r_fk.rel_schema, r_fk.rel_tblseq, r_fk.conname, r_fk.nspname, r_fk.relname,
-                    array_to_string(p_groups, ',');
+                    array_to_string(p_groups, ', ');
     END LOOP;
 -- Issue a warning for rollbackable groups if a FK on a partition is actualy set on the partitionned table.
 -- The warning message depends on the FK characteristics.
@@ -8432,7 +8432,7 @@ $_delete_before_mark_group$
   BEGIN
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
--- Retrieve the timestamp and the emaj_gid value and the time stamp id of the target new first mark.
+-- Retrieve the emaj_gid value and the time stamp id of the target new first mark.
     SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
       FROM emaj.emaj_mark
            JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)

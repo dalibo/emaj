@@ -116,6 +116,118 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._check_fk_groups(p_groups TEXT[])
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_fk_groups$
+-- This function checks foreign key constraints for tables of a groups array.
+-- Tables from audit_only groups are ignored in this check because they will never be rolled back.
+-- Input: group names array
+  DECLARE
+    v_isEmajExtension        BOOLEAN;
+    r_fk                     RECORD;
+  BEGIN
+-- Issue a warning if a table of the groups has a foreign key that references a table outside the groups.
+    FOR r_fk IN
+      SELECT c.conname, r.rel_schema, r.rel_tblseq, nf.nspname, tf.relname
+        FROM emaj.emaj_relation r
+             JOIN emaj.emaj_group g ON (g.group_name = r.rel_group)
+             JOIN pg_catalog.pg_class t ON (t.relname = r.rel_tblseq)
+             JOIN pg_catalog.pg_namespace n ON (t.relnamespace = n.oid AND n.nspname = r.rel_schema)
+             JOIN pg_catalog.pg_constraint c ON (c.conrelid  = t.oid)
+             JOIN pg_catalog.pg_class tf ON (tf.oid = c.confrelid)
+             JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace)
+        WHERE contype = 'f'                                         -- FK constraints only
+          AND upper_inf(r.rel_time_range)
+          AND r.rel_group = ANY (p_groups)                      -- only tables currently belonging to the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND tf.relkind = 'r'                                      -- only constraints referencing true tables, ie. excluding
+                                                                    --   partitionned tables
+          AND NOT EXISTS                                            -- referenced table currently outside the groups
+                (SELECT 0
+                   FROM emaj.emaj_relation
+                   WHERE rel_schema = nf.nspname
+                     AND rel_tblseq = tf.relname
+                     AND upper_inf(rel_time_range)
+                     AND rel_group = ANY (p_groups)
+                )
+        ORDER BY 1, 2, 3
+    LOOP
+      RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" references the table "%.%" that is outside the groups (%).',
+        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq, r_fk.nspname, r_fk.relname, array_to_string(p_groups, ', ');
+    END LOOP;
+-- Issue a warning if a table of the groups is referenced by a table outside the groups.
+    FOR r_fk IN
+      SELECT c.conname, n.nspname, t.relname, r.rel_schema, r.rel_tblseq
+        FROM emaj.emaj_relation r
+             JOIN emaj.emaj_group g ON (g.group_name = r.rel_group)
+             JOIN pg_catalog.pg_class tf ON (tf.relname = r.rel_tblseq)
+             JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace AND nf.nspname = r.rel_schema)
+             JOIN pg_catalog.pg_constraint c ON (c.confrelid  = tf.oid)
+             JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
+             JOIN pg_catalog.pg_namespace n ON (n.oid = t.relnamespace)
+        WHERE contype = 'f'                                         -- FK constraints only
+          AND upper_inf(r.rel_time_range)
+          AND r.rel_group = ANY (p_groups)                      -- only tables currently belonging to the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND t.relkind = 'r'                                       -- only constraints referenced by true tables, ie. excluding
+                                                                    --   partitionned tables
+          AND NOT EXISTS                                            -- referenced table outside the groups
+                (SELECT 0
+                   FROM emaj.emaj_relation
+                   WHERE rel_schema = n.nspname
+                     AND rel_tblseq = t.relname
+                     AND upper_inf(rel_time_range)
+                     AND rel_group = ANY (p_groups)
+                )
+        ORDER BY 1, 2, 3
+    LOOP
+      RAISE WARNING '_check_fk_groups: The table "%.%" is referenced by the foreign key "%" on the table "%.%" that is outside'
+                    ' the groups (%).', r_fk.rel_schema, r_fk.rel_tblseq, r_fk.conname, r_fk.nspname, r_fk.relname,
+                    array_to_string(p_groups, ', ');
+    END LOOP;
+-- Issue a warning for rollbackable groups if a FK on a partition is actualy set on the partitionned table.
+-- The warning message depends on the FK characteristics.
+    v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
+    FOR r_fk IN
+      SELECT rel_schema, rel_tblseq, c.conname, confupdtype, confdeltype, condeferrable
+        FROM emaj.emaj_relation r
+             JOIN emaj.emaj_group g ON (g.group_name = r.rel_group)
+             JOIN pg_catalog.pg_class t ON (t.relname = r.rel_tblseq)
+             JOIN pg_catalog.pg_namespace n ON (t.relnamespace  = n.oid AND n.nspname = r.rel_schema)
+             JOIN pg_catalog.pg_constraint c ON (c.conrelid = t.oid)
+        WHERE contype = 'f'                                         -- FK constraints only
+          AND coninhcount > 0                                       -- inherited FK
+          AND upper_inf(r.rel_time_range)
+          AND r.rel_group = ANY (p_groups)                      -- only tables currently belonging to the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND r.rel_kind = 'r'                                      -- only constraints referencing true tables, ie. excluding
+                                                                    --   partitionned tables
+        ORDER BY 1, 2, 3
+    LOOP
+      IF r_fk.confupdtype = 'a' AND r_fk.confdeltype = 'a' AND NOT r_fk.condeferrable THEN
+        -- Advise DEFERRABLE FK if there is no ON UPDATE|DELETE clause.
+        RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table. It should'
+                      ' be set as DEFERRABLE to avoid E-Maj rollback failure.',
+                      r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+      ELSIF r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
+        -- Warn about potential rollback failure with FK having ON UPDATE|DELETE clause.
+        IF v_isEmajExtension THEN
+          RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table. An E-Maj'
+                        ' rollback targeting a mark set before the latest table assignement could fail.',
+                        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+        ELSE
+          RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table and has'
+                        ' ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be'
+                        ' temporarily dropped and recreated.',
+                        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+        END IF;
+      END IF;
+    END LOOP;
+--
+    RETURN;
+  END;
+$_check_fk_groups$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(p_groups TEXT[] DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql AS
 $emaj_export_groups_configuration$
@@ -551,6 +663,164 @@ $_import_groups_conf_prepare$
     RETURN;
   END;
 $_import_groups_conf_prepare$;
+
+CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(p_group TEXT, p_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$_delete_before_mark_group$
+-- This function deletes all logs and marks set before a given mark.
+-- The function is called by the emaj_delete_before_mark_group(), emaj_delete_mark_group() functions.
+-- It deletes rows corresponding to the marks to delete from emaj_mark and emaj_sequence.
+-- It deletes rows from emaj_relation corresponding to old versions that become unreacheable.
+-- It deletes rows from all concerned log tables.
+-- To complete, the function deletes oldest rows from emaj_hist.
+-- Input: group name, name of the new first mark.
+-- Output: number of deleted marks, number of tables effectively processed (for which at least one log row has been deleted)
+  DECLARE
+    v_eventTriggers          TEXT[];
+    v_markGlobalSeq          BIGINT;
+    v_markTimeId             BIGINT;
+    v_nbMark                 INT;
+    r_rel                    RECORD;
+  BEGIN
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Retrieve the emaj_gid value and the time stamp id of the target new first mark.
+    SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
+      FROM emaj.emaj_mark
+           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+      WHERE mark_group = p_group
+        AND mark_name = p_mark;
+--
+-- First process all obsolete time ranges for the group.
+--
+-- Drop obsolete old log tables.
+    FOR r_rel IN
+        -- log tables for the group, whose end time stamp is older than the new first mark time stamp
+        SELECT DISTINCT rel_log_schema, rel_log_table
+          FROM emaj.emaj_relation
+          WHERE rel_kind = 'r'
+            AND rel_group = p_group
+            AND upper(rel_time_range) <= v_markTimeId
+      EXCEPT
+        -- unless they are also used for more recent time range, or are also linked to other groups
+        SELECT rel_log_schema, rel_log_table
+          FROM emaj.emaj_relation
+          WHERE rel_kind = 'r'
+            AND (upper(rel_time_range) > v_markTimeId
+                 OR upper_inf(rel_time_range)
+                 OR rel_group <> p_group)
+        ORDER BY 1, 2
+    LOOP
+      EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
+                     r_rel.rel_log_schema, r_rel.rel_log_table);
+    END LOOP;
+-- Delete emaj_table rows corresponding to obsolete relation time range that will be deleted just later.
+-- The related emaj_seq_hole rows will be deleted just later ; they are not directly linked to an emaj_relation row.
+    DELETE FROM emaj.emaj_table
+      USING emaj.emaj_relation r1
+      WHERE rel_group = p_group
+        AND rel_kind = 'r'
+        AND tbl_schema = rel_schema
+        AND tbl_name = rel_tblseq
+        AND upper(rel_time_range) <= v_markTimeId
+        AND (tbl_time_id < v_markTimeId                   -- all tables states prior the mark time
+             OR (tbl_time_id = v_markTimeId               -- and the tables state of the mark time
+                 AND NOT EXISTS                           --   if it is not the lower bound of an adjacent time range
+                       (SELECT 0
+                          FROM emaj.emaj_relation r2
+                          WHERE r2.rel_schema = r1.rel_schema
+                            AND r2.rel_tblseq = r1.rel_tblseq
+                            AND lower(r2.rel_time_range) = v_markTimeId
+                       )));
+-- Keep a trace of the relation group ownership history and finaly delete from the emaj_relation table the relation that ended before
+-- the new first mark.
+    WITH deleted AS
+      (DELETE FROM emaj.emaj_relation
+         WHERE rel_group = p_group
+           AND upper(rel_time_range) <= v_markTimeId
+         RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+        FROM deleted;
+-- Drop the E-Maj log schemas that are now useless (i.e. not used by any created group).
+    PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', FALSE);
+--
+-- Then process the current relation time range for the group.
+--
+-- Delete rows from all log tables.
+    FOR r_rel IN
+      SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name
+        FROM emaj.emaj_relation
+        WHERE rel_group = p_group
+          AND rel_kind = 'r'
+          AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_markTimeId)
+        ORDER BY rel_priority, rel_schema, rel_tblseq
+    LOOP
+-- Delete log rows prior to the new first mark.
+      EXECUTE format('DELETE FROM %s WHERE emaj_gid <= $1',
+                     r_rel.log_table_name)
+        USING v_markGlobalSeq;
+    END LOOP;
+-- Process emaj_seq_hole content.
+-- Delete all existing holes, if any, before the mark.
+-- It may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
+-- but is safe enough for rollbacks.
+    DELETE FROM emaj.emaj_seq_hole
+      USING emaj.emaj_relation
+      WHERE rel_group = p_group
+        AND rel_kind = 'r'
+        AND rel_schema = sqhl_schema
+        AND rel_tblseq = sqhl_table
+        AND sqhl_begin_time_id < v_markTimeId;
+-- Now the sequences related to the mark to delete can be suppressed.
+-- Delete first application sequences related data for the group.
+-- The sequence state at time range bounds are kept (if the mark comes from a logging group alter operation).
+    DELETE FROM emaj.emaj_sequence
+      USING emaj.emaj_relation
+      WHERE sequ_schema = rel_schema
+        AND sequ_name = rel_tblseq
+        AND rel_time_range @> sequ_time_id
+        AND rel_group = p_group
+        AND rel_kind = 'S'
+        AND sequ_time_id < v_markTimeId
+        AND lower(rel_time_range) <> sequ_time_id;
+-- Delete then tables related data for the group.
+-- The tables state at time range bounds are kept.
+    DELETE FROM emaj.emaj_table
+      USING emaj.emaj_relation
+      WHERE tbl_schema = rel_schema
+        AND tbl_name = rel_tblseq
+        AND rel_time_range @> tbl_time_id
+        AND rel_group = p_group
+        AND rel_kind = 'r'
+        AND tbl_time_id < v_markTimeId
+        AND lower(rel_time_range) <> tbl_time_id;
+-- And that may have one of the deleted marks as target mark from a previous logged rollback operation.
+    UPDATE emaj.emaj_mark
+      SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = p_group
+        AND mark_time_id >= v_markTimeId
+        AND mark_logged_rlbk_target_mark IN
+             (SELECT mark_name
+                FROM emaj.emaj_mark
+                WHERE mark_group = p_group
+                  AND mark_time_id < v_markTimeId
+             );
+-- Delete oldest marks.
+    DELETE FROM emaj.emaj_mark
+      WHERE mark_group = p_group
+        AND mark_time_id < v_markTimeId;
+    GET DIAGNOSTICS v_nbMark = ROW_COUNT;
+-- Enable previously disabled event triggers.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- Purge the history tables, if needed (even if no mark as been really dropped).
+    PERFORM emaj._purge_histories();
+--
+    RETURN v_nbMark;
+  END;
+$_delete_before_mark_group$;
 
 CREATE OR REPLACE FUNCTION emaj._export_param_conf(p_includeDefault BOOLEAN)
 RETURNS JSON LANGUAGE plpgsql AS
