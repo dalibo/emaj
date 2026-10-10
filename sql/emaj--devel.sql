@@ -939,6 +939,8 @@ $_dblink_open_cnx$
     v_stmt                   TEXT;
     v_isEmajAdmin            BOOLEAN;
     v_sqlstate               TEXT;
+    v_errMsg                 TEXT;
+    v_errDetail              TEXT;
   BEGIN
 -- Look for the schema holding the dblink functions.
     SELECT nspname INTO p_schema
@@ -1014,6 +1016,8 @@ $_dblink_open_cnx$
         WHEN OTHERS THEN
           p_status = -6;                -- the connection attempt failed
           v_sqlstate = SQLSTATE;
+          v_errMsg = SQLERRM;
+          GET STACKED DIAGNOSTICS v_errDetail = PG_EXCEPTION_DETAIL;
       END;
     END IF;
 -- The connection succeeds.
@@ -1046,7 +1050,8 @@ $_dblink_open_cnx$
             WHEN -3 THEN ' (installer role not allowed to EXECUTE dblink_connect_u())'
             WHEN -4 THEN ' (transaction isolation level not READ COMMITTED)'
             WHEN -5 THEN ' (''dblink_user_password'' parameter not set)'
-            WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
+            WHEN -6 THEN format(' (dblink connection test failed - SQLSTATE %s - %s - %s)',
+                                v_sqlstate, v_errMsg, v_errDetail)
             WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not E-Maj administration rights)'
             WHEN -8 THEN ' (installer role has not pg_read_all_settings privileges)'
             ELSE ''
