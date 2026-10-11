@@ -1,7 +1,8 @@
 emaj/README.md
 emaj/CHANGES.md
-emaj/AUTHORS.md
 emaj/LICENSE
+emaj/AUTHORS.md
+emaj/SECURITY.md
 emaj/META.json
 emaj/emaj.control
 emaj/Makefile

@@ -2,14 +2,15 @@ Here are the contributors of the E-Maj extension.
 ================================================
 
 The **main developers** are:
-Philippe Beaudoin
-Thibaud Walkowiak
+
+- Philippe Beaudoin <phb.emaj@free.fr>
+- Thibaud Walkowiak
 
 **Many thanks** (for their patches, comments, suggestions, help in translation, etc) to:
 * Emmanuel Bezagu and its team at DGFiP (French Ministry of Finance)
 * Djamel Haddadi
 * Damien Cazeil, for the logo design
-* Marie-Claude Quidoz and the DRBD organization at CNRS
+* Marie-Claude Quidoz and the DRBD organization at French CNRS organization
 * The CNAF DB administrators team
 * Ronan Dunklau
 * Mayeul Kauffmann
