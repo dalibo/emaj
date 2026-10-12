@@ -190,6 +190,8 @@ CREATE TYPE emaj._relation_change_kind_enum AS ENUM (
   'RENAME_TABLE',
   'RENAME_SEQUENCE'
   );
+COMMENT ON TYPE emaj._relation_change_kind_enum IS
+$$Possible values for the emaj_relation_change.rlchg_change_kind column.$$;
 
 -- Enum of the possible values for the rollback status columns.
 CREATE TYPE emaj._rlbk_status_enum AS ENUM (
@@ -200,6 +202,8 @@ CREATE TYPE emaj._rlbk_status_enum AS ENUM (
   'COMMITTED',               -- the emaj rollback transaction is known as committed
   'ABORTED'                  -- the emaj rollback transaction is known as aborted
   );
+COMMENT ON TYPE emaj._rlbk_status_enum IS
+$$Possible values for rollback status.$$;
 
 -- Enum of the possible values for the rollback steps.
 CREATE TYPE emaj._rlbk_step_enum AS ENUM (
@@ -220,6 +224,8 @@ CREATE TYPE emaj._rlbk_step_enum AS ENUM (
   'CTRL+DBLINK',             -- pseudo step representing the periods between 2 steps execution, when dblink is used
   'CTRL-DBLINK'              -- pseudo step representing the periods between 2 steps execution, when dblink is not used
   );
+COMMENT ON TYPE emaj._rlbk_step_enum IS
+$$Possible values for rollback elementary steps.$$;
 
 ----------------------------------------------------------------
 --                                                            --
@@ -661,7 +667,7 @@ CREATE TYPE emaj.emaj_log_stat_group_type AS (
   stat_rows                    BIGINT                      -- estimated number of update events recorded for this table
   );
 COMMENT ON TYPE emaj.emaj_log_stat_group_type IS
-$$Represents the structure of rows returned by the emaj_log_stat_group() function.$$;
+$$Structure of rows returned by the emaj_log_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_detailed_log_stat_group_type AS (
   stat_group                   TEXT,                       -- group name owning the schema.table
@@ -678,7 +684,7 @@ CREATE TYPE emaj.emaj_detailed_log_stat_group_type AS (
   stat_rows                    BIGINT                      -- real number of update events recorded for this table
   );
 COMMENT ON TYPE emaj.emaj_detailed_log_stat_group_type IS
-$$Represents the structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
+$$Structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_sequence_stat_group_type AS (
   stat_group                   TEXT,                       -- group name owning the schema.table
@@ -694,7 +700,7 @@ CREATE TYPE emaj.emaj_sequence_stat_group_type AS (
   stat_has_structure_changed   BOOLEAN                     -- TRUE if any property other than last_value has changed
   );
 COMMENT ON TYPE emaj.emaj_sequence_stat_group_type IS
-$$Represents the structure of rows returned by the emaj_sequence_stat_group() function.$$;
+$$Structure of rows returned by the emaj_sequence_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_log_stat_table_type AS (
   stat_group                   TEXT,                       -- table group name owning the marks and the table
@@ -712,7 +718,7 @@ CREATE TYPE emaj.emaj_log_stat_table_type AS (
   stat_rollbacks               INT                         -- number of E-maj rollbacks executed in the time slice
   );
 COMMENT ON TYPE emaj.emaj_log_stat_table_type IS
-$$Represents the structure of rows returned by the emaj_log_stat_table() function.$$;
+$$Structure of rows returned by the emaj_log_stat_table() function.$$;
 
 CREATE TYPE emaj.emaj_log_stat_sequence_type AS (
   stat_group                   TEXT,                       -- table group name owning the marks and the sequence
@@ -731,7 +737,7 @@ CREATE TYPE emaj.emaj_log_stat_sequence_type AS (
   stat_rollbacks               INT                         -- number of E-maj rollbacks executed in the time slice
   );
 COMMENT ON TYPE emaj.emaj_log_stat_sequence_type IS
-$$Represents the structure of rows returned by the emaj_log_stat_sequence() function.$$;
+$$Structure of rows returned by the emaj_log_stat_sequence() function.$$;
 
 CREATE TYPE emaj.emaj_rollback_activity_type AS (
   rlbk_id                      INT,                        -- rollback id
@@ -755,7 +761,7 @@ CREATE TYPE emaj.emaj_rollback_activity_type AS (
   rlbk_completion_pct          SMALLINT                    -- estimated percentage of the rollback operation
   );
 COMMENT ON TYPE emaj.emaj_rollback_activity_type IS
-$$Represents the structure of rows returned by the emaj_rollback_activity() function.$$;
+$$Structure of rows returned by the emaj_rollback_activity() function.$$;
 
 CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
   cons_group                   TEXT,                       -- group name
@@ -767,7 +773,7 @@ CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
   cons_marks                   INT                         -- number of marks that would be deleted by a consolidation
   );
 COMMENT ON TYPE emaj.emaj_consolidable_rollback_type IS
-$$Represents the structure of rows returned by the emaj_get_consolidable_rollbacks() function.$$;
+$$Structure of rows returned by the emaj_get_consolidable_rollbacks() function.$$;
 
 -- Composite types used by emaj internal functions.
 
@@ -778,7 +784,7 @@ CREATE TYPE emaj._verify_groups_type AS (                -- this type is not use
   ver_msg                      TEXT
   );
 COMMENT ON TYPE emaj._verify_groups_type IS
-$$Represents the structure of rows returned by the internal _verify_groups() function.$$;
+$$Structure of rows returned by the internal _verify_groups() function.$$;
 
 CREATE TYPE emaj._report_message_type AS (
   rpt_msg_type                 INT,                        -- message number
@@ -799,7 +805,7 @@ CREATE TYPE emaj._report_message_type AS (
   rpt_message                  TEXT                        -- the english formatted error message
   );
 COMMENT ON TYPE emaj._report_message_type IS
-$$Represents a generic notice, warning or error message structure that can be translated by external clients.$$;
+$$Generic notice, warning or error message structure that can be translated by external clients.$$;
 
 ----------------------------------------------------------------
 --                                                            --

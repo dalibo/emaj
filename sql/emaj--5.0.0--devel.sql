@@ -90,6 +90,31 @@ SELECT emaj._disable_event_triggers();
 --                                                            --
 ----------------------------------------------------------------
 
+COMMENT ON TYPE emaj._relation_change_kind_enum IS
+$$Possible values for the emaj_relation_change.rlchg_change_kind column.$$;
+COMMENT ON TYPE emaj._rlbk_status_enum IS
+$$Possible values for rollback status.$$;
+COMMENT ON TYPE emaj._rlbk_step_enum IS
+$$Possible values for rollback elementary steps.$$;
+COMMENT ON TYPE emaj.emaj_log_stat_group_type IS
+$$Structure of rows returned by the emaj_log_stat_group() function.$$;
+COMMENT ON TYPE emaj.emaj_detailed_log_stat_group_type IS
+$$Structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
+COMMENT ON TYPE emaj.emaj_sequence_stat_group_type IS
+$$Structure of rows returned by the emaj_sequence_stat_group() function.$$;
+COMMENT ON TYPE emaj.emaj_log_stat_table_type IS
+$$Structure of rows returned by the emaj_log_stat_table() function.$$;
+COMMENT ON TYPE emaj.emaj_log_stat_sequence_type IS
+$$Structure of rows returned by the emaj_log_stat_sequence() function.$$;
+COMMENT ON TYPE emaj.emaj_rollback_activity_type IS
+$$Structure of rows returned by the emaj_rollback_activity() function.$$;
+COMMENT ON TYPE emaj.emaj_consolidable_rollback_type IS
+$$Structure of rows returned by the emaj_get_consolidable_rollbacks() function.$$;
+COMMENT ON TYPE emaj._verify_groups_type IS
+$$Structure of rows returned by the internal _verify_groups() function.$$;
+COMMENT ON TYPE emaj._report_message_type IS
+$$Generic notice, warning or error message structure that can be translated by external clients.$$;
+
 --
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
