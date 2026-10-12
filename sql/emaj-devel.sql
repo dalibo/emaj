@@ -4928,8 +4928,8 @@ $_get_current_seq$
   END;
 $_get_current_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, p_minGlobalSeq BIGINT, p_maxGlobalSeq BIGINT, p_nbSession INT,
-                                          p_isLoggedRlbk BOOLEAN, p_isReplRoleReplica BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, p_minGlobalSeq BIGINT, p_maxGlobalSeq BIGINT, p_isLoggedRlbk BOOLEAN,
+                                          p_isReplRoleReplica BOOLEAN)
 RETURNS BIGINT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_rlbk_tbl$
@@ -4937,7 +4937,6 @@ $_rlbk_tbl$
 -- The function is called by emaj._rlbk_session_exec().
 -- Input: row from emaj_relation corresponding to the appplication table to proccess
 --        global sequence (non inclusive) lower and (inclusive) upper limits covering the rollback time frame
---        number of sessions
 --        a boolean indicating whether the rollback is logged
 --        a boolean indicating whether the rollback is to be performed with a session_replication_role set to replica
 -- Output: number of rolled back primary keys
@@ -4947,7 +4946,6 @@ $_rlbk_tbl$
     v_fullTableName          TEXT;
     v_logTableName           TEXT;
     v_tmpTable               TEXT;
-    v_tableType              TEXT;
     v_pkColsList             TEXT;
     v_pkCondition            TEXT;
     v_nbPk                   BIGINT;
@@ -4969,20 +4967,13 @@ $_rlbk_tbl$
       SET session_replication_role = 'replica';
     END IF;
 -- Create the temporary table containing all primary key values with their earliest emaj_gid.
-    IF p_nbSession = 1 THEN
-      v_tableType = 'TEMP';
-      v_tmpTable = 'emaj_tmp_' || pg_catalog.pg_backend_pid();
-    ELSE
--- With multi session parallel rollbacks, the table cannot be a TEMP table because it would not be usable in 2PC
--- but it may be an UNLOGGED table.
-      v_tableType = 'UNLOGGED';
-      v_tmpTable = 'emaj.emaj_tmp_' || pg_catalog.pg_backend_pid();
-    END IF;
-    EXECUTE format('CREATE %s TABLE %s AS '
+-- The table is created as UNLOGGED, because TEMP table are not usable with 2PC transactions used for parallel rollbacks.
+    v_tmpTable = 'emaj.emaj_tmp_' || pg_catalog.pg_backend_pid();
+    EXECUTE format('CREATE UNLOGGED TABLE %s AS '
                    '  SELECT %s, min(emaj_gid) as emaj_gid FROM %s'
                    '    WHERE emaj_gid > %s AND emaj_gid <= %s'
                    '    GROUP BY %s',
-                   v_tableType, v_tmpTable, v_pkColsList, v_logTableName,
+                   v_tmpTable, v_pkColsList, v_logTableName,
                    p_minGlobalSeq, p_maxGlobalSeq, v_pkColsList);
     GET DIAGNOSTICS v_nbPk = ROW_COUNT;
 -- Delete all rows from the application table corresponding to each touched primary key.
@@ -10349,7 +10340,7 @@ $_rlbk_session_exec$
                                 CASE WHEN v_rlbkMarkTimeId = r_step.rlbp_target_time_id THEN v_lastGlobalSeq      -- common case
                                      ELSE (SELECT time_last_emaj_gid FROM emaj.emaj_time_stamp WHERE time_id = r_step.rlbp_target_time_id)
                                 END,
-                                v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk, r_step.rlbp_is_repl_role_replica) INTO v_nbRows
+                                v_maxGlobalSeq, v_isLoggedRlbk, r_step.rlbp_is_repl_role_replica) INTO v_nbRows
             FROM emaj.emaj_relation
             WHERE rel_schema = r_step.rlbp_schema
               AND rel_tblseq = r_step.rlbp_table
