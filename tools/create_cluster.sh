@@ -47,7 +47,7 @@ fi
 cat <<-EOF1 >${PGDATA}/specif.conf
 	listen_addresses = '*'
 	port = ${PGPORT}
-	max_prepared_transactions = 5
+	max_prepared_transactions = 10
 	logging_collector = on
 	track_functions = all
 	plpgsql.extra_warnings = all
