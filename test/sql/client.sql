@@ -46,6 +46,13 @@ SELECT emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::JSONB);
 -- Unlogged rollback for 2 groups in unstrict mode.
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 
+-- Parallel rollback with an error occuring at PREPARE TRANSACTION time.
+SELECT current_setting('max_prepared_transactions')::INT + 2 AS too_many_session
+\gset
+\setenv EMAJTESTTMS :too_many_session
+--   The number of requested sessions is 2 over the max_prepared_transactions GUC
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s $EMAJTESTTMS -a
+
 -- Logged rollback for a single group and a single session.
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
 

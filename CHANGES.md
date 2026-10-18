@@ -9,6 +9,8 @@ E-Maj - Change log
   * Fix a vulnerability: a role having emaj_adm privileges could acquire
     superuser rights. The emaj schema and all its content now belongs to
     emaj_adm.
+  * In the emajParallelRollback.pl client, properly handle errors that may
+    occur in the PREPARE TRANSACTION phase.
 
 5.0.0 (2026-Jul-24)
 ------

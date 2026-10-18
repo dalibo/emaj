@@ -120,7 +120,7 @@ SELECT mark_group, regexp_replace(mark_name, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\
  myGroup2   | Multi-1                      |        14008 | f                      |                                                     |                        92 | 
  myGroup2   | RLBK_20000_START             |        20001 | f                      | Automatically set at rollback to mark Multi-1 start |                        32 | 
  myGroup2   | latest_mark                  |        20002 | f                      | Automatically set at rollback to mark Multi-1 end   |                        19 | Multi-1
- myGroup2   | After restore mark           |        20004 | f                      |                                                     |                           | 
+ myGroup2   | After restore mark           |        20005 | f                      |                                                     |                           | 
 (13 rows)
 
 SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
@@ -155,8 +155,8 @@ SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
  myschema2   | myTbl3_col31_seq  |        20001 |            20 | t
  myschema2   | myseq1            |        20002 |          1004 | f
  myschema2   | myTbl3_col31_seq  |        20002 |            20 | t
- myschema2   | myseq1            |        20004 |          1004 | t
- myschema2   | myTbl3_col31_seq  |        20004 |            20 | t
+ myschema2   | myseq1            |        20005 |          1004 | t
+ myschema2   | myTbl3_col31_seq  |        20005 |            20 | t
 (30 rows)
 
 SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val
@@ -240,12 +240,12 @@ SELECT tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val
  myschema2  | mytbl4   |       20002 |                   14
  myschema2  | mytbl5   |       20002 |                   17
  myschema2  | mytbl6   |       20002 |                   77
- myschema2  | mytbl1   |       20004 |                   59
- myschema2  | mytbl2   |       20004 |                   13
- myschema2  | myTbl3   |       20004 |                   30
- myschema2  | mytbl4   |       20004 |                   14
- myschema2  | mytbl5   |       20004 |                   17
- myschema2  | mytbl6   |       20004 |                   77
+ myschema2  | mytbl1   |       20005 |                   59
+ myschema2  | mytbl2   |       20005 |                   13
+ myschema2  | myTbl3   |       20005 |                   30
+ myschema2  | mytbl4   |       20005 |                   14
+ myschema2  | mytbl5   |       20005 |                   17
+ myschema2  | mytbl6   |       20005 |                   77
 (83 rows)
 
 -- User tables.
@@ -425,7 +425,7 @@ SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 SELECT * FROM emaj.emaj_rollback_group('myGroup2', 'Multi-1');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
- Notice        | Rollback id = 20002.
+ Notice        | Rollback id = 20003.
  Notice        | 6 / 6 tables effectively processed.
  Notice        | 1 / 2 sequences effectively processed.
 (3 rows)
@@ -975,9 +975,10 @@ SELECT time_id, time_last_emaj_gid, time_event FROM emaj.emaj_time_stamp ORDER B
    20001 |           20000079 | R
    20002 |           20000142 | M
    20003 |           20000142 | R
-   20004 |           20000161 | M
-   20005 |           20000161 | R
-(522 rows)
+   20004 |           20000142 | R
+   20005 |           20000161 | M
+   20006 |           20000161 | R
+(523 rows)
 
 SELECT sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
   FROM emaj.emaj_sequence ORDER BY sequ_time_id, sequ_schema, sequ_name;
@@ -1163,7 +1164,7 @@ SELECT emaj.emaj_stop_group('myGroup2');
 SELECT count(*) FROM emaj.emaj_hist;
  count 
 -------
-   127
+   128
 (1 row)
 
 --SELECT hist_id, hist_function, hist_event, hist_object,

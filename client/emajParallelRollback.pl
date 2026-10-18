@@ -60,6 +60,7 @@ my $verbose = 0;                          # -v flag for verbose mode
 my $conn_string = "application_name=$APPNAME;";
 my $multiGroup = 'false';
 my $msgRlbk = 'Rollback';
+my $prepTxBaseName;
 
 # Get supplied options.
 GetOptions(
@@ -205,19 +206,20 @@ if ($nbSession == 1) {
 # If there is only 1 session, perform a usual COMMIT ...
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Commit transaction #1...\n") if ($verbose);
   $dbh[1]->commit
-    or die("Commit prepared #1 failed.\n$DBI::errstr\n");
+    or die("Commit #1 failed.\n$DBI::errstr\n");
 } else {
 # ... else, COMMIT with 2PC to be sure that all sessions can either commit or rollback in a single transaction.
+  $prepTxBaseName = "${APPNAME}_${rlbkId}";
 # Phase 1 : Prepare transaction
   for (my $i = 1 ; $i <= $nbSession; $i++) {
     print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Prepare transaction #$i...\n") if ($verbose);
-    $dbh[$i]->do("PREPARE TRANSACTION 'emajtx$i'")
-      or die("Prepare transaction #$i failed.\n$DBI::errstr\n");
+    $dbh[$i]->do("PREPARE TRANSACTION '${prepTxBaseName}_$i'")
+      or rlbkPrepDie($i, "Prepare transaction #$i failed.\n$DBI::errstr\n");
   }
 # Phase 2 : Commit
   for (my $i = 1 ; $i <= $nbSession; $i++) {
     print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Commit transaction #$i...\n") if ($verbose);
-    $dbh[$i]->do("COMMIT PREPARED 'emajtx$i'")
+    $dbh[$i]->do("COMMIT PREPARED '${prepTxBaseName}_$i'")
       or die("Commit prepared #$i failed.\n$DBI::errstr\n");
   }
 }
@@ -253,6 +255,19 @@ foreach $execReportRows ( @$execReportRows) {
 # Sub-functions
 #
 #------------------------------------------------------------------------------
+
+sub rlbkPrepDie {
+  my ($failedSession, $errMsg) = @_;
+
+# Rollback the already prepared transactions.
+  for (my $i = 1 ; $i < $failedSession; $i++) {
+    print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Rollback the prepared transaction on session #$i...\n") if ($verbose);
+    $dbh[$i]->do("ROLLBACK PREPARED '${prepTxBaseName}_$i'")
+      or die("ROLLBACK PREPARED on session #$i failed.\n$DBI::errstr\n\n");
+  }
+# And die with the error message display.
+  die($errMsg);
+}
 
 sub printHelp {
   print qq{$PROGRAM belongs to the E-Maj PostgreSQL extension (version $VERSION).

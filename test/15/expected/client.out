@@ -81,14 +81,27 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
     Notice: 3 / 4 sequences effectively processed.
     Warning: Table group change not rolled back: ignored triggers list for myschema1.mytbl2
     Warning: Table group change not rolled back: E-Maj priority for myschema1.mytbl1
+-- Parallel rollback with an error occuring at PREPARE TRANSACTION time.
+SELECT current_setting('max_prepared_transactions')::INT + 2 AS too_many_session
+\gset
+\setenv EMAJTESTTMS :too_many_session
+--   The number of requested sessions is 2 over the max_prepared_transactions GUC
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g "myGroup1,myGroup2" -m Multi-1 -s $EMAJTESTTMS -a
+Prepare transaction #11 failed.
+ERROR:  maximum number of prepared transactions reached
+HINT:  Increase max_prepared_transactions (currently 10).
+ E-Maj (version <devel>) - launching parallel rollbacks
+-----------------------------------------------------------
+==> Rollback to mark 'Multi-1' is now in progress with 12 sessions...
+    Its rollback identifier is 20001. It can be monitored using the emajRollbackMonitor client or Emaj_web.
 -- Logged rollback for a single group and a single session.
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -U _regress_emaj_adm1 -W adm -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
-    Its rollback identifier is 20001. It can be monitored using the emajRollbackMonitor client or Emaj_web.
+    Its rollback identifier is 20002. It can be monitored using the emajRollbackMonitor client or Emaj_web.
 ==> Rollback completed.
-    Notice: Rollback id = 20001.
+    Notice: Rollback id = 20002.
     Notice: 4 / 5 tables effectively processed.
     Notice: 2 / 2 sequences effectively processed.
     Warning: Table group change not rolled back: ignored triggers list for myschema1.mytbl2
@@ -158,11 +171,11 @@ Error: the user is not allowed to look at E-Maj data.
  E-Maj (version <devel>) - Monitoring rollbacks activity
 -----------------------------------------------------------
 [current date and time]
-** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2} 
-   status: COMMITTED ; ended at [rollback end time] 
+** rollback 20001 started at [rollback start time] for groups {myGroup1,myGroup2} 
+   status: ABORTED ; ended at [rollback end time] 
    rollback to mark: "Multi-1" set at [mark time]
-   3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
-** rollback 20001 started at [rollback start time] for groups {myGroup1} 
+   12 session(s) to process 10/11 table(s) and 2/4 sequence(s)
+** rollback 20002 started at [rollback start time] for groups {myGroup1} 
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: "Multi-1" set at [mark time]
    1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
@@ -179,11 +192,11 @@ Error: the user is not allowed to look at E-Maj data.
    rollback to mark: mark20103 set at [mark time]
    1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 [current date and time]
-** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2} 
-   status: COMMITTED ; ended at [rollback end time] 
+** rollback 20001 started at [rollback start time] for groups {myGroup1,myGroup2} 
+   status: ABORTED ; ended at [rollback end time] 
    rollback to mark: "Multi-1" set at [mark time]
-   3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
-** rollback 20001 started at [rollback start time] for groups {myGroup1} 
+   12 session(s) to process 10/11 table(s) and 2/4 sequence(s)
+** rollback 20002 started at [rollback start time] for groups {myGroup1} 
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: "Multi-1" set at [mark time]
    1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
