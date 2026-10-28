@@ -144,7 +144,6 @@
 	mv test/sql/non_superuser_install.sql.bak test/sql/non_superuser_install.sql
 
 # Adjust the extension version to create into the install_previous.sql and install_upgrade.sql test scripts
-	rm test/sql/install_previous.sql.bak
 	sed -i "s/CREATE EXTENSION emaj VERSION '.*' CASCADE;/CREATE EXTENSION emaj VERSION '${NEW}' CASCADE;/" test/sql/install_previous.sql
 	sed -i "s/CREATE EXTENSION emaj VERSION '.*' CASCADE;/CREATE EXTENSION emaj VERSION '${NEW}' CASCADE;/" test/sql/install_upgrade.sql
 

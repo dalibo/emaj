@@ -94,7 +94,7 @@
 	sed -i.bak "s/'devel'/'${NEW}'/g" test/sql/install_oldest.sql
 	sed -i.bak "s/'devel'/'${NEW}'/g" test/sql/upgrade_while_logging.sql
 	sed -i.bak "s/emaj-devel.sql/emaj-${NEW}.sql/" test/sql/install_psql.sql
-	sed -i.bak "s/emaj-devel.sql/emaj-${NEW}.sql/" test/sqlnon_superuser_install.sql
+	sed -i.bak "s/emaj-devel.sql/emaj-${NEW}.sql/" test/sql/non_superuser_install.sql
 
 	cd ..
 

@@ -1,23 +1,27 @@
 --
--- E-Maj : logs and rollbacks table changes : Version 5.0.0
+-- E-Maj : logs and rollbacks table changes : Version <devel>
 --
 -- This software is distributed under the GNU General Public License.
 --
--- This script is automatically called by a "CREATE EXTENSION emaj CASCADE;" statement.
+-- This psql script creates the emaj environment, for cases when the "CREATE EXTENSION" syntax is not possible.
+-- Use the "CREATE EXTENSION" syntax when possible.
 --
--- This script must be executed by a role having SUPERUSER privileges.
+-- This script may be executed by a non SUPERUSER role. But in this case:
+--   - the installation role must be the owner of application tables and sequences that will be assigned to the
+--     future table groups,
+--   - emaj_adm and emaj_viewer roles may not exist,
+--   - event triggers that protect the E-Maj environment may not be created,
+--   - functions that read or write external files may be not allowed.
 --
 -- The E-Maj technical tables will be installed into the default tablespace.
 -- The user executing the installation may set it to a particular value using a "set default_tablespace to <name>;" statement.
 --
 -- The emaj extension also installs the dblink and btree_gist extensions into the database if they are not already installed.
 
--- Complain if this script is executed in psql, rather than via a CREATE EXTENSION statement.
-\echo Use "CREATE EXTENSION emaj CASCADE" to install the E-Maj extension. \quit
 
 ----------------------------------------------------------------
 --                                                            --
---                   Checks and E-Maj roles                   --
+--                           Checks                           --
 --                                                            --
 ----------------------------------------------------------------
 
@@ -35,6 +39,18 @@ $do$
   END;
 $do$;
 
+BEGIN TRANSACTION;
+
+DROP SCHEMA IF EXISTS emaj CASCADE;
+CREATE SCHEMA emaj;
+
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+DO LANGUAGE plpgsql $do$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS dblink;
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+$do$;
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
@@ -58,7 +74,7 @@ CREATE TABLE emaj.emaj_version_hist (
   EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
   );
 INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range)
-  SELECT '5.0.0', TSTZRANGE(clock_timestamp(), null, '[]');
+  SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]');
 COMMENT ON TABLE emaj.emaj_version_hist IS
 $$Contains E-Maj versions history.$$;
 
@@ -174,6 +190,8 @@ CREATE TYPE emaj._relation_change_kind_enum AS ENUM (
   'RENAME_TABLE',
   'RENAME_SEQUENCE'
   );
+COMMENT ON TYPE emaj._relation_change_kind_enum IS
+$$Possible values for the emaj_relation_change.rlchg_change_kind column.$$;
 
 -- Enum of the possible values for the rollback status columns.
 CREATE TYPE emaj._rlbk_status_enum AS ENUM (
@@ -184,6 +202,8 @@ CREATE TYPE emaj._rlbk_status_enum AS ENUM (
   'COMMITTED',               -- the emaj rollback transaction is known as committed
   'ABORTED'                  -- the emaj rollback transaction is known as aborted
   );
+COMMENT ON TYPE emaj._rlbk_status_enum IS
+$$Possible values for rollback status.$$;
 
 -- Enum of the possible values for the rollback steps.
 CREATE TYPE emaj._rlbk_step_enum AS ENUM (
@@ -204,6 +224,8 @@ CREATE TYPE emaj._rlbk_step_enum AS ENUM (
   'CTRL+DBLINK',             -- pseudo step representing the periods between 2 steps execution, when dblink is used
   'CTRL-DBLINK'              -- pseudo step representing the periods between 2 steps execution, when dblink is not used
   );
+COMMENT ON TYPE emaj._rlbk_step_enum IS
+$$Possible values for rollback elementary steps.$$;
 
 ----------------------------------------------------------------
 --                                                            --
@@ -645,7 +667,7 @@ CREATE TYPE emaj.emaj_log_stat_group_type AS (
   stat_rows                    BIGINT                      -- estimated number of update events recorded for this table
   );
 COMMENT ON TYPE emaj.emaj_log_stat_group_type IS
-$$Represents the structure of rows returned by the emaj_log_stat_group() function.$$;
+$$Structure of rows returned by the emaj_log_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_detailed_log_stat_group_type AS (
   stat_group                   TEXT,                       -- group name owning the schema.table
@@ -662,7 +684,7 @@ CREATE TYPE emaj.emaj_detailed_log_stat_group_type AS (
   stat_rows                    BIGINT                      -- real number of update events recorded for this table
   );
 COMMENT ON TYPE emaj.emaj_detailed_log_stat_group_type IS
-$$Represents the structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
+$$Structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_sequence_stat_group_type AS (
   stat_group                   TEXT,                       -- group name owning the schema.table
@@ -678,7 +700,7 @@ CREATE TYPE emaj.emaj_sequence_stat_group_type AS (
   stat_has_structure_changed   BOOLEAN                     -- TRUE if any property other than last_value has changed
   );
 COMMENT ON TYPE emaj.emaj_sequence_stat_group_type IS
-$$Represents the structure of rows returned by the emaj_sequence_stat_group() function.$$;
+$$Structure of rows returned by the emaj_sequence_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_log_stat_table_type AS (
   stat_group                   TEXT,                       -- table group name owning the marks and the table
@@ -696,7 +718,7 @@ CREATE TYPE emaj.emaj_log_stat_table_type AS (
   stat_rollbacks               INT                         -- number of E-maj rollbacks executed in the time slice
   );
 COMMENT ON TYPE emaj.emaj_log_stat_table_type IS
-$$Represents the structure of rows returned by the emaj_log_stat_table() function.$$;
+$$Structure of rows returned by the emaj_log_stat_table() function.$$;
 
 CREATE TYPE emaj.emaj_log_stat_sequence_type AS (
   stat_group                   TEXT,                       -- table group name owning the marks and the sequence
@@ -715,7 +737,7 @@ CREATE TYPE emaj.emaj_log_stat_sequence_type AS (
   stat_rollbacks               INT                         -- number of E-maj rollbacks executed in the time slice
   );
 COMMENT ON TYPE emaj.emaj_log_stat_sequence_type IS
-$$Represents the structure of rows returned by the emaj_log_stat_sequence() function.$$;
+$$Structure of rows returned by the emaj_log_stat_sequence() function.$$;
 
 CREATE TYPE emaj.emaj_rollback_activity_type AS (
   rlbk_id                      INT,                        -- rollback id
@@ -739,7 +761,7 @@ CREATE TYPE emaj.emaj_rollback_activity_type AS (
   rlbk_completion_pct          SMALLINT                    -- estimated percentage of the rollback operation
   );
 COMMENT ON TYPE emaj.emaj_rollback_activity_type IS
-$$Represents the structure of rows returned by the emaj_rollback_activity() function.$$;
+$$Structure of rows returned by the emaj_rollback_activity() function.$$;
 
 CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
   cons_group                   TEXT,                       -- group name
@@ -751,7 +773,7 @@ CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
   cons_marks                   INT                         -- number of marks that would be deleted by a consolidation
   );
 COMMENT ON TYPE emaj.emaj_consolidable_rollback_type IS
-$$Represents the structure of rows returned by the emaj_get_consolidable_rollbacks() function.$$;
+$$Structure of rows returned by the emaj_get_consolidable_rollbacks() function.$$;
 
 -- Composite types used by emaj internal functions.
 
@@ -762,7 +784,7 @@ CREATE TYPE emaj._verify_groups_type AS (                -- this type is not use
   ver_msg                      TEXT
   );
 COMMENT ON TYPE emaj._verify_groups_type IS
-$$Represents the structure of rows returned by the internal _verify_groups() function.$$;
+$$Structure of rows returned by the internal _verify_groups() function.$$;
 
 CREATE TYPE emaj._report_message_type AS (
   rpt_msg_type                 INT,                        -- message number
@@ -783,7 +805,7 @@ CREATE TYPE emaj._report_message_type AS (
   rpt_message                  TEXT                        -- the english formatted error message
   );
 COMMENT ON TYPE emaj._report_message_type IS
-$$Represents a generic notice, warning or error message structure that can be translated by external clients.$$;
+$$Generic notice, warning or error message structure that can be translated by external clients.$$;
 
 ----------------------------------------------------------------
 --                                                            --
@@ -939,6 +961,8 @@ $_dblink_open_cnx$
     v_stmt                   TEXT;
     v_isEmajAdmin            BOOLEAN;
     v_sqlstate               TEXT;
+    v_errMsg                 TEXT;
+    v_errDetail              TEXT;
   BEGIN
 -- Look for the schema holding the dblink functions.
     SELECT nspname INTO p_schema
@@ -1014,6 +1038,8 @@ $_dblink_open_cnx$
         WHEN OTHERS THEN
           p_status = -6;                -- the connection attempt failed
           v_sqlstate = SQLSTATE;
+          v_errMsg = SQLERRM;
+          GET STACKED DIAGNOSTICS v_errDetail = PG_EXCEPTION_DETAIL;
       END;
     END IF;
 -- The connection succeeds.
@@ -1046,7 +1072,8 @@ $_dblink_open_cnx$
             WHEN -3 THEN ' (installer role not allowed to EXECUTE dblink_connect_u())'
             WHEN -4 THEN ' (transaction isolation level not READ COMMITTED)'
             WHEN -5 THEN ' (''dblink_user_password'' parameter not set)'
-            WHEN -6 THEN ' (dblink connection test failed - SQLSTATE ' || v_sqlstate || ')'
+            WHEN -6 THEN format(' (dblink connection test failed - SQLSTATE %s - %s - %s)',
+                                v_sqlstate, v_errMsg, v_errDetail)
             WHEN -7 THEN ' (role set in ''dblink_user_password'' parameter has not E-Maj administration rights)'
             WHEN -8 THEN ' (installer role has not pg_read_all_settings privileges)'
             ELSE ''
@@ -4901,8 +4928,8 @@ $_get_current_seq$
   END;
 $_get_current_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, p_minGlobalSeq BIGINT, p_maxGlobalSeq BIGINT, p_nbSession INT,
-                                          p_isLoggedRlbk BOOLEAN, p_isReplRoleReplica BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, p_minGlobalSeq BIGINT, p_maxGlobalSeq BIGINT, p_isLoggedRlbk BOOLEAN,
+                                          p_isReplRoleReplica BOOLEAN)
 RETURNS BIGINT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_rlbk_tbl$
@@ -4910,7 +4937,6 @@ $_rlbk_tbl$
 -- The function is called by emaj._rlbk_session_exec().
 -- Input: row from emaj_relation corresponding to the appplication table to proccess
 --        global sequence (non inclusive) lower and (inclusive) upper limits covering the rollback time frame
---        number of sessions
 --        a boolean indicating whether the rollback is logged
 --        a boolean indicating whether the rollback is to be performed with a session_replication_role set to replica
 -- Output: number of rolled back primary keys
@@ -4920,7 +4946,6 @@ $_rlbk_tbl$
     v_fullTableName          TEXT;
     v_logTableName           TEXT;
     v_tmpTable               TEXT;
-    v_tableType              TEXT;
     v_pkColsList             TEXT;
     v_pkCondition            TEXT;
     v_nbPk                   BIGINT;
@@ -4942,20 +4967,13 @@ $_rlbk_tbl$
       SET session_replication_role = 'replica';
     END IF;
 -- Create the temporary table containing all primary key values with their earliest emaj_gid.
-    IF p_nbSession = 1 THEN
-      v_tableType = 'TEMP';
-      v_tmpTable = 'emaj_tmp_' || pg_catalog.pg_backend_pid();
-    ELSE
--- With multi session parallel rollbacks, the table cannot be a TEMP table because it would not be usable in 2PC
--- but it may be an UNLOGGED table.
-      v_tableType = 'UNLOGGED';
-      v_tmpTable = 'emaj.emaj_tmp_' || pg_catalog.pg_backend_pid();
-    END IF;
-    EXECUTE format('CREATE %s TABLE %s AS '
+-- The table is created as UNLOGGED, because TEMP table are not usable with 2PC transactions used for parallel rollbacks.
+    v_tmpTable = 'emaj.emaj_tmp_' || pg_catalog.pg_backend_pid();
+    EXECUTE format('CREATE UNLOGGED TABLE %s AS '
                    '  SELECT %s, min(emaj_gid) as emaj_gid FROM %s'
                    '    WHERE emaj_gid > %s AND emaj_gid <= %s'
                    '    GROUP BY %s',
-                   v_tableType, v_tmpTable, v_pkColsList, v_logTableName,
+                   v_tmpTable, v_pkColsList, v_logTableName,
                    p_minGlobalSeq, p_maxGlobalSeq, v_pkColsList);
     GET DIAGNOSTICS v_nbPk = ROW_COUNT;
 -- Delete all rows from the application table corresponding to each touched primary key.
@@ -5809,7 +5827,7 @@ $_check_fk_groups$
         ORDER BY 1, 2, 3
     LOOP
       RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" references the table "%.%" that is outside the groups (%).',
-        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq, r_fk.nspname, r_fk.relname, array_to_string(p_groups, ',');
+        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq, r_fk.nspname, r_fk.relname, array_to_string(p_groups, ', ');
     END LOOP;
 -- Issue a warning if a table of the groups is referenced by a table outside the groups.
     FOR r_fk IN
@@ -5839,7 +5857,7 @@ $_check_fk_groups$
     LOOP
       RAISE WARNING '_check_fk_groups: The table "%.%" is referenced by the foreign key "%" on the table "%.%" that is outside'
                     ' the groups (%).', r_fk.rel_schema, r_fk.rel_tblseq, r_fk.conname, r_fk.nspname, r_fk.relname,
-                    array_to_string(p_groups, ',');
+                    array_to_string(p_groups, ', ');
     END LOOP;
 -- Issue a warning for rollbackable groups if a FK on a partition is actualy set on the partitionned table.
 -- The warning message depends on the FK characteristics.
@@ -6232,7 +6250,7 @@ $emaj_export_groups_configuration$
 -- This function returns a JSON formatted structure representing some or all configured table groups
 -- The function can be called by clients like Emaj_web.
 -- This is just a wrapper of the internal _export_groups_conf() function.
--- Input: an optional array of goup's names, NULL means all table groups
+-- Input: an optional group names array, NULL means all table groups
 -- Output: the table groups content in JSON format
   BEGIN
     RETURN emaj._export_groups_conf(p_groups);
@@ -6247,7 +6265,8 @@ SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_export_groups_configuration$
 -- This function stores some or all configured table groups configuration into a file on the server.
 -- The JSON structure is built by the _export_groups_conf() function.
--- Input: an optional array of goup's names, NULL means all table groups
+-- Input: output file path name,
+--        an optional group names array, NULL means all table groups
 -- Output: the number of table groups recorded in the file.
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
@@ -6276,7 +6295,7 @@ CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_groups_conf$
 -- This function generates a JSON formatted structure representing the current configuration of some or all table groups.
--- Input: an optional array of goup's names, NULL means all table groups
+-- Input: an optional group names array, NULL means all table groups
 -- Output: the table groups configuration in JSON format
   DECLARE
     v_groupsText             TEXT;
@@ -6497,10 +6516,7 @@ $_import_groups_conf$
 -- For tables, "priority", "log_data_tablespace" and "log_index_tablespace" attributes are optional.
 -- A table group may have no "tables" or "sequences" arrays.
 -- A table may have no "ignored_triggers" array.
--- The function replaces the content of the tmp_app_table table for the imported table groups by the content of the JSON configuration.
 -- Non existing groups are created empty.
--- The _alter_groups() function is used to process the assignement, the move, the removal or the attributes change for tables and
--- sequences.
 -- Input: - the table groups configuration structure in JSON format
 --        - the array of group names to process (a NULL value process all table groups described in the JSON structure)
 --        - a boolean indicating whether table groups to import may already exist
@@ -6553,7 +6569,7 @@ $_import_groups_conf_prepare$
 -- This function prepares the effective table groups configuration import.
 -- It is called by _import_groups_conf() and by Emaj_web
 -- At the end of the function, the tmp_app_table table is updated with the new configuration of groups
---   and a temporary table is created to prepare the application triggers management
+--   and a temporary table is created to prepare the application triggers management.
 -- Input: - the table groups configuration structure in JSON format
 --        - an optional array of group names to process (a NULL value process all table groups described in the JSON structure)
 --        - an optional boolean indicating whether table groups to import may already exist (FALSE by default)
@@ -8434,7 +8450,7 @@ $_delete_before_mark_group$
   BEGIN
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
--- Retrieve the timestamp and the emaj_gid value and the time stamp id of the target new first mark.
+-- Retrieve the emaj_gid value and the time stamp id of the target new first mark.
     SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
       FROM emaj.emaj_mark
            JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
@@ -10324,7 +10340,7 @@ $_rlbk_session_exec$
                                 CASE WHEN v_rlbkMarkTimeId = r_step.rlbp_target_time_id THEN v_lastGlobalSeq      -- common case
                                      ELSE (SELECT time_last_emaj_gid FROM emaj.emaj_time_stamp WHERE time_id = r_step.rlbp_target_time_id)
                                 END,
-                                v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk, r_step.rlbp_is_repl_role_replica) INTO v_nbRows
+                                v_maxGlobalSeq, v_isLoggedRlbk, r_step.rlbp_is_repl_role_replica) INTO v_nbRows
             FROM emaj.emaj_relation
             WHERE rel_schema = r_step.rlbp_schema
               AND rel_tblseq = r_step.rlbp_table
@@ -13568,8 +13584,6 @@ CREATE OR REPLACE FUNCTION emaj._export_param_conf(p_includeDefault BOOLEAN)
 RETURNS JSON LANGUAGE plpgsql AS
 $_export_param_conf$
 -- This function generates a JSON formatted structure representing the parameters.
--- All parameters are extracted, except the "emaj_version" key that is directly linked to the extension and thus is not updatable.
--- The E-Maj version is already displayed in the generated comment at the beginning of the structure.
 -- Input: boolean indicating whether keys which current value equals their default value must be exported.
 -- Output: the parameters content in JSON format
   DECLARE
@@ -15019,8 +15033,7 @@ RETURNS TEXT[] LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_disable_event_triggers$
 -- This function disables all known E-Maj event triggers that are in enabled state.
--- The function is called by functions that alter or drop E-Maj components, such as
---   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
+-- The function is called by functions that alter or drop E-Maj components.
 -- It is also called by the user emaj_disable_event_triggers_protection() function.
 -- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers().
 -- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger.
@@ -15037,8 +15050,7 @@ $_disable_event_triggers$
       RETURN v_eventTriggers;
     END IF;
 -- Build the event trigger names array from the pg_event_trigger table.
--- A single operation like _alter_groups() may call the function several times. But this is not an issue as only enabled triggers are
--- disabled.
+-- A single operation may call the function several times. But this is not an issue as only enabled triggers are disabled.
     SELECT coalesce(array_agg(evtname ORDER BY evtname), ARRAY[]::TEXT[]) INTO v_eventTriggers
       FROM pg_catalog.pg_event_trigger
       WHERE evtname LIKE 'emaj%'
@@ -15061,8 +15073,7 @@ $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter.
 -- It also recreates the emaj_protection_trg event trigger if it does not exist. This event trigger is the only component
 -- that is not linked to the emaj extension and cannot be protected by another event trigger.
--- The function is called by functions that alter or drop E-Maj components, such as
---   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
+-- The function is called by functions that alter or drop E-Maj components.
 -- It is also called by the user emaj_enable_event_triggers_protection() function.
 -- Input: array of event trigger names to enable.
 -- Output: same array.
@@ -15120,6 +15131,8 @@ $emaj_drop_extension$
     v_supportEmajViewer      BOOLEAN;
     v_isSuperuser            BOOLEAN;
     v_isRoleCreaterole       BOOLEAN;
+    v_isRoleEmajAdm          BOOLEAN;
+    v_emajSchemaOwner        TEXT;
     v_nbObject               INTEGER;
     v_roleToDrop             BOOLEAN;
     v_dbList                 TEXT;
@@ -15129,27 +15142,41 @@ $emaj_drop_extension$
     v_tspList                TEXT;
     r_object                 RECORD;
   BEGIN
--- Read some installation characteristics.
+-- Perform some checks to verify that the conditions to execute the function are met.
+-- Read some installation and current user characteristics.
     v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
     SELECT inst_with_emaj_adm, inst_with_emaj_viewer
       INTO STRICT v_supportEmajAdm, v_supportEmajViewer
       FROM emaj.emaj_install_conf;
--- Perform some checks to verify that the conditions to execute the function are met.
---
--- For extensions, check the current role is superuser.
-    SELECT rolsuper, rolcreaterole INTO v_isSuperuser, v_isRoleCreaterole
+    SELECT rolname
+      INTO v_emajSchemaOwner
+      FROM pg_catalog.pg_namespace
+           JOIN pg_catalog.pg_roles ON (pg_roles.oid = nspowner)
+      WHERE nspname = 'emaj';
+    SELECT rolsuper, rolcreaterole,
+           CASE WHEN NOT v_supportEmajAdm THEN FALSE
+                ELSE pg_catalog.pg_has_role(rolname, 'emaj_adm', 'MEMBER') END
+      INTO v_isSuperuser, v_isRoleCreaterole, v_isRoleEmajAdm
       FROM pg_catalog.pg_roles
       WHERE rolname = current_user;
-    IF v_isEmajExtension THEN
-      IF NOT v_isSuperuser THEN
-        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be a superuser';
-      END IF;
-    ELSE
--- Otherwise, check the current role is the owner of the emaj schema (i.e. the role who installed emaj) or is a superuser.
-      PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
-        WHERE nspowner = pg_roles.oid AND nspname = 'emaj' AND rolname = current_user;
-      IF NOT FOUND AND NOT v_isSuperuser THEN
-        RAISE EXCEPTION 'emaj_drop_extension: The role executing this script must be the owner of the emaj schema or a superuser';
+-- Check current user rights.
+    IF NOT v_isSuperuser THEN
+      IF v_isEmajExtension THEN
+-- For extensions, the current role must be superuser.
+        RAISE EXCEPTION 'emaj_drop_extension: The current role must be a superuser to be allowed to drop the EXTENSION';
+      ELSE
+        IF v_emajSchemaOwner <> current_user THEN
+          IF v_supportEmajAdm AND v_emajSchemaOwner = 'emaj_adm' THEN
+---- For emaj installed by psql script with emaj_adm capabilities, the current role must have emaj_adm rights or be a superuser.
+            IF NOT v_isRoleEmajAdm THEN
+              RAISE EXCEPTION 'emaj_drop_extension: The current role must be an emaj adminstrator or a superuser';
+            END IF;
+          ELSE
+---- For emaj installed by psql script without emaj_adm capabilities, the current role must either be the owner of the emaj schema
+----   or be a superuser.
+            RAISE EXCEPTION 'emaj_drop_extension: The current role must be the owner of the emaj schema or a superuser';
+          END IF;
+        END IF;
       END IF;
     END IF;
 --
@@ -15439,20 +15466,42 @@ DO LANGUAGE plpgsql
 $do$
   DECLARE
     v_supportEmajAdm         BOOLEAN;
+    r_object                 RECORD;
   BEGIN
 -- Get the installation configuration data.
     SELECT inst_with_emaj_adm
       INTO STRICT v_supportEmajAdm
       FROM emaj.emaj_install_conf;
--- Grant rights.
     IF v_supportEmajAdm THEN
-
--- emaj_adm can execute all emaj functions and access all emaj tables without any restrictions.
-      GRANT ALL ON SCHEMA emaj TO emaj_adm;
-      GRANT ALL ON ALL TABLES IN SCHEMA emaj TO emaj_adm;
-      GRANT ALL ON ALL SEQUENCES IN SCHEMA emaj TO emaj_adm;
+-- If it exists, emaj_adm becomes the owner of the emaj schema and all contained objects.
+-- The emaj schema.
+      ALTER SCHEMA emaj OWNER TO emaj_adm;
+-- All tables, views and composite types.
+      FOR r_object IN
+        SELECT relname, CASE relkind WHEN 'r' THEN 'TABLE' WHEN 'v' THEN 'VIEW' WHEN 'c' THEN 'TYPE' END AS object
+          FROM pg_catalog.pg_class
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+          WHERE nspname = 'emaj'
+            AND relkind IN ('r', 'v', 'c')
+      LOOP
+        EXECUTE format('ALTER %s emaj.%s OWNER TO emaj_adm',
+                           r_object.object, r_object.relname);
+      END LOOP;
+-- All enum types.
+      FOR r_object IN
+        SELECT typname
+          FROM pg_catalog.pg_type
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = typnamespace)
+          WHERE nspname = 'emaj'
+            AND typtype = 'e'
+      LOOP
+        EXECUTE format('ALTER type emaj.%s OWNER TO emaj_adm',
+                           r_object.typname);
+      END LOOP;
+-- The emaj global sequence.
+      ALTER SEQUENCE emaj.emaj_global_seq OWNER TO emaj_adm;
+-- Grant execute rights on all functions.
       GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
-
     END IF;
   END;
 $do$;
@@ -15470,19 +15519,16 @@ $do$
       FROM emaj.emaj_install_conf;
 -- Grant rights.
     IF v_supportEmajViewer THEN
-
--- emaj_viewer can only
--- ... view the emaj objects, i.e. the content of emaj and log tables,
---     except the emaj_param table that emaj_viewer should only see through the emaj_visible_param view
---     that hides the password used by the configured dblink user,
+-- if it exists, emaj_viewer can only:
+--   - view the emaj objects, i.e. the content of emaj and log tables,
       GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
       GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
       GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
-
+--   - except the emaj_param table that emaj_viewer should only see through the emaj_visible_param view
+--     that hides the password used by the configured dblink user,
       REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
       REVOKE SELECT ON TABLE emaj.emaj_all_param FROM emaj_viewer;
-
--- ... and execute a subset of emaj functions for which rights are explicitely granted.
+--   - and execute a subset of emaj functions for which rights are explicitely granted.
       GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj._clean_array(p_array TEXT[]) TO emaj_viewer;
       GRANT EXECUTE ON FUNCTION emaj._check_group_names(p_groups TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN,
@@ -15710,7 +15756,7 @@ $do$
 -- Insert the completion event into the operations history.
     v_extraWording = coalesce(' (' || v_extraWording || ')', '');
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-      VALUES ('EMAJ_INSTALL', 'E-Maj 5.0.0', 'Initialisation completed' || v_extraWording);
+      VALUES ('EMAJ_INSTALL', 'E-Maj <devel>', 'Initialisation completed' || v_extraWording);
 --
     RETURN;
   END;
@@ -15725,3 +15771,5 @@ WITH start_time_data AS (
   UPDATE emaj.emaj_version_hist
     SET verh_time_range = TSTZRANGE(clock_timestamp(), null, '[]'), verh_install_duration = duration
     FROM start_time_data;
+--
+COMMIT;
