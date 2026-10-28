@@ -1,6 +1,7 @@
 E-Maj - Change log
 ==================
-<devel>
+
+5.0.1 (2026-Oct-28)
 ------
 ###Enhancements:###
   * Minor code changes.

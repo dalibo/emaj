@@ -1,19 +1,23 @@
 --
--- E-Maj : logs and rollbacks table changes : Version <devel>
+-- E-Maj : logs and rollbacks table changes : Version 5.0.1
 --
 -- This software is distributed under the GNU General Public License.
 --
--- This script is automatically called by a "CREATE EXTENSION emaj CASCADE;" statement.
+-- This psql script creates the emaj environment, for cases when the "CREATE EXTENSION" syntax is not possible.
+-- Use the "CREATE EXTENSION" syntax when possible.
 --
--- This script must be executed by a role having SUPERUSER privileges.
+-- This script may be executed by a non SUPERUSER role. But in this case:
+--   - the installation role must be the owner of application tables and sequences that will be assigned to the
+--     future table groups,
+--   - emaj_adm and emaj_viewer roles may not exist,
+--   - event triggers that protect the E-Maj environment may not be created,
+--   - functions that read or write external files may be not allowed.
 --
 -- The E-Maj technical tables will be installed into the default tablespace.
 -- The user executing the installation may set it to a particular value using a "set default_tablespace to <name>;" statement.
 --
 -- The emaj extension also installs the dblink and btree_gist extensions into the database if they are not already installed.
 
--- Complain if this script is executed in psql, rather than via a CREATE EXTENSION statement.
-\echo Use "CREATE EXTENSION emaj CASCADE" to install the E-Maj extension. \quit
 
 ----------------------------------------------------------------
 --                                                            --
@@ -35,6 +39,18 @@ $do$
   END;
 $do$;
 
+BEGIN TRANSACTION;
+
+DROP SCHEMA IF EXISTS emaj CASCADE;
+CREATE SCHEMA emaj;
+
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+DO LANGUAGE plpgsql $do$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS dblink;
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+$do$;
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
@@ -58,7 +74,7 @@ CREATE TABLE emaj.emaj_version_hist (
   EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
   );
 INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range)
-  SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]');
+  SELECT '5.0.1', TSTZRANGE(clock_timestamp(), null, '[]');
 COMMENT ON TABLE emaj.emaj_version_hist IS
 $$Contains E-Maj versions history.$$;
 
@@ -15740,7 +15756,7 @@ $do$
 -- Insert the completion event into the operations history.
     v_extraWording = coalesce(' (' || v_extraWording || ')', '');
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-      VALUES ('EMAJ_INSTALL', 'E-Maj <devel>', 'Initialisation completed' || v_extraWording);
+      VALUES ('EMAJ_INSTALL', 'E-Maj 5.0.1', 'Initialisation completed' || v_extraWording);
 --
     RETURN;
   END;
@@ -15755,3 +15771,5 @@ WITH start_time_data AS (
   UPDATE emaj.emaj_version_hist
     SET verh_time_range = TSTZRANGE(clock_timestamp(), null, '[]'), verh_install_duration = duration
     FROM start_time_data;
+--
+COMMIT;
