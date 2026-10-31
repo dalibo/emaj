@@ -117,7 +117,7 @@
 
 	cd $MAINDIR
 # Add a new entry in CHANGES.md
-	sed -i "3i<devel>\n------\n###Enhancements:###\n\n\n###Bug fixes:###\n\n" CHANGES.md
+	sed -i "3idevel\n------\n### Enhancements: ###\n\n\n### Bug fixes: ###\n\n" CHANGES.md
 
 # Revert the version id to <devel> for files modified by the create_version_prepare.sh script
 	mv META.json.bak META.json
