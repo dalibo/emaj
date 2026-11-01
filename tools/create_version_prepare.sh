@@ -60,7 +60,7 @@
 	rm -f *.tar*
 
 # Stamp the CHANGES.md file
-	sed -i "s/<devel>/\n${NEW} (${DATE})/" CHANGES.md
+	sed -i "s/^devel$/\n${NEW} (${DATE})/" CHANGES.md
 
 # Adapt and rename the migration script
 	sed -i "s/<devel>/${NEW}/g" sql/emaj--*--devel.sql

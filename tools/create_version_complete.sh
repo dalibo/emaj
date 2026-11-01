@@ -108,8 +108,10 @@
 	tar -czf emaj-${NEW}.tar.gz -T emaj-${NEW}/tar.index
 
 # Check that no 'devel' string remains in sql scripts
+	cd $NEWDIR
 	echo "Chack that no 'devel' string appear below"
 	grep -s 'devel[^o]' * sql/* test/sql/*
+	cd ..
 
 # Adjust the emaj directory content
 # ---------------------------------
