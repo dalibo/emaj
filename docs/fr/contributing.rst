@@ -36,7 +36,7 @@ L’arborescence comprend les éléments complémentaires suivants :
 
 Paramétrer les outils
 ^^^^^^^^^^^^^^^^^^^^^
-Les outils présents dans le répertoire **tools** nécessitent d’être paramétrés en fonction de l’environnement de chacun. Un système de paramétrage couvre certains outils. Pour les autres, le fichier **tools/README** détaille les adaptations à réaliser.
+Les outils présents dans le répertoire **tools** nécessitent d’être paramétrés en fonction de l’environnement de chacun. Un système de paramétrage couvre certains outils. Pour les autres, le fichier **tools/README.md** détaille les adaptations à réaliser.
 
 Le fichier **tools/emaj_tools.profile** contient des définitions de variables et de fonctions utilisées par différents outils. En principe, ces éléments n’ont pas besoin d’être modifiés.
 

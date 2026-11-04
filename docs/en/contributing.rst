@@ -38,7 +38,7 @@ The main directory also includes:
 Setting Up Tool Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The tools in the **tools** directory require specific parameters to be set according to your environment. A parameter system covers most tools, while others are detailed in the **tools/README** file.
+The tools in the **tools** directory require specific parameters to be set according to your environment. A parameter system covers most tools, while others are detailed in the **tools/README.md** file.
 
 Creating the ``emaj_tools.env`` File
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -63,7 +63,7 @@
 	rm *.bak sql/*.bak client/*.bak test/sql/*.bak
 
 # Change version identifiers inside files from tools, except the README file
-	find tools ! -path tools/README -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;
+	find tools ! -path tools/README.md -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;
 
 # Change environment directories and files into tools
 	sed -i "s/\/emaj/\/emaj-${NEW}/" tools/copy2Expected.sh

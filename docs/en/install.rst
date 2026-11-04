@@ -65,7 +65,7 @@ Manual Installation on Linux
      unzip e-maj-<version>.zip
      cd e-maj-<version>/
 
-3. Edit the **emaj.control** file to set the ``directory`` parameter to the absolute path of the E-Maj SQL scripts directory (e.g., */path/to/e-maj-<version>.sql*).
+3. Edit the **emaj.control** file to set the ``directory`` parameter to the absolute path of the E-Maj SQL scripts directory (e.g., */path/to/e-maj-<version>/sql*).
 
 4. Locate the *SHAREDIR* directory. You can use the following command::
 
