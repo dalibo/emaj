@@ -314,4 +314,4 @@ SELECT sum(calls) FROM pg_stat_user_functions WHERE funcname LIKE E'emaj\\_%';
 -----------------------------
 -- Execute the perl script that checks the code.
 -----------------------------
-\! perl ${EMAJ_DIR}/tools/check_code.pl | grep -P '^WARNING:|^ERROR:'
+\! perl ${EMAJ_DIR}/tools/check_code.pl | grep -P '^Error |^WARNING:|^ERROR:'
