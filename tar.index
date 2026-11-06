@@ -1,11 +1,12 @@
-emaj/README.md
-emaj/CHANGES.md
-emaj/LICENSE
 emaj/AUTHORS.md
-emaj/SECURITY.md
-emaj/META.json
+emaj/CHANGES.md
+emaj/CONTRIBUTING.md
 emaj/emaj.control
+emaj/LICENSE
 emaj/Makefile
+emaj/META.json
+emaj/README.md
+emaj/SECURITY.md
 emaj/sql/emaj--devel.sql
 emaj/sql/emaj-devel.sql
 emaj/sql/emaj--5.0.1--devel.sql
