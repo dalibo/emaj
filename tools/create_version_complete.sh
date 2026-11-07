@@ -66,8 +66,6 @@
 	find tools ! -path tools/README.md -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;
 
 # Change environment directories and files into tools
-	sed -i "s/\/emaj/\/emaj-${NEW}/" tools/copy2Expected.sh
-
 	sed -i "s/emaj--devel.sql/emaj--${NEW}.sql/g" tools/check_code.pl
 
 	sed -i "s/emaj--devel.sql/emaj--${NEW}.sql/g" tools/check_error_messages.pl

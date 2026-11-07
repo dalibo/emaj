@@ -96,11 +96,11 @@ copy2Expected.sh
 
 The *copy2Expected.sh* shell script copies the *results* files of regression tests environment to the *expected* directory. Once result regression test files are considered as representing a new reference, you can simply execute the script.
 
+If a parameter is supplied, it represents a single postgres version to process.
+
 **Customisation**:
 
-At the beginning of the script (near line 7), the *EMAJ_HOME* variable is initialized with the E-Maj project root directory. You must adapt its value to fit your installation.
-
-Then for each available postgres major version on the environment, 2 commands copy the ouput test files from the /results to the /expected directories. You must adapt the script to your installed major postgres versions.
+No customization is needed.
 
 create_sql_install_script.pl
 ----------------------------

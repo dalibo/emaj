@@ -1,28 +1,29 @@
-#!/bin/sh
+#!/bin/bash
 # E-Maj
 # copy2Expected.sh
 # Prepare expected files for regression tests
-# For each db version, delete existing .out files from 'expected' directory and 
-#                      copy .out files from 'results' to 'expected' directory
+# For each PG version, copy .out files from 'results' to 'expected' directory and remove in 'expected' deleted files in 'results', if any.
+# If a parameter is supplied, only process this PG version.
 
-EMAJ_HOME="/home/postgres/proj/emaj"
+# Source emaj_tools.profile
+. `dirname ${0}`/emaj_tools.profile
 
-rm $EMAJ_HOME/test/14/expected/*
-cp $EMAJ_HOME/test/14/results/*.out $EMAJ_HOME/test/14/expected/.
+# Determine the PG versions to process.
+if [ -z "$1" ]; then
+	PGVERS=${EMAJ_SUPPORTED_PGVER[@]//.}
+else
+	if [ -d "$EMAJ_DIR/test/$1" ]; then
+		PGVERS=($1)
+	else
+		echo "The 'test/$1' directory doesn't exist."
+		exit 1
+	fi
+fi
 
-rm $EMAJ_HOME/test/15/expected/*
-cp $EMAJ_HOME/test/15/results/*.out $EMAJ_HOME/test/15/expected/.
-
-rm $EMAJ_HOME/test/16/expected/*
-cp $EMAJ_HOME/test/16/results/*.out $EMAJ_HOME/test/16/expected/.
-
-rm $EMAJ_HOME/test/17/expected/*
-cp $EMAJ_HOME/test/17/results/*.out $EMAJ_HOME/test/17/expected/.
-
-rm $EMAJ_HOME/test/18/expected/*
-cp $EMAJ_HOME/test/18/results/*.out $EMAJ_HOME/test/18/expected/.
-
-rm $EMAJ_HOME/test/19/expected/*
-cp $EMAJ_HOME/test/19/results/*.out $EMAJ_HOME/test/19/expected/.
+# Copy files.
+for PGVER in ${PGVERS[@]//.}; do
+	echo "Processing test/$PGVER"
+	rsync -a --delete --include='*.out' --exclude='*' $EMAJ_DIR/test/$PGVER/expected/ $EMAJ_DIR/test/$PGVER/expected/
+done
 
 echo ".out files successfully copied from 'results' to 'expected' directories"
