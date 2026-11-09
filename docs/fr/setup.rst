@@ -59,10 +59,12 @@ où <répertoire_emaj> est le répertoire issu de l’:ref:`installation du logi
 
 ----
 
-Adaptation du fichier de configuration postgresql.conf
-------------------------------------------------------
+.. _instance_conf_change:
 
-Deux paramètres de configuration peuvent devoir être modifiés dans le fichier **postgresql.conf** :
+Adaptation de la configuration de l'instance PostgreSQL
+-------------------------------------------------------
+
+Deux paramètres peuvent devoir être modifiés dans la configuration de l'instance PostgreSQL :
 
 - ``max_locks_per_transaction`` :
 
@@ -70,7 +72,7 @@ Deux paramètres de configuration peuvent devoir être modifiés dans le fichier
 
 - ``max_prepared_transactions`` :
 
-   Nécessaire pour utiliser l'outil de :doc:`rollback E-Maj parallélisé<parallelRollbackClient>`. La valeur par défaut, 0, bloque l’utilisation de transactions préparées. La valeur du paramètre doit être au moins égale au nombre de rollbacks E-Maj parallélisés concurrents.
+   Nécessaire pour utiliser l'outil de :doc:`rollback E-Maj parallélisé<parallelRollbackClient>`. La valeur par défaut, 0, bloque l’utilisation de transactions préparées. La valeur du paramètre doit être au moins égale au nombre de sessions de rollbacks E-Maj parallélisés concurrents.
 
 .. note::
    La modification de ces paramètres nécessite un **arrêt-relance de l’instance**.

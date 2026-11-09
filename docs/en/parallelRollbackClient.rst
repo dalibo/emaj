@@ -23,7 +23,7 @@ Prerequisites
 
 The provided tool is coded in *Perl*. It requires that the **Perl software** with the *DBI* and *DBD::Pg* modules be installed on the server that executes the command (which is not necessarily the same as the one hosting the PostgreSQL instance).
 
-Rolling back each session within a single transaction implies the use of two-phase commit. As a consequence, the **max_prepared_transactions** parameter in the *postgresql.conf* file must be adjusted. As the default value of this parameter is 0, it must be modified by specifying a value at least equal to the maximum number of *sessions* that will be used.
+Rolling back each session within a single transaction implies the use of two-phase commit. As a consequence, the :ref:`max_prepared_transactions<instance_conf_change>` parameter of the PostgresSQL instance configuration must take into account the maximum number of *sessions* that will be used.
 
 It is also necessary to set the E-Maj :doc:`dblink_user_password parameter<parameters>`.
 
